@@ -10,6 +10,7 @@ function createWindow(): void {
     width: 1366,
     height: 768,
     show: false,
+    frame: false, // Remove default title bar
     autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
@@ -52,6 +53,12 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on("ping", () => console.log("pong"))
+
+  // Window controls
+  ipcMain.on("window-close", () => {
+    const window = BrowserWindow.getFocusedWindow()
+    if (window) window.close()
+  })
 
   createWindow()
 
