@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 
 import electronLogo from "../assets/electron.svg"
-import { VersionsNew } from "../components/versions-new"
+import { VersionsNew } from "../components/versions"
 import { useTheme } from "../providers/theme-provider"
 
 export const Home = () => {
