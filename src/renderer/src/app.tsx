@@ -5,7 +5,7 @@ import { ThemeProvider } from "./providers/theme-provider"
 
 export const AppNew = () => {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
