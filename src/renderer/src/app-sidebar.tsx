@@ -161,7 +161,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar {...props}>
+    <Sidebar {...props} variant="inset">
       <SidebarContent className="gap-0">
         {data.navMain.map((item) => (
           <Collapsible
