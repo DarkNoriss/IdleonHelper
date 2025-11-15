@@ -11,7 +11,6 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
   },
   renderer: {
-    // @ts-expect-error - Type incompatibility due to pnpm dependency resolution with Vite types
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
