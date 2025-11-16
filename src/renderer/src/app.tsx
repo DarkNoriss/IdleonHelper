@@ -5,7 +5,7 @@ import { AppHeader } from "./app-header"
 import { AppSidebar } from "./app-sidebar"
 import { SidebarInset, SidebarProvider } from "./components/ui/sidebar"
 import { Dashboard } from "./pages/dashboard"
-import { Test } from "./pages/test"
+import { GameWindow } from "./pages/game-window"
 import { World1Temp } from "./pages/worlds/world-1/temp"
 import { World2Temp } from "./pages/worlds/world-2/temp"
 import { World3Construction } from "./pages/worlds/world-3/construction"
@@ -27,7 +27,7 @@ export const AppNew = (): React.ReactElement => {
             <SidebarInset>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/test" element={<Test />} />
+                <Route path="/game-window" element={<GameWindow />} />
                 <Route path="/world-1/temp" element={<World1Temp />} />
                 <Route path="/world-2/temp" element={<World2Temp />} />
                 <Route path="/world-3/temp" element={<World3Temp />} />

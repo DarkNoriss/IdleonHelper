@@ -10,8 +10,9 @@ const api = {
     processJson: (jsonString: string) =>
       ipcRenderer.invoke("world-3-construction:process-json", jsonString),
   },
-  test: {
-    runTest: () => ipcRenderer.invoke("test:run"),
+  gamewindow: {
+    find: () => ipcRenderer.invoke("gamewindow:find"),
+    screenshot: () => ipcRenderer.invoke("gamewindow:screenshot"),
   },
 }
 

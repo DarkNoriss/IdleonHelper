@@ -27,8 +27,8 @@ const data = {
       url: "/dashboard",
     },
     {
-      title: "Test",
-      url: "/test",
+      title: "Game Window",
+      url: "/game-window",
     },
     {
       title: "World 1",

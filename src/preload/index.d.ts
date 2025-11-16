@@ -14,11 +14,12 @@ declare global {
           error?: string
         }>
       }
-      test: {
-        runTest: () => Promise<{
+      gamewindow: {
+        find: () => Promise<{
           success: boolean
           hwnd?: string
         }>
+        screenshot: () => Promise<void>
       }
     }
   }
