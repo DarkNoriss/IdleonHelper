@@ -1,5 +1,6 @@
 import * as React from "react"
 import { ChevronRight } from "lucide-react"
+import { Link } from "react-router-dom"
 
 import {
   Collapsible,
@@ -18,19 +19,19 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
+// Navigation data with routes
 const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
     },
     {
       title: "World 1",
       items: [
         {
           title: "Temp",
-          url: "#",
+          url: "/world-1/temp",
         },
       ],
     },
@@ -39,57 +40,52 @@ const data = {
       items: [
         {
           title: "Temp",
-          url: "#",
+          url: "/world-2/temp",
         },
       ],
     },
     {
       title: "World 3",
-      url: "#",
       items: [
         {
           title: "Temp",
-          url: "#",
+          url: "/world-3/temp",
         },
       ],
     },
     {
       title: "World 4",
-      url: "#",
       items: [
         {
           title: "Temp",
-          url: "#",
+          url: "/world-4/temp",
         },
       ],
     },
     {
       title: "World 5",
-      url: "#",
       items: [
         {
           title: "Temp",
-          url: "#",
+          url: "/world-5/temp",
         },
       ],
     },
     {
       title: "World 6",
-      url: "#",
       items: [
         {
           title: "Temp",
-          url: "#",
+          url: "/world-6/temp",
         },
       ],
     },
     {
       title: "World 7",
-      url: "#",
       items: [
         {
           title: "Temp",
-          url: "#",
+          url: "/world-7/temp",
         },
       ],
     },
@@ -105,12 +101,14 @@ export function AppSidebar({
         {data.navMain.map((item) => {
           // If item has no children, render as a simple button
           if (!item.items || item.items.length === 0) {
+            if (!item.url) return null
+
             return (
               <SidebarGroup key={item.title}>
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                      <a href={item.url}>{item.title}</a>
+                      <Link to={item.url}>{item.title}</Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
@@ -142,7 +140,7 @@ export function AppSidebar({
                       {item.items.map((subItem) => (
                         <SidebarMenuItem key={subItem.title}>
                           <SidebarMenuButton asChild>
-                            <a href={subItem.url}>{subItem.title}</a>
+                            <Link to={subItem.url}>{subItem.title}</Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       ))}

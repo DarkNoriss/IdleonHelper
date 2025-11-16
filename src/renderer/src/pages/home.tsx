@@ -1,10 +1,12 @@
+import * as React from "react"
+
 import { Button } from "@/components/ui/button"
 
 import electronLogo from "../assets/electron.svg"
 import { VersionsNew } from "../components/versions"
 import { useTheme } from "../providers/theme-provider"
 
-export const Home = () => {
+export const Home = (): React.ReactElement => {
   const ipcHandle = (): void => window.electron.ipcRenderer.send("ping")
   const { theme, setTheme } = useTheme()
 
