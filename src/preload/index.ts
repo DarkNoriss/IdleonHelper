@@ -10,6 +10,9 @@ const api = {
     processJson: (jsonString: string) =>
       ipcRenderer.invoke("world-3-construction:process-json", jsonString),
   },
+  test: {
+    runTest: () => ipcRenderer.invoke("test:run"),
+  },
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

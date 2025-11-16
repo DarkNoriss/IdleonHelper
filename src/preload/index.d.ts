@@ -14,6 +14,12 @@ declare global {
           error?: string
         }>
       }
+      test: {
+        runTest: () => Promise<{
+          success: boolean
+          hwnd?: string
+        }>
+      }
     }
   }
 }

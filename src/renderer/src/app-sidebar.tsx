@@ -27,6 +27,10 @@ const data = {
       url: "/dashboard",
     },
     {
+      title: "Test",
+      url: "/test",
+    },
+    {
       title: "World 1",
       items: [
         {

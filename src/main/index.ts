@@ -54,6 +54,11 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on("ping", () => console.log("pong"))
 
+  // Test handlers
+  import("./test").then((module) => {
+    module.registerTestHandlers()
+  })
+
   // Window controls
   ipcMain.on("window-close", () => {
     const window = BrowserWindow.getFocusedWindow()
