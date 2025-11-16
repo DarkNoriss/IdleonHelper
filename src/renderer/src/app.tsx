@@ -7,6 +7,7 @@ import { SidebarInset, SidebarProvider } from "./components/ui/sidebar"
 import { Dashboard } from "./pages/dashboard"
 import { World1Temp } from "./pages/worlds/world-1/temp"
 import { World2Temp } from "./pages/worlds/world-2/temp"
+import { World3Construction } from "./pages/worlds/world-3/construction"
 import { World3Temp } from "./pages/worlds/world-3/temp"
 import { World4Temp } from "./pages/worlds/world-4/temp"
 import { World5Temp } from "./pages/worlds/world-5/temp"
@@ -28,6 +29,10 @@ export const AppNew = (): React.ReactElement => {
                 <Route path="/world-1/temp" element={<World1Temp />} />
                 <Route path="/world-2/temp" element={<World2Temp />} />
                 <Route path="/world-3/temp" element={<World3Temp />} />
+                <Route
+                  path="/world-3/construction"
+                  element={<World3Construction />}
+                />
                 <Route path="/world-4/temp" element={<World4Temp />} />
                 <Route path="/world-5/temp" element={<World5Temp />} />
                 <Route path="/world-6/temp" element={<World6Temp />} />
