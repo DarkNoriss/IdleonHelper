@@ -7,6 +7,13 @@ declare global {
       window: {
         close: () => void
       }
+      world3: {
+        processJson: (jsonString: string) => Promise<{
+          success: boolean
+          data?: unknown
+          error?: string
+        }>
+      }
     }
   }
 }

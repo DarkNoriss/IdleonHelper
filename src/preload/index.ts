@@ -6,6 +6,10 @@ const api = {
   window: {
     close: () => ipcRenderer.send("window-close"),
   },
+  world3: {
+    processJson: (jsonString: string) =>
+      ipcRenderer.invoke("world-3-construction:process-json", jsonString),
+  },
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

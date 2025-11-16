@@ -60,6 +60,11 @@ app.whenReady().then(() => {
     if (window) window.close()
   })
 
+  // World handlers
+  import("./worlds/world-3/construction").then((module) => {
+    module.registerWorld3ConstructionHandlers()
+  })
+
   createWindow()
 
   app.on("activate", function () {
