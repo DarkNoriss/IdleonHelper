@@ -10,7 +10,7 @@ export const GameWindow = (): React.ReactElement => {
 
   const handleFindWindow = async (): Promise<void> => {
     try {
-      const testResult = await window.api.gamewindow.find()
+      const testResult = await window.api.gameWindow.find()
       setResult(testResult)
     } catch (err) {
       console.error("Find window failed:", err)
@@ -20,7 +20,7 @@ export const GameWindow = (): React.ReactElement => {
 
   const handleScreenshot = async (): Promise<void> => {
     try {
-      await window.api.gamewindow.screenshot()
+      await window.api.gameWindow.screenshot()
     } catch (err) {
       console.error("Screenshot failed:", err)
     }

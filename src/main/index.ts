@@ -55,8 +55,8 @@ app.whenReady().then(() => {
   ipcMain.on("ping", () => console.log("pong"))
 
   // Test handlers
-  import("./test").then((module) => {
-    module.registerTestHandlers()
+  import("./game-window/game-window").then((module) => {
+    module.registerGameWindowHandlers()
   })
 
   // Window controls
