@@ -2,7 +2,7 @@ import { ipcMain } from "electron"
 
 import { findWindow } from "../utils/window"
 
-export function registerGameWindowHandlers(): void {
+export const registerGameWindowHandlers = (): void => {
   ipcMain.handle("gameWindow:find", () => {
     const hwnd = findWindow()
 
@@ -15,5 +15,7 @@ export function registerGameWindowHandlers(): void {
 
   ipcMain.handle("gameWindow:screenshot", () => {
     console.log("screenshot")
+
+    return { success: true }
   })
 }

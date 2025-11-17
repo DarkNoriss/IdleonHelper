@@ -4,7 +4,7 @@ import { app, BrowserWindow, ipcMain, shell } from "electron"
 
 import icon from "../../resources/icon.png?asset"
 
-function createWindow(): void {
+const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1366,
@@ -72,7 +72,7 @@ app.whenReady().then(() => {
 
   createWindow()
 
-  app.on("activate", function () {
+  app.on("activate", () => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

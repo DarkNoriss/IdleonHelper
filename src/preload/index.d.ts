@@ -19,7 +19,9 @@ declare global {
           success: boolean
           hwnd?: string
         }>
-        screenshot: () => Promise<void>
+        screenshot: () => Promise<{
+          success: boolean
+        }>
       }
     }
   }

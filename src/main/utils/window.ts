@@ -12,10 +12,10 @@ const FindWindowW = user32.func("FindWindowW", "void*", ["str16", "str16"])
 
 // Function to find window by class name and/or window title
 // Returns HWND as string (address), or null if not found
-export function findWindow(
+export const findWindow = (
   className: string | null = null,
   windowName: string | null = WINDOW_NAME
-): string | null {
+): string | null => {
   try {
     // Call FindWindowW
     const hwnd = FindWindowW(className, windowName)
