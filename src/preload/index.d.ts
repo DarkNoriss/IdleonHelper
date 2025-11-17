@@ -14,15 +14,6 @@ declare global {
           error?: string
         }>
       }
-      gameWindow: {
-        find: () => Promise<{
-          success: boolean
-          hwnd?: string
-        }>
-        screenshot: () => Promise<{
-          success: boolean
-        }>
-      }
     }
   }
 }
