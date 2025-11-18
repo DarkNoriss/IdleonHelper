@@ -2,6 +2,8 @@
 using System.Text;
 using System.Text.Json;
 using IdleonBotBackend.Utils;
+using IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+using Newtonsoft.Json;
 
 namespace IdleonBotBackend.Comms;
 
@@ -11,13 +13,18 @@ internal static class WsRouter {
   };
 
   public static async Task HandleMessageAsync(WebSocket ws, string json) {
-    Console.WriteLine($"[WS] recv json: {json}");
-
     WsRequest? req;
     try {
-      req = JsonSerializer.Deserialize<WsRequest>(json, JsonOptions);
+      req = System.Text.Json.JsonSerializer.Deserialize<WsRequest>(json, JsonOptions);
     } catch (Exception ex) {
-      Console.WriteLine($"[WS] invalid json: {ex.Message}");
+      // Log minimal info for large JSON files
+      var preview = json.Length > 150 ? json.Substring(0, 150) : json;
+      var suffix = json.Length > 150 ? json.Substring(Math.Max(0, json.Length - 50)) : "";
+      Console.WriteLine($"[WS] Invalid JSON (length: {json.Length}): {ex.Message}");
+      Console.WriteLine($"[WS] Start: {preview}...");
+      if (suffix.Length > 0) {
+        Console.WriteLine($"[WS] End: ...{suffix}");
+      }
       return;
     }
 
@@ -41,6 +48,10 @@ internal static class WsRouter {
 
       case "world-3-construction":
         await HandleWorld3Construction(ws, req);
+        break;
+
+      case "world-3-construction-load-json":
+        await HandleWorld3ConstructionLoadJson(ws, req);
         break;
 
       default:
@@ -116,8 +127,82 @@ internal static class WsRouter {
     Console.WriteLine("[WS] world-3-construction done");
   }
 
+  private static async Task HandleWorld3ConstructionLoadJson(WebSocket ws, WsRequest req) {
+    Console.WriteLine("[WS] world-3-construction-load-json start");
+
+    if (!req.data.HasValue) {
+      await Send(ws, new WsResponse(
+        type: "error",
+        source: req.source,
+        data: "No JSON data provided"
+      ));
+      return;
+    }
+
+    // Convert JsonElement to string for processing
+    var dataString = req.data.Value.GetRawText();
+
+    // Log callback for BoardOptimizer
+    async Task LogCallback(string message) {
+      await Send(ws, new WsResponse(
+        type: "log",
+        source: req.source,
+        data: message
+      ));
+    }
+
+    await Send(ws, new WsResponse(
+      type: "log",
+      source: req.source,
+      data: "Loading JSON data..."
+    ));
+
+    try {
+      // Validate JSON before processing with Newtonsoft.Json (since that's what LoadJsonData uses)
+      try {
+        var testParse = Newtonsoft.Json.Linq.JObject.Parse(dataString);
+        Console.WriteLine("[WS] JSON validation passed");
+      } catch (Newtonsoft.Json.JsonException jsonEx) {
+        Console.WriteLine($"[WS] JSON validation failed: {jsonEx.Message}");
+        await Send(ws, new WsResponse(
+          type: "error",
+          source: req.source,
+          data: $"Invalid JSON format: {jsonEx.Message}"
+        ));
+        return;
+      }
+
+      var ct = CancellationToken.None;
+      var score = await BoardOptimizer.LoadJsonData(dataString, req.source, LogCallback, ct);
+
+      // Serialize score to JSON
+      var scoreJson = JsonConvert.SerializeObject(score, Formatting.Indented);
+
+      await Send(ws, new WsResponse(
+        type: "data",
+        source: req.source,
+        data: scoreJson
+      ));
+
+      await Send(ws, new WsResponse(
+        type: "done",
+        source: req.source,
+        data: "world-3-construction-load-json finished"
+      ));
+
+      Console.WriteLine("[WS] world-3-construction-load-json done");
+    } catch (Exception ex) {
+      await Send(ws, new WsResponse(
+        type: "error",
+        source: req.source,
+        data: $"Failed to load JSON: {ex.Message}"
+      ));
+      Console.WriteLine($"[WS] world-3-construction-load-json error: {ex.Message}");
+    }
+  }
+
   private static async Task Send(WebSocket ws, WsResponse response) {
-    var json = JsonSerializer.Serialize(response);
+    var json = System.Text.Json.JsonSerializer.Serialize(response);
     var bytes = Encoding.UTF8.GetBytes(json);
     await ws.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
   }

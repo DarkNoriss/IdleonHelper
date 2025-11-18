@@ -1,5 +1,7 @@
-﻿namespace IdleonBotBackend.Comms;
+﻿using System.Text.Json;
 
-internal record WsRequest(string type, string source);
+namespace IdleonBotBackend.Comms;
+
+internal record WsRequest(string type, string source, JsonElement? data = null);
 
 internal record WsResponse(string type, string? source, string data);

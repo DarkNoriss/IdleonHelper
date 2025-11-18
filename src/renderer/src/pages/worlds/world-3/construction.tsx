@@ -1,44 +1,122 @@
 import * as React from "react"
 import { useJsonDataStore } from "@/stores/json-data"
+import { useWebSocketStore, type WSMessage } from "@/stores/ws"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 
+const SOURCE = "world-3-construction"
+
 export const World3Construction = (): React.ReactElement => {
-  const jsonData = useJsonDataStore((state) => state.jsonData)
-  const setJsonData = useJsonDataStore((state) => state.setJsonData)
-  const [textareaValue, setTextareaValue] = React.useState(jsonData || "")
-  const [cogMResult, setCogMResult] = React.useState<unknown>(null)
+  const { isConnected, send, subscribe } = useWebSocketStore()
+  const { jsonData, setJsonData } = useJsonDataStore()
+  const [textareaValue, setTextareaValue] = React.useState("")
+  const [score, setScore] = React.useState<unknown>(null)
+  const [logs, setLogs] = React.useState<string[]>([])
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [dataLoaded, setDataLoaded] = React.useState(false)
+  const hasLoadedFromStore = React.useRef(false)
 
-  const handleSubmit = (): void => {
-    setJsonData(textareaValue)
-    setTextareaValue("")
-  }
+  // Load JSON from store on initial mount
+  React.useEffect(() => {
+    if (!hasLoadedFromStore.current && jsonData) {
+      setTextareaValue(jsonData)
+      hasLoadedFromStore.current = true
+    }
+  }, [jsonData])
 
-  const handleProcessJson = async (): Promise<void> => {
-    if (!jsonData) {
-      setError("No JSON data available. Please set JSON data first.")
+  React.useEffect(() => {
+    const unsubscribe = subscribe(SOURCE, (msg: WSMessage) => {
+      if (msg.type === "log") {
+        setLogs((prev) => [...prev, String(msg.data || "")])
+      } else if (msg.type === "data") {
+        try {
+          const scoreData = JSON.parse(String(msg.data || "{}"))
+          setScore(scoreData)
+          setDataLoaded(true)
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : "Failed to parse score data"
+          )
+        }
+      } else if (msg.type === "done") {
+        setLogs((prev) => [...prev, String(msg.data || "Task completed")])
+        setIsProcessing(false)
+      } else if (msg.type === "error") {
+        setError(String(msg.data || "Unknown error"))
+        setLogs((prev) => [
+          ...prev,
+          `Error: ${String(msg.data || "Unknown error")}`,
+        ])
+        setIsProcessing(false)
+        setDataLoaded(false)
+      }
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [subscribe])
+
+  const handleSaveJson = (): void => {
+    if (!textareaValue.trim()) {
+      setError("No JSON data provided. Please enter JSON data first.")
       return
     }
 
-    setIsProcessing(true)
-    setError(null)
-    setCogMResult(null)
+    try {
+      // Validate JSON format
+      JSON.parse(textareaValue)
+
+      // Save to store for persistence
+      setJsonData(textareaValue)
+      setError(null)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Invalid JSON format: ${err.message}`
+          : "Invalid JSON format"
+      )
+    }
+  }
+
+  const handleProcessJson = (): void => {
+    if (!textareaValue.trim()) {
+      setError("No JSON data provided. Please enter JSON data first.")
+      return
+    }
 
     try {
-      const result = await window.api.world3.processJson(jsonData)
+      // Parse the full JSON to validate it
+      const fullJson = JSON.parse(textareaValue)
 
-      if (result.success) {
-        setCogMResult(result.data)
-      } else {
-        setError(result.error || "Failed to process JSON")
+      // Save to store for persistence (if not already saved)
+      if (!jsonData || jsonData !== textareaValue) {
+        setJsonData(textareaValue)
       }
+
+      // Send the whole JSON data object - backend can extract what it needs
+      // This avoids needing to update frontend when new fields are needed
+      const jsonDataToSend = fullJson.data ?? fullJson
+
+      setScore(null)
+      setLogs([])
+      setError(null)
+      setDataLoaded(false)
+      setIsProcessing(true)
+
+      send({
+        type: "world-3-construction-load-json",
+        source: SOURCE,
+        data: jsonDataToSend,
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error occurred")
-    } finally {
-      setIsProcessing(false)
+      setError(
+        err instanceof Error
+          ? `Invalid JSON format: ${err.message}`
+          : "Invalid JSON format"
+      )
     }
   }
 
@@ -53,12 +131,18 @@ export const World3Construction = (): React.ReactElement => {
           className="min-h-[200px]"
         />
         <div className="flex gap-2">
-          <Button onClick={handleSubmit}>Set JSON Data</Button>
+          <Button
+            onClick={handleSaveJson}
+            disabled={!textareaValue.trim()}
+            variant="outline"
+          >
+            Save to Store
+          </Button>
           <Button
             onClick={handleProcessJson}
-            disabled={isProcessing || !jsonData}
+            disabled={!isConnected || isProcessing || !textareaValue.trim()}
           >
-            {isProcessing ? "Processing..." : "Process JSON (Get CogM)"}
+            {isProcessing ? "Processing..." : "Send to Backend"}
           </Button>
         </div>
         {error && (
@@ -67,12 +151,42 @@ export const World3Construction = (): React.ReactElement => {
             <p>{error}</p>
           </div>
         )}
-        {cogMResult !== null && (
+        {logs.length > 0 && (
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-semibold">CogM Result:</h2>
+            <h2 className="text-xl font-semibold">Logs:</h2>
+            <div className="bg-muted max-h-[200px] overflow-auto rounded-md p-4">
+              <div className="flex flex-col gap-1">
+                {logs.map((log, index) => (
+                  <p key={index} className="text-sm">
+                    {log}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {score !== null && (
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xl font-semibold">Current Score:</h2>
             <pre className="bg-muted max-h-[300px] overflow-auto rounded-md p-4 text-sm">
-              {JSON.stringify(cogMResult, null, 2)}
+              {JSON.stringify(score, null, 2)}
             </pre>
+          </div>
+        )}
+        {dataLoaded && (
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xl font-semibold">Actions:</h2>
+            <div className="flex gap-2">
+              <Button disabled variant="outline">
+                Optimize Board (Coming Soon)
+              </Button>
+              <Button disabled variant="outline">
+                Calculate Best Moves (Coming Soon)
+              </Button>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Data is loaded and ready for optimization actions.
+            </p>
           </div>
         )}
       </div>

@@ -11,24 +11,22 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "pnpm typecheck:node && pnpm typecheck:web",
-
     "start": "electron-vite preview",
-    "dev": "electron-vite dev",
-
+    "dev": "pnpm build:backend && electron-vite dev",
     "build:backend": "powershell -ExecutionPolicy Bypass -File .\\scripts\\build-backend.ps1",
     "build": "pnpm typecheck && pnpm build:backend && electron-vite build",
-
     "postinstall": "electron-builder install-app-deps",
-
     "build:unpack": "pnpm build && electron-builder --dir",
     "build:win": "pnpm build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux"
-    },
+  },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
-    "electron-updater": "^6.3.9"
+    "@radix-ui/react-select": "^2.2.6",
+    "electron-updater": "^6.3.9",
+    "radix-ui": "^1.4.3"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

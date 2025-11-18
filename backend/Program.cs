@@ -34,20 +34,34 @@ app.Map("/ws", async context => {
         var ct = context.RequestAborted;
 
         while (ws.State == WebSocketState.Open && !ct.IsCancellationRequested) {
-            var result = await ws.ReceiveAsync(buffer, ct);
+            // Accumulate message fragments
+            using var ms = new MemoryStream();
+            WebSocketReceiveResult? result = null;
 
-            if (result.MessageType == WebSocketMessageType.Close) {
-                Console.WriteLine("[WS] close from client");
-                await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-                break;
+            // Keep receiving until we get the complete message
+            do {
+                result = await ws.ReceiveAsync(buffer, ct);
+
+                if (result.MessageType == WebSocketMessageType.Close) {
+                    Console.WriteLine("[WS] close from client");
+                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                    return;
+                }
+
+                if (result.MessageType == WebSocketMessageType.Text) {
+                    ms.Write(buffer, 0, result.Count);
+                } else if (result.MessageType == WebSocketMessageType.Binary) {
+                    // Skip binary messages
+                    continue;
+                }
+            } while (!result.EndOfMessage && result.MessageType == WebSocketMessageType.Text);
+
+            // Only process if we received text
+            if (result.MessageType == WebSocketMessageType.Text && ms.Length > 0) {
+                ms.Position = 0;
+                var json = Encoding.UTF8.GetString(ms.ToArray());
+                await WsRouter.HandleMessageAsync(ws, json);
             }
-
-            if (result.MessageType != WebSocketMessageType.Text)
-                continue;
-
-            var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
-
-            await WsRouter.HandleMessageAsync(ws, json);
         }
     } catch (OperationCanceledException) {
         Console.WriteLine("[WS] Connection cancelled");

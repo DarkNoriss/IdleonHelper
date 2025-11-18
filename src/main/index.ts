@@ -31,6 +31,16 @@ const startBackend = (): void => {
     detached: false,
   })
 
+  // Forward stdout to console
+  backendProcess.stdout?.on("data", (data) => {
+    console.log(`[Backend] ${data.toString()}`)
+  })
+
+  // Forward stderr to console
+  backendProcess.stderr?.on("data", (data) => {
+    console.error(`[Backend Error] ${data.toString()}`)
+  })
+
   backendProcess.on("exit", (code, signal) => {
     console.log(`Backend process exited with code ${code} and signal ${signal}`)
     backendProcess = null
