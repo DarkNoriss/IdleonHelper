@@ -23,7 +23,7 @@ out/
 dist/*.exe
 dist/*.blockmap
 dist/latest.yml
-dist/win-*/         # installer's unpacked folder
+dist/win-*/  
 
 # ---------------------------
 # Backend (.NET)
@@ -38,7 +38,7 @@ backend/*.cache
 backend/*.db
 
 # Ignore compiled backend EXE in resources
-resources/backend/IdleonBotBackend.exe
+resources/backend/*
 
 # ---------------------------
 # IDE / Editor files

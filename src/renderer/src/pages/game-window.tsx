@@ -26,6 +26,10 @@ export const GameWindow = (): React.ReactElement => {
     send({ type: "ping", source: SOURCE })
   }
 
+  const handleTestCaptureScreenshot = (): void => {
+    send({ type: "test-capture-screenshot", source: SOURCE })
+  }
+
   const displayMessage = (): string => {
     if (error) return `Error: ${error}`
     if (testMessage) return testMessage
@@ -40,6 +44,9 @@ export const GameWindow = (): React.ReactElement => {
         <div className="flex gap-2">
           <Button onClick={handleSendPing} disabled={!isConnected}>
             Send Ping
+          </Button>
+          <Button onClick={handleTestCaptureScreenshot} disabled={!isConnected}>
+            Test Capture Screenshot
           </Button>
         </div>
         <div className="mt-4 min-h-[100px] min-w-[300px] rounded-lg border p-4">

@@ -12,8 +12,6 @@ files:
 extraResources:
   - from: resources/backend
     to: backend
-    filter:
-      - IdleonBotBackend.exe
 win:
   executableName: IdleonBot
 nsis:

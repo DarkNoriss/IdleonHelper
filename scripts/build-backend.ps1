@@ -16,7 +16,7 @@ dotnet publish ./backend/IdleonBotBackend.csproj `
     -c Release `
     -r win-x64 `
     --self-contained true `
-    -p:PublishSingleFile=true `
+    -p:PublishSingleFile=false `
     -p:DebugType=None `
     -o ./backend/publish
 
@@ -25,11 +25,12 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-Write-Host "Copying only IdleonBotBackend.exe..."
-Copy-Item "./backend/publish/IdleonBotBackend.exe" "$backendOut/IdleonBotBackend.exe" -Force
+Write-Host "Copying ALL backend files (exe + dll)..."
+Copy-Item "./backend/publish/*" "$backendOut" -Recurse -Force
 
 Write-Host "Cleaning temp publish folder..."
 Remove-Item "./backend/publish" -Recurse -Force
 
 Write-Host "Backend build complete!"
-Write-Host "EXE ready at: resources/backend/IdleonBotBackend.exe"
+Write-Host "Files ready at: resources/backend/"
+
