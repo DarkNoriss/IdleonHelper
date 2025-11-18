@@ -15,8 +15,19 @@ import { World5Temp } from "./pages/worlds/world-5/temp"
 import { World6Temp } from "./pages/worlds/world-6/temp"
 import { World7Temp } from "./pages/worlds/world-7/temp"
 import { ThemeProvider } from "./providers/theme-provider"
+import { useWebSocketStore } from "./stores/ws"
 
 export const AppNew = (): React.ReactElement => {
+  const { connect, disconnect } = useWebSocketStore()
+
+  React.useEffect(() => {
+    connect()
+
+    return () => {
+      disconnect()
+    }
+  }, [connect, disconnect])
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
       <BrowserRouter>
