@@ -23,16 +23,9 @@ interface WebSocketState {
 }
 
 const WS_URL = "ws://localhost:5000/ws"
-const RECONNECT_DELAY = 3000 // 3 seconds
-const MAX_RECONNECT_DELAY = 30000 // 30 seconds max
 
 // Store message handlers outside the store to persist across re-renders
 const handlers: MessageHandler[] = []
-
-// Track reconnection state outside the store
-let reconnectTimeout: NodeJS.Timeout | null = null
-let shouldReconnect = true
-let reconnectAttempts = 0
 
 export const useWebSocketStore = create<WebSocketState>((set, get) => ({
   ws: null,
@@ -49,20 +42,10 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
       ws.close() // Close existing connection if any
     }
 
-    // Clear any existing reconnect timeout
-    if (reconnectTimeout) {
-      clearTimeout(reconnectTimeout)
-      reconnectTimeout = null
-    }
-
-    shouldReconnect = true
-    reconnectAttempts = 0
-
     const newWs = new WebSocket(WS_URL)
 
     newWs.onopen = () => {
       set({ isConnected: true, error: null })
-      reconnectAttempts = 0 // Reset attempts on successful connection
     }
 
     newWs.onmessage = (event) => {
@@ -97,52 +80,15 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
       })
     }
 
-    newWs.onclose = (event) => {
+    newWs.onclose = () => {
       set({ isConnected: false })
       set({ ws: null })
-
-      // Don't reconnect if it was a manual disconnect (code 1000)
-      if (event.code === 1000 || !shouldReconnect) {
-        return
-      }
-
-      // Calculate exponential backoff delay
-      const delay = Math.min(
-        RECONNECT_DELAY * Math.pow(2, reconnectAttempts),
-        MAX_RECONNECT_DELAY
-      )
-
-      reconnectAttempts++
-
-      set({
-        error: `Disconnected. Reconnecting in ${delay / 1000}s... (Attempt ${reconnectAttempts})`,
-      })
-
-      // Schedule reconnection
-      reconnectTimeout = setTimeout(() => {
-        const { ws: currentWs } = get()
-        // Only reconnect if we're still supposed to and not already connected
-        if (
-          shouldReconnect &&
-          (!currentWs || currentWs.readyState === WebSocket.CLOSED)
-        ) {
-          get().connect()
-        }
-      }, delay)
     }
 
     set({ ws: newWs })
   },
 
   disconnect: () => {
-    shouldReconnect = false
-
-    // Clear any pending reconnection attempts
-    if (reconnectTimeout) {
-      clearTimeout(reconnectTimeout)
-      reconnectTimeout = null
-    }
-
     const { ws } = get()
     if (ws) {
       ws.close(1000, "Client disconnect")

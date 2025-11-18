@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useWebSocketStore } from "@/stores/ws"
 import { ChevronRight } from "lucide-react"
 import { Link } from "react-router-dom"
 
@@ -10,6 +11,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -103,6 +105,8 @@ const data = {
 export function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>): React.ReactElement {
+  const { isConnected, error } = useWebSocketStore()
+
   return (
     <Sidebar {...props} variant="inset">
       <SidebarContent className="gap-0">
@@ -160,6 +164,28 @@ export function AppSidebar({
           )
         })}
       </SidebarContent>
+      <SidebarFooter className="border-sidebar-border border-t p-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div
+              className={`size-2 rounded-full ${
+                isConnected ? "bg-green-500" : "bg-red-500"
+              }`}
+            />
+            <span className="text-sidebar-foreground text-sm font-medium">
+              {isConnected ? "Connected" : "Disconnected"}
+            </span>
+          </div>
+          {!isConnected && error && (
+            <p className="text-sidebar-foreground/70 text-xs">{error}</p>
+          )}
+          {!isConnected && !error && (
+            <p className="text-sidebar-foreground/70 text-xs">
+              Connecting to backend...
+            </p>
+          )}
+        </div>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
