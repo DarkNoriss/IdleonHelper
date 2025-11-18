@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useState, type ReactElement } from "react"
 
-export const VersionsNew = () => {
+export const VersionsNew = (): ReactElement => {
   const [versions] = useState(window.electron.process.versions)
 
   return (

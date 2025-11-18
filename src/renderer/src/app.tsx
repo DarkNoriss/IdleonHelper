@@ -1,4 +1,4 @@
-import * as React from "react"
+import { useEffect, type ReactElement } from "react"
 import { HashRouter, Route, Routes } from "react-router-dom"
 
 import { AppHeader } from "./app-header"
@@ -17,10 +17,10 @@ import { World7Temp } from "./pages/worlds/world-7/temp"
 import { ThemeProvider } from "./providers/theme-provider"
 import { useWebSocketStore } from "./stores/ws"
 
-export const AppNew = (): React.ReactElement => {
+export const AppNew = (): ReactElement => {
   const { connect, disconnect } = useWebSocketStore()
 
-  React.useEffect(() => {
+  useEffect(() => {
     connect()
 
     return () => {
