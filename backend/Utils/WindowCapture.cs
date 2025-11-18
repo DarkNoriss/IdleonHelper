@@ -12,6 +12,11 @@ public class WindowCapture {
     private const int RESIZE_DELAY_MS = 50;
     
     private static IntPtr _cachedWindowHandle = IntPtr.Zero;
+    private static IntPtr _cachedHdcSrc = IntPtr.Zero;
+    private static IntPtr _cachedHdcDest = IntPtr.Zero;
+    private static IntPtr _cachedHBitmap = IntPtr.Zero;
+    private static int _cachedWidth = 0;
+    private static int _cachedHeight = 0;
 
     public static Mat CaptureScreenShot(CancellationToken ct) {
         var hwnd = GetWindowHandle();
@@ -48,6 +53,7 @@ public class WindowCapture {
             return;
 
         ResizeWindow(hwnd, ct);
+        ReleaseCachedGdiResources(); // Size changed, invalidate cache
     }
 
     private static (int width, int height) GetWindowSize(IntPtr hwnd) {
@@ -64,25 +70,49 @@ public class WindowCapture {
     }
 
     private static Bitmap CaptureWindowBitmap(IntPtr hwnd, int width, int height) {
-        var hdcSrc = GetDC(hwnd);
-        var hdcDest = CreateCompatibleDC(hdcSrc);
-        var hBitmap = CreateCompatibleBitmap(hdcSrc, width, height);
-        var hOld = SelectObject(hdcDest, hBitmap);
-
-        try {
-            const int SRCCOPY_CAPTUREBLT = 0x00CC0020 | 0x40000000;
-            
-            if (!BitBlt(hdcDest, 0, 0, width, height, hdcSrc, 0, 0, SRCCOPY_CAPTUREBLT))
-                throw new InvalidOperationException("Failed to capture window bitmap");
-
-            return Image.FromHbitmap(hBitmap);
+        // Initialize or reinitialize cached resources if dimensions changed
+        if (_cachedHdcSrc == IntPtr.Zero || _cachedWidth != width || _cachedHeight != height) {
+            ReleaseCachedGdiResources();
+            InitializeCachedGdiResources(hwnd, width, height);
         }
-        finally {
-            SelectObject(hdcDest, hOld);
-            DeleteDC(hdcDest);
-            ReleaseDC(hwnd, hdcSrc);
-            DeleteObject(hBitmap);
+
+        const int SRCCOPY_CAPTUREBLT = 0x00CC0020 | 0x40000000;
+        
+        if (!BitBlt(_cachedHdcDest, 0, 0, width, height, _cachedHdcSrc, 0, 0, SRCCOPY_CAPTUREBLT))
+            throw new InvalidOperationException("Failed to capture window bitmap");
+
+        return Image.FromHbitmap(_cachedHBitmap);
+    }
+
+    private static void InitializeCachedGdiResources(IntPtr hwnd, int width, int height) {
+        _cachedHdcSrc = GetDC(hwnd);
+        _cachedHdcDest = CreateCompatibleDC(_cachedHdcSrc);
+        _cachedHBitmap = CreateCompatibleBitmap(_cachedHdcSrc, width, height);
+        SelectObject(_cachedHdcDest, _cachedHBitmap);
+        _cachedWidth = width;
+        _cachedHeight = height;
+    }
+
+    private static void ReleaseCachedGdiResources() {
+        if (_cachedHBitmap != IntPtr.Zero) {
+            DeleteObject(_cachedHBitmap);
+            _cachedHBitmap = IntPtr.Zero;
         }
+        if (_cachedHdcDest != IntPtr.Zero) {
+            DeleteDC(_cachedHdcDest);
+            _cachedHdcDest = IntPtr.Zero;
+        }
+        if (_cachedHdcSrc != IntPtr.Zero) {
+            ReleaseDC(_cachedWindowHandle, _cachedHdcSrc);
+            _cachedHdcSrc = IntPtr.Zero;
+        }
+        _cachedWidth = 0;
+        _cachedHeight = 0;
+    }
+
+    public static void Cleanup() {
+        ReleaseCachedGdiResources();
+        _cachedWindowHandle = IntPtr.Zero;
     }
 
     #region P/Invoke Declarations
