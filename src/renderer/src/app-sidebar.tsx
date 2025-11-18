@@ -24,7 +24,11 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/dashboard",
+      url: "/",
+    },
+    {
+      title: "Game Window",
+      url: "/game-window",
     },
     {
       title: "World 1",

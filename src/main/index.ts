@@ -1,10 +1,48 @@
+import { ChildProcessWithoutNullStreams, spawn } from "child_process"
 import { join } from "path"
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
 import { app, BrowserWindow, ipcMain, shell } from "electron"
 
-import icon from "../../resources/icon.png?asset"
+let backendProcess: ChildProcessWithoutNullStreams | null = null
 
-function createWindow(): void {
+const getBackendPath = (): string => {
+  if (is.dev) {
+    return join(process.cwd(), "resources", "backend", "IdleonBotBackend.exe")
+  } else {
+    return join(process.resourcesPath, "backend", "IdleonBotBackend.exe")
+  }
+}
+
+const startBackend = (): void => {
+  if (process.platform !== "win32") {
+    // Skip if not Windows
+    return
+  }
+
+  const exePath = getBackendPath()
+  if (!exePath) {
+    throw new Error("Backend executable path not found")
+  }
+
+  console.log("Starting backend...")
+
+  backendProcess = spawn(exePath, [], {
+    stdio: "pipe",
+    detached: false,
+  })
+
+  backendProcess.on("exit", (code, signal) => {
+    console.log(`Backend process exited with code ${code} and signal ${signal}`)
+    backendProcess = null
+  })
+
+  backendProcess.on("error", (error) => {
+    console.error("Backend process error:", error)
+    backendProcess = null
+  })
+}
+
+const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1366,
@@ -12,7 +50,6 @@ function createWindow(): void {
     show: false,
     frame: false, // Remove default title bar
     autoHideMenuBar: true,
-    ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
@@ -44,6 +81,9 @@ app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId("com.electron")
 
+  // Start the backend
+  startBackend()
+
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
@@ -67,7 +107,7 @@ app.whenReady().then(() => {
 
   createWindow()
 
-  app.on("activate", function () {
+  app.on("activate", () => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -80,6 +120,13 @@ app.whenReady().then(() => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit()
+  }
+})
+
+// Kill the backend process when the app is closed
+app.on("before-quit", () => {
+  if (backendProcess && !backendProcess.killed) {
+    backendProcess.kill()
   }
 })
 
