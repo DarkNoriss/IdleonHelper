@@ -160,11 +160,11 @@ public static class Solver {
     } else if (abs < 10_000_000_000) {
       // Math.ceil(e / 1e6) + 'M'
       return $"{sign}{Math.Ceiling(abs / 1_000_000.0)}M";
-    } else if (abs < 1_000_000_000_000_000) {
-      // Math.ceil(e / 1e9) + 'B'
+    } else if (abs < 10_000_000_000_000) {
+      // Math.ceil(e / 1e9) + 'B' (1e13 threshold)
       return $"{sign}{Math.Ceiling(abs / 1_000_000_000.0)}B";
-    } else if (abs < 1_000_000_000_000_000_000) {
-      // Math.ceil(e / 1e12) + 'T'
+    } else if (abs < 10_000_000_000_000_000) {
+      // Math.ceil(e / 1e12) + 'T' (1e16 threshold)
       return $"{sign}{Math.Ceiling(abs / 1_000_000_000_000.0)}T";
     } else if (abs < 1e22) {
       // Math.ceil(e / 1e15) + 'Q'

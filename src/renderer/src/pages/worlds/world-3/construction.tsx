@@ -259,11 +259,11 @@ export const World3Construction = (): React.ReactElement => {
     } else if (abs < 10_000_000_000) {
       // Math.ceil(e / 1e6) + 'M'
       return `${sign}${Math.ceil(abs / 1_000_000)}M`
-    } else if (abs < 1_000_000_000_000_000) {
-      // Math.ceil(e / 1e9) + 'B'
+    } else if (abs < 10_000_000_000_000) {
+      // Math.ceil(e / 1e9) + 'B' (1e13 threshold)
       return `${sign}${Math.ceil(abs / 1_000_000_000)}B`
-    } else if (abs < 1_000_000_000_000_000_000) {
-      // Math.ceil(e / 1e12) + 'T'
+    } else if (abs < 10_000_000_000_000_000) {
+      // Math.ceil(e / 1e12) + 'T' (1e16 threshold)
       return `${sign}${Math.ceil(abs / 1_000_000_000_000)}T`
     } else if (abs < 1_000_000_000_000_000_000_000) {
       // Math.ceil(e / 1e15) + 'Q'
@@ -343,9 +343,7 @@ export const World3Construction = (): React.ReactElement => {
                   </div>
                   <div>
                     Exp Bonus:{" "}
-                    {formatScoreValue(
-                      ((score as any).ExpBonus as number) || 0
-                    )}
+                    {formatScoreValue(((score as any).ExpBonus as number) || 0)}
                   </div>
                   <div>
                     Flaggy:{" "}
@@ -353,9 +351,7 @@ export const World3Construction = (): React.ReactElement => {
                   </div>
                   <div>
                     Exp Boost:{" "}
-                    {formatScoreValue(
-                      ((score as any).ExpBoost as number) || 0
-                    )}
+                    {formatScoreValue(((score as any).ExpBoost as number) || 0)}
                   </div>
                   <div>
                     Flag Boost:{" "}
