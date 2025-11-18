@@ -1,5 +1,5 @@
 import * as React from "react"
-import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { HashRouter, Route, Routes } from "react-router-dom"
 
 import { AppHeader } from "./app-header"
 import { AppSidebar } from "./app-sidebar"
@@ -30,7 +30,7 @@ export const AppNew = (): React.ReactElement => {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
-      <BrowserRouter>
+      <HashRouter>
         <div className="flex h-screen flex-col">
           <AppHeader />
           <SidebarProvider className="min-h-0 flex-1">
@@ -54,7 +54,7 @@ export const AppNew = (): React.ReactElement => {
             </SidebarInset>
           </SidebarProvider>
         </div>
-      </BrowserRouter>
+      </HashRouter>
     </ThemeProvider>
   )
 }

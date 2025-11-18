@@ -1,7 +1,7 @@
 {
-  "name": "idleon",
+  "name": "IdleonBot",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "IdleonBot is a bot for the game Idleon",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
@@ -23,8 +23,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
-    "electron-updater": "^6.3.9",
-    "koffi": "^2.14.1"
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
@@ -66,8 +65,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "electron",
-      "esbuild",
-      "koffi"
+      "esbuild"
     ]
   }
 }
