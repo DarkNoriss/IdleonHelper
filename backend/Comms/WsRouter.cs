@@ -54,6 +54,10 @@ internal static class WsRouter {
         await HandleWorld3ConstructionLoadJson(ws, req);
         break;
 
+      case "world-3-construction-optimize":
+        await HandleWorld3ConstructionOptimize(ws, req);
+        break;
+
       default:
         await Send(ws, new WsResponse(
           type: "error",
@@ -198,6 +202,75 @@ internal static class WsRouter {
         data: $"Failed to load JSON: {ex.Message}"
       ));
       Console.WriteLine($"[WS] world-3-construction-load-json error: {ex.Message}");
+    }
+  }
+
+  private static async Task HandleWorld3ConstructionOptimize(WebSocket ws, WsRequest req) {
+    Console.WriteLine("[WS] world-3-construction-optimize start");
+
+    if (!req.data.HasValue) {
+      await Send(ws, new WsResponse(
+        type: "error",
+        source: req.source,
+        data: "No optimization parameters provided"
+      ));
+      return;
+    }
+
+    try {
+      // Parse the data to get timeInSeconds
+      var dataString = req.data.Value.GetRawText();
+      var dataObj = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(dataString);
+      
+      if (!dataObj.TryGetProperty("timeInSeconds", out var timeProperty)) {
+        await Send(ws, new WsResponse(
+          type: "error",
+          source: req.source,
+          data: "timeInSeconds parameter is required"
+        ));
+        return;
+      }
+
+      var timeInSeconds = timeProperty.GetInt32();
+      
+      if (timeInSeconds <= 0) {
+        await Send(ws, new WsResponse(
+          type: "error",
+          source: req.source,
+          data: "timeInSeconds must be greater than 0"
+        ));
+        return;
+      }
+
+      await Send(ws, new WsResponse(
+        type: "log",
+        source: req.source,
+        data: $"Starting optimization for {timeInSeconds} seconds..."
+      ));
+
+      // For now, just wait for the specified time
+      await Task.Delay(TimeSpan.FromSeconds(timeInSeconds));
+
+      await Send(ws, new WsResponse(
+        type: "log",
+        source: req.source,
+        data: $"Optimization completed after {timeInSeconds} seconds."
+      ));
+
+      await Send(ws, new WsResponse(
+        type: "done",
+        source: req.source,
+        data: "world-3-construction-optimize finished"
+      ));
+
+      Console.WriteLine("[WS] world-3-construction-optimize done");
+    } catch (Exception ex) {
+      await Send(ws, new WsResponse(
+        type: "error",
+        source: req.source,
+        data: $"Failed to optimize: {ex.Message}"
+      ));
+      Console.WriteLine($"[WS] world-3-construction-optimize error: {ex.Message}");
     }
   }
 

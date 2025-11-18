@@ -3,9 +3,29 @@ import { useJsonDataStore } from "@/stores/json-data"
 import { useWebSocketStore, type WSMessage } from "@/stores/ws"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 
 const SOURCE = "world-3-construction"
+
+interface TimePreset {
+  label: string
+  value: number
+}
+
+const TIME_PRESETS: Record<string, TimePreset> = {
+  quick: { label: "Quick (10 sec)", value: 10 },
+  medium: { label: "Medium (30 sec)", value: 30 },
+  long: { label: "Long (60 sec)", value: 60 },
+  custom: { label: "Custom", value: 0 }, // 0 indicates custom input
+}
 
 export const World3Construction = (): React.ReactElement => {
   const { isConnected, send, subscribe } = useWebSocketStore()
@@ -16,6 +36,11 @@ export const World3Construction = (): React.ReactElement => {
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [dataLoaded, setDataLoaded] = React.useState(false)
+  const [timePreset, setTimePreset] = React.useState<string>("medium")
+  const [customTime, setCustomTime] = React.useState<string>("120")
+  const [isOptimizing, setIsOptimizing] = React.useState(false)
+  const [remainingTime, setRemainingTime] = React.useState<number | null>(null)
+  const countdownIntervalRef = React.useRef<NodeJS.Timeout | null>(null)
   const hasLoadedFromStore = React.useRef(false)
 
   // Load JSON from store on initial mount
@@ -29,7 +54,37 @@ export const World3Construction = (): React.ReactElement => {
   React.useEffect(() => {
     const unsubscribe = subscribe(SOURCE, (msg: WSMessage) => {
       if (msg.type === "log") {
-        setLogs((prev) => [...prev, String(msg.data || "")])
+        const logMessage = String(msg.data || "")
+        setLogs((prev) => [...prev, logMessage])
+
+        // Check if it's the "Starting optimization" message to extract time
+        const startingMatch = logMessage.match(
+          /Starting optimization for (\d+) seconds/
+        )
+        if (startingMatch && isOptimizing) {
+          const totalSeconds = parseInt(startingMatch[1], 10)
+          if (!isNaN(totalSeconds)) {
+            setRemainingTime(totalSeconds)
+
+            // Start countdown
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current)
+            }
+
+            countdownIntervalRef.current = setInterval(() => {
+              setRemainingTime((prev) => {
+                if (prev === null || prev <= 1) {
+                  if (countdownIntervalRef.current) {
+                    clearInterval(countdownIntervalRef.current)
+                    countdownIntervalRef.current = null
+                  }
+                  return 0
+                }
+                return prev - 1
+              })
+            }, 1000)
+          }
+        }
       } else if (msg.type === "data") {
         try {
           const scoreData = JSON.parse(String(msg.data || "{}"))
@@ -43,6 +98,12 @@ export const World3Construction = (): React.ReactElement => {
       } else if (msg.type === "done") {
         setLogs((prev) => [...prev, String(msg.data || "Task completed")])
         setIsProcessing(false)
+        setIsOptimizing(false)
+        setRemainingTime(null)
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current)
+          countdownIntervalRef.current = null
+        }
       } else if (msg.type === "error") {
         setError(String(msg.data || "Unknown error"))
         setLogs((prev) => [
@@ -51,13 +112,22 @@ export const World3Construction = (): React.ReactElement => {
         ])
         setIsProcessing(false)
         setDataLoaded(false)
+        setIsOptimizing(false)
+        setRemainingTime(null)
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current)
+          countdownIntervalRef.current = null
+        }
       }
     })
 
     return () => {
       unsubscribe()
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+      }
     }
-  }, [subscribe])
+  }, [subscribe, isOptimizing])
 
   const handleSaveJson = (): void => {
     if (!textareaValue.trim()) {
@@ -120,6 +190,38 @@ export const World3Construction = (): React.ReactElement => {
     }
   }
 
+  const handleOptimize = (): void => {
+    if (!dataLoaded) {
+      setError("Please load data first before optimizing.")
+      return
+    }
+
+    // Calculate time in seconds based on preset
+    let timeInSeconds: number
+    const preset = TIME_PRESETS[timePreset]
+
+    if (timePreset === "custom") {
+      const custom = parseInt(customTime, 10)
+      if (isNaN(custom) || custom <= 0) {
+        setError("Please enter a valid number of seconds (greater than 0).")
+        return
+      }
+      timeInSeconds = custom
+    } else {
+      timeInSeconds = preset.value
+    }
+
+    setError(null)
+    setLogs([])
+    setIsOptimizing(true)
+
+    send({
+      type: "world-3-construction-optimize",
+      source: SOURCE,
+      data: { timeInSeconds },
+    })
+  }
+
   return (
     <div className="flex h-full flex-col gap-4 p-8">
       <h1 className="text-3xl font-bold">World 3 - Construction</h1>
@@ -174,19 +276,61 @@ export const World3Construction = (): React.ReactElement => {
           </div>
         )}
         {dataLoaded && (
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-semibold">Actions:</h2>
-            <div className="flex gap-2">
-              <Button disabled variant="outline">
-                Optimize Board (Coming Soon)
-              </Button>
-              <Button disabled variant="outline">
-                Calculate Best Moves (Coming Soon)
-              </Button>
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-semibold">Optimize Board:</h2>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <label className="min-w-[100px] text-sm font-medium">
+                  Time Preset:
+                </label>
+                <Select value={timePreset} onValueChange={setTimePreset}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TIME_PRESETS).map(([key, preset]) => (
+                      <SelectItem key={key} value={key}>
+                        {preset.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {timePreset === "custom" && (
+                <div className="flex items-center gap-3">
+                  <label className="min-w-[100px] text-sm font-medium">
+                    Custom Time (seconds):
+                  </label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={customTime}
+                    onChange={(e) => setCustomTime(e.target.value)}
+                    className="w-[200px]"
+                    placeholder="Enter seconds"
+                  />
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleOptimize}
+                    disabled={!isConnected || isOptimizing}
+                  >
+                    {isOptimizing ? "Optimizing..." : "Start Optimization"}
+                  </Button>
+                </div>
+                {isOptimizing && remainingTime !== null && (
+                  <div className="bg-primary/10 flex items-center gap-2 rounded-md p-3">
+                    <div className="text-sm font-medium">Time remaining:</div>
+                    <div className="text-lg font-bold tabular-nums">
+                      {Math.floor(remainingTime / 60)}:
+                      {String(remainingTime % 60).padStart(2, "0")}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <p className="text-muted-foreground text-sm">
-              Data is loaded and ready for optimization actions.
-            </p>
           </div>
         )}
       </div>
