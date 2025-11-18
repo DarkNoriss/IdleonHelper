@@ -1,3 +1,4 @@
+import * as React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 
 type Theme = "dark" | "light" | "system"
@@ -25,7 +26,7 @@ export function ThemeProvider({
   defaultTheme = "system",
   storageKey = "vite-ui-theme",
   ...props
-}: ThemeProviderProps) {
+}: ThemeProviderProps): React.ReactElement {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   )
@@ -63,7 +64,8 @@ export function ThemeProvider({
   )
 }
 
-export const useTheme = () => {
+// eslint-disable-next-line react-refresh/only-export-components
+export const useTheme = (): ThemeProviderState => {
   const context = useContext(ThemeProviderContext)
 
   if (context === undefined)

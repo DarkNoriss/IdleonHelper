@@ -44,7 +44,7 @@ type SidebarContextProps = {
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
 
-function useSidebar() {
+function useSidebar(): SidebarContextProps {
   const context = React.useContext(SidebarContext)
   if (!context) {
     throw new Error("useSidebar must be used within a SidebarProvider.")
@@ -65,7 +65,7 @@ function SidebarProvider({
   defaultOpen?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
-}) {
+}): React.ReactElement {
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = React.useState(false)
 
@@ -95,7 +95,7 @@ function SidebarProvider({
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
@@ -162,7 +162,7 @@ function Sidebar({
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
-}) {
+}): React.ReactElement {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
   if (collapsible === "none") {
@@ -257,7 +257,7 @@ function SidebarTrigger({
   className,
   onClick,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof Button>): React.ReactElement {
   const { toggleSidebar } = useSidebar()
 
   return (
@@ -279,7 +279,10 @@ function SidebarTrigger({
   )
 }
 
-function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
+function SidebarRail({
+  className,
+  ...props
+}: React.ComponentProps<"button">): React.ReactElement {
   const { toggleSidebar } = useSidebar()
 
   return (
@@ -304,7 +307,10 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   )
 }
 
-function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+function SidebarInset({
+  className,
+  ...props
+}: React.ComponentProps<"main">): React.ReactElement {
   return (
     <main
       data-slot="sidebar-inset"
@@ -321,7 +327,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
 function SidebarInput({
   className,
   ...props
-}: React.ComponentProps<typeof Input>) {
+}: React.ComponentProps<typeof Input>): React.ReactElement {
   return (
     <Input
       data-slot="sidebar-input"
@@ -332,7 +338,10 @@ function SidebarInput({
   )
 }
 
-function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarHeader({
+  className,
+  ...props
+}: React.ComponentProps<"div">): React.ReactElement {
   return (
     <div
       data-slot="sidebar-header"
@@ -343,7 +352,10 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarFooter({
+  className,
+  ...props
+}: React.ComponentProps<"div">): React.ReactElement {
   return (
     <div
       data-slot="sidebar-footer"
@@ -357,7 +369,7 @@ function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
 function SidebarSeparator({
   className,
   ...props
-}: React.ComponentProps<typeof Separator>) {
+}: React.ComponentProps<typeof Separator>): React.ReactElement {
   return (
     <Separator
       data-slot="sidebar-separator"
@@ -368,7 +380,10 @@ function SidebarSeparator({
   )
 }
 
-function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarContent({
+  className,
+  ...props
+}: React.ComponentProps<"div">): React.ReactElement {
   return (
     <div
       data-slot="sidebar-content"
@@ -382,7 +397,10 @@ function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarGroup({
+  className,
+  ...props
+}: React.ComponentProps<"div">): React.ReactElement {
   return (
     <div
       data-slot="sidebar-group"
@@ -397,7 +415,7 @@ function SidebarGroupLabel({
   className,
   asChild = false,
   ...props
-}: React.ComponentProps<"div"> & { asChild?: boolean }) {
+}: React.ComponentProps<"div"> & { asChild?: boolean }): React.ReactElement {
   const Comp = asChild ? Slot : "div"
 
   return (
@@ -418,7 +436,7 @@ function SidebarGroupAction({
   className,
   asChild = false,
   ...props
-}: React.ComponentProps<"button"> & { asChild?: boolean }) {
+}: React.ComponentProps<"button"> & { asChild?: boolean }): React.ReactElement {
   const Comp = asChild ? Slot : "button"
 
   return (
@@ -440,7 +458,7 @@ function SidebarGroupAction({
 function SidebarGroupContent({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div">): React.ReactElement {
   return (
     <div
       data-slot="sidebar-group-content"
@@ -451,7 +469,10 @@ function SidebarGroupContent({
   )
 }
 
-function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
+function SidebarMenu({
+  className,
+  ...props
+}: React.ComponentProps<"ul">): React.ReactElement {
   return (
     <ul
       data-slot="sidebar-menu"
@@ -462,7 +483,10 @@ function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
   )
 }
 
-function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
+function SidebarMenuItem({
+  className,
+  ...props
+}: React.ComponentProps<"li">): React.ReactElement {
   return (
     <li
       data-slot="sidebar-menu-item"
@@ -507,7 +531,7 @@ function SidebarMenuButton({
   asChild?: boolean
   isActive?: boolean
   tooltip?: string | React.ComponentProps<typeof TooltipContent>
-} & VariantProps<typeof sidebarMenuButtonVariants>) {
+} & VariantProps<typeof sidebarMenuButtonVariants>): React.ReactElement {
   const Comp = asChild ? Slot : "button"
   const { isMobile, state } = useSidebar()
 
@@ -553,7 +577,7 @@ function SidebarMenuAction({
 }: React.ComponentProps<"button"> & {
   asChild?: boolean
   showOnHover?: boolean
-}) {
+}): React.ReactElement {
   const Comp = asChild ? Slot : "button"
 
   return (
@@ -580,7 +604,7 @@ function SidebarMenuAction({
 function SidebarMenuBadge({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div">): React.ReactElement {
   return (
     <div
       data-slot="sidebar-menu-badge"
@@ -605,9 +629,9 @@ function SidebarMenuSkeleton({
   ...props
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean
-}) {
+}): React.ReactElement {
   // Random width between 50 to 90%.
-  const width = React.useMemo(() => {
+  const width = React.useMemo((): string => {
     return `${Math.floor(Math.random() * 40) + 50}%`
   }, [])
 
@@ -637,7 +661,10 @@ function SidebarMenuSkeleton({
   )
 }
 
-function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
+function SidebarMenuSub({
+  className,
+  ...props
+}: React.ComponentProps<"ul">): React.ReactElement {
   return (
     <ul
       data-slot="sidebar-menu-sub"
@@ -655,7 +682,7 @@ function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
 function SidebarMenuSubItem({
   className,
   ...props
-}: React.ComponentProps<"li">) {
+}: React.ComponentProps<"li">): React.ReactElement {
   return (
     <li
       data-slot="sidebar-menu-sub-item"
@@ -676,7 +703,7 @@ function SidebarMenuSubButton({
   asChild?: boolean
   size?: "sm" | "md"
   isActive?: boolean
-}) {
+}): React.ReactElement {
   const Comp = asChild ? Slot : "a"
 
   return (
@@ -722,5 +749,6 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar,
 }
+// eslint-disable-next-line react-refresh/only-export-components
+export { useSidebar }

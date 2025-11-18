@@ -31,7 +31,8 @@ function Textarea({
   className,
   variant,
   ...props
-}: React.ComponentProps<"textarea"> & VariantProps<typeof textareaVariants>) {
+}: React.ComponentProps<"textarea"> &
+  VariantProps<typeof textareaVariants>): React.ReactElement {
   return (
     <textarea
       data-slot="textarea"
@@ -41,4 +42,6 @@ function Textarea({
   )
 }
 
-export { Textarea, textareaVariants }
+export { Textarea }
+// eslint-disable-next-line react-refresh/only-export-components
+export { textareaVariants }
