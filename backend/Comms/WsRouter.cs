@@ -43,8 +43,6 @@ internal static class WsRouter
                 break;
 
             case "world-3-construction":
-                // 🔹 tu na razie tylko testowy handler
-                // front: send({ type: "world-3-construction", source: "world-3" })
                 await HandleWorld3Construction(ws, req);
                 break;
 
@@ -60,10 +58,8 @@ internal static class WsRouter
 
     private static async Task HandleWorld3Construction(WebSocket ws, WsRequest req)
     {
-        // tu później wstawisz prawdziwą logikę: WindowCapture, OpenCV itd.
         Console.WriteLine("[WS] world-3-construction start");
 
-        // przykład logów krok po kroku:
         await Send(ws, new WsResponse(
             type: "log",
             source: req.source,

@@ -9,7 +9,6 @@ app.UseWebSockets();
 
 app.MapGet("/", () => "Hello World!");
 
-// WebSocket JSON-only handler
 app.Map("/ws", async context =>
 {
     if (!context.WebSockets.IsWebSocketRequest)
@@ -42,7 +41,6 @@ app.Map("/ws", async context =>
 
             var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-            // 🔹 całą logikę wrzucamy do routera
             await WsRouter.HandleMessageAsync(ws, json);
         }
     }
