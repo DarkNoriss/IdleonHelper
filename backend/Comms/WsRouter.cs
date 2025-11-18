@@ -242,19 +242,37 @@ internal static class WsRouter {
         return;
       }
 
+      // Log callback for BoardOptimizer
+      async Task LogCallback(string message) {
+        await Send(ws, new WsResponse(
+          type: "log",
+          source: req.source,
+          data: message
+        ));
+      }
+
       await Send(ws, new WsResponse(
         type: "log",
         source: req.source,
         data: $"Starting optimization for {timeInSeconds} seconds..."
       ));
 
-      // For now, just wait for the specified time
-      await Task.Delay(TimeSpan.FromSeconds(timeInSeconds));
+      var ct = CancellationToken.None;
+      var result = await BoardOptimizer.Optimize(req.source, timeInSeconds, LogCallback, ct);
+
+      // Send optimization result with comparison
+      var resultJson = JsonConvert.SerializeObject(result, Formatting.Indented);
+
+      await Send(ws, new WsResponse(
+        type: "data",
+        source: req.source,
+        data: resultJson
+      ));
 
       await Send(ws, new WsResponse(
         type: "log",
         source: req.source,
-        data: $"Optimization completed after {timeInSeconds} seconds."
+        data: $"Optimization completed. Score improvement: {result.DifferencePercent}%"
       ));
 
       await Send(ws, new WsResponse(

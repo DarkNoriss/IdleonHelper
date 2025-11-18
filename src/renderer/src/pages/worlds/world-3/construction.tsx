@@ -32,6 +32,8 @@ export const World3Construction = (): React.ReactElement => {
   const { jsonData, setJsonData } = useJsonDataStore()
   const [textareaValue, setTextareaValue] = React.useState("")
   const [score, setScore] = React.useState<unknown>(null)
+  const [optimizationResult, setOptimizationResult] =
+    React.useState<unknown>(null)
   const [logs, setLogs] = React.useState<string[]>([])
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -87,13 +89,19 @@ export const World3Construction = (): React.ReactElement => {
         }
       } else if (msg.type === "data") {
         try {
-          const scoreData = JSON.parse(String(msg.data || "{}"))
-          setScore(scoreData)
-          setDataLoaded(true)
+          const data = JSON.parse(String(msg.data || "{}"))
+
+          // Check if it's an optimization result (has Before/After) or just a score
+          if (data.Before && data.After) {
+            // It's an optimization result
+            setOptimizationResult(data)
+          } else {
+            // It's a score from initial load
+            setScore(data)
+            setDataLoaded(true)
+          }
         } catch (err) {
-          setError(
-            err instanceof Error ? err.message : "Failed to parse score data"
-          )
+          setError(err instanceof Error ? err.message : "Failed to parse data")
         }
       } else if (msg.type === "done") {
         setLogs((prev) => [...prev, String(msg.data || "Task completed")])
@@ -171,6 +179,7 @@ export const World3Construction = (): React.ReactElement => {
       const jsonDataToSend = fullJson.data ?? fullJson
 
       setScore(null)
+      setOptimizationResult(null)
       setLogs([])
       setError(null)
       setDataLoaded(false)
@@ -213,6 +222,7 @@ export const World3Construction = (): React.ReactElement => {
 
     setError(null)
     setLogs([])
+    setOptimizationResult(null)
     setIsOptimizing(true)
 
     send({
@@ -220,6 +230,56 @@ export const World3Construction = (): React.ReactElement => {
       source: SOURCE,
       data: { timeInSeconds },
     })
+  }
+
+  const formatScoreValue = (value: number): string => {
+    const abs = Math.abs(value)
+    const sign = value >= 0 ? "+" : "-"
+
+    // Extract from notateNumber default case (ignoring special s cases)
+    if (abs < 100) {
+      return `${sign}${Math.floor(abs)}`
+    } else if (abs < 1_000) {
+      return `${sign}${Math.floor(abs)}`
+    } else if (abs < 10_000) {
+      // Math.ceil(e / 10) / 100 + 'K'
+      return `${sign}${Math.ceil(abs / 10) / 100}K`
+    } else if (abs < 100_000) {
+      // Math.ceil(e / 100) / 10 + 'K'
+      return `${sign}${Math.ceil(abs / 100) / 10}K`
+    } else if (abs < 1_000_000) {
+      // Math.ceil(e / 1e3) + 'K'
+      return `${sign}${Math.ceil(abs / 1_000)}K`
+    } else if (abs < 10_000_000) {
+      // Math.ceil(e / 1e4) / 100 + 'M'
+      return `${sign}${Math.ceil(abs / 10_000) / 100}M`
+    } else if (abs < 100_000_000) {
+      // Math.ceil(e / 1e5) / 10 + 'M'
+      return `${sign}${Math.ceil(abs / 100_000) / 10}M`
+    } else if (abs < 10_000_000_000) {
+      // Math.ceil(e / 1e6) + 'M'
+      return `${sign}${Math.ceil(abs / 1_000_000)}M`
+    } else if (abs < 1_000_000_000_000_000) {
+      // Math.ceil(e / 1e9) + 'B'
+      return `${sign}${Math.ceil(abs / 1_000_000_000)}B`
+    } else if (abs < 1_000_000_000_000_000_000) {
+      // Math.ceil(e / 1e12) + 'T'
+      return `${sign}${Math.ceil(abs / 1_000_000_000_000)}T`
+    } else if (abs < 1_000_000_000_000_000_000_000) {
+      // Math.ceil(e / 1e15) + 'Q'
+      return `${sign}${Math.ceil(abs / 1_000_000_000_000_000)}Q`
+    } else if (abs < 1e22) {
+      // Math.ceil(e / 1e18) + 'QQ'
+      return `${sign}${Math.ceil(abs / 1e18)}QQ`
+    } else if (abs < 1e24) {
+      // Math.ceil(e / 1e21) + 'QQQ'
+      return `${sign}${Math.ceil(abs / 1e21)}QQQ`
+    } else {
+      // For very large numbers, use E notation
+      const exp = Math.floor(Math.log10(abs))
+      const mantissa = Math.floor((abs / Math.pow(10, exp)) * 100) / 100
+      return `${sign}${mantissa}E${exp}`
+    }
   }
 
   return (
@@ -267,14 +327,177 @@ export const World3Construction = (): React.ReactElement => {
             </div>
           </div>
         )}
-        {score !== null && (
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-semibold">Current Score:</h2>
-            <pre className="bg-muted max-h-[300px] overflow-auto rounded-md p-4 text-sm">
-              {JSON.stringify(score, null, 2)}
-            </pre>
-          </div>
-        )}
+        {score !== null &&
+          !optimizationResult &&
+          typeof score === "object" &&
+          score !== null && (
+            <div className="flex flex-col gap-4">
+              <h2 className="text-xl font-semibold">Current Score:</h2>
+              <div className="bg-muted rounded-md p-4">
+                <div className="flex flex-col gap-2 text-sm">
+                  <div>
+                    Build Rate:{" "}
+                    {formatScoreValue(
+                      ((score as any).BuildRate as number) || 0
+                    )}
+                  </div>
+                  <div>
+                    Exp Bonus:{" "}
+                    {formatScoreValue(
+                      ((score as any).ExpBonus as number) || 0
+                    )}
+                  </div>
+                  <div>
+                    Flaggy:{" "}
+                    {formatScoreValue(((score as any).Flaggy as number) || 0)}
+                  </div>
+                  <div>
+                    Exp Boost:{" "}
+                    {formatScoreValue(
+                      ((score as any).ExpBoost as number) || 0
+                    )}
+                  </div>
+                  <div>
+                    Flag Boost:{" "}
+                    {formatScoreValue(
+                      ((score as any).FlagBoost as number) || 0
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        {(() => {
+          if (
+            !optimizationResult ||
+            typeof optimizationResult !== "object" ||
+            optimizationResult === null ||
+            !("Before" in optimizationResult) ||
+            !("After" in optimizationResult)
+          ) {
+            return null
+          }
+
+          const result = optimizationResult as any
+
+          return (
+            <div className="flex flex-col gap-4">
+              <h2 className="text-xl font-semibold">Optimization Result:</h2>
+              <div className="bg-muted rounded-md p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <h3 className="text-lg font-semibold">Before:</h3>
+                    <div className="flex flex-col gap-1 text-sm">
+                      <div>
+                        Build Rate:{" "}
+                        {formatScoreValue(
+                          (result.Before?.BuildRate as number) || 0
+                        )}
+                      </div>
+                      <div>
+                        Exp Bonus:{" "}
+                        {formatScoreValue(
+                          (result.Before?.ExpBonus as number) || 0
+                        )}
+                      </div>
+                      <div>
+                        Flaggy:{" "}
+                        {formatScoreValue(
+                          (result.Before?.Flaggy as number) || 0
+                        )}
+                      </div>
+                      <div>
+                        Exp Boost:{" "}
+                        {formatScoreValue(
+                          (result.Before?.ExpBoost as number) || 0
+                        )}
+                      </div>
+                      <div>
+                        Flag Boost:{" "}
+                        {formatScoreValue(
+                          (result.Before?.FlagBoost as number) || 0
+                        )}
+                      </div>
+                      <div className="mt-2 font-semibold">
+                        Total Score:{" "}
+                        {formatScoreValue((result.BeforeSum as number) || 0)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <h3 className="text-lg font-semibold">After:</h3>
+                    <div className="flex flex-col gap-1 text-sm">
+                      <div>
+                        Build Rate:{" "}
+                        {formatScoreValue(
+                          (result.After?.BuildRate as number) || 0
+                        )}
+                      </div>
+                      <div>
+                        Exp Bonus:{" "}
+                        {formatScoreValue(
+                          (result.After?.ExpBonus as number) || 0
+                        )}
+                      </div>
+                      <div>
+                        Flaggy:{" "}
+                        {formatScoreValue(
+                          (result.After?.Flaggy as number) || 0
+                        )}
+                      </div>
+                      <div>
+                        Exp Boost:{" "}
+                        {formatScoreValue(
+                          (result.After?.ExpBoost as number) || 0
+                        )}
+                      </div>
+                      <div>
+                        Flag Boost:{" "}
+                        {formatScoreValue(
+                          (result.After?.FlagBoost as number) || 0
+                        )}
+                      </div>
+                      <div className="mt-2 font-semibold">
+                        Total Score:{" "}
+                        {formatScoreValue((result.AfterSum as number) || 0)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 border-t pt-4">
+                  <h3 className="mb-2 text-lg font-semibold">Improvements:</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      Build Rate:{" "}
+                      {formatScoreValue((result.BuildRateDiff as number) || 0)}
+                    </div>
+                    <div>
+                      Exp Bonus:{" "}
+                      {formatScoreValue((result.ExpBonusDiff as number) || 0)}
+                    </div>
+                    <div>
+                      Flaggy:{" "}
+                      {formatScoreValue((result.FlaggyDiff as number) || 0)}
+                    </div>
+                    <div>
+                      Exp Boost:{" "}
+                      {formatScoreValue((result.ExpBoostDiff as number) || 0)}
+                    </div>
+                    <div>
+                      Flag Boost:{" "}
+                      {formatScoreValue((result.FlagBoostDiff as number) || 0)}
+                    </div>
+                    <div className="text-primary font-bold">
+                      Total Improvement:{" "}
+                      {formatScoreValue((result.Difference as number) || 0)} (
+                      {(result.DifferencePercent as number) || 0}%)
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
         {dataLoaded && (
           <div className="flex flex-col gap-4">
             <h2 className="text-xl font-semibold">Optimize Board:</h2>

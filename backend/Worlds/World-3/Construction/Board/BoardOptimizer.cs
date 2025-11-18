@@ -134,4 +134,136 @@ public static class BoardOptimizer {
   public static Inventory? GetInventory(string source) {
     return inventories.TryGetValue(source, out var inv) ? inv : null;
   }
+
+  public static async Task<OptimizationResult> Optimize(
+    string source,
+    int timeInSeconds,
+    Func<string, Task>? logCallback,
+    CancellationToken ct
+  ) {
+    if (!inventories.TryGetValue(source, out var inventory) || inventory == null) {
+      throw new Exception("Inventory not found. Please load JSON data first.");
+    }
+
+    async Task Log(string message) {
+      if (logCallback != null) {
+        await logCallback(message);
+      }
+    }
+
+    var weights = new Dictionary<string, double>(SOLVER_WEIGHTS);
+
+    // Adjust weights if no flags
+    if (inventory.FlagPose.Count == 0) {
+      weights["flaggy"] = 0;
+      await Log("No flags found, setting flaggy weight to 0.");
+    }
+
+    await Log($"Solving with goal {string.Join(", ", weights.Select(kvp => $"{kvp.Key} {kvp.Value}"))}");
+
+    Score currentScore = inventory.Score;
+    double currentScoreSum = Solver.GetScoreSum(currentScore, weights);
+
+    await Log($"Starting solver with time {timeInSeconds} seconds...");
+
+    int timeoutMs = timeInSeconds * 1000;
+    Inventory bestInv = await Solver.SolveAsync(inventory, timeoutMs, weights, logCallback, ct);
+
+    Score bestScore = bestInv.Score;
+    double bestScoreSum = Solver.GetScoreSum(bestScore, weights);
+
+    await Log($"Score before optimization: {FormatScore(currentScoreSum)}");
+    await Log($"Score after optimization: {FormatScore(bestScoreSum)}");
+    await Log($"Difference: {CalculateDifference(bestScoreSum, currentScoreSum)}");
+
+    return new OptimizationResult {
+      Before = currentScore,
+      After = bestScore,
+      BeforeSum = currentScoreSum,
+      AfterSum = bestScoreSum,
+      Difference = bestScoreSum - currentScoreSum,
+      DifferencePercent = CalculateDifferencePercent(currentScoreSum, bestScoreSum),
+      BuildRateDiff = bestScore.BuildRate - currentScore.BuildRate,
+      ExpBonusDiff = bestScore.ExpBonus - currentScore.ExpBonus,
+      FlaggyDiff = bestScore.Flaggy - currentScore.Flaggy,
+      ExpBoostDiff = (bestScore.ExpBoost ?? 0) - (currentScore.ExpBoost ?? 0),
+      FlagBoostDiff = (bestScore.FlagBoost ?? 0) - (currentScore.FlagBoost ?? 0)
+    };
+  }
+
+  private static string FormatScore(double score) {
+    string sign = score >= 0 ? "+" : "-";
+    double abs = Math.Abs(score);
+
+    // Extract from notateNumber default case (ignoring special s cases)
+    if (abs < 100) {
+      return $"{sign}{Math.Floor(abs)}";
+    } else if (abs < 1_000) {
+      return $"{sign}{Math.Floor(abs)}";
+    } else if (abs < 10_000) {
+      // Math.ceil(e / 10) / 100 + 'K'
+      return $"{sign}{Math.Ceiling(abs / 10.0) / 100.0}K";
+    } else if (abs < 100_000) {
+      // Math.ceil(e / 100) / 10 + 'K'
+      return $"{sign}{Math.Ceiling(abs / 100.0) / 10.0}K";
+    } else if (abs < 1_000_000) {
+      // Math.ceil(e / 1e3) + 'K'
+      return $"{sign}{Math.Ceiling(abs / 1_000.0)}K";
+    } else if (abs < 10_000_000) {
+      // Math.ceil(e / 1e4) / 100 + 'M'
+      return $"{sign}{Math.Ceiling(abs / 10_000.0) / 100.0}M";
+    } else if (abs < 100_000_000) {
+      // Math.ceil(e / 1e5) / 10 + 'M'
+      return $"{sign}{Math.Ceiling(abs / 100_000.0) / 10.0}M";
+    } else if (abs < 10_000_000_000) {
+      // Math.ceil(e / 1e6) + 'M'
+      return $"{sign}{Math.Ceiling(abs / 1_000_000.0)}M";
+    } else if (abs < 1_000_000_000_000_000) {
+      // Math.ceil(e / 1e9) + 'B'
+      return $"{sign}{Math.Ceiling(abs / 1_000_000_000.0)}B";
+    } else if (abs < 1_000_000_000_000_000_000) {
+      // Math.ceil(e / 1e12) + 'T'
+      return $"{sign}{Math.Ceiling(abs / 1_000_000_000_000.0)}T";
+    } else if (abs < 1e22) {
+      // Math.ceil(e / 1e15) + 'Q'
+      return $"{sign}{Math.Ceiling(abs / 1_000_000_000_000_000.0)}Q";
+    } else if (abs < 1e24) {
+      // Math.ceil(e / 1e18) + 'QQ'
+      return $"{sign}{Math.Ceiling(abs / 1e18)}QQ";
+    } else {
+      // For very large numbers, use E notation
+      double exp = Math.Floor(Math.Log10(abs));
+      double mantissa = Math.Floor((abs / Math.Pow(10, exp)) * 100) / 100.0;
+      return $"{sign}{mantissa}E{exp}";
+    }
+  }
+
+  private static string CalculateDifference(double before, double after) {
+    double difference = after - before;
+    double percentDifference = Math.Round(difference / Math.Abs(before) * 100, 3);
+    return $"{percentDifference}%";
+  }
+
+  private static double CalculateDifferencePercent(double before, double after) {
+    double difference = after - before;
+    if (Math.Abs(before) < 0.0001) {
+      // Avoid division by zero - if before is essentially zero, return 0% or handle appropriately
+      return difference >= 0 ? 100 : -100;
+    }
+    return Math.Round((difference / Math.Abs(before)) * 100, 3);
+  }
+}
+
+public class OptimizationResult {
+  public Score Before { get; set; } = new();
+  public Score After { get; set; } = new();
+  public double BeforeSum { get; set; }
+  public double AfterSum { get; set; }
+  public double Difference { get; set; }
+  public double DifferencePercent { get; set; }
+  public double BuildRateDiff { get; set; }
+  public double ExpBonusDiff { get; set; }
+  public double FlaggyDiff { get; set; }
+  public double ExpBoostDiff { get; set; }
+  public double FlagBoostDiff { get; set; }
 }
