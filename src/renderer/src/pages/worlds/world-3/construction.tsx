@@ -490,6 +490,39 @@ export const World3Construction = (): React.ReactElement => {
                     </div>
                   </div>
                 </div>
+                {result.Steps &&
+                  Array.isArray(result.Steps) &&
+                  result.Steps.length > 0 && (
+                    <div className="mt-4 border-t pt-4">
+                      <h3 className="mb-2 text-lg font-semibold">
+                        Steps to Apply ({result.Steps.length} moves):
+                      </h3>
+                      <div className="bg-muted max-h-[400px] overflow-auto rounded-md p-4">
+                        <div className="flex flex-col gap-2 text-sm">
+                          {result.Steps.map((step: any, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 rounded border p-2"
+                            >
+                              <span className="text-muted-foreground font-mono font-semibold">
+                                {index + 1}.
+                              </span>
+                              <span>
+                                Move cog from position{" "}
+                                <span className="font-mono font-semibold">
+                                  {step.KeyFrom}
+                                </span>{" "}
+                                to position{" "}
+                                <span className="font-mono font-semibold">
+                                  {step.KeyTo}
+                                </span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
               </div>
             </div>
           )

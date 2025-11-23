@@ -176,6 +176,32 @@ public static class BoardOptimizer {
     await Log($"Score after optimization: {FormatScore(bestScoreSum)}");
     await Log($"Difference: {CalculateDifference(bestScoreSum, currentScoreSum)}");
 
+    // Calculate optimal steps to achieve the optimized board
+    List<Step> steps = [];
+    try {
+      steps = Steps.GetOptimalSteps(bestInv.Cogs, ct);
+      await Log($"Cogs to move: {steps.Count}");
+
+      // Validate steps by applying them to a clone
+      if (steps.Count > 0) {
+        Inventory clone = inventory.Clone();
+        foreach (var step in steps) {
+          clone.Move(step.KeyFrom, step.KeyTo);
+        }
+
+        Score cloneScore = clone.Score;
+        double cloneScoreSum = Solver.GetScoreSum(cloneScore, weights);
+
+        if (Math.Abs(cloneScoreSum - bestScoreSum) < 0.001) {
+          await Log("Steps are valid.");
+        } else {
+          await Log($"Warning: Steps validation failed. Expected score: {FormatScore(bestScoreSum)}, Got: {FormatScore(cloneScoreSum)}");
+        }
+      }
+    } catch (Exception ex) {
+      await Log($"Error calculating steps: {ex.Message}");
+    }
+
     return new OptimizationResult {
       Before = currentScore,
       After = bestScore,
@@ -187,7 +213,8 @@ public static class BoardOptimizer {
       ExpBonusDiff = bestScore.ExpBonus - currentScore.ExpBonus,
       FlaggyDiff = bestScore.Flaggy - currentScore.Flaggy,
       ExpBoostDiff = (bestScore.ExpBoost ?? 0) - (currentScore.ExpBoost ?? 0),
-      FlagBoostDiff = (bestScore.FlagBoost ?? 0) - (currentScore.FlagBoost ?? 0)
+      FlagBoostDiff = (bestScore.FlagBoost ?? 0) - (currentScore.FlagBoost ?? 0),
+      Steps = steps
     };
   }
 
@@ -266,4 +293,5 @@ public class OptimizationResult {
   public double FlaggyDiff { get; set; }
   public double ExpBoostDiff { get; set; }
   public double FlagBoostDiff { get; set; }
+  public List<Step> Steps { get; set; } = [];
 }
