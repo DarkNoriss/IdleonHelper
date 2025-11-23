@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactElement } from "react"
+import { useEffect, useEffectEvent, type ReactElement } from "react"
 import { HashRouter, Route, Routes } from "react-router-dom"
 
 import { AppHeader } from "./app-header"
@@ -19,22 +19,22 @@ import { useWebSocketStore } from "./stores/ws"
 
 export const AppNew = (): ReactElement => {
   const { connect, disconnect } = useWebSocketStore()
-  const isMounted = useRef(false)
+
+  const onConnect = useEffectEvent(() => {
+    connect()
+  })
+
+  const onDisconnect = useEffectEvent(() => {
+    disconnect()
+  })
 
   useEffect(() => {
-    // Skip first mount in development (React Strict Mode)
-    if (!isMounted.current) {
-      isMounted.current = true
-      return
-    }
-
-    connect()
+    onConnect()
 
     return () => {
-      disconnect()
-      isMounted.current = false
+      onDisconnect()
     }
-  }, [connect, disconnect])
+  }, [])
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
