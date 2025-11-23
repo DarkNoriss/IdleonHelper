@@ -43,5 +43,4 @@ function Textarea({
 }
 
 export { Textarea }
-// eslint-disable-next-line react-refresh/only-export-components
 export { textareaVariants }

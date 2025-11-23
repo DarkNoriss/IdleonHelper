@@ -20,6 +20,34 @@ interface TimePreset {
   value: number
 }
 
+interface ScoreData {
+  BuildRate: number
+  ExpBonus: number
+  Flaggy: number
+  ExpBoost: number | null
+  FlagBoost: number | null
+}
+
+interface OptimizationStep {
+  KeyFrom: number
+  KeyTo: number
+}
+
+interface OptimizationResult {
+  Before: ScoreData
+  After: ScoreData
+  BeforeSum: number
+  AfterSum: number
+  BuildRateDiff: number
+  ExpBonusDiff: number
+  FlaggyDiff: number
+  ExpBoostDiff: number
+  FlagBoostDiff: number
+  Difference: number
+  DifferencePercent: number
+  Steps?: OptimizationStep[]
+}
+
 const TIME_PRESETS: Record<string, TimePreset> = {
   quick: { label: "Quick (10 sec)", value: 10 },
   medium: { label: "Medium (30 sec)", value: 30 },
@@ -31,9 +59,9 @@ export const World3Construction = (): React.ReactElement => {
   const { isConnected, send, subscribe } = useWebSocketStore()
   const { jsonData, setJsonData } = useJsonDataStore()
   const [textareaValue, setTextareaValue] = React.useState("")
-  const [score, setScore] = React.useState<unknown>(null)
+  const [score, setScore] = React.useState<ScoreData | null>(null)
   const [optimizationResult, setOptimizationResult] =
-    React.useState<unknown>(null)
+    React.useState<OptimizationResult | null>(null)
   const [logs, setLogs] = React.useState<string[]>([])
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -89,15 +117,22 @@ export const World3Construction = (): React.ReactElement => {
         }
       } else if (msg.type === "data") {
         try {
-          const data = JSON.parse(String(msg.data || "{}"))
+          const data = JSON.parse(String(msg.data || "{}")) as
+            | ScoreData
+            | OptimizationResult
 
           // Check if it's an optimization result (has Before/After) or just a score
-          if (data.Before && data.After) {
+          if (
+            data &&
+            typeof data === "object" &&
+            "Before" in data &&
+            "After" in data
+          ) {
             // It's an optimization result
-            setOptimizationResult(data)
+            setOptimizationResult(data as OptimizationResult)
           } else {
             // It's a score from initial load
-            setScore(data)
+            setScore(data as ScoreData)
             setDataLoaded(true)
           }
         } catch (err) {
@@ -327,54 +362,26 @@ export const World3Construction = (): React.ReactElement => {
             </div>
           </div>
         )}
-        {score !== null &&
-          !optimizationResult &&
-          typeof score === "object" &&
-          score !== null && (
-            <div className="flex flex-col gap-4">
-              <h2 className="text-xl font-semibold">Current Score:</h2>
-              <div className="bg-muted rounded-md p-4">
-                <div className="flex flex-col gap-2 text-sm">
-                  <div>
-                    Build Rate:{" "}
-                    {formatScoreValue(
-                      ((score as any).BuildRate as number) || 0
-                    )}
-                  </div>
-                  <div>
-                    Exp Bonus:{" "}
-                    {formatScoreValue(((score as any).ExpBonus as number) || 0)}
-                  </div>
-                  <div>
-                    Flaggy:{" "}
-                    {formatScoreValue(((score as any).Flaggy as number) || 0)}
-                  </div>
-                  <div>
-                    Exp Boost:{" "}
-                    {formatScoreValue(((score as any).ExpBoost as number) || 0)}
-                  </div>
-                  <div>
-                    Flag Boost:{" "}
-                    {formatScoreValue(
-                      ((score as any).FlagBoost as number) || 0
-                    )}
-                  </div>
-                </div>
+        {score !== null && !optimizationResult && (
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-semibold">Current Score:</h2>
+            <div className="bg-muted rounded-md p-4">
+              <div className="flex flex-col gap-2 text-sm">
+                <div>Build Rate: {formatScoreValue(score.BuildRate || 0)}</div>
+                <div>Exp Bonus: {formatScoreValue(score.ExpBonus || 0)}</div>
+                <div>Flaggy: {formatScoreValue(score.Flaggy || 0)}</div>
+                <div>Exp Boost: {formatScoreValue(score.ExpBoost ?? 0)}</div>
+                <div>Flag Boost: {formatScoreValue(score.FlagBoost ?? 0)}</div>
               </div>
             </div>
-          )}
+          </div>
+        )}
         {(() => {
-          if (
-            !optimizationResult ||
-            typeof optimizationResult !== "object" ||
-            optimizationResult === null ||
-            !("Before" in optimizationResult) ||
-            !("After" in optimizationResult)
-          ) {
+          if (!optimizationResult) {
             return null
           }
 
-          const result = optimizationResult as any
+          const result = optimizationResult
 
           return (
             <div className="flex flex-col gap-4">
@@ -386,37 +393,25 @@ export const World3Construction = (): React.ReactElement => {
                     <div className="flex flex-col gap-1 text-sm">
                       <div>
                         Build Rate:{" "}
-                        {formatScoreValue(
-                          (result.Before?.BuildRate as number) || 0
-                        )}
+                        {formatScoreValue(result.Before.BuildRate || 0)}
                       </div>
                       <div>
                         Exp Bonus:{" "}
-                        {formatScoreValue(
-                          (result.Before?.ExpBonus as number) || 0
-                        )}
+                        {formatScoreValue(result.Before.ExpBonus || 0)}
                       </div>
                       <div>
-                        Flaggy:{" "}
-                        {formatScoreValue(
-                          (result.Before?.Flaggy as number) || 0
-                        )}
+                        Flaggy: {formatScoreValue(result.Before.Flaggy || 0)}
                       </div>
                       <div>
                         Exp Boost:{" "}
-                        {formatScoreValue(
-                          (result.Before?.ExpBoost as number) || 0
-                        )}
+                        {formatScoreValue(result.Before.ExpBoost ?? 0)}
                       </div>
                       <div>
                         Flag Boost:{" "}
-                        {formatScoreValue(
-                          (result.Before?.FlagBoost as number) || 0
-                        )}
+                        {formatScoreValue(result.Before.FlagBoost ?? 0)}
                       </div>
                       <div className="mt-2 font-semibold">
-                        Total Score:{" "}
-                        {formatScoreValue((result.BeforeSum as number) || 0)}
+                        Total Score: {formatScoreValue(result.BeforeSum || 0)}
                       </div>
                     </div>
                   </div>
@@ -425,37 +420,25 @@ export const World3Construction = (): React.ReactElement => {
                     <div className="flex flex-col gap-1 text-sm">
                       <div>
                         Build Rate:{" "}
-                        {formatScoreValue(
-                          (result.After?.BuildRate as number) || 0
-                        )}
+                        {formatScoreValue(result.After.BuildRate || 0)}
                       </div>
                       <div>
                         Exp Bonus:{" "}
-                        {formatScoreValue(
-                          (result.After?.ExpBonus as number) || 0
-                        )}
+                        {formatScoreValue(result.After.ExpBonus || 0)}
                       </div>
                       <div>
-                        Flaggy:{" "}
-                        {formatScoreValue(
-                          (result.After?.Flaggy as number) || 0
-                        )}
+                        Flaggy: {formatScoreValue(result.After.Flaggy || 0)}
                       </div>
                       <div>
                         Exp Boost:{" "}
-                        {formatScoreValue(
-                          (result.After?.ExpBoost as number) || 0
-                        )}
+                        {formatScoreValue(result.After.ExpBoost ?? 0)}
                       </div>
                       <div>
                         Flag Boost:{" "}
-                        {formatScoreValue(
-                          (result.After?.FlagBoost as number) || 0
-                        )}
+                        {formatScoreValue(result.After.FlagBoost ?? 0)}
                       </div>
                       <div className="mt-2 font-semibold">
-                        Total Score:{" "}
-                        {formatScoreValue((result.AfterSum as number) || 0)}
+                        Total Score: {formatScoreValue(result.AfterSum || 0)}
                       </div>
                     </div>
                   </div>
@@ -499,26 +482,28 @@ export const World3Construction = (): React.ReactElement => {
                       </h3>
                       <div className="bg-muted max-h-[400px] overflow-auto rounded-md p-4">
                         <div className="flex flex-col gap-2 text-sm">
-                          {result.Steps.map((step: any, index: number) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 rounded border p-2"
-                            >
-                              <span className="text-muted-foreground font-mono font-semibold">
-                                {index + 1}.
-                              </span>
-                              <span>
-                                Move cog from position{" "}
-                                <span className="font-mono font-semibold">
-                                  {step.KeyFrom}
-                                </span>{" "}
-                                to position{" "}
-                                <span className="font-mono font-semibold">
-                                  {step.KeyTo}
+                          {result.Steps.map(
+                            (step: OptimizationStep, index: number) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-2 rounded border p-2"
+                              >
+                                <span className="text-muted-foreground font-mono font-semibold">
+                                  {index + 1}.
                                 </span>
-                              </span>
-                            </div>
-                          ))}
+                                <span>
+                                  Move cog from position{" "}
+                                  <span className="font-mono font-semibold">
+                                    {step.KeyFrom}
+                                  </span>{" "}
+                                  to position{" "}
+                                  <span className="font-mono font-semibold">
+                                    {step.KeyTo}
+                                  </span>
+                                </span>
+                              </div>
+                            )
+                          )}
                         </div>
                       </div>
                     </div>

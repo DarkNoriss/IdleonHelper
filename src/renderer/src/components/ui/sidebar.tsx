@@ -631,9 +631,9 @@ function SidebarMenuSkeleton({
   showIcon?: boolean
 }): React.ReactElement {
   // Random width between 50 to 90%.
-  const width = React.useMemo((): string => {
+  const [width] = React.useState(() => {
     return `${Math.floor(Math.random() * 40) + 50}%`
-  }, [])
+  })
 
   return (
     <div
@@ -750,5 +750,4 @@ export {
   SidebarSeparator,
   SidebarTrigger,
 }
-// eslint-disable-next-line react-refresh/only-export-components
 export { useSidebar }
