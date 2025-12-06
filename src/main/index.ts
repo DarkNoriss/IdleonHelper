@@ -55,8 +55,8 @@ const startBackend = (): void => {
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1366,
-    height: 768,
+    width: 958,
+    height: 570,
     show: false,
     frame: false, // Remove default title bar
     autoHideMenuBar: true,
