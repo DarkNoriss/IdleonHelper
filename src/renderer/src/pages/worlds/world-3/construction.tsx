@@ -325,7 +325,7 @@ export const World3Construction = (): React.ReactElement => {
           placeholder="Enter JSON data here..."
           value={textareaValue}
           onChange={(e) => setTextareaValue(e.target.value)}
-          className="min-h-[200px]"
+          rows={10}
         />
         <div className="flex gap-2">
           <Button
