@@ -30,11 +30,6 @@ internal static class WsRouter {
 
     var messageType = req.type.ToLowerInvariant();
 
-    if (messageType == "ping") {
-      await Send(ws, new WsResponse(type: "pong", source: req.source, data: "pong"));
-      return;
-    }
-
     var handler = Handlers.FirstOrDefault(h => h.CanHandle(messageType));
     if (handler != null) {
       try {
