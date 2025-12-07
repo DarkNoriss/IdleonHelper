@@ -6,8 +6,8 @@ public static class Solver {
   public static double GetScoreSum(Score score, Dictionary<string, double> weights) {
     double res = 0;
     res += score.BuildRate * weights["buildRate"];
-    res += score.ExpBonus * weights["expBonus"] * ((score.ExpBoost ?? 0) + 10) / 10.0;
-    res += score.Flaggy * weights["flaggy"] * ((score.FlagBoost ?? 0) + 4) / 4.0;
+    res += score.ExpBonus * weights["expBonus"] * ((score.ExpBoost ?? 0) + 10) / 10;
+    res += score.Flaggy * weights["flaggy"] * ((score.FlagBoost ?? 0) + 4) / 4;
     return res;
   }
 
@@ -15,50 +15,43 @@ public static class Solver {
     Inventory inventory,
     int timeoutMs,
     Dictionary<string, double> weights,
-    Func<string, Task>? logCallback,
     CancellationToken ct
   ) {
-    async Task Log(string message) {
-      if (logCallback != null) {
-        await logCallback(message);
-      }
-    }
-
-    await Log($"Solving with goal {string.Join(", ", weights.Select(kvp => $"{kvp.Key} {kvp.Value}"))}");
+    Console.WriteLine($"Solving with goal {string.Join(", ", weights.Select(kvp => $"{kvp.Key} {kvp.Value}"))}");
 
     return await Task.Run(async () => {
-
       var stopwatch = Stopwatch.StartNew();
       Inventory state = inventory.Clone();
       List<Inventory> solutions = [state];
       List<int> allSlots = inventory.AvailableSlotKeys;
       double currentScore = GetScoreSum(state.Score, weights);
+      Random random = new Random();
+      DateTime lastYield = DateTime.Now;
 
       int iteration = 0;
-      Random random = new();
+
+      Console.WriteLine("Trying to optimize");
 
       while (stopwatch.ElapsedMilliseconds < timeoutMs && !ct.IsCancellationRequested) {
+        if ((DateTime.Now - lastYield).TotalMilliseconds > 100) {
+          // Prevent UI from freezing with very high solve times
+          await Task.Yield();
+          lastYield = DateTime.Now;
+        }
+
         iteration++;
 
-        // Clone and save state every 10k iterations
         if (iteration % 10000 == 0) {
           state = inventory.Clone();
-          Shuffle(state, random);
+          Shuffle(state);
           currentScore = GetScoreSum(state.Score, weights);
           solutions.Add(state);
         }
 
-        // Log progress every 100k iterations
-        if (iteration % 100000 == 0 && logCallback != null) {
-          await logCallback($"Progress: {iteration} iterations, best score: {FormatScore(currentScore)}");
-        }
-
-        if (allSlots.Count == 0 || state.CogKeys.Count == 0) {
-          break;
-        }
-
         int slotKey = allSlots[random.Next(allSlots.Count)];
-        int cogKey = state.CogKeys[random.Next(state.CogKeys.Count)];
+        // Moving a cog to an empty space changes the list of cog keys, so we need to re-fetch this
+        List<int> allKeys = state.CogKeys;
+        int cogKey = allKeys[random.Next(allKeys.Count)];
         Cog slot = state.Get(slotKey);
         Cog cog = state.Get(cogKey);
 
@@ -75,27 +68,27 @@ public static class Solver {
           state.Move(slotKey, cogKey);
         }
       }
-
-      if (logCallback != null) {
-        await logCallback($"Simulated annealing finished after {stopwatch.ElapsedMilliseconds}ms with {iteration} iterations.");
-      }
+      Console.WriteLine($"Tried {iteration} switches");
       stopwatch.Stop();
 
-      Inventory best = solutions.OrderByDescending(inv => GetScoreSum(inv.Score, weights)).First();
+      var scores = solutions.Select(s => GetScoreSum(s.Score, weights)).ToList();
+      Console.WriteLine($"Made {solutions.Count} different attempts with final scores: {string.Join(", ", scores)}");
+
+      int bestIndex = scores.IndexOf(scores.Max());
+      Inventory best = solutions[bestIndex];
+      Console.WriteLine($"Best solution was number {bestIndex}");
+
       RemoveUselessMoves(best);
 
       return best;
     }, ct);
   }
 
-  private static void Shuffle(Inventory inventory, Random random, int n = 500) {
+  private static void Shuffle(Inventory inventory, int n = 500) {
     List<int> allSlots = inventory.AvailableSlotKeys;
+    Random random = new Random();
 
     for (int i = 0; i < n; i++) {
-      if (allSlots.Count == 0 || inventory.CogKeys.Count == 0) {
-        break;
-      }
-
       int slotKey = allSlots[random.Next(allSlots.Count)];
       List<int> allKeys = inventory.CogKeys;
       int cogKey = allKeys[random.Next(allKeys.Count)];
@@ -126,6 +119,7 @@ public static class Solver {
           && changed.ExpBonus == goal.ExpBonus
           && changed.ExpBoost == goal.ExpBoost
           && changed.FlagBoost == goal.FlagBoost) {
+        Console.WriteLine($"Removed useless move {cog1Key} to {cog2Key}");
         continue;
       }
 

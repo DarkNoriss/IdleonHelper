@@ -22,14 +22,9 @@ public static class Steps {
 
       var firstEntry = interimCogs.First();
       var (key, cog) = firstEntry;
-      
-      // Find what cog is currently at the target position
-      // If no cog is at the target position, create a placeholder
-      var targetCog = interimCogs.GetValueOrDefault(cog.Key, new Cog { Key = key, InitialKey = key });
+      var targetCog = interimCogs.GetValueOrDefault(cog.Key, new Cog { Key = key });
 
-      // If targetCog's InitialKey matches the current key, the slot is already correct
-      // (either the cog is already in place, or the placeholder indicates it's empty/correct)
-      if (targetCog.InitialKey == key) {
+      if (targetCog == cog) {
         interimCogs.Remove(key);
         continue;
       }

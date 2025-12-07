@@ -1,5 +1,6 @@
 using System.Net.WebSockets;
 using System.Text.Json;
+using IdleonBotBackend.Utils;
 using IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 using static IdleonBotBackend.Comms.Handlers.WsHandlerHelpers;
 
@@ -8,49 +9,25 @@ namespace IdleonBotBackend.Comms.Handlers;
 internal class World3ConstructionHandler : BaseHandler {
   public override bool CanHandle(string messageType) {
     var type = messageType.ToLowerInvariant();
-    return type == "world-3-construction" ||
-           type == "world-3-construction-load-json" ||
-           type == "world-3-construction-optimize";
+    return type == "world-3-construction-load-json" ||
+           type == "world-3-construction-optimize" ||
+           type == "world-3-construction-apply-board";
   }
 
   public override async Task HandleAsync(WebSocket ws, WsRequest req) {
     var type = req.type.ToLowerInvariant();
 
     switch (type) {
-      case "world-3-construction":
-        await HandleConstruction(ws, req);
-        break;
       case "world-3-construction-load-json":
         await HandleLoadJson(ws, req);
         break;
       case "world-3-construction-optimize":
         await HandleOptimize(ws, req);
         break;
+      case "world-3-construction-apply-board":
+        await HandleApplyBoard(ws, req);
+        break;
     }
-  }
-
-  private static async Task HandleConstruction(WebSocket ws, WsRequest req) {
-    await Send(ws, new WsResponse(
-      type: "log",
-      source: req.source,
-      data: "Starting world-3 construction..."
-    ));
-
-    await Task.Delay(300);
-
-    await Send(ws, new WsResponse(
-      type: "log",
-      source: req.source,
-      data: "TODO: capture screen, find building, click..."
-    ));
-
-    await Task.Delay(300);
-
-    await Send(ws, new WsResponse(
-      type: "done",
-      source: req.source,
-      data: "world-3-construction finished"
-    ));
   }
 
   private static async Task HandleLoadJson(WebSocket ws, WsRequest req) {
@@ -65,20 +42,6 @@ internal class World3ConstructionHandler : BaseHandler {
 
     var dataString = req.data.Value.GetRawText();
 
-    async Task LogCallback(string message) {
-      await Send(ws, new WsResponse(
-        type: "log",
-        source: req.source,
-        data: message
-      ));
-    }
-
-    await Send(ws, new WsResponse(
-      type: "log",
-      source: req.source,
-      data: "Loading JSON data..."
-    ));
-
     try {
       try {
         Newtonsoft.Json.Linq.JObject.Parse(dataString);
@@ -91,7 +54,7 @@ internal class World3ConstructionHandler : BaseHandler {
         return;
       }
 
-      var score = await BoardOptimizer.LoadJsonData(dataString, req.source, LogCallback, CancellationToken.None);
+      var score = await BoardOptimizer.LoadJsonData(dataString, req.source, CancellationToken.None);
       var scoreJson = WsHandlerHelpers.SerializeToCamelCase(score);
 
       await Send(ws, new WsResponse(
@@ -149,21 +112,7 @@ internal class World3ConstructionHandler : BaseHandler {
         return;
       }
 
-      async Task LogCallback(string message) {
-        await Send(ws, new WsResponse(
-          type: "log",
-          source: req.source,
-          data: message
-        ));
-      }
-
-      await Send(ws, new WsResponse(
-        type: "log",
-        source: req.source,
-        data: $"Starting optimization for {timeInSeconds} seconds..."
-      ));
-
-      var result = await BoardOptimizer.Optimize(req.source, timeInSeconds, LogCallback, CancellationToken.None);
+      var result = await BoardOptimizer.Optimize(req.source, timeInSeconds, CancellationToken.None);
       
       // Convert OptimizationResult to ScoreCardData format
       var scoreCardData = new ScoreCardData {
@@ -187,12 +136,6 @@ internal class World3ConstructionHandler : BaseHandler {
       ));
 
       await Send(ws, new WsResponse(
-        type: "log",
-        source: req.source,
-        data: "Optimization completed"
-      ));
-
-      await Send(ws, new WsResponse(
         type: "done",
         source: req.source,
         data: "world-3-construction-optimize finished"
@@ -203,6 +146,36 @@ internal class World3ConstructionHandler : BaseHandler {
         type: "error",
         source: req.source,
         data: $"Failed to optimize: {ex.Message}"
+      )      );
+    }
+  }
+
+  private static async Task HandleApplyBoard(WebSocket ws, WsRequest req) {
+    try {
+      using var cts = new CancellationTokenSource();
+      var ct = cts.Token;
+
+      bool success = await BoardApplier.ApplyBoard(req.source, ct);
+
+      if (success) {
+        await Send(ws, new WsResponse(
+          type: "done",
+          source: req.source,
+          data: "world-3-construction-apply-board finished"
+        ));
+      } else {
+        await Send(ws, new WsResponse(
+          type: "error",
+          source: req.source,
+          data: "Failed to apply board. Please check the logs for details."
+        ));
+      }
+    } catch (Exception ex) {
+      Console.WriteLine($"[WS] Apply board error: {ex.Message}");
+      await Send(ws, new WsResponse(
+        type: "error",
+        source: req.source,
+        data: $"Failed to apply board: {ex.Message}"
       ));
     }
   }

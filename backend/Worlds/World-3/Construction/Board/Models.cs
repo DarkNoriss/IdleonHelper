@@ -344,12 +344,10 @@ public class Inventory {
   public void Move(int pos1, int pos2) {
     _score = null;
 
-    bool hasCog1 = Cogs.TryGetValue(pos1, out Cog? cog1);
-    bool hasCog2 = Cogs.TryGetValue(pos2, out Cog? cog2);
+    Cogs.TryGetValue(pos1, out Cog? cog1);
+    Cogs.TryGetValue(pos2, out Cog? cog2);
 
-    if (!hasCog1 && !hasCog2) {
-      return;
-    }
+    Cog? temp = cog2;
 
     Cogs[pos2] = cog1!;
     if (cog1 != null) {
@@ -358,9 +356,9 @@ public class Inventory {
       Cogs.Remove(pos2);
     }
 
-    Cogs[pos1] = cog2!;
-    if (cog2 != null) {
-      cog2.Key = pos1;
+    Cogs[pos1] = temp!;
+    if (temp != null) {
+      temp.Key = pos1;
     } else {
       Cogs.Remove(pos1);
     }

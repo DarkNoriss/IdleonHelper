@@ -1,6 +1,4 @@
 using System.Drawing;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 
@@ -22,110 +20,18 @@ public static class BoardOptimizer {
   public static readonly Point BOARD_FIRST_COORDS = new(210, 130);
   public static readonly Point COLLECT_ULTIMATE_COGS = new(291, 420);
 
-  public static async Task<ScoreCardData> LoadJsonData(string data, string source, Func<string, Task>? logCallback, CancellationToken ct) {
-      var rawData = JsonConvert.DeserializeObject<JObject>(data) ?? throw new Exception("JSON data is null.");
+  public static async Task<ScoreCardData> LoadJsonData(string data, string source, CancellationToken ct) {
+      var inv = InventoryExtractor.ExtractFromJson(data);
 
-      var inv = new Inventory();
-
-      async Task Log(string message) {
-        if (logCallback != null) {
-          await logCallback(message);
-        }
-      }
-
-      if(rawData["GemItemsPurchased"] is JValue gemItemValue) {
-        JArray gemItemsPurchased = JArray.Parse(gemItemValue.ToString());
-
-        inv.FlaggyShopUpgrades = (int)gemItemsPurchased[184];
-        await Log($"Flaggy shop upgrades loaded successfully ({inv.FlaggyShopUpgrades}).");
-      }
-
-      if(rawData["CogM"] is JValue cogValue) {
-        JObject cogM = JObject.Parse(cogValue.ToString());
-
-        Dictionary<int, Cog> cogDict = cogM.Properties()
-          .ToDictionary(
-              prop => int.Parse(prop.Name),
-              prop => {
-                int keyNum = int.Parse(prop.Name);
-                JObject c = (JObject)prop.Value;
-                return new Cog {
-                  Key = keyNum,
-                  InitialKey = keyNum,
-                  BuildRate = c.Value<double>("a"),
-                  IsPlayer = c.Value<double>("b") > 0,
-                  ExpGain = c.Value<double>("b"),
-                  Flaggy = c.Value<double>("c"),
-                  ExpBonus = c.Value<double>("d"),
-                  BuildRadiusBoost = c.Value<double>("e"),
-                  ExpRadiusBoost = c.Value<double>("f"),
-                  FlaggyRadiusBoost = c.Value<double>("g"),
-                  BoostRadius = c.Value<string>("h") ?? "",
-                  FlagBoost = c.Value<double>("j"),
-                  Nothing = c.Value<double>("k"),
-                  Fixed = c.Value<string>("h") == "everything",
-                  Blocked = false
-                };
-              }
-          );
-
-        inv.Cogs = cogDict;
-        await Log($"Cogs loaded successfully ({inv.Cogs.Count}).");
-      }
-
-      if(rawData["FlagP"] is JValue flagPValue) {
-        JArray flagPArray = JArray.Parse(flagPValue.ToString());
-        var newFlagPose = flagPArray.Where(v => v.Value<int>() >= 0).Select(v => v.Value<int>()).ToList();
-
-        inv.FlagPose = newFlagPose;
-        await Log($"Flag pose loaded successfully ({inv.FlagPose.Count}).");
-      }
-
-      if(rawData["FlagU"] is JValue flagUValue) {
-        JArray flagUArray = JArray.Parse(flagUValue.ToString());
-
-        Dictionary<int, Cog> slotsFlags = [];
-
-        foreach(var (n, i) in flagUArray.Select((n, i) => (n, i))) {
-          int value = n.Value<int>();
-          if(value > 0 && inv.FlagPose.Contains(i)) {
-            slotsFlags[i] = new Cog {
-              Key = i,
-              IsFlag = true,
-              Fixed = true,
-              Blocked = true,
-            };
-          } else if(value != -11) {
-            slotsFlags[i] = new Cog {
-              Key = i,
-              Fixed = true,
-              Blocked = true,
-            };
-          } else {
-            slotsFlags[i] = new Cog {
-              Key = i,
-            };
-          }
-        }
-
-        inv.Slots = slotsFlags;
-
-        foreach(var slot in slotsFlags) {
-          var slotV = slot.Value;
-          if(!slotV.Fixed) {
-            if(inv.AvailableSlotKeys.Contains(slotV.Key)) {
-              inv.AvailableSlotKeys.Remove(slotV.Key);
-            }
-            inv.AvailableSlotKeys.Add(slotV.Key);
-          }
-        }
-        await Log($"Flag upgrades loaded successfully ({inv.Slots.Count}).");
-      }
+      Console.WriteLine($"Flaggy shop upgrades loaded successfully ({inv.FlaggyShopUpgrades}).");
+      Console.WriteLine($"Cogs loaded successfully ({inv.Cogs.Count}).");
+      Console.WriteLine($"Flag pose loaded successfully ({inv.FlagPose.Count}).");
+      Console.WriteLine($"Flag upgrades loaded successfully ({inv.Slots.Count}).");
 
       // Store inventory for this session
       inventories[source] = inv;
 
-      await Log("JSON data loaded successfully.");
+      Console.WriteLine("JSON data loaded successfully.");
 
       // Return formatted score in ScoreCard format
       var score = inv.Score;
@@ -143,17 +49,10 @@ public static class BoardOptimizer {
   public static async Task<OptimizationResult> Optimize(
     string source,
     int timeInSeconds,
-    Func<string, Task>? logCallback,
     CancellationToken ct
   ) {
     if (!inventories.TryGetValue(source, out var inventory) || inventory == null) {
       throw new Exception("Inventory not found. Please load JSON data first.");
-    }
-
-    async Task Log(string message) {
-      if (logCallback != null) {
-        await logCallback(message);
-      }
     }
 
     var weights = new Dictionary<string, double>(SOLVER_WEIGHTS);
@@ -161,25 +60,57 @@ public static class BoardOptimizer {
     // Adjust weights if no flags
     if (inventory.FlagPose.Count == 0) {
       weights["flaggy"] = 0;
-      await Log("No flags found, setting flaggy weight to 0.");
+      Console.WriteLine("No flags found, setting flaggy weight to 0.");
     }
 
-    await Log($"Solving with goal {string.Join(", ", weights.Select(kvp => $"{kvp.Key} {kvp.Value}"))}");
+    Console.WriteLine($"Solving with goal {string.Join(", ", weights.Select(kvp => $"{kvp.Key} {kvp.Value}"))}");
 
     Score currentScore = inventory.Score;
     double currentScoreSum = Solver.GetScoreSum(currentScore, weights);
 
-    await Log($"Starting solver with time {timeInSeconds} seconds...");
+    Console.WriteLine($"Starting solver with time {timeInSeconds} seconds...");
 
     int timeoutMs = timeInSeconds * 1000;
-    Inventory bestInv = await Solver.SolveAsync(inventory, timeoutMs, weights, logCallback, ct);
+    Inventory bestInv = await Solver.SolveAsync(inventory, timeoutMs, weights, ct);
 
     Score bestScore = bestInv.Score;
     double bestScoreSum = Solver.GetScoreSum(bestScore, weights);
 
-    await Log($"Score before optimization: {FormatScore(currentScoreSum)}");
-    await Log($"Score after optimization: {FormatScore(bestScoreSum)}");
-    await Log($"Difference: {CalculateDifference(bestScoreSum, currentScoreSum)}");
+    Console.WriteLine($"Score before optimization: {FormatScore(currentScoreSum)}");
+    Console.WriteLine($"Score after optimization: {FormatScore(bestScoreSum)}");
+    Console.WriteLine($"Difference: {CalculateDifference(bestScoreSum, currentScoreSum)}");
+
+    // Validate that extracted steps match the optimal board
+    Console.WriteLine("Checking if steps are valid...");
+    List<Step> steps = Steps.GetOptimalSteps(bestInv.Cogs, ct);
+    Inventory clone = inventory.Clone();
+    foreach (var step in steps) {
+      clone.Move(step.KeyFrom, step.KeyTo);
+    }
+
+    Score cloneScore = clone.Score;
+    double cloneScoreSum = Solver.GetScoreSum(cloneScore, weights);
+
+    if (steps.Count != 0 && Math.Abs(cloneScoreSum - bestScoreSum) < 0.0001) {
+      Console.WriteLine("Steps are valid.");
+      Console.WriteLine("Steps:");
+      for (int i = 0; i < steps.Count; i++) {
+        var step = steps[i];
+        var posFrom = step.Cog.Position(step.KeyFrom);
+        var posTo = step.TargetCog.Position(step.KeyTo);
+        Console.WriteLine($"  [{i}] Move from {posFrom.Location}({posFrom.X}, {posFrom.Y}) [key {step.KeyFrom}] " +
+                         $"to {posTo.Location}({posTo.X}, {posTo.Y}) [key {step.KeyTo}]");
+      }
+    } else if (steps.Count != 0) {
+      Console.WriteLine($"Steps are invalid. Expected score: {FormatScore(bestScoreSum)}, Got: {FormatScore(cloneScoreSum)}");
+      Console.WriteLine($"Expected - BuildRate: {FormatScore(bestScore.BuildRate)}, ExpBonus: {FormatScore(bestScore.ExpBonus)}, Flaggy: {FormatScore(bestScore.Flaggy)}");
+      Console.WriteLine($"Got - BuildRate: {FormatScore(cloneScore.BuildRate)}, ExpBonus: {FormatScore(cloneScore.ExpBonus)}, Flaggy: {FormatScore(cloneScore.Flaggy)}");
+    } else {
+      Console.WriteLine("No steps needed (board already optimal).");
+    }
+
+    // Store the optimized inventory so BoardApplier can retrieve it
+    inventories[source] = bestInv;
 
     return new OptimizationResult {
       Before = new ScoreCardData {

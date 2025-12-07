@@ -52,6 +52,7 @@ export const Construction2 = (): React.ReactElement => {
   const [error, setError] = React.useState<string | null>(null)
   const [timePreset, setTimePreset] = React.useState<string>("medium")
   const [isOptimizing, setIsOptimizing] = React.useState(false)
+  const [isApplyingBoard, setIsApplyingBoard] = React.useState(false)
   const [remainingTime, setRemainingTime] = React.useState<number | null>(null)
   const countdownIntervalRef = React.useRef<NodeJS.Timeout | null>(null)
 
@@ -110,17 +111,28 @@ export const Construction2 = (): React.ReactElement => {
           setIsOptimizing(false)
         }
       } else if (msg.type === "done") {
-        setIsProcessing(false)
-        setIsOptimizing(false)
-        setRemainingTime(null)
-        if (countdownIntervalRef.current) {
-          clearInterval(countdownIntervalRef.current)
-          countdownIntervalRef.current = null
+        const doneMessage = String(msg.data || "")
+
+        // Check if this is the apply-board done message
+        if (doneMessage.includes("apply-board")) {
+          setIsApplyingBoard(false)
+        } else {
+          setIsProcessing(false)
+          setIsOptimizing(false)
+          setRemainingTime(null)
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current)
+            countdownIntervalRef.current = null
+          }
         }
       } else if (msg.type === "error") {
-        setError(String(msg.data || "Unknown error"))
+        const errorMessage = String(msg.data || "Unknown error")
+        setError(errorMessage)
+
+        // Reset all processing states on error
         setIsProcessing(false)
         setIsOptimizing(false)
+        setIsApplyingBoard(false)
         setRemainingTime(null)
         if (countdownIntervalRef.current) {
           clearInterval(countdownIntervalRef.current)
@@ -217,6 +229,30 @@ export const Construction2 = (): React.ReactElement => {
       type: "world-3-construction-optimize",
       source: SOURCE,
       data: { timeInSeconds: preset.value },
+    })
+  }
+
+  const handleApplyBoard = (): void => {
+    if (!scoreCardData) {
+      setError("Please load and optimize data first before applying board.")
+      return
+    }
+
+    if (
+      !scoreCardData.afterBuildRate ||
+      !scoreCardData.afterExpBonus ||
+      !scoreCardData.afterFlaggy
+    ) {
+      setError("No optimized board found. Please run optimization first.")
+      return
+    }
+
+    setError(null)
+    setIsApplyingBoard(true)
+
+    send({
+      type: "world-3-construction-apply-board",
+      source: SOURCE,
     })
   }
 
@@ -326,9 +362,22 @@ export const Construction2 = (): React.ReactElement => {
                 )}
                 {isOptimizing ? "Optimizing..." : "Optimize"}
               </Button>
-              <Button disabled>
-                <Check className="size-4" />
-                Apply Board
+              <Button
+                onClick={handleApplyBoard}
+                disabled={
+                  !isConnected ||
+                  isApplyingBoard ||
+                  !scoreCardData.afterBuildRate ||
+                  !scoreCardData.afterExpBonus ||
+                  !scoreCardData.afterFlaggy
+                }
+              >
+                {isApplyingBoard ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Check className="size-4" />
+                )}
+                {isApplyingBoard ? "Applying..." : "Apply Board"}
               </Button>
             </div>
           </CardContent>
