@@ -5,7 +5,8 @@ namespace IdleonBotBackend.Utils;
 /// </summary>
 public static class NavigationUI {
   /// <summary>
-  /// Opens the Codex menu.
+  /// Opens the Codex menu. Verifies it's actually open by checking for quick-ref inside it.
+  /// If the first click closes something else instead, it will click again.
   /// </summary>
   /// <param name="ct">Cancellation token</param>
   /// <param name="timeoutMs">Timeout for finding Codex (default: 100ms)</param>
@@ -14,7 +15,27 @@ public static class NavigationUI {
     CancellationToken ct,
     int timeoutMs = Navigation.DEFAULT_TIMEOUT_MS
   ) {
-    return await Navigation.NavigateTo("ui/codex.png", ct, null, timeoutMs);
+    // First attempt to click Codex
+    bool clicked = await Navigation.NavigateTo("ui/codex.png", ct, null, timeoutMs);
+    if (!clicked) {
+      return false;
+    }
+
+    // Verify Codex is open by checking for quick-ref (which is inside Codex)
+    bool isOpen = await Navigation.IsVisible("quik-ref/quick-ref.png", ct);
+    
+    if (!isOpen) {
+      // Codex wasn't actually opened (probably closed something else), try clicking again
+      clicked = await Navigation.NavigateTo("ui/codex.png", ct, null, timeoutMs);
+      if (!clicked) {
+        return false;
+      }
+
+      // Verify again
+      isOpen = await Navigation.IsVisible("quik-ref/quick-ref.png", ct);
+    }
+
+    return isOpen;
   }
 
   /// <summary>
