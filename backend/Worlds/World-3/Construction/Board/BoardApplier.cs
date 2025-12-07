@@ -264,7 +264,7 @@ public static class BoardApplier {
       }
 
       return true;
-    } catch (Exception ex) {
+    } catch {
       return false;
     }
   }

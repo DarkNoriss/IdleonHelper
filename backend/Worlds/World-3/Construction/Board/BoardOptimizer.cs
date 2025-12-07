@@ -59,10 +59,28 @@ public static class BoardOptimizer {
     double currentScoreSum = Solver.GetScoreSum(currentScore, weights);
 
     int timeoutMs = timeInSeconds * 1000;
-    Inventory bestInv = await Solver.SolveAsync(inventory, timeoutMs, weights, ct);
+    
+    // Run 4 solver instances in parallel and pick the best result
+    var solverTasks = new List<Task<Inventory>>();
+    for (int i = 0; i < 4; i++) {
+      solverTasks.Add(Solver.SolveAsync(inventory, timeoutMs, weights, ct));
+    }
+    
+    Inventory[] results = await Task.WhenAll(solverTasks);
+    
+    // Find the best inventory based on score sum
+    Inventory bestInv = results[0];
+    double bestScoreSum = Solver.GetScoreSum(bestInv.Score, weights);
+    
+    for (int i = 1; i < results.Length; i++) {
+      double scoreSum = Solver.GetScoreSum(results[i].Score, weights);
+      if (scoreSum > bestScoreSum) {
+        bestScoreSum = scoreSum;
+        bestInv = results[i];
+      }
+    }
 
     Score bestScore = bestInv.Score;
-    double bestScoreSum = Solver.GetScoreSum(bestScore, weights);
 
     // Validate that extracted steps match the optimal board
     List<Step> steps = Steps.GetOptimalSteps(bestInv.Cogs, ct);
