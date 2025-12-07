@@ -17,8 +17,6 @@ public static class Solver {
     Dictionary<string, double> weights,
     CancellationToken ct
   ) {
-    Console.WriteLine($"Solving with goal {string.Join(", ", weights.Select(kvp => $"{kvp.Key} {kvp.Value}"))}");
-
     return await Task.Run(async () => {
       var stopwatch = Stopwatch.StartNew();
       Inventory state = inventory.Clone();
@@ -29,8 +27,6 @@ public static class Solver {
       DateTime lastYield = DateTime.Now;
 
       int iteration = 0;
-
-      Console.WriteLine("Trying to optimize");
 
       while (stopwatch.ElapsedMilliseconds < timeoutMs && !ct.IsCancellationRequested) {
         if ((DateTime.Now - lastYield).TotalMilliseconds > 100) {
@@ -68,15 +64,12 @@ public static class Solver {
           state.Move(slotKey, cogKey);
         }
       }
-      Console.WriteLine($"Tried {iteration} switches");
       stopwatch.Stop();
 
       var scores = solutions.Select(s => GetScoreSum(s.Score, weights)).ToList();
-      Console.WriteLine($"Made {solutions.Count} different attempts with final scores: {string.Join(", ", scores)}");
 
       int bestIndex = scores.IndexOf(scores.Max());
       Inventory best = solutions[bestIndex];
-      Console.WriteLine($"Best solution was number {bestIndex}");
 
       RemoveUselessMoves(best);
 
@@ -119,7 +112,6 @@ public static class Solver {
           && changed.ExpBonus == goal.ExpBonus
           && changed.ExpBoost == goal.ExpBoost
           && changed.FlagBoost == goal.FlagBoost) {
-        Console.WriteLine($"Removed useless move {cog1Key} to {cog2Key}");
         continue;
       }
 

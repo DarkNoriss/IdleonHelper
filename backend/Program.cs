@@ -9,7 +9,6 @@ var app = builder.Build();
 // Register cleanup on application shutdown
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 lifetime.ApplicationStopping.Register(() => {
-    Console.WriteLine("[App] Shutting down, cleaning up resources...");
     WindowCapture.Cleanup();
 });
 
@@ -54,10 +53,10 @@ app.Map("/ws", async context => {
         }
     } catch (OperationCanceledException) {
         // Connection cancelled - normal shutdown
-    } catch (WebSocketException ex) {
-        Console.WriteLine($"[WS] WebSocket error: {ex.Message}");
-    } catch (Exception ex) {
-        Console.WriteLine($"[WS] Unexpected error: {ex.Message}");
+    } catch (WebSocketException) {
+        // WebSocket error - connection closed
+    } catch (Exception) {
+        // Unexpected error - connection closed
     }
 });
 

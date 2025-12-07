@@ -23,15 +23,8 @@ public static class BoardOptimizer {
   public static async Task<ScoreCardData> LoadJsonData(string data, string source, CancellationToken ct) {
       var inv = InventoryExtractor.ExtractFromJson(data);
 
-      Console.WriteLine($"Flaggy shop upgrades loaded successfully ({inv.FlaggyShopUpgrades}).");
-      Console.WriteLine($"Cogs loaded successfully ({inv.Cogs.Count}).");
-      Console.WriteLine($"Flag pose loaded successfully ({inv.FlagPose.Count}).");
-      Console.WriteLine($"Flag upgrades loaded successfully ({inv.Slots.Count}).");
-
       // Store inventory for this session
       inventories[source] = inv;
-
-      Console.WriteLine("JSON data loaded successfully.");
 
       // Return formatted score in ScoreCard format
       var score = inv.Score;
@@ -60,15 +53,10 @@ public static class BoardOptimizer {
     // Adjust weights if no flags
     if (inventory.FlagPose.Count == 0) {
       weights["flaggy"] = 0;
-      Console.WriteLine("No flags found, setting flaggy weight to 0.");
     }
-
-    Console.WriteLine($"Solving with goal {string.Join(", ", weights.Select(kvp => $"{kvp.Key} {kvp.Value}"))}");
 
     Score currentScore = inventory.Score;
     double currentScoreSum = Solver.GetScoreSum(currentScore, weights);
-
-    Console.WriteLine($"Starting solver with time {timeInSeconds} seconds...");
 
     int timeoutMs = timeInSeconds * 1000;
     Inventory bestInv = await Solver.SolveAsync(inventory, timeoutMs, weights, ct);
@@ -76,12 +64,7 @@ public static class BoardOptimizer {
     Score bestScore = bestInv.Score;
     double bestScoreSum = Solver.GetScoreSum(bestScore, weights);
 
-    Console.WriteLine($"Score before optimization: {FormatScore(currentScoreSum)}");
-    Console.WriteLine($"Score after optimization: {FormatScore(bestScoreSum)}");
-    Console.WriteLine($"Difference: {CalculateDifference(bestScoreSum, currentScoreSum)}");
-
     // Validate that extracted steps match the optimal board
-    Console.WriteLine("Checking if steps are valid...");
     List<Step> steps = Steps.GetOptimalSteps(bestInv.Cogs, ct);
     Inventory clone = inventory.Clone();
     foreach (var step in steps) {
@@ -90,24 +73,6 @@ public static class BoardOptimizer {
 
     Score cloneScore = clone.Score;
     double cloneScoreSum = Solver.GetScoreSum(cloneScore, weights);
-
-    if (steps.Count != 0 && Math.Abs(cloneScoreSum - bestScoreSum) < 0.0001) {
-      Console.WriteLine("Steps are valid.");
-      Console.WriteLine("Steps:");
-      for (int i = 0; i < steps.Count; i++) {
-        var step = steps[i];
-        var posFrom = step.Cog.Position(step.KeyFrom);
-        var posTo = step.TargetCog.Position(step.KeyTo);
-        Console.WriteLine($"  [{i}] Move from {posFrom.Location}({posFrom.X}, {posFrom.Y}) [key {step.KeyFrom}] " +
-                         $"to {posTo.Location}({posTo.X}, {posTo.Y}) [key {step.KeyTo}]");
-      }
-    } else if (steps.Count != 0) {
-      Console.WriteLine($"Steps are invalid. Expected score: {FormatScore(bestScoreSum)}, Got: {FormatScore(cloneScoreSum)}");
-      Console.WriteLine($"Expected - BuildRate: {FormatScore(bestScore.BuildRate)}, ExpBonus: {FormatScore(bestScore.ExpBonus)}, Flaggy: {FormatScore(bestScore.Flaggy)}");
-      Console.WriteLine($"Got - BuildRate: {FormatScore(cloneScore.BuildRate)}, ExpBonus: {FormatScore(cloneScore.ExpBonus)}, Flaggy: {FormatScore(cloneScore.Flaggy)}");
-    } else {
-      Console.WriteLine("No steps needed (board already optimal).");
-    }
 
     // Store the optimized inventory so BoardApplier can retrieve it
     inventories[source] = bestInv;

@@ -69,7 +69,6 @@ internal class World3ConstructionHandler : BaseHandler {
         data: "world-3-construction-load-json finished"
       ));
     } catch (Exception ex) {
-      Console.WriteLine($"[WS] Load JSON error: {ex.Message}");
       await Send(ws, new WsResponse(
         type: "error",
         source: req.source,
@@ -141,7 +140,6 @@ internal class World3ConstructionHandler : BaseHandler {
         data: "world-3-construction-optimize finished"
       ));
     } catch (Exception ex) {
-      Console.WriteLine($"[WS] Optimize error: {ex.Message}");
       await Send(ws, new WsResponse(
         type: "error",
         source: req.source,
@@ -171,7 +169,6 @@ internal class World3ConstructionHandler : BaseHandler {
         ));
       }
     } catch (Exception ex) {
-      Console.WriteLine($"[WS] Apply board error: {ex.Message}");
       await Send(ws, new WsResponse(
         type: "error",
         source: req.source,

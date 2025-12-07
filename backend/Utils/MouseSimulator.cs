@@ -61,7 +61,6 @@ public static class MouseSimulator {
     ct.ThrowIfCancellationRequested();
 
     if (points == null || points.Count == 0) {
-      Console.WriteLine("No coordinates to click");
       return;
     }
 

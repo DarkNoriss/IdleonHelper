@@ -101,8 +101,6 @@ public static class BoardApplier {
     int pagesToClick = Math.Abs(pagesToNavigate);
     int newPage = currentPage;
 
-    Console.WriteLine($"changing page to {targetPage}");
-
     for (int i = 0; i < pagesToClick; i++) {
       ct.ThrowIfCancellationRequested();
 
@@ -199,15 +197,11 @@ public static class BoardApplier {
       // Prepare construction interface
       bool prepared = await PrepareConstructionInterface(ct);
       if (!prepared) {
-        var errorMsg = "Failed to prepare Construction interface";
-        Console.WriteLine(errorMsg);
         return false;
       }
 
       var inventory = BoardOptimizer.GetInventory(source);
       if (inventory == null) {
-        var errorMsg = $"Inventory not found for source: {source}";
-        Console.WriteLine(errorMsg);
         return false;
       }
 
@@ -237,8 +231,6 @@ public static class BoardApplier {
           if (currentPage != targetPage) {
             var (navigated, newPage) = await NavigateToPage(targetPage, currentPage, ct);
             if (!navigated) {
-              var errorMsg = $"Failed to navigate to page {targetPage}";
-              Console.WriteLine(errorMsg);
               return false;
             }
             currentPage = newPage;
@@ -259,8 +251,6 @@ public static class BoardApplier {
           if (currentPage != targetPage) {
             var (navigated, newPage) = await NavigateToPage(targetPage, currentPage, ct);
             if (!navigated) {
-              var errorMsg = $"Failed to navigate to page {targetPage}";
-              Console.WriteLine(errorMsg);
               return false;
             }
             currentPage = newPage;
@@ -270,14 +260,11 @@ public static class BoardApplier {
         }
 
         // Perform drag operation
-        Console.WriteLine($"moving cogs from {pos1.X} {pos1.Y} {pos1.Location} to {pos2.X} {pos2.Y} {pos2.Location}");
         await MouseSimulator.Drag(startCoords, endCoords, ct, stepSize: 10);
       }
 
       return true;
     } catch (Exception ex) {
-      var errorMsg = $"Error applying board: {ex.Message}";
-      Console.WriteLine(errorMsg);
       return false;
     }
   }

@@ -19,8 +19,7 @@ internal static class WsRouter {
     WsRequest? req;
     try {
       req = System.Text.Json.JsonSerializer.Deserialize<WsRequest>(json, JsonOptions);
-    } catch (Exception ex) {
-      Console.WriteLine($"[WS] Invalid JSON: {ex.Message}");
+    } catch (Exception) {
       return;
     }
 
@@ -35,7 +34,6 @@ internal static class WsRouter {
       try {
         await handler.HandleAsync(ws, req);
       } catch (Exception ex) {
-        Console.WriteLine($"[WS] Handler error ({req.type}): {ex.Message}");
         await Send(ws, new WsResponse(
           type: "error",
           source: req.source,

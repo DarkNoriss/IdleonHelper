@@ -72,7 +72,7 @@ export const Construction = (): React.ReactElement => {
           const data = JSON.parse(rawData) as ScoreCardData
           setScoreCardData(data)
           setIsProcessing(false)
-          setIsOptimizing(false)
+          // Don't clear isOptimizing here - wait for "done" message
           setError(null)
         } catch (err) {
           setError(err instanceof Error ? err.message : "Failed to parse data")
@@ -85,14 +85,18 @@ export const Construction = (): React.ReactElement => {
         // Check if this is the apply-board done message
         if (doneMessage.includes("apply-board")) {
           setIsApplyingBoard(false)
-        } else {
-          setIsProcessing(false)
+        } else if (doneMessage.includes("optimize")) {
+          // Optimization finished - clear the timer
           setIsOptimizing(false)
           setRemainingTime(null)
           if (countdownIntervalRef.current) {
             clearInterval(countdownIntervalRef.current)
             countdownIntervalRef.current = null
           }
+          setIsProcessing(false)
+        } else {
+          // Other done messages (like load-json)
+          setIsProcessing(false)
         }
       } else if (msg.type === "error") {
         const errorMessage = String(msg.data || "Unknown error")
