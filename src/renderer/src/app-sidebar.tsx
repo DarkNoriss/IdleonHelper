@@ -61,10 +61,6 @@ const data = {
           title: "Construction",
           url: "/world-3/construction",
         },
-        {
-          title: "Construction 2",
-          url: "/world-3/construction2",
-        },
       ],
     },
     {
