@@ -23,7 +23,7 @@ public static class NavigationConstruction {
   }
 
   /// <summary>
-  /// Opens the Cogs tab inside Construction menu.
+  /// Opens the Cogs tab inside Construction menu. Will attempt to open Construction if Cogs tab is not found.
   /// </summary>
   /// <param name="ct">Cancellation token</param>
   /// <param name="timeoutMs">Timeout for finding Cogs tab (default: 100ms)</param>
@@ -32,7 +32,12 @@ public static class NavigationConstruction {
     CancellationToken ct,
     int timeoutMs = Navigation.DEFAULT_TIMEOUT_MS
   ) {
-    return await Navigation.NavigateTo("construction/cogs_tab.png", ct, null, timeoutMs);
+    return await Navigation.NavigateTo(
+      "construction/cogs_tab.png",
+      ct,
+      fallback: (cancellationToken) => OpenConstruction(cancellationToken, timeoutMs),
+      timeoutMs: timeoutMs
+    );
   }
 
   /// <summary>

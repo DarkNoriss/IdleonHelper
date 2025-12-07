@@ -164,13 +164,7 @@ public static class BoardApplier {
   /// Prepares the Construction Cogs interface by opening the tab and ensuring proper state.
   /// </summary>
   private static async Task<bool> PrepareConstructionInterface(CancellationToken ct) {
-    // Open Construction menu
-    bool constructionOpened = await NavigationConstruction.OpenConstruction(ct);
-    if (!constructionOpened) {
-      return false;
-    }
-
-    // Open Cogs tab
+    // Open Cogs tab (will open Construction as fallback if needed)
     bool cogsTabOpened = await NavigationConstruction.OpenCogsTab(ct);
     if (!cogsTabOpened) {
       return false;
