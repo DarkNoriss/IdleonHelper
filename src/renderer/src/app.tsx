@@ -9,6 +9,7 @@ import { GameWindow } from "./pages/game-window"
 import { World1Temp } from "./pages/worlds/world-1/temp"
 import { World2Temp } from "./pages/worlds/world-2/temp"
 import { World3Construction } from "./pages/worlds/world-3/construction"
+import { Construction2 } from "./pages/worlds/world-3/construction2"
 import { World3Temp } from "./pages/worlds/world-3/temp"
 import { World4Temp } from "./pages/worlds/world-4/temp"
 import { World5Temp } from "./pages/worlds/world-5/temp"
@@ -53,6 +54,10 @@ export const AppNew = (): ReactElement => {
                 <Route
                   path="/world-3/construction"
                   element={<World3Construction />}
+                />
+                <Route
+                  path="/world-3/construction2"
+                  element={<Construction2 />}
                 />
                 <Route path="/world-4/temp" element={<World4Temp />} />
                 <Route path="/world-5/temp" element={<World5Temp />} />

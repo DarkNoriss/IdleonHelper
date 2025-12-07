@@ -22,7 +22,7 @@ public static class BoardOptimizer {
   public static readonly Point BOARD_FIRST_COORDS = new(210, 130);
   public static readonly Point COLLECT_ULTIMATE_COGS = new(291, 420);
 
-  public static async Task<Score> LoadJsonData(string data, string source, Func<string, Task>? logCallback, CancellationToken ct) {
+  public static async Task<ScoreCardData> LoadJsonData(string data, string source, Func<string, Task>? logCallback, CancellationToken ct) {
       var rawData = JsonConvert.DeserializeObject<JObject>(data) ?? throw new Exception("JSON data is null.");
 
       var inv = new Inventory();
@@ -127,8 +127,13 @@ public static class BoardOptimizer {
 
       await Log("JSON data loaded successfully.");
 
-      // Return the score
-      return await Task.FromResult(inv.Score);
+      // Return formatted score in ScoreCard format
+      var score = inv.Score;
+      return new ScoreCardData {
+        BuildRate = FormatScore(score.BuildRate),
+        ExpBonus = FormatScore(score.ExpBonus),
+        Flaggy = FormatScore(score.Flaggy)
+      };
     }
 
   public static Inventory? GetInventory(string source) {
@@ -176,49 +181,70 @@ public static class BoardOptimizer {
     await Log($"Score after optimization: {FormatScore(bestScoreSum)}");
     await Log($"Difference: {CalculateDifference(bestScoreSum, currentScoreSum)}");
 
-    // Calculate optimal steps to achieve the optimized board
-    List<Step> steps = [];
-    try {
-      steps = Steps.GetOptimalSteps(bestInv.Cogs, ct);
-      await Log($"Cogs to move: {steps.Count}");
-
-      // Validate steps by applying them to a clone
-      if (steps.Count > 0) {
-        Inventory clone = inventory.Clone();
-        foreach (var step in steps) {
-          clone.Move(step.KeyFrom, step.KeyTo);
-        }
-
-        Score cloneScore = clone.Score;
-        double cloneScoreSum = Solver.GetScoreSum(cloneScore, weights);
-
-        if (Math.Abs(cloneScoreSum - bestScoreSum) < 0.001) {
-          await Log("Steps are valid.");
-        } else {
-          await Log($"Warning: Steps validation failed. Expected score: {FormatScore(bestScoreSum)}, Got: {FormatScore(cloneScoreSum)}");
-        }
-      }
-    } catch (Exception ex) {
-      await Log($"Error calculating steps: {ex.Message}");
-    }
-
     return new OptimizationResult {
-      Before = currentScore,
-      After = bestScore,
-      BeforeSum = currentScoreSum,
-      AfterSum = bestScoreSum,
-      Difference = bestScoreSum - currentScoreSum,
-      DifferencePercent = CalculateDifferencePercent(currentScoreSum, bestScoreSum),
-      BuildRateDiff = bestScore.BuildRate - currentScore.BuildRate,
-      ExpBonusDiff = bestScore.ExpBonus - currentScore.ExpBonus,
-      FlaggyDiff = bestScore.Flaggy - currentScore.Flaggy,
-      ExpBoostDiff = (bestScore.ExpBoost ?? 0) - (currentScore.ExpBoost ?? 0),
-      FlagBoostDiff = (bestScore.FlagBoost ?? 0) - (currentScore.FlagBoost ?? 0),
-      Steps = steps
+      Before = new ScoreCardData {
+        BuildRate = FormatScore(currentScore.BuildRate),
+        ExpBonus = FormatScore(currentScore.ExpBonus),
+        Flaggy = FormatScore(currentScore.Flaggy)
+      },
+      After = new ScoreCardData {
+        BuildRate = FormatScore(bestScore.BuildRate),
+        ExpBonus = FormatScore(bestScore.ExpBonus),
+        Flaggy = FormatScore(bestScore.Flaggy)
+      },
+      BuildRateDiff = FormatScoreDiff(bestScore.BuildRate - currentScore.BuildRate),
+      ExpBonusDiff = FormatScoreDiff(bestScore.ExpBonus - currentScore.ExpBonus),
+      FlaggyDiff = FormatScoreDiff(bestScore.Flaggy - currentScore.Flaggy)
     };
   }
 
   private static string FormatScore(double score) {
+    double abs = Math.Abs(score);
+
+    // Extract from notateNumber default case (ignoring special s cases)
+    if (abs < 100) {
+      return $"{Math.Floor(abs)}";
+    } else if (abs < 1_000) {
+      return $"{Math.Floor(abs)}";
+    } else if (abs < 10_000) {
+      // Math.ceil(e / 10) / 100 + 'K'
+      return $"{Math.Ceiling(abs / 10.0) / 100.0}K";
+    } else if (abs < 100_000) {
+      // Math.ceil(e / 100) / 10 + 'K'
+      return $"{Math.Ceiling(abs / 100.0) / 10.0}K";
+    } else if (abs < 1_000_000) {
+      // Math.ceil(e / 1e3) + 'K'
+      return $"{Math.Ceiling(abs / 1_000.0)}K";
+    } else if (abs < 10_000_000) {
+      // Math.ceil(e / 1e4) / 100 + 'M'
+      return $"{Math.Ceiling(abs / 10_000.0) / 100.0}M";
+    } else if (abs < 100_000_000) {
+      // Math.ceil(e / 1e5) / 10 + 'M'
+      return $"{Math.Ceiling(abs / 100_000.0) / 10.0}M";
+    } else if (abs < 10_000_000_000) {
+      // Math.ceil(e / 1e6) + 'M'
+      return $"{Math.Ceiling(abs / 1_000_000.0)}M";
+    } else if (abs < 10_000_000_000_000) {
+      // Math.ceil(e / 1e9) + 'B' (1e13 threshold)
+      return $"{Math.Ceiling(abs / 1_000_000_000.0)}B";
+    } else if (abs < 10_000_000_000_000_000) {
+      // Math.ceil(e / 1e12) + 'T' (1e16 threshold)
+      return $"{Math.Ceiling(abs / 1_000_000_000_000.0)}T";
+    } else if (abs < 1e22) {
+      // Math.ceil(e / 1e15) + 'Q'
+      return $"{Math.Ceiling(abs / 1_000_000_000_000_000.0)}Q";
+    } else if (abs < 1e24) {
+      // Math.ceil(e / 1e18) + 'QQ'
+      return $"{Math.Ceiling(abs / 1e18)}QQ";
+    } else {
+      // For very large numbers, use E notation
+      double exp = Math.Floor(Math.Log10(abs));
+      double mantissa = Math.Floor((abs / Math.Pow(10, exp)) * 100) / 100.0;
+      return $"{mantissa}E{exp}";
+    }
+  }
+
+  private static string FormatScoreDiff(double score) {
     string sign = score >= 0 ? "+" : "-";
     double abs = Math.Abs(score);
 
@@ -281,17 +307,22 @@ public static class BoardOptimizer {
   }
 }
 
+public class ScoreCardData {
+  public string BuildRate { get; set; } = "";
+  public string ExpBonus { get; set; } = "";
+  public string Flaggy { get; set; } = "";
+  public string? AfterBuildRate { get; set; }
+  public string? AfterExpBonus { get; set; }
+  public string? AfterFlaggy { get; set; }
+  public string? BuildRateDiff { get; set; }
+  public string? ExpBonusDiff { get; set; }
+  public string? FlaggyDiff { get; set; }
+}
+
 public class OptimizationResult {
-  public Score Before { get; set; } = new();
-  public Score After { get; set; } = new();
-  public double BeforeSum { get; set; }
-  public double AfterSum { get; set; }
-  public double Difference { get; set; }
-  public double DifferencePercent { get; set; }
-  public double BuildRateDiff { get; set; }
-  public double ExpBonusDiff { get; set; }
-  public double FlaggyDiff { get; set; }
-  public double ExpBoostDiff { get; set; }
-  public double FlagBoostDiff { get; set; }
-  public List<Step> Steps { get; set; } = [];
+  public ScoreCardData Before { get; set; } = new();
+  public ScoreCardData After { get; set; } = new();
+  public string BuildRateDiff { get; set; } = "";
+  public string ExpBonusDiff { get; set; } = "";
+  public string FlaggyDiff { get; set; } = "";
 }

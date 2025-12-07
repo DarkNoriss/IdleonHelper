@@ -21,31 +21,17 @@ interface TimePreset {
 }
 
 interface ScoreData {
-  BuildRate: number
-  ExpBonus: number
-  Flaggy: number
-  ExpBoost: number | null
-  FlagBoost: number | null
-}
-
-interface OptimizationStep {
-  KeyFrom: number
-  KeyTo: number
+  BuildRate: string
+  ExpBonus: string
+  Flaggy: string
 }
 
 interface OptimizationResult {
   Before: ScoreData
   After: ScoreData
-  BeforeSum: number
-  AfterSum: number
-  BuildRateDiff: number
-  ExpBonusDiff: number
-  FlaggyDiff: number
-  ExpBoostDiff: number
-  FlagBoostDiff: number
-  Difference: number
-  DifferencePercent: number
-  Steps?: OptimizationStep[]
+  BuildRateDiff: string
+  ExpBonusDiff: string
+  FlaggyDiff: string
 }
 
 const TIME_PRESETS: Record<string, TimePreset> = {
@@ -267,56 +253,6 @@ export const World3Construction = (): React.ReactElement => {
     })
   }
 
-  const formatScoreValue = (value: number): string => {
-    const abs = Math.abs(value)
-    const sign = value >= 0 ? "+" : "-"
-
-    // Extract from notateNumber default case (ignoring special s cases)
-    if (abs < 100) {
-      return `${sign}${Math.floor(abs)}`
-    } else if (abs < 1_000) {
-      return `${sign}${Math.floor(abs)}`
-    } else if (abs < 10_000) {
-      // Math.ceil(e / 10) / 100 + 'K'
-      return `${sign}${Math.ceil(abs / 10) / 100}K`
-    } else if (abs < 100_000) {
-      // Math.ceil(e / 100) / 10 + 'K'
-      return `${sign}${Math.ceil(abs / 100) / 10}K`
-    } else if (abs < 1_000_000) {
-      // Math.ceil(e / 1e3) + 'K'
-      return `${sign}${Math.ceil(abs / 1_000)}K`
-    } else if (abs < 10_000_000) {
-      // Math.ceil(e / 1e4) / 100 + 'M'
-      return `${sign}${Math.ceil(abs / 10_000) / 100}M`
-    } else if (abs < 100_000_000) {
-      // Math.ceil(e / 1e5) / 10 + 'M'
-      return `${sign}${Math.ceil(abs / 100_000) / 10}M`
-    } else if (abs < 10_000_000_000) {
-      // Math.ceil(e / 1e6) + 'M'
-      return `${sign}${Math.ceil(abs / 1_000_000)}M`
-    } else if (abs < 10_000_000_000_000) {
-      // Math.ceil(e / 1e9) + 'B' (1e13 threshold)
-      return `${sign}${Math.ceil(abs / 1_000_000_000)}B`
-    } else if (abs < 10_000_000_000_000_000) {
-      // Math.ceil(e / 1e12) + 'T' (1e16 threshold)
-      return `${sign}${Math.ceil(abs / 1_000_000_000_000)}T`
-    } else if (abs < 1_000_000_000_000_000_000_000) {
-      // Math.ceil(e / 1e15) + 'Q'
-      return `${sign}${Math.ceil(abs / 1_000_000_000_000_000)}Q`
-    } else if (abs < 1e22) {
-      // Math.ceil(e / 1e18) + 'QQ'
-      return `${sign}${Math.ceil(abs / 1e18)}QQ`
-    } else if (abs < 1e24) {
-      // Math.ceil(e / 1e21) + 'QQQ'
-      return `${sign}${Math.ceil(abs / 1e21)}QQQ`
-    } else {
-      // For very large numbers, use E notation
-      const exp = Math.floor(Math.log10(abs))
-      const mantissa = Math.floor((abs / Math.pow(10, exp)) * 100) / 100
-      return `${sign}${mantissa}E${exp}`
-    }
-  }
-
   return (
     <div className="flex h-full flex-col gap-4 p-8">
       <h1 className="text-3xl font-bold">World 3 - Construction</h1>
@@ -367,11 +303,9 @@ export const World3Construction = (): React.ReactElement => {
             <h2 className="text-xl font-semibold">Current Score:</h2>
             <div className="bg-muted rounded-md p-4">
               <div className="flex flex-col gap-2 text-sm">
-                <div>Build Rate: {formatScoreValue(score.BuildRate || 0)}</div>
-                <div>Exp Bonus: {formatScoreValue(score.ExpBonus || 0)}</div>
-                <div>Flaggy: {formatScoreValue(score.Flaggy || 0)}</div>
-                <div>Exp Boost: {formatScoreValue(score.ExpBoost ?? 0)}</div>
-                <div>Flag Boost: {formatScoreValue(score.FlagBoost ?? 0)}</div>
+                <div>Build Rate: {score.BuildRate}</div>
+                <div>Exp Bonus: {score.ExpBonus}</div>
+                <div>Flaggy: {score.Flaggy}</div>
               </div>
             </div>
           </div>
@@ -391,123 +325,28 @@ export const World3Construction = (): React.ReactElement => {
                   <div className="flex flex-col gap-2">
                     <h3 className="text-lg font-semibold">Before:</h3>
                     <div className="flex flex-col gap-1 text-sm">
-                      <div>
-                        Build Rate:{" "}
-                        {formatScoreValue(result.Before.BuildRate || 0)}
-                      </div>
-                      <div>
-                        Exp Bonus:{" "}
-                        {formatScoreValue(result.Before.ExpBonus || 0)}
-                      </div>
-                      <div>
-                        Flaggy: {formatScoreValue(result.Before.Flaggy || 0)}
-                      </div>
-                      <div>
-                        Exp Boost:{" "}
-                        {formatScoreValue(result.Before.ExpBoost ?? 0)}
-                      </div>
-                      <div>
-                        Flag Boost:{" "}
-                        {formatScoreValue(result.Before.FlagBoost ?? 0)}
-                      </div>
-                      <div className="mt-2 font-semibold">
-                        Total Score: {formatScoreValue(result.BeforeSum || 0)}
-                      </div>
+                      <div>Build Rate: {result.Before.BuildRate}</div>
+                      <div>Exp Bonus: {result.Before.ExpBonus}</div>
+                      <div>Flaggy: {result.Before.Flaggy}</div>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
                     <h3 className="text-lg font-semibold">After:</h3>
                     <div className="flex flex-col gap-1 text-sm">
-                      <div>
-                        Build Rate:{" "}
-                        {formatScoreValue(result.After.BuildRate || 0)}
-                      </div>
-                      <div>
-                        Exp Bonus:{" "}
-                        {formatScoreValue(result.After.ExpBonus || 0)}
-                      </div>
-                      <div>
-                        Flaggy: {formatScoreValue(result.After.Flaggy || 0)}
-                      </div>
-                      <div>
-                        Exp Boost:{" "}
-                        {formatScoreValue(result.After.ExpBoost ?? 0)}
-                      </div>
-                      <div>
-                        Flag Boost:{" "}
-                        {formatScoreValue(result.After.FlagBoost ?? 0)}
-                      </div>
-                      <div className="mt-2 font-semibold">
-                        Total Score: {formatScoreValue(result.AfterSum || 0)}
-                      </div>
+                      <div>Build Rate: {result.After.BuildRate}</div>
+                      <div>Exp Bonus: {result.After.ExpBonus}</div>
+                      <div>Flaggy: {result.After.Flaggy}</div>
                     </div>
                   </div>
                 </div>
                 <div className="mt-4 border-t pt-4">
                   <h3 className="mb-2 text-lg font-semibold">Improvements:</h3>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      Build Rate:{" "}
-                      {formatScoreValue((result.BuildRateDiff as number) || 0)}
-                    </div>
-                    <div>
-                      Exp Bonus:{" "}
-                      {formatScoreValue((result.ExpBonusDiff as number) || 0)}
-                    </div>
-                    <div>
-                      Flaggy:{" "}
-                      {formatScoreValue((result.FlaggyDiff as number) || 0)}
-                    </div>
-                    <div>
-                      Exp Boost:{" "}
-                      {formatScoreValue((result.ExpBoostDiff as number) || 0)}
-                    </div>
-                    <div>
-                      Flag Boost:{" "}
-                      {formatScoreValue((result.FlagBoostDiff as number) || 0)}
-                    </div>
-                    <div className="text-primary font-bold">
-                      Total Improvement:{" "}
-                      {formatScoreValue((result.Difference as number) || 0)} (
-                      {(result.DifferencePercent as number) || 0}%)
-                    </div>
+                    <div>Build Rate: {result.BuildRateDiff}</div>
+                    <div>Exp Bonus: {result.ExpBonusDiff}</div>
+                    <div>Flaggy: {result.FlaggyDiff}</div>
                   </div>
                 </div>
-                {result.Steps &&
-                  Array.isArray(result.Steps) &&
-                  result.Steps.length > 0 && (
-                    <div className="mt-4 border-t pt-4">
-                      <h3 className="mb-2 text-lg font-semibold">
-                        Steps to Apply ({result.Steps.length} moves):
-                      </h3>
-                      <div className="bg-muted max-h-[400px] overflow-auto rounded-md p-4">
-                        <div className="flex flex-col gap-2 text-sm">
-                          {result.Steps.map(
-                            (step: OptimizationStep, index: number) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-2 rounded border p-2"
-                              >
-                                <span className="text-muted-foreground font-mono font-semibold">
-                                  {index + 1}.
-                                </span>
-                                <span>
-                                  Move cog from position{" "}
-                                  <span className="font-mono font-semibold">
-                                    {step.KeyFrom}
-                                  </span>{" "}
-                                  to position{" "}
-                                  <span className="font-mono font-semibold">
-                                    {step.KeyTo}
-                                  </span>
-                                </span>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
               </div>
             </div>
           )

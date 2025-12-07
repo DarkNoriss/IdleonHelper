@@ -1,7 +1,6 @@
 using System.Net.WebSockets;
 using System.Text.Json;
 using IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
-using Newtonsoft.Json;
 using static IdleonBotBackend.Comms.Handlers.WsHandlerHelpers;
 
 namespace IdleonBotBackend.Comms.Handlers;
@@ -93,7 +92,7 @@ internal class World3ConstructionHandler : BaseHandler {
       }
 
       var score = await BoardOptimizer.LoadJsonData(dataString, req.source, LogCallback, CancellationToken.None);
-      var scoreJson = JsonConvert.SerializeObject(score, Formatting.Indented);
+      var scoreJson = WsHandlerHelpers.SerializeToCamelCase(score);
 
       await Send(ws, new WsResponse(
         type: "data",
@@ -165,7 +164,21 @@ internal class World3ConstructionHandler : BaseHandler {
       ));
 
       var result = await BoardOptimizer.Optimize(req.source, timeInSeconds, LogCallback, CancellationToken.None);
-      var resultJson = JsonConvert.SerializeObject(result, Formatting.Indented);
+      
+      // Convert OptimizationResult to ScoreCardData format
+      var scoreCardData = new ScoreCardData {
+        BuildRate = result.Before.BuildRate,
+        ExpBonus = result.Before.ExpBonus,
+        Flaggy = result.Before.Flaggy,
+        AfterBuildRate = result.After.BuildRate,
+        AfterExpBonus = result.After.ExpBonus,
+        AfterFlaggy = result.After.Flaggy,
+        BuildRateDiff = result.BuildRateDiff,
+        ExpBonusDiff = result.ExpBonusDiff,
+        FlaggyDiff = result.FlaggyDiff
+      };
+      
+      var resultJson = WsHandlerHelpers.SerializeToCamelCase(scoreCardData);
 
       await Send(ws, new WsResponse(
         type: "data",
@@ -176,7 +189,7 @@ internal class World3ConstructionHandler : BaseHandler {
       await Send(ws, new WsResponse(
         type: "log",
         source: req.source,
-        data: $"Optimization completed. Score improvement: {result.DifferencePercent}%"
+        data: "Optimization completed"
       ));
 
       await Send(ws, new WsResponse(
