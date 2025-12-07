@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useJsonDataStore } from "@/stores/json-data"
 import { useWebSocketStore, type WSMessage } from "@/stores/ws"
-import { Check, Play, Save, Send } from "lucide-react"
+import { Check, Loader2, Play, Save, Send } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -252,9 +252,18 @@ export const Construction2 = (): React.ReactElement => {
         </Button>
         <Button
           onClick={handleProcessJson}
-          disabled={!isConnected || isProcessing || !textareaValue.trim()}
+          disabled={
+            !isConnected ||
+            isProcessing ||
+            !textareaValue.trim() ||
+            isOptimizing
+          }
         >
-          <Send className="size-4" />
+          {isProcessing ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Send className="size-4" />
+          )}
           {isProcessing ? "Processing..." : "Send to Process"}
         </Button>
       </div>
@@ -310,7 +319,11 @@ export const Construction2 = (): React.ReactElement => {
                 onClick={handleOptimize}
                 disabled={!isConnected || isOptimizing}
               >
-                <Play className="size-4" />
+                {isOptimizing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Play className="size-4" />
+                )}
                 {isOptimizing ? "Optimizing..." : "Optimize"}
               </Button>
               <Button disabled>
