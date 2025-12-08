@@ -5,9 +5,8 @@ using IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 namespace IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 
 public static class BoardApplier {
-  /// <summary>
-  /// Calculates screen coordinates for a cog position.
-  /// </summary>
+  private const int PAGE_NAV_DELAY_MS = 250;
+
   private static Point CalculateCoords(string location, Point pos) {
     Point baseCoords = location == "board" 
       ? BoardOptimizer.BOARD_FIRST_COORDS 
@@ -19,10 +18,6 @@ public static class BoardApplier {
     );
   }
 
-  /// <summary>
-  /// Gets the current page number by checking button states.
-  /// Returns 1 if on first page, or detects current page by checking disabled buttons.
-  /// </summary>
   private static async Task<int> GetCurrentPage(CancellationToken ct) {
     // Check if we're on first page (prev button disabled)
     bool isFirstPage = await Navigation.IsVisible("construction/cogs-page-prev_off.png", ct, Navigation.DEFAULT_TIMEOUT_MS);
@@ -44,11 +39,6 @@ public static class BoardApplier {
     return -1;
   }
 
-  /// <summary>
-  /// Navigates to a specific page by clicking next/prev buttons.
-  /// Verifies button availability before clicking.
-  /// Returns (success, newCurrentPage).
-  /// </summary>
   private static async Task<(bool success, int newCurrentPage)> NavigateToPage(int targetPage, int currentPage, CancellationToken ct) {
     // Verify we're actually on the page we think we are (especially for page 1)
     if (targetPage == 1) {
@@ -132,6 +122,9 @@ public static class BoardApplier {
         return (false, newPage);
       }
 
+      // Give the game time to register the page change
+      await Task.Delay(PAGE_NAV_DELAY_MS, ct);
+
       // Update current page tracking
       if (isNext) {
         newPage++;
@@ -143,24 +136,14 @@ public static class BoardApplier {
     return (true, newPage);
   }
 
-  /// <summary>
-  /// Calculates which page a spare cog is on based on its Y position.
-  /// Uses SPARE_COLUMNS to determine rows per page (despite the name).
-  /// </summary>
   private static int CalculateSparePage(int yPosition) {
     return (yPosition / BoardOptimizer.SPARE_COLUMNS) + 1;
   }
 
-  /// <summary>
-  /// Calculates the local Y position within a page for a spare cog.
-  /// </summary>
   private static int CalculateSpareLocalY(int yPosition) {
     return yPosition % BoardOptimizer.SPARE_COLUMNS;
   }
 
-  /// <summary>
-  /// Prepares the Construction Cogs interface by opening the tab and ensuring proper state.
-  /// </summary>
   private static async Task<bool> PrepareConstructionInterface(CancellationToken ct) {
     // Open Cogs tab (will open Construction as fallback if needed)
     bool cogsTabOpened = await NavigationConstruction.OpenCogsTab(ct);
@@ -189,33 +172,55 @@ public static class BoardApplier {
     return true;
   }
 
-  /// <summary>
-  /// Applies the optimized board by executing steps with drag operations.
-  /// </summary>
   public static async Task<bool> ApplyBoard(string source, CancellationToken ct) {
     try {
+      Console.WriteLine("[Construction] ApplyBoard started");
+
       // Prepare construction interface
       bool prepared = await PrepareConstructionInterface(ct);
       if (!prepared) {
+        Console.WriteLine("[Construction] Preparation failed");
         return false;
       }
 
+      await Task.Delay(250, ct);
+
       var inventory = BoardOptimizer.GetInventory(source);
       if (inventory == null) {
+        Console.WriteLine("[Construction] No optimized inventory found");
+        return false;
+      }
+
+      // Track working state to use up-to-date positions for each step
+      var workingInventory = BoardOptimizer.GetInitialInventory(source);
+      if (workingInventory == null) {
+        Console.WriteLine("[Construction] No initial inventory found for tracking");
         return false;
       }
 
       // Get optimized steps
       var steps = Steps.GetOptimalSteps(inventory.Cogs, ct);
 
+      Console.WriteLine($"[Construction] Steps to apply: {steps.Count}");
+
       int currentPage = 1;
 
-      foreach (var step in steps) {
+      for (int stepIndex = 0; stepIndex < steps.Count; stepIndex++) {
+        var step = steps[stepIndex];
         ct.ThrowIfCancellationRequested();
 
-        // Get positions for source and target cogs
-        var pos1 = step.Cog.Position(step.KeyFrom);
-        var pos2 = step.TargetCog.Position(step.KeyTo);
+        // Resolve current positions using working inventory (to avoid stale coordinates after swaps)
+        var sourceCog = workingInventory.Cogs.Values.FirstOrDefault(c => c.InitialKey == step.Cog.InitialKey);
+        if (sourceCog == null) {
+          Console.WriteLine($"[Construction] Missing source cog for initialKey={step.Cog.InitialKey}");
+          return false;
+        }
+        int currentFromKey = sourceCog.Key;
+        var pos1 = sourceCog.Position();
+
+        // Target position based on desired key
+        var targetPosCog = workingInventory.Get(step.KeyTo);
+        var pos2 = targetPosCog.Position(step.KeyTo);
 
         Point startCoords = new(), endCoords = new();
 
@@ -259,12 +264,33 @@ public static class BoardApplier {
           endCoords = CalculateCoords("spare", localPos);
         }
 
+        Console.WriteLine(
+          $"[Construction] Step {stepIndex + 1}/{steps.Count}: " +
+          $"from {pos1.Location}({pos1.X},{pos1.Y}) -> {pos2.Location}({pos2.X},{pos2.Y}), " +
+          $"coords {startCoords} -> {endCoords}, page {currentPage}"
+        );
+
         // Perform drag operation
-        await MouseSimulator.Drag(startCoords, endCoords, ct, stepSize: 10);
+        await MouseSimulator.Drag(startCoords, endCoords, ct);
+
+        // Update working inventory to keep positions in sync for subsequent steps
+        workingInventory.Move(currentFromKey, step.KeyTo);
+
+        // Log post-move expected vs working positions for the two cogs involved
+        var srcAfter = workingInventory.Get(step.KeyTo); // now at target
+        var dstAfter = workingInventory.Get(currentFromKey); // what is now at source slot
+        var srcPosAfter = srcAfter.Position();
+        var dstPosAfter = dstAfter.Position();
+        Console.WriteLine(
+          $"[Construction] Post-move: moved initial={step.Cog.InitialKey} now at {srcPosAfter.Location}({srcPosAfter.X},{srcPosAfter.Y}); " +
+          $"slot {currentFromKey} now holds initial={dstAfter.InitialKey} at {dstPosAfter.Location}({dstPosAfter.X},{dstPosAfter.Y})"
+        );
       }
 
+      Console.WriteLine("[Construction] ApplyBoard finished");
       return true;
-    } catch {
+    } catch (Exception ex) {
+      Console.WriteLine($"[Construction] ApplyBoard exception: {ex.Message}");
       return false;
     }
   }
