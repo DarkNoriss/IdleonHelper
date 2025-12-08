@@ -177,10 +177,11 @@ electron-builder --win --publish always
 
 # Update the GitHub release with our generated notes using GitHub API
 Write-Host "Updating GitHub release with release notes..." -ForegroundColor Green
-$releaseNotesJson = $notesContent | ConvertTo-Json
+Start-Sleep -Seconds 2  # Wait a moment for GitHub to process the release
+
 $body = @{
     body = $notesContent
-} | ConvertTo-Json
+} | ConvertTo-Json -Depth 10
 
 $headers = @{
     Authorization = "token $env:GH_TOKEN"
@@ -189,10 +190,11 @@ $headers = @{
 
 $updateUrl = "https://api.github.com/repos/DarkNoriss/IdleonHelper/releases/tags/$tagName"
 try {
-    Invoke-RestMethod -Uri $updateUrl -Method PATCH -Headers $headers -Body $body -ContentType "application/json" | Out-Null
+    $response = Invoke-RestMethod -Uri $updateUrl -Method PATCH -Headers $headers -Body $body -ContentType "application/json"
     Write-Host "Release notes updated successfully!" -ForegroundColor Green
 } catch {
     Write-Host "Warning: Could not update release notes automatically: $_" -ForegroundColor Yellow
+    Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor Yellow
     Write-Host "You can manually update the release notes at:" -ForegroundColor Yellow
     Write-Host "https://github.com/DarkNoriss/IdleonHelper/releases/tag/$tagName" -ForegroundColor Cyan
 }
