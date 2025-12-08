@@ -16,7 +16,6 @@ export const UpdateStatus = (): React.ReactElement => {
 
   const [showLatest, setShowLatest] = useState(false)
   const previousStatusRef = useRef<typeof updateStatus>(updateStatus)
-  const isManualCheckRef = useRef(false)
 
   // Create stable event handlers using useEffectEvent
   const handleShowLatest = useEffectEvent(() => {
@@ -27,24 +26,13 @@ export const UpdateStatus = (): React.ReactElement => {
     setShowLatest(false)
   })
 
-  // Wrapper for checkForUpdates to track manual checks
-  const handleManualCheck = (): void => {
-    isManualCheckRef.current = true
-    checkForUpdates()
-  }
-
   // Handle showing "Latest" state after confirming up-to-date
   useEffect(() => {
     const previousStatus = previousStatusRef.current
 
-    // Only show "Latest" when transitioning from "checking" to "up-to-date" AND it was a manual check
-    if (
-      previousStatus === "checking" &&
-      updateStatus === "up-to-date" &&
-      isManualCheckRef.current
-    ) {
+    // Show "Latest" when transitioning from "checking" to "up-to-date" (both manual and automatic)
+    if (previousStatus === "checking" && updateStatus === "up-to-date") {
       handleShowLatest()
-      isManualCheckRef.current = false // Reset flag
 
       const hideTimer = setTimeout(() => {
         handleHideLatest()
@@ -57,7 +45,6 @@ export const UpdateStatus = (): React.ReactElement => {
       }
     } else if (updateStatus !== "up-to-date") {
       handleHideLatest()
-      isManualCheckRef.current = false // Reset flag if status changes away from up-to-date
       previousStatusRef.current = updateStatus
       return undefined
     } else {
@@ -84,7 +71,7 @@ export const UpdateStatus = (): React.ReactElement => {
                   ? "text-green-500 hover:text-green-600"
                   : "text-muted-foreground hover:text-foreground"
               }`}
-              onClick={handleManualCheck}
+              onClick={checkForUpdates}
               disabled={updateStatus === "checking"}
             >
               {updateStatus === "checking" ? (
