@@ -2,8 +2,14 @@ import { ChildProcessWithoutNullStreams, spawn } from "child_process"
 import { join } from "path"
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
 import { app, BrowserWindow, ipcMain, shell } from "electron"
+import { autoUpdater } from "electron-updater"
 
 let backendProcess: ChildProcessWithoutNullStreams | null = null
+let mainWindow: BrowserWindow | null = null
+
+// Configure auto-updater
+autoUpdater.autoDownload = false // User-initiated updates only
+autoUpdater.autoInstallOnAppQuit = true // Auto-install on quit after download
 
 const getBackendPath = (): string => {
   if (is.dev) {
@@ -59,7 +65,7 @@ const startBackend = (): void => {
 
 const createWindow = (): void => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 958,
     height: 570,
     show: false,
@@ -72,7 +78,7 @@ const createWindow = (): void => {
   })
 
   mainWindow.on("ready-to-show", () => {
-    mainWindow.show()
+    mainWindow?.show()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -117,6 +123,100 @@ app.whenReady().then(() => {
     const window = BrowserWindow.getFocusedWindow()
     if (window) window.close()
   })
+
+  // Update handlers
+  ipcMain.handle("app:get-version", () => {
+    return app.getVersion()
+  })
+
+  ipcMain.handle("updater:check-for-updates", async () => {
+    if (is.dev) {
+      // Skip update check in development
+      return { available: false, currentVersion: app.getVersion() }
+    }
+    try {
+      const result = await autoUpdater.checkForUpdates()
+      return {
+        available: result?.updateInfo ? true : false,
+        currentVersion: app.getVersion(),
+        latestVersion: result?.updateInfo?.version,
+      }
+    } catch (error) {
+      console.error("Update check failed:", error)
+      return {
+        available: false,
+        currentVersion: app.getVersion(),
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
+    }
+  })
+
+  ipcMain.handle("updater:download-update", async () => {
+    if (is.dev) {
+      return { success: false, error: "Updates not available in development" }
+    }
+    try {
+      await autoUpdater.downloadUpdate()
+      return { success: true }
+    } catch (error) {
+      console.error("Update download failed:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
+    }
+  })
+
+  ipcMain.handle("updater:quit-and-install", () => {
+    autoUpdater.quitAndInstall(false, true)
+  })
+
+  // Auto-updater event handlers
+  autoUpdater.on("checking-for-update", () => {
+    mainWindow?.webContents.send("updater:checking-for-update")
+  })
+
+  autoUpdater.on("update-available", (info) => {
+    mainWindow?.webContents.send("updater:update-available", {
+      version: info.version,
+      releaseDate: info.releaseDate,
+    })
+  })
+
+  autoUpdater.on("update-not-available", () => {
+    mainWindow?.webContents.send("updater:update-not-available")
+  })
+
+  autoUpdater.on("update-downloaded", (info) => {
+    mainWindow?.webContents.send("updater:update-downloaded", {
+      version: info.version,
+    })
+  })
+
+  autoUpdater.on("error", (error) => {
+    console.error("Auto-updater error:", error)
+    mainWindow?.webContents.send("updater:error", {
+      message: error.message,
+    })
+  })
+
+  autoUpdater.on("download-progress", (progress) => {
+    mainWindow?.webContents.send("updater:download-progress", {
+      percent: progress.percent,
+      transferred: progress.transferred,
+      total: progress.total,
+    })
+  })
+
+  // Check for updates on startup (only in production)
+  if (!is.dev) {
+    // Delay initial check slightly to let UI load
+    setTimeout(() => {
+      autoUpdater.checkForUpdates().catch((error) => {
+        console.error("Initial update check failed:", error)
+      })
+    }, 2000)
+  }
 
   // World handlers
   import("./worlds/world-3/construction").then((module) => {
