@@ -29,77 +29,77 @@ const data = {
       title: "Dashboard",
       url: "/",
     },
-    {
-      title: "Game Window",
-      url: "/game-window",
-    },
-    {
-      title: "World 1",
-      items: [
-        {
-          title: "Temp",
-          url: "/world-1/temp",
-        },
-      ],
-    },
-    {
-      title: "World 2",
-      items: [
-        {
-          title: "Temp",
-          url: "/world-2/temp",
-        },
-      ],
-    },
+    // {
+    //   title: "Game Window",
+    //   url: "/game-window",
+    // },
+    // {
+    //   title: "World 1",
+    //   items: [
+    //     {
+    //       title: "Temp",
+    //       url: "/world-1/temp",
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: "World 2",
+    //   items: [
+    //     {
+    //       title: "Temp",
+    //       url: "/world-2/temp",
+    //     },
+    //   ],
+    // },
     {
       title: "World 3",
       items: [
-        {
-          title: "Temp",
-          url: "/world-3/temp",
-        },
+        // {
+        //   title: "Temp",
+        //   url: "/world-3/temp",
+        // },
         {
           title: "Construction",
           url: "/world-3/construction",
         },
       ],
     },
-    {
-      title: "World 4",
-      items: [
-        {
-          title: "Temp",
-          url: "/world-4/temp",
-        },
-      ],
-    },
-    {
-      title: "World 5",
-      items: [
-        {
-          title: "Temp",
-          url: "/world-5/temp",
-        },
-      ],
-    },
-    {
-      title: "World 6",
-      items: [
-        {
-          title: "Temp",
-          url: "/world-6/temp",
-        },
-      ],
-    },
-    {
-      title: "World 7",
-      items: [
-        {
-          title: "Temp",
-          url: "/world-7/temp",
-        },
-      ],
-    },
+    // {
+    //   title: "World 4",
+    //   items: [
+    //     {
+    //       title: "Temp",
+    //       url: "/world-4/temp",
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: "World 5",
+    //   items: [
+    //     {
+    //       title: "Temp",
+    //       url: "/world-5/temp",
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: "World 6",
+    //   items: [
+    //     {
+    //       title: "Temp",
+    //       url: "/world-6/temp",
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: "World 7",
+    //   items: [
+    //     {
+    //       title: "Temp",
+    //       url: "/world-7/temp",
+    //     },
+    //   ],
+    // },
   ],
 }
 
@@ -178,6 +178,7 @@ export function AppSidebar({
           )
         })}
       </SidebarContent>
+
       <SidebarFooter className="border-sidebar-border border-t p-4">
         <div className="flex flex-col gap-3">
           {/* Connection Status */}
