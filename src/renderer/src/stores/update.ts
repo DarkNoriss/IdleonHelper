@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { create } from "zustand"
 
 export type UpdateStatus =
+  | "idle"
   | "checking"
   | "up-to-date"
   | "update-available"
@@ -15,22 +16,18 @@ interface UpdateState {
   latestVersion: string | null
   downloadProgress: number | null
   error: string | null
-  logs: string[]
   checkForUpdates: () => Promise<void>
   downloadUpdate: () => Promise<void>
   quitAndInstall: () => Promise<void>
   initialize: () => void
-  addLog: (message: string) => void
-  clearLogs: () => void
 }
 
 export const useUpdateStore = create<UpdateState>((set, get) => ({
-  status: "checking",
-  currentVersion: "0.0.1",
+  status: "idle",
+  currentVersion: "0.0.0",
   latestVersion: null,
   downloadProgress: null,
   error: null,
-  logs: [],
 
   initialize: () => {
     // Get current version
@@ -38,37 +35,17 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
       set({ currentVersion: version })
     })
 
-    // Set up event listeners
-    window.api.updater.onCheckingForUpdate(() => {
-      set({ status: "checking", error: null })
-    })
-
+    // Event listeners - these are the source of truth for status updates
     window.api.updater.onUpdateAvailable((info) => {
-      console.log("[UpdateStore] Update available:", info)
-      const currentStatus = get().status
-      // Only update status if we're checking - prevents race conditions and layout shifts
-      // If already in update-available, just ensure latestVersion is set
-      if (currentStatus === "checking") {
-        set({
-          status: "update-available",
-          latestVersion: info.version,
-          error: null,
-        })
-      } else if (currentStatus !== "update-available") {
-        // If in some other state, update to update-available
-        set({
-          status: "update-available",
-          latestVersion: info.version,
-          error: null,
-        })
-      } else {
-        // Already in update-available, just ensure latestVersion is set
-        set({ latestVersion: info.version })
-      }
+      set({
+        status: "update-available",
+        latestVersion: info.version,
+        error: null,
+      })
     })
 
     window.api.updater.onUpdateNotAvailable(() => {
-      set({ status: "up-to-date", latestVersion: null, error: null })
+      set({ status: "up-to-date", error: null })
     })
 
     window.api.updater.onUpdateDownloaded(() => {
@@ -76,90 +53,38 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
     })
 
     window.api.updater.onUpdateError((error) => {
-      console.error("[UpdateStore] Update error event:", error)
-      set({
-        status: "error",
-        error: error.message,
-      })
+      set({ status: "error", error: error.message })
     })
 
     window.api.updater.onDownloadProgress((progress) => {
-      set({
-        status: "downloading",
-        downloadProgress: progress.percent,
-      })
+      set({ status: "downloading", downloadProgress: progress.percent })
     })
 
-    // Listen for logs from main process
-    window.api.updater.onLog((message) => {
-      get().addLog(message)
-    })
-
-    // Initial check
+    // Do initial check on startup
     get().checkForUpdates()
   },
 
-  addLog: (message: string) => {
-    set((state) => ({
-      logs: [...state.logs.slice(-19), message], // Keep last 20 logs
-    }))
-  },
-
-  clearLogs: () => {
-    set({ logs: [] })
-  },
-
   checkForUpdates: async () => {
+    const { status } = get()
+    // Don't check if already checking or downloading
+    if (status === "checking" || status === "downloading") return
+
     try {
       set({ status: "checking", error: null })
-      const logMsg = "[UpdateStore] Checking for updates..."
-      console.log(logMsg)
-      get().addLog(logMsg)
-
       const result = await window.api.updater.checkForUpdates()
-      const resultMsg = `[UpdateStore] Check result: ${JSON.stringify(result)}`
-      console.log(resultMsg)
-      get().addLog(resultMsg)
 
       if (result.error) {
-        const errorMsg = `[UpdateStore] Update check error: ${result.error}`
-        console.error(errorMsg)
-        get().addLog(errorMsg)
         set({ status: "error", error: result.error })
         return
       }
 
-      // Only update state if event listeners haven't already set it
-      // This prevents race conditions where the event fires before this completes
-      const currentStatus = get().status
-
+      // Update state based on result (events may also fire, but this ensures consistency)
       if (result.available && result.latestVersion) {
-        const availableMsg = `[UpdateStore] Update available: ${result.latestVersion}`
-        console.log(availableMsg)
-        get().addLog(availableMsg)
-        // Only set if not already set by event listener
-        if (currentStatus !== "update-available") {
-          set({
-            status: "update-available",
-            latestVersion: result.latestVersion,
-          })
-        } else {
-          // Just ensure latestVersion is set
-          set({ latestVersion: result.latestVersion })
-        }
+        set({ status: "update-available", latestVersion: result.latestVersion })
       } else {
-        // Only set to up-to-date if event listener hasn't already set update-available
-        if (currentStatus === "checking") {
-          const upToDateMsg = "[UpdateStore] Up to date"
-          console.log(upToDateMsg)
-          get().addLog(upToDateMsg)
-          set({ status: "up-to-date", latestVersion: null })
-        }
+        set({ status: "up-to-date" })
       }
     } catch (error) {
-      const errorMsg = `[UpdateStore] Check failed: ${error instanceof Error ? error.message : "Unknown error"}`
-      console.error(errorMsg)
-      get().addLog(errorMsg)
       set({
         status: "error",
         error: error instanceof Error ? error.message : "Unknown error",
@@ -168,40 +93,18 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
   },
 
   downloadUpdate: async () => {
-    try {
-      // Ensure we've checked for updates first
-      const currentStatus = get().status
-      if (currentStatus !== "update-available") {
-        const warnMsg = `[UpdateStore] Cannot download - status is not 'update-available': ${currentStatus}`
-        console.warn(warnMsg)
-        get().addLog(warnMsg)
-        set({
-          status: "error",
-          error: "Please check for updates first",
-        })
-        return
-      }
+    const { status } = get()
+    if (status !== "update-available") return
 
-      const startMsg = "[UpdateStore] Starting download..."
-      console.log(startMsg)
-      get().addLog(startMsg)
+    try {
       set({ status: "downloading", downloadProgress: 0, error: null })
       const result = await window.api.updater.downloadUpdate()
-      const resultMsg = `[UpdateStore] Download result: ${JSON.stringify(result)}`
-      console.log(resultMsg)
-      get().addLog(resultMsg)
 
       if (!result.success && result.error) {
-        const errorMsg = `[UpdateStore] Download error: ${result.error}`
-        console.error(errorMsg)
-        get().addLog(errorMsg)
         set({ status: "error", error: result.error })
       }
-      // Download progress and completion will be handled by event listeners
+      // Success state will be set by onUpdateDownloaded event
     } catch (error) {
-      const errorMsg = `[UpdateStore] Download failed: ${error instanceof Error ? error.message : "Unknown error"}`
-      console.error(errorMsg)
-      get().addLog(errorMsg)
       set({
         status: "error",
         error: error instanceof Error ? error.message : "Unknown error",
@@ -215,13 +118,12 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
 }))
 
 // Hook to initialize update store on mount
-export const useUpdateInitializer = () => {
+export const useUpdateInitializer = (): void => {
   const initialize = useUpdateStore((state) => state.initialize)
 
   useEffect(() => {
     initialize()
 
-    // Cleanup listeners on unmount
     return () => {
       window.api.updater.removeAllListeners("updater:checking-for-update")
       window.api.updater.removeAllListeners("updater:update-available")

@@ -17,12 +17,7 @@ const api = {
     checkForUpdates: () => ipcRenderer.invoke("updater:check-for-updates"),
     downloadUpdate: () => ipcRenderer.invoke("updater:download-update"),
     quitAndInstall: () => ipcRenderer.invoke("updater:quit-and-install"),
-    onCheckingForUpdate: (callback: () => void) => {
-      ipcRenderer.on("updater:checking-for-update", () => callback())
-    },
-    onUpdateAvailable: (
-      callback: (info: { version: string; releaseDate?: string }) => void
-    ) => {
+    onUpdateAvailable: (callback: (info: { version: string }) => void) => {
       ipcRenderer.on("updater:update-available", (_, info) => callback(info))
     },
     onUpdateNotAvailable: (callback: () => void) => {
@@ -44,9 +39,6 @@ const api = {
       ipcRenderer.on("updater:download-progress", (_, progress) =>
         callback(progress)
       )
-    },
-    onLog: (callback: (message: string) => void) => {
-      ipcRenderer.on("updater:log", (_, message) => callback(message))
     },
     removeAllListeners: (channel: string) => {
       ipcRenderer.removeAllListeners(channel)

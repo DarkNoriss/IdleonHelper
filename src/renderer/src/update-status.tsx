@@ -6,57 +6,52 @@ import { useUpdateStore } from "./stores/update"
 
 export const UpdateStatus = (): React.ReactElement => {
   const {
-    status: updateStatus,
+    status,
     currentVersion,
     latestVersion,
-    error: updateError,
-    logs,
+    error,
     checkForUpdates,
     downloadUpdate,
     quitAndInstall,
-    clearLogs,
   } = useUpdateStore()
 
-  const [showLogs, setShowLogs] = useState(false)
-
   const [showLatest, setShowLatest] = useState(false)
-  const previousStatusRef = useRef<typeof updateStatus>(updateStatus)
+  const prevStatusRef = useRef(status)
 
-  // Create stable event handlers using useEffectEvent
-  const handleShowLatest = useEffectEvent(() => {
+  // Effect events for state updates - avoids lint errors about setState in effects
+  const onBecameLatest = useEffectEvent(() => {
     setShowLatest(true)
   })
 
-  const handleHideLatest = useEffectEvent(() => {
+  const onHideLatest = useEffectEvent(() => {
     setShowLatest(false)
   })
 
-  // Handle showing "Latest" state after confirming up-to-date
+  // Show "Latest" badge briefly after confirming up-to-date
   useEffect(() => {
-    const previousStatus = previousStatusRef.current
+    const wasChecking = prevStatusRef.current === "checking"
+    const isNowUpToDate = status === "up-to-date"
+    prevStatusRef.current = status
 
-    // Show "Latest" when transitioning from "checking" to "up-to-date" (both manual and automatic)
-    if (previousStatus === "checking" && updateStatus === "up-to-date") {
-      handleShowLatest()
-
-      const hideTimer = setTimeout(() => {
-        handleHideLatest()
-      }, 30000) // 30 seconds
-
-      previousStatusRef.current = updateStatus
-
-      return () => {
-        clearTimeout(hideTimer)
-      }
-    } else if (updateStatus !== "up-to-date") {
-      handleHideLatest()
-      previousStatusRef.current = updateStatus
-      return undefined
-    } else {
-      previousStatusRef.current = updateStatus
-      return undefined
+    if (wasChecking && isNowUpToDate) {
+      onBecameLatest()
+      const timer = setTimeout(onHideLatest, 30000)
+      return () => clearTimeout(timer)
     }
-  }, [updateStatus])
+
+    if (status !== "up-to-date") {
+      onHideLatest()
+    }
+
+    return
+  }, [status])
+
+  const isChecking = status === "checking"
+  const showCheckButton = ![
+    "update-available",
+    "downloading",
+    "downloaded",
+  ].includes(status)
 
   return (
     <div className="flex flex-col gap-1">
@@ -65,46 +60,44 @@ export const UpdateStatus = (): React.ReactElement => {
         <span className="text-muted-foreground font-mono text-xs">
           v{currentVersion}
         </span>
-        {updateStatus !== "update-available" &&
-          updateStatus !== "downloading" &&
-          updateStatus !== "downloaded" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-6 gap-1.5 px-2 text-xs transition-all duration-300 ${
-                showLatest
-                  ? "text-green-500 hover:text-green-600"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={checkForUpdates}
-              disabled={updateStatus === "checking"}
-            >
-              {updateStatus === "checking" ? (
-                <>
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>Checking...</span>
-                </>
-              ) : showLatest ? (
-                <>
-                  <Check className="animate-in fade-in zoom-in-95 h-3 w-3 duration-300" />
-                  <span className="animate-in fade-in zoom-in-95 duration-300">
-                    Latest
-                  </span>
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="animate-in fade-in zoom-in-95 h-3 w-3 duration-300" />
-                  <span className="animate-in fade-in zoom-in-95 duration-300">
-                    Check
-                  </span>
-                </>
-              )}
-            </Button>
-          )}
+        {showCheckButton && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-6 gap-1.5 px-2 text-xs transition-all duration-300 ${
+              showLatest
+                ? "text-green-500 hover:text-green-600"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            onClick={checkForUpdates}
+            disabled={isChecking}
+          >
+            {isChecking ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Checking...</span>
+              </>
+            ) : showLatest ? (
+              <>
+                <Check className="animate-in fade-in zoom-in-95 h-3 w-3 duration-300" />
+                <span className="animate-in fade-in zoom-in-95 duration-300">
+                  Latest
+                </span>
+              </>
+            ) : (
+              <>
+                <RefreshCw className="animate-in fade-in zoom-in-95 h-3 w-3 duration-300" />
+                <span className="animate-in fade-in zoom-in-95 duration-300">
+                  Check
+                </span>
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
-      {/* Update Available / Downloading / Downloaded */}
-      {updateStatus === "update-available" && (
+      {/* Update Available */}
+      {status === "update-available" && (
         <div className="flex items-center justify-between rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1.5">
           <span className="text-[11px] font-medium text-blue-400">
             v{latestVersion} available
@@ -120,7 +113,9 @@ export const UpdateStatus = (): React.ReactElement => {
           </Button>
         </div>
       )}
-      {updateStatus === "downloading" && (
+
+      {/* Downloading */}
+      {status === "downloading" && (
         <div className="flex items-center justify-between rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1.5">
           <span className="text-[11px] font-medium text-blue-400">
             v{latestVersion} available
@@ -136,7 +131,9 @@ export const UpdateStatus = (): React.ReactElement => {
           </Button>
         </div>
       )}
-      {updateStatus === "downloaded" && (
+
+      {/* Downloaded */}
+      {status === "downloaded" && (
         <div className="flex items-center justify-between rounded-md border border-green-500/20 bg-green-500/10 px-2 py-1.5">
           <span className="text-[11px] font-medium text-green-400">
             Ready to install
@@ -153,51 +150,14 @@ export const UpdateStatus = (): React.ReactElement => {
         </div>
       )}
 
-      {/* Error Display */}
-      {updateStatus === "error" && updateError && (
+      {/* Error */}
+      {status === "error" && error && (
         <div className="bg-destructive/5 border-destructive/20 flex items-center justify-between rounded-md border px-2 py-1.5">
           <span className="text-destructive text-[11px] font-medium">
-            Error: {updateError}
+            Error: {error}
           </span>
         </div>
       )}
-
-      {/* Debug Logs */}
-      <div className="flex flex-col gap-1">
-        <button
-          type="button"
-          onClick={() => setShowLogs(!showLogs)}
-          className="text-muted-foreground hover:text-foreground text-left text-[10px]"
-        >
-          {showLogs ? "Hide" : "Show"} Debug Logs ({logs.length})
-        </button>
-        {showLogs && logs.length > 0 && (
-          <div className="bg-muted/50 border-muted max-h-32 overflow-y-auto rounded-md border p-2">
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-muted-foreground text-[10px] font-medium">
-                Update Logs
-              </span>
-              <button
-                type="button"
-                onClick={clearLogs}
-                className="text-muted-foreground hover:text-foreground text-[10px]"
-              >
-                Clear
-              </button>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              {logs.map((log, index) => (
-                <div
-                  key={index}
-                  className="font-mono text-[10px] leading-tight"
-                >
-                  {log}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   )
 }

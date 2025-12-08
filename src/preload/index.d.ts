@@ -24,14 +24,10 @@ declare global {
           latestVersion?: string
           error?: string
         }>
-        downloadUpdate: () => Promise<{
-          success: boolean
-          error?: string
-        }>
+        downloadUpdate: () => Promise<{ success: boolean; error?: string }>
         quitAndInstall: () => Promise<void>
-        onCheckingForUpdate: (callback: () => void) => void
         onUpdateAvailable: (
-          callback: (info: { version: string; releaseDate?: string }) => void
+          callback: (info: { version: string }) => void
         ) => void
         onUpdateNotAvailable: (callback: () => void) => void
         onUpdateDownloaded: (
@@ -45,7 +41,6 @@ declare global {
             total: number
           }) => void
         ) => void
-        onLog: (callback: (message: string) => void) => void
         removeAllListeners: (channel: string) => void
       }
     }
