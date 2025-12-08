@@ -66,7 +66,8 @@ if (-not $env:GH_TOKEN) {
     if (Test-Path ".env") {
         $envContent = Get-Content ".env" | Where-Object { $_ -match "^GH_TOKEN=(.+)$" }
         if ($envContent) {
-            $env:GH_TOKEN = $matches[1]
+            $token = $matches[1].Trim('"').Trim("'").Trim()
+            $env:GH_TOKEN = $token
             Write-Host "Loaded GH_TOKEN from .env" -ForegroundColor Green
         } else {
             Write-Host "GH_TOKEN not found in .env file!" -ForegroundColor Red
