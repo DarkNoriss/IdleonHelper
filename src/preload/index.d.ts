@@ -45,6 +45,7 @@ declare global {
             total: number
           }) => void
         ) => void
+        onLog: (callback: (message: string) => void) => void
         removeAllListeners: (channel: string) => void
       }
     }

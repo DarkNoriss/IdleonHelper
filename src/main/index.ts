@@ -127,33 +127,63 @@ app.whenReady().then(() => {
     if (window) window.close()
   })
 
+  // Helper function to send logs to renderer
+  const sendLog = (message: string): void => {
+    mainWindow?.webContents.send("updater:log", message)
+  }
+
   // Update handlers
   ipcMain.handle("app:get-version", () => {
     return app.getVersion()
   })
 
   ipcMain.handle("updater:check-for-updates", async () => {
-    if (is.dev) {
-      // Skip update check in development
-      return { available: false, currentVersion: app.getVersion() }
-    }
+    // Allow update checks in dev mode for debugging
     try {
-      console.log("[Updater] Checking for updates...")
-      console.log("[Updater] Current version:", app.getVersion())
-      console.log("[Updater] Feed URL:", autoUpdater.getFeedURL())
+      const logMsg = "[Updater] Checking for updates..."
+      console.log(logMsg)
+      sendLog(logMsg)
+
+      const currentVersion = app.getVersion()
+      const devModeMsg = `[Updater] Current version: ${currentVersion}, Is dev: ${is.dev}`
+      console.log(devModeMsg)
+      sendLog(devModeMsg)
+
+      if (is.dev) {
+        // In dev mode, simulate checking but return no update
+        const skipMsg = "[Updater] Dev mode - skipping actual check"
+        console.log(skipMsg)
+        sendLog(skipMsg)
+        return { available: false, currentVersion }
+      }
+
+      const feedUrl = autoUpdater.getFeedURL()
+      const feedMsg = `[Updater] Feed URL: ${feedUrl}`
+      console.log(feedMsg)
+      sendLog(feedMsg)
+
       const result = await autoUpdater.checkForUpdates()
-      console.log("[Updater] Check result:", {
-        updateInfo: result?.updateInfo,
-        version: result?.updateInfo?.version,
-        hasUpdate: !!result?.updateInfo,
-      })
+      const checkResultMsg = `[Updater] Check result: version=${result?.updateInfo?.version}, hasUpdate=${!!result?.updateInfo}`
+      console.log(checkResultMsg)
+      sendLog(checkResultMsg)
+
+      // Check if the detected version is actually newer
+      const latestVersion = result?.updateInfo?.version
+      const isNewer = latestVersion && latestVersion !== currentVersion
+
+      const compareMsg = `[Updater] Version comparison: current=${currentVersion}, latest=${latestVersion}, isNewer=${isNewer}`
+      console.log(compareMsg)
+      sendLog(compareMsg)
+
       return {
-        available: result?.updateInfo ? true : false,
-        currentVersion: app.getVersion(),
-        latestVersion: result?.updateInfo?.version,
+        available: result?.updateInfo ? isNewer : false,
+        currentVersion,
+        latestVersion: isNewer ? latestVersion : undefined,
       }
     } catch (error) {
-      console.error("[Updater] Update check failed:", error)
+      const errorMsg = `[Updater] Update check failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      console.error(errorMsg)
+      sendLog(errorMsg)
       return {
         available: false,
         currentVersion: app.getVersion(),
@@ -163,16 +193,28 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle("updater:download-update", async () => {
-    if (is.dev) {
-      return { success: false, error: "Updates not available in development" }
-    }
     try {
-      console.log("[Updater] Starting download...")
+      const startMsg = "[Updater] Starting download..."
+      console.log(startMsg)
+      sendLog(startMsg)
+
+      const devModeMsg = `[Updater] Is dev mode: ${is.dev}`
+      console.log(devModeMsg)
+      sendLog(devModeMsg)
+
+      if (is.dev) {
+        return { success: false, error: "Updates not available in development" }
+      }
+
       await autoUpdater.downloadUpdate()
-      console.log("[Updater] Download initiated")
+      const initiatedMsg = "[Updater] Download initiated"
+      console.log(initiatedMsg)
+      sendLog(initiatedMsg)
       return { success: true }
     } catch (error) {
-      console.error("[Updater] Update download failed:", error)
+      const errorMsg = `[Updater] Update download failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      console.error(errorMsg)
+      sendLog(errorMsg)
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -190,11 +232,9 @@ app.whenReady().then(() => {
   })
 
   autoUpdater.on("update-available", (info) => {
-    console.log("[Updater Event] update-available:", {
-      version: info.version,
-      releaseDate: info.releaseDate,
-      releaseName: info.releaseName,
-    })
+    const eventMsg = `[Updater Event] update-available: version=${info.version}`
+    console.log(eventMsg)
+    sendLog(eventMsg)
     mainWindow?.webContents.send("updater:update-available", {
       version: info.version,
       releaseDate: info.releaseDate,
@@ -212,11 +252,9 @@ app.whenReady().then(() => {
   })
 
   autoUpdater.on("error", (error) => {
-    console.error("[Updater Event] error:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-    })
+    const errorMsg = `[Updater Event] error: ${error.message}`
+    console.error(errorMsg)
+    sendLog(errorMsg)
     mainWindow?.webContents.send("updater:error", {
       message: error.message,
     })

@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react"
-import { CheckCircle, Download, Loader2, RefreshCw } from "lucide-react"
+import { Check, Download, Loader2, RefreshCw, Rocket } from "lucide-react"
 
 import { Button } from "./components/ui/button"
 import { useUpdateStore } from "./stores/update"
@@ -10,10 +10,14 @@ export const UpdateStatus = (): React.ReactElement => {
     currentVersion,
     latestVersion,
     error: updateError,
+    logs,
     checkForUpdates,
     downloadUpdate,
     quitAndInstall,
+    clearLogs,
   } = useUpdateStore()
+
+  const [showLogs, setShowLogs] = useState(false)
 
   const [showLatest, setShowLatest] = useState(false)
   const previousStatusRef = useRef<typeof updateStatus>(updateStatus)
@@ -82,7 +86,7 @@ export const UpdateStatus = (): React.ReactElement => {
                 </>
               ) : showLatest ? (
                 <>
-                  <CheckCircle className="animate-in fade-in zoom-in-95 h-3 w-3 duration-300" />
+                  <Check className="animate-in fade-in zoom-in-95 h-3 w-3 duration-300" />
                   <span className="animate-in fade-in zoom-in-95 duration-300">
                     Latest
                   </span>
@@ -100,44 +104,52 @@ export const UpdateStatus = (): React.ReactElement => {
       </div>
 
       {/* Update Available / Downloading / Downloaded */}
-      {(updateStatus === "update-available" ||
-        updateStatus === "downloading" ||
-        updateStatus === "downloaded") && (
-        <div className="bg-primary/5 border-primary/20 flex items-center justify-between rounded-md border px-2 py-1.5">
-          <span className="text-primary text-[11px] font-medium">
+      {updateStatus === "update-available" && (
+        <div className="flex items-center justify-between rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1.5">
+          <span className="text-[11px] font-medium text-blue-400">
             v{latestVersion} available
           </span>
-          {updateStatus === "downloading" ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-primary hover:text-primary hover:bg-primary/10 h-6 gap-1.5 px-2 text-xs"
-              disabled
-            >
-              <Loader2 className="h-3 w-3 animate-spin" />
-              <span>Downloading...</span>
-            </Button>
-          ) : updateStatus === "downloaded" ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-primary hover:text-primary hover:bg-primary/10 h-6 gap-1.5 px-2 text-xs"
-              onClick={quitAndInstall}
-            >
-              <CheckCircle className="h-3 w-3" />
-              <span>Install</span>
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-primary hover:text-primary hover:bg-primary/10 h-6 gap-1.5 px-2 text-xs"
-              onClick={downloadUpdate}
-            >
-              <Download className="h-3 w-3" />
-              <span>Update</span>
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 gap-1.5 px-2 text-xs text-blue-400 hover:bg-blue-500/10 hover:text-blue-300"
+            onClick={downloadUpdate}
+          >
+            <Download className="h-3 w-3" />
+            <span>Update</span>
+          </Button>
+        </div>
+      )}
+      {updateStatus === "downloading" && (
+        <div className="flex items-center justify-between rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1.5">
+          <span className="text-[11px] font-medium text-blue-400">
+            v{latestVersion} available
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 gap-1.5 px-2 text-xs text-blue-400 hover:bg-blue-500/10 hover:text-blue-300"
+            disabled
+          >
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>Downloading...</span>
+          </Button>
+        </div>
+      )}
+      {updateStatus === "downloaded" && (
+        <div className="flex items-center justify-between rounded-md border border-green-500/20 bg-green-500/10 px-2 py-1.5">
+          <span className="text-[11px] font-medium text-green-400">
+            Ready to install
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 gap-1.5 px-2 text-xs text-green-400 hover:bg-green-500/10 hover:text-green-300"
+            onClick={quitAndInstall}
+          >
+            <Rocket className="h-3 w-3" />
+            <span>Install</span>
+          </Button>
         </div>
       )}
 
@@ -149,6 +161,43 @@ export const UpdateStatus = (): React.ReactElement => {
           </span>
         </div>
       )}
+
+      {/* Debug Logs */}
+      <div className="flex flex-col gap-1">
+        <button
+          type="button"
+          onClick={() => setShowLogs(!showLogs)}
+          className="text-muted-foreground hover:text-foreground text-left text-[10px]"
+        >
+          {showLogs ? "Hide" : "Show"} Debug Logs ({logs.length})
+        </button>
+        {showLogs && logs.length > 0 && (
+          <div className="bg-muted/50 border-muted max-h-32 overflow-y-auto rounded-md border p-2">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-muted-foreground text-[10px] font-medium">
+                Update Logs
+              </span>
+              <button
+                type="button"
+                onClick={clearLogs}
+                className="text-muted-foreground hover:text-foreground text-[10px]"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              {logs.map((log, index) => (
+                <div
+                  key={index}
+                  className="font-mono text-[10px] leading-tight"
+                >
+                  {log}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

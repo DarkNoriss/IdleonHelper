@@ -45,6 +45,9 @@ const api = {
         callback(progress)
       )
     },
+    onLog: (callback: (message: string) => void) => {
+      ipcRenderer.on("updater:log", (_, message) => callback(message))
+    },
     removeAllListeners: (channel: string) => {
       ipcRenderer.removeAllListeners(channel)
     },
