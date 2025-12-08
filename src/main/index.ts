@@ -10,6 +10,8 @@ let mainWindow: BrowserWindow | null = null
 // Configure auto-updater
 autoUpdater.autoDownload = false // User-initiated updates only
 autoUpdater.autoInstallOnAppQuit = true // Auto-install on quit after download
+// autoUpdater.channel = "beta" // Uncomment to check for pre-releases
+// autoUpdater.allowPrerelease = true // Uncomment to allow pre-releases
 
 const getBackendPath = (): string => {
   if (is.dev) {
