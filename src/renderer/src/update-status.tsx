@@ -59,8 +59,10 @@ export const UpdateStatus = (): React.ReactElement => {
       handleHideLatest()
       isManualCheckRef.current = false // Reset flag if status changes away from up-to-date
       previousStatusRef.current = updateStatus
+      return undefined
     } else {
       previousStatusRef.current = updateStatus
+      return undefined
     }
   }, [updateStatus])
 
