@@ -17,7 +17,9 @@
     "build": "pnpm typecheck && pnpm build:backend && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "pnpm build && electron-builder --dir",
-    "build:win": "pnpm build && electron-builder --win"
+    "build:win": "pnpm build && electron-builder --win",
+    "release:win": "pnpm build && electron-builder --win --publish always",
+    "release": "powershell -ExecutionPolicy Bypass -File .\\scripts\\release.ps1"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
