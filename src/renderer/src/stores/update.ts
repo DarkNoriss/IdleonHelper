@@ -40,6 +40,7 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
     })
 
     window.api.updater.onUpdateAvailable((info) => {
+      console.log("[UpdateStore] Update available:", info)
       set({
         status: "update-available",
         latestVersion: info.version,
@@ -56,6 +57,7 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
     })
 
     window.api.updater.onUpdateError((error) => {
+      console.error("[UpdateStore] Update error event:", error)
       set({
         status: "error",
         error: error.message,
@@ -76,22 +78,28 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
   checkForUpdates: async () => {
     try {
       set({ status: "checking", error: null })
+      console.log("[UpdateStore] Checking for updates...")
       const result = await window.api.updater.checkForUpdates()
+      console.log("[UpdateStore] Check result:", result)
 
       if (result.error) {
+        console.error("[UpdateStore] Update check error:", result.error)
         set({ status: "error", error: result.error })
         return
       }
 
       if (result.available && result.latestVersion) {
+        console.log("[UpdateStore] Update available:", result.latestVersion)
         set({
           status: "update-available",
           latestVersion: result.latestVersion,
         })
       } else {
+        console.log("[UpdateStore] Up to date")
         set({ status: "up-to-date", latestVersion: null })
       }
     } catch (error) {
+      console.error("[UpdateStore] Check failed:", error)
       set({
         status: "error",
         error: error instanceof Error ? error.message : "Unknown error",
@@ -101,14 +109,18 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
 
   downloadUpdate: async () => {
     try {
+      console.log("[UpdateStore] Starting download...")
       set({ status: "downloading", downloadProgress: 0, error: null })
       const result = await window.api.updater.downloadUpdate()
+      console.log("[UpdateStore] Download result:", result)
 
       if (!result.success && result.error) {
+        console.error("[UpdateStore] Download error:", result.error)
         set({ status: "error", error: result.error })
       }
       // Download progress and completion will be handled by event listeners
     } catch (error) {
+      console.error("[UpdateStore] Download failed:", error)
       set({
         status: "error",
         error: error instanceof Error ? error.message : "Unknown error",

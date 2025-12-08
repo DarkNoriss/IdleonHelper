@@ -9,6 +9,7 @@ export const UpdateStatus = (): React.ReactElement => {
     status: updateStatus,
     currentVersion,
     latestVersion,
+    error: updateError,
     checkForUpdates,
     downloadUpdate,
     quitAndInstall,
@@ -137,6 +138,15 @@ export const UpdateStatus = (): React.ReactElement => {
               <span>Update</span>
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Error Display */}
+      {updateStatus === "error" && updateError && (
+        <div className="bg-destructive/5 border-destructive/20 flex items-center justify-between rounded-md border px-2 py-1.5">
+          <span className="text-destructive text-[11px] font-medium">
+            Error: {updateError}
+          </span>
         </div>
       )}
     </div>

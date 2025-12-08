@@ -74,6 +74,7 @@ const createWindow = (): void => {
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
+      devTools: true, // Enable DevTools for debugging (F12 or Ctrl+Shift+I)
     },
   })
 
@@ -135,14 +136,22 @@ app.whenReady().then(() => {
       return { available: false, currentVersion: app.getVersion() }
     }
     try {
+      console.log("[Updater] Checking for updates...")
+      console.log("[Updater] Current version:", app.getVersion())
+      console.log("[Updater] Feed URL:", autoUpdater.getFeedURL())
       const result = await autoUpdater.checkForUpdates()
+      console.log("[Updater] Check result:", {
+        updateInfo: result?.updateInfo,
+        version: result?.updateInfo?.version,
+        hasUpdate: !!result?.updateInfo,
+      })
       return {
         available: result?.updateInfo ? true : false,
         currentVersion: app.getVersion(),
         latestVersion: result?.updateInfo?.version,
       }
     } catch (error) {
-      console.error("Update check failed:", error)
+      console.error("[Updater] Update check failed:", error)
       return {
         available: false,
         currentVersion: app.getVersion(),
@@ -156,10 +165,12 @@ app.whenReady().then(() => {
       return { success: false, error: "Updates not available in development" }
     }
     try {
+      console.log("[Updater] Starting download...")
       await autoUpdater.downloadUpdate()
+      console.log("[Updater] Download initiated")
       return { success: true }
     } catch (error) {
-      console.error("Update download failed:", error)
+      console.error("[Updater] Update download failed:", error)
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -177,6 +188,11 @@ app.whenReady().then(() => {
   })
 
   autoUpdater.on("update-available", (info) => {
+    console.log("[Updater Event] update-available:", {
+      version: info.version,
+      releaseDate: info.releaseDate,
+      releaseName: info.releaseName,
+    })
     mainWindow?.webContents.send("updater:update-available", {
       version: info.version,
       releaseDate: info.releaseDate,
@@ -194,7 +210,11 @@ app.whenReady().then(() => {
   })
 
   autoUpdater.on("error", (error) => {
-    console.error("Auto-updater error:", error)
+    console.error("[Updater Event] error:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    })
     mainWindow?.webContents.send("updater:error", {
       message: error.message,
     })
