@@ -24,3 +24,4 @@ publish:
   provider: github
   owner: DarkNoriss
   repo: IdleonHelper
+  releaseType: release
