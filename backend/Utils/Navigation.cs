@@ -8,8 +8,6 @@ namespace IdleonHelperBackend.Utils;
 /// </summary>
 public static class Navigation {
   public const int DEFAULT_TIMEOUT_MS = 100; // Quick check - image should be there or not
-  public const int DEFAULT_INTERVAL_MS = 50;
-  public const double DEFAULT_THRESHOLD = 0.9;
 
   /// <summary>
   /// Gets the base path for assets. Tries multiple locations to support both development and production.
@@ -48,7 +46,7 @@ public static class Navigation {
     Func<CancellationToken, Task<bool>>? fallback = null,
     int timeoutMs = DEFAULT_TIMEOUT_MS,
     int? clickInterval = null,
-    double threshold = DEFAULT_THRESHOLD
+    double threshold = ImageProcessing.DEFAULT_IMAGE_THRESHOLD
   ) {
     ct.ThrowIfCancellationRequested();
 
@@ -96,7 +94,7 @@ public static class Navigation {
     string[] navigationChain,
     CancellationToken ct,
     int timeoutMs = DEFAULT_TIMEOUT_MS,
-    double threshold = DEFAULT_THRESHOLD
+    double threshold = ImageProcessing.DEFAULT_IMAGE_THRESHOLD
   ) {
     ct.ThrowIfCancellationRequested();
 
@@ -108,12 +106,12 @@ public static class Navigation {
       ct.ThrowIfCancellationRequested();
 
       string imagePath = navigationChain[i];
-      bool success = await NavigateTo(imagePath, ct, null, timeoutMs, null, threshold);
+      bool success = await NavigateTo(imagePath, ct, null, timeoutMs, null, threshold: threshold);
 
       if (!success) {
         // If this step failed and it's not the first step, try navigating from the beginning
         if (i > 0) {
-          return await NavigateChain(navigationChain, ct, timeoutMs, threshold);
+          return await NavigateChain(navigationChain, ct, timeoutMs, threshold: threshold);
         }
         return false;
       }
@@ -143,7 +141,7 @@ public static class Navigation {
     string imagePath,
     CancellationToken ct,
     int timeoutMs = 1000,
-    double threshold = DEFAULT_THRESHOLD
+    double threshold = ImageProcessing.DEFAULT_IMAGE_THRESHOLD
   ) {
     ct.ThrowIfCancellationRequested();
 
