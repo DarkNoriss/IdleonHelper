@@ -1,3 +1,4 @@
-provider: generic
-url: https://example.com/auto-updates
-updaterCacheDirName: idleon-updater
+provider: github
+owner: DarkNoriss
+repo: IdleonHelper
+updaterCacheDirName: idleonhelper-updater

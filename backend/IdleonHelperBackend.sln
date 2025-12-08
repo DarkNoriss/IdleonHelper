@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36705.20 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdleonHelperBackend", "IdleonHelperBackend.csproj", "{C823F194-DF18-4B2B-A838-742E1412303B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C823F194-DF18-4B2B-A838-742E1412303B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C823F194-DF18-4B2B-A838-742E1412303B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C823F194-DF18-4B2B-A838-742E1412303B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C823F194-DF18-4B2B-A838-742E1412303B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {439B83B0-B459-4CBD-A288-16247CFA1E12}
+	EndGlobalSection
+EndGlobal
