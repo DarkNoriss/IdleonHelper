@@ -2,44 +2,40 @@ namespace IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 
 public static class Steps {
   public static List<Step> GetOptimalSteps(Dictionary<int, Cog> optimized, CancellationToken ct) {
+    // Work on a mutable view keyed by current position (InitialKey), preserving desired Key
+    // working dictionary keyed by current position; value contains desired Key
+    var working = optimized.Values.ToDictionary(c => c.InitialKey, c => new Cog(c));
     List<Step> steps = [];
 
-    // Find cogs that need to be moved (where Key != InitialKey)
-    var cogsToMove = optimized.Values
-      .Select(c => new Cog(c))
-      .Where(c => c.Key != c.InitialKey)
-      .ToList();
-
-    // Build a dictionary of interim cogs (keyed by their initial position)
-    var interimCogs = new Dictionary<int, Cog>();
-    foreach (var cog in cogsToMove) {
-      interimCogs[cog.InitialKey] = cog;
-    }
-
-    // Build the optimal sequence of moves
-    while (interimCogs.Count > 0) {
+    // Continue until every cog is at its desired position (Key == InitialKey)
+    while (true) {
       ct.ThrowIfCancellationRequested();
 
-      var firstEntry = interimCogs.First();
-      var (key, cog) = firstEntry;
-      var targetCog = interimCogs.GetValueOrDefault(cog.Key, new Cog { Key = key });
-
-      if (targetCog == cog) {
-        interimCogs.Remove(key);
-        continue;
+      // Find a cog that is not in its desired position (dictionary key is current position)
+      var kvp = working.FirstOrDefault(kvp => kvp.Key != kvp.Value.Key);
+      if (kvp.Value == null) {
+        break;
       }
 
-      // Swap: move cog from its initial position to its target position
-      // The cog at the target position needs to be moved to the current position temporarily
-      interimCogs[key] = targetCog;
+      int from = kvp.Key;           // current position
+      var outOfPlace = kvp.Value;   // cog currently at 'from'
+      int to = outOfPlace.Key;      // desired position
 
-      steps.Add(new Step(cog, targetCog, key, cog.Key));
+      // Identify the cog currently sitting at the target position
+      var targetCog = working[to];
 
-      // Remove the cog that was moved to its target position
-      interimCogs.Remove(cog.Key);
+      // Record the swap step
+      steps.Add(new Step(outOfPlace, targetCog, from, to));
+
+      // Simulate the swap in the working inventory to keep positions consistent
+      Swap(working, from, to);
     }
 
     return steps;
+  }
+
+  private static void Swap(Dictionary<int, Cog> inv, int from, int to) {
+    (inv[from], inv[to]) = (inv[to], inv[from]);
   }
 }
 
