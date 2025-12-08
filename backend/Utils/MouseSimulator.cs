@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace IdleonBotBackend.Utils;
+namespace IdleonHelperBackend.Utils;
 
 /// <summary>
 /// Provides methods for simulating mouse interactions (clicks and drags) on a target window.

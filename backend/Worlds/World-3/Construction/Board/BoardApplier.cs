@@ -1,8 +1,8 @@
 using System.Drawing;
-using IdleonBotBackend.Utils;
-using IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+using IdleonHelperBackend.Utils;
+using IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 
-namespace IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+namespace IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 
 public static class BoardApplier {
   /// <summary>

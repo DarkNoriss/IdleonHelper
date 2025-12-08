@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+namespace IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 
 public static class InventoryExtractor {
   public static Inventory ExtractFromJson(string jsonData) {

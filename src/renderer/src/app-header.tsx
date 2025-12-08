@@ -17,7 +17,7 @@ export const AppHeader = (): React.ReactElement => {
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
       <div className="flex items-center">
-        <h1 className="text-smfont-semibold">Idleon Bot</h1>
+        <h1 className="text-smfont-semibold">Idleon Helper</h1>
       </div>
 
       <div className="absolute right-0 flex items-center gap-2">

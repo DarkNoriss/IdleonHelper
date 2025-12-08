@@ -1,6 +1,6 @@
 using System.Net.WebSockets;
 
-namespace IdleonBotBackend.Comms.Handlers;
+namespace IdleonHelperBackend.Comms.Handlers;
 
 internal interface IWsHandler {
   bool CanHandle(string messageType);

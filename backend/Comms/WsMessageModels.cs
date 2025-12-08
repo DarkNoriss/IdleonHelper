@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace IdleonBotBackend.Comms;
+namespace IdleonHelperBackend.Comms;
 
 internal record WsRequest(string type, string source, JsonElement? data = null);
 

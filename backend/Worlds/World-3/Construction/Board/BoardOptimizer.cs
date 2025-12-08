@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+namespace IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 
 public static class BoardOptimizer {
   private static readonly int SOLVER_TIME = 10000;

@@ -1,7 +1,7 @@
 using System.Drawing;
 using OpenCvSharp;
 
-namespace IdleonBotBackend.Utils;
+namespace IdleonHelperBackend.Utils;
 
 /// <summary>
 /// Base navigation functionality for finding and clicking UI elements with fallback support.

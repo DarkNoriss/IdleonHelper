@@ -1,5 +1,5 @@
 # =====================================================================
-# Build backend (.NET) and prepare final IdleonBotBackend.exe
+# Build backend (.NET) and prepare final IdleonHelperBackend.exe
 # =====================================================================
 
 Write-Host "Cleaning old backend output..."
@@ -12,7 +12,7 @@ if (Test-Path $backendOut) {
 New-Item -ItemType Directory -Force -Path $backendOut | Out-Null
 
 Write-Host "Publishing backend with dotnet publish..."
-dotnet publish ./backend/IdleonBotBackend.csproj `
+dotnet publish ./backend/IdleonHelperBackend.csproj `
     -c Release `
     -r win-x64 `
     --self-contained true `

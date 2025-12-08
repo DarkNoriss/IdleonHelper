@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+namespace IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 
 public static class Solver {
   public static double GetScoreSum(Score score, Dictionary<string, double> weights) {

@@ -4,7 +4,7 @@ using System.Text.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace IdleonBotBackend.Comms.Handlers;
+namespace IdleonHelperBackend.Comms.Handlers;
 
 internal abstract class BaseHandler : IWsHandler {
   public abstract bool CanHandle(string messageType);

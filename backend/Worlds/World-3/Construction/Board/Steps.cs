@@ -1,4 +1,4 @@
-namespace IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+namespace IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 
 public static class Steps {
   public static List<Step> GetOptimalSteps(Dictionary<int, Cog> optimized, CancellationToken ct) {

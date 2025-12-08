@@ -1,6 +1,6 @@
 using System.Net.WebSockets;
 
-namespace IdleonBotBackend.Comms.Handlers;
+namespace IdleonHelperBackend.Comms.Handlers;
 
 internal class TestHandler : BaseHandler {
   public override bool CanHandle(string messageType) {

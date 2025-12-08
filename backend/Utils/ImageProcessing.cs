@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Drawing;
 using OpenCvSharp;
 
-namespace IdleonBotBackend.Utils;
+namespace IdleonHelperBackend.Utils;
 
 /// <summary>
 /// Provides methods for finding images on screen using template matching and performing actions on them.

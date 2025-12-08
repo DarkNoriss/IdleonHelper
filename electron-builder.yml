@@ -1,5 +1,5 @@
-appId: com.electron.idelonbot
-productName: IdleonBot
+appId: com.electron.idleonhelper
+productName: IdleonHelper
 directories:
   buildResources: build
 files:
@@ -13,7 +13,7 @@ extraResources:
   - from: resources/backend
     to: backend
 win:
-  executableName: IdleonBot
+  executableName: IdleonHelper
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

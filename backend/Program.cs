@@ -1,7 +1,7 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
-using IdleonBotBackend.Comms;
-using IdleonBotBackend.Utils;
+using IdleonHelperBackend.Comms;
+using IdleonHelperBackend.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();

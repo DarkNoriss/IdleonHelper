@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 
-namespace IdleonBotBackend.Utils;
+namespace IdleonHelperBackend.Utils;
 
 public class WindowCapture {
     private const string WINDOW_NAME = "Legends Of Idleon";

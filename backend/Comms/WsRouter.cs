@@ -1,9 +1,9 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using IdleonBotBackend.Comms.Handlers;
+using IdleonHelperBackend.Comms.Handlers;
 
-namespace IdleonBotBackend.Comms;
+namespace IdleonHelperBackend.Comms;
 
 internal static class WsRouter {
   private static readonly JsonSerializerOptions JsonOptions = new() {

@@ -7,9 +7,14 @@ let backendProcess: ChildProcessWithoutNullStreams | null = null
 
 const getBackendPath = (): string => {
   if (is.dev) {
-    return join(process.cwd(), "resources", "backend", "IdleonBotBackend.exe")
+    return join(
+      process.cwd(),
+      "resources",
+      "backend",
+      "IdleonHelperBackend.exe"
+    )
   } else {
-    return join(process.resourcesPath, "backend", "IdleonBotBackend.exe")
+    return join(process.resourcesPath, "backend", "IdleonHelperBackend.exe")
   }
 }
 
@@ -84,12 +89,15 @@ const createWindow = (): void => {
   }
 }
 
+// Set the app name for Task Manager and system display
+app.setName("IdleonHelper")
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId("com.electron")
+  electronApp.setAppUserModelId("com.electron.idleonhelper")
 
   // Start the backend
   startBackend()

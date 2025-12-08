@@ -1,4 +1,4 @@
-namespace IdleonBotBackend.Utils;
+namespace IdleonHelperBackend.Utils;
 
 /// <summary>
 /// Navigation functionality specific to Construction features.

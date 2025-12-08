@@ -1,10 +1,10 @@
 using System.Net.WebSockets;
 using System.Text.Json;
-using IdleonBotBackend.Utils;
-using IdleonBotBackend.Worlds.World3.Construction.Board.BoardOptimizer;
-using static IdleonBotBackend.Comms.Handlers.WsHandlerHelpers;
+using IdleonHelperBackend.Utils;
+using IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+using static IdleonHelperBackend.Comms.Handlers.WsHandlerHelpers;
 
-namespace IdleonBotBackend.Comms.Handlers;
+namespace IdleonHelperBackend.Comms.Handlers;
 
 internal class World3ConstructionHandler : BaseHandler {
   public override bool CanHandle(string messageType) {
