@@ -10,7 +10,7 @@ namespace IdleonHelperBackend.Utils;
 public static class ImageProcessing {
   private const int DEFAULT_IMAGE_INTERVAL_MS = 50;
   private const int DEFAULT_IMAGE_TIMEOUT_MS = 5000;
-  private const double DEFAULT_IMAGE_THRESHOLD = 0.9;
+  public const double DEFAULT_IMAGE_THRESHOLD = 0.9;
 
   /// <summary>
   /// Represents screen offset boundaries for filtering search results.
