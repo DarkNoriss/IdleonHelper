@@ -9,21 +9,18 @@ namespace IdleonHelperBackend.Utils;
 public static class MouseSimulator {
   private static readonly Random _random = new Random();
   
-  // Click timing constants (25% faster than research baseline)
-  public const int MOUSE_CLICK_DELAY = 188; // Average delay between clicks (25% faster)
-  private const int MOUSE_CLICK_HOLD_MIN = 38; // Minimum hold time (25% faster)
-  private const int MOUSE_CLICK_HOLD_MAX = 90; // Maximum hold time (25% faster)
+  public const int MOUSE_CLICK_DELAY = 170;
+  private const int MOUSE_CLICK_HOLD_MIN = 80;
+  private const int MOUSE_CLICK_HOLD_MAX = 80; 
   
-  // Drag timing constants (matching clicks, but movement is MUCH faster)
-  private const int MOUSE_DRAG_DELAY = 188; // Delay after drag (matches click delay - gives app time to catch up)
-  private const int MOUSE_DRAG_HOLD_MIN = 60; // Initial hold before drag (25% faster - gives app time)
-  private const int MOUSE_DRAG_HOLD_MAX = 135; // Maximum initial hold (25% faster)
+  private const int MOUSE_DRAG_DELAY = 170;
+  private const int MOUSE_DRAG_HOLD_MIN = 80;
+  private const int MOUSE_DRAG_HOLD_MAX = 80;
   
-  // Movement parameters (FAST dragging - gaming speed)
-  private const double BASE_SPEED = 3.0; // pixels per millisecond (3000 px/s - very fast)
+  private const double BASE_SPEED = 2.0; // pixels per millisecond (3000 px/s - very fast)
   private const int MIN_STEP_DELAY = 1; // Minimum delay between movement steps (very fast)
   private const int MAX_STEP_DELAY = 3; // Maximum delay between movement steps (very fast)
-  private const int STEP_SIZE = 8; // Larger steps = fewer steps = faster completion
+  private const int STEP_SIZE = 5; // Larger steps = fewer steps = faster completion
 
   /// <summary>
   /// Simulates a human-like mouse click at the specified coordinates.
