@@ -4,59 +4,76 @@ using System.Runtime.InteropServices;
 namespace IdleonHelperBackend.Utils;
 
 /// <summary>
-/// Provides methods for simulating mouse interactions (clicks and drags) on a target window.
+/// Provides methods for simulating human-like mouse interactions.
 /// </summary>
 public static class MouseSimulator {
-  // Timing constants - DO NOT LOWER THESE VALUES
-  public const int MOUSE_CLICK_DELAY = 125; // Minimum delay between clicks
-  private const int MOUSE_CLICK_DELAY_HOLD = 25; // Minimum hold time for click
-  private const int MOUSE_DRAG_DELAY = 125; // Minimum delay after drag
-  private const int MOUSE_DRAG_DELAY_HOLD = 25; // Minimum hold time during drag
+  private static readonly Random _random = new Random();
+  
+  public const int MOUSE_CLICK_DELAY = 170;
+  private const int MOUSE_CLICK_HOLD_MIN = 80;
+  private const int MOUSE_CLICK_HOLD_MAX = 80; 
+  
+  private const int MOUSE_DRAG_DELAY = 170;
+  private const int MOUSE_DRAG_HOLD_MIN = 80;
+  private const int MOUSE_DRAG_HOLD_MAX = 80;
+  
+  private const double BASE_SPEED = 2.0; // pixels per millisecond (3000 px/s - very fast)
+  private const int MIN_STEP_DELAY = 1; // Minimum delay between movement steps (very fast)
+  private const int MAX_STEP_DELAY = 3; // Maximum delay between movement steps (very fast)
+  private const int STEP_SIZE = 5; // Larger steps = fewer steps = faster completion
 
   /// <summary>
-  /// Simulates a mouse click at the specified coordinates.
+  /// Simulates a human-like mouse click at the specified coordinates.
+  /// Includes slight position variation and randomized timing.
   /// </summary>
   /// <param name="point">The coordinates to click at</param>
   /// <param name="ct">Cancellation token</param>
   /// <param name="times">Number of times to click (default: 1)</param>
-  /// <param name="interval">Delay between clicks in milliseconds (default: MOUSE_CLICK_DELAY)</param>
-  /// <param name="intervalHold">Hold time for each click in milliseconds (default: MOUSE_CLICK_DELAY_HOLD)</param>
+  /// <param name="interval">Base delay between clicks in milliseconds (default: MOUSE_CLICK_DELAY)</param>
   public static async Task Click(
     Point point,
     CancellationToken ct,
     int times = 1,
-    int interval = MOUSE_CLICK_DELAY,
-    int intervalHold = MOUSE_CLICK_DELAY_HOLD
+    int interval = MOUSE_CLICK_DELAY
   ) {
     ct.ThrowIfCancellationRequested();
 
     IntPtr hWnd = WindowCapture.GetWindowHandle();
-    int lParam = MakeLong(point.X, point.Y);
 
     for (int i = 0; i < times; i++) {
       ct.ThrowIfCancellationRequested();
 
+      // Add slight random offset (±2 pixels) for more natural clicking
+      int offsetX = _random.Next(-2, 3);
+      int offsetY = _random.Next(-2, 3);
+      Point clickPoint = new Point(point.X + offsetX, point.Y + offsetY);
+      int lParam = MakeLong(clickPoint.X, clickPoint.Y);
+
+      // Randomized hold time
+      int holdTime = _random.Next(MOUSE_CLICK_HOLD_MIN, MOUSE_CLICK_HOLD_MAX);
+      
+      // Randomized interval with ±20% variation
+      int actualInterval = interval + _random.Next(-(interval / 5), interval / 5);
+
       PostMessage(hWnd, (uint)MouseMessages.WM_LBUTTONDOWN, 1, lParam);
-      await Task.Delay(intervalHold, ct);
+      await Task.Delay(holdTime, ct);
       PostMessage(hWnd, (uint)MouseMessages.WM_LBUTTONUP, 0, lParam);
-      await Task.Delay(interval, ct);
+      await Task.Delay(actualInterval, ct);
     }
   }
 
   /// <summary>
-  /// Simulates mouse clicks at multiple coordinates.
+  /// Simulates human-like mouse clicks at multiple coordinates.
   /// </summary>
   /// <param name="points">List of coordinates to click at</param>
   /// <param name="ct">Cancellation token</param>
   /// <param name="times">Number of times to click each coordinate (default: 1)</param>
-  /// <param name="interval">Delay between clicks in milliseconds (default: MOUSE_CLICK_DELAY)</param>
-  /// <param name="intervalHold">Hold time for each click in milliseconds (default: MOUSE_CLICK_DELAY_HOLD)</param>
+  /// <param name="interval">Base delay between clicks in milliseconds (default: MOUSE_CLICK_DELAY)</param>
   public static async Task Click(
     List<Point> points,
     CancellationToken ct,
     int times = 1,
-    int interval = MOUSE_CLICK_DELAY,
-    int intervalHold = MOUSE_CLICK_DELAY_HOLD
+    int interval = MOUSE_CLICK_DELAY
   ) {
     ct.ThrowIfCancellationRequested();
 
@@ -66,87 +83,134 @@ public static class MouseSimulator {
 
     foreach (var point in points) {
       ct.ThrowIfCancellationRequested();
-      await Click(point, ct, times, interval, intervalHold);
+      await Click(point, ct, times, interval);
     }
   }
 
   /// <summary>
-  /// Simulates a mouse drag operation from start to end coordinates.
+  /// Simulates a human-like mouse drag operation using bezier curves for natural movement.
   /// </summary>
   /// <param name="start">Starting coordinates</param>
   /// <param name="end">Ending coordinates</param>
   /// <param name="ct">Cancellation token</param>
   /// <param name="interval">Delay after drag in milliseconds (default: MOUSE_DRAG_DELAY)</param>
-  /// <param name="hold">Hold time during drag in milliseconds (default: MOUSE_DRAG_DELAY_HOLD)</param>
-  /// <param name="instant">If true, performs instant drag; otherwise performs smooth drag (default: false)</param>
-  /// <param name="stepSize">Step size for smooth drag in pixels (default: 1)</param>
   public static async Task Drag(
     Point start,
     Point end,
     CancellationToken ct,
-    int interval = MOUSE_DRAG_DELAY,
-    int hold = MOUSE_DRAG_DELAY_HOLD,
-    bool instant = false,
-    int stepSize = 1
+    int interval = MOUSE_DRAG_DELAY
   ) {
     ct.ThrowIfCancellationRequested();
 
     IntPtr hwnd = WindowCapture.GetWindowHandle();
-    int startLParam = MakeLong(start.X, start.Y);
-    int endLParam = MakeLong(end.X, end.Y);
+    
+    // Add slight random offset to start position
+    int startOffsetX = _random.Next(-1, 2);
+    int startOffsetY = _random.Next(-1, 2);
+    Point actualStart = new Point(start.X + startOffsetX, start.Y + startOffsetY);
+    
+    Console.WriteLine($"[MouseSimulator] Human-like drag from {actualStart.X},{actualStart.Y} to {end.X},{end.Y}");
 
-    if (instant) {
-      await DragInstant(startLParam, endLParam, hwnd, hold, ct);
-    } else {
-      await DragSmooth(startLParam, endLParam, hwnd, hold, stepSize, ct);
-    }
-
-    await Task.Delay(interval, ct);
-  }
-
-  /// <summary>
-  /// Performs an instant drag operation (no intermediate steps).
-  /// </summary>
-  private static async Task DragInstant(int start, int end, IntPtr hwnd, int hold, CancellationToken ct) {
-    PostMessage(hwnd, (uint)MouseMessages.WM_LBUTTONDOWN, 1, start);
-    PostMessage(hwnd, (uint)MouseMessages.WM_MOUSEMOVE, 0, start);
-    await Task.Delay(hold, ct);
-    PostMessage(hwnd, (uint)MouseMessages.WM_MOUSEMOVE, 0, end);
-    PostMessage(hwnd, (uint)MouseMessages.WM_LBUTTONUP, 0, end);
-  }
-
-  /// <summary>
-  /// Performs a smooth drag operation with intermediate steps.
-  /// </summary>
-  private static async Task DragSmooth(int start, int end, IntPtr hwnd, int hold, int stepSize, CancellationToken ct) {
-    int startX = (short)(start & 0xFFFF);
-    int startY = (short)((start >> 16) & 0xFFFF);
-    int endX = (short)(end & 0xFFFF);
-    int endY = (short)((end >> 16) & 0xFFFF);
-
-    int distanceX = Math.Abs(endX - startX);
-    int distanceY = Math.Abs(endY - startY);
-    double distance = Math.Sqrt(distanceX * distanceX + distanceY * distanceY);
-    int steps = (int)Math.Ceiling(distance / stepSize);
-
-    PostMessage(hwnd, (uint)MouseMessages.WM_LBUTTONDOWN, 1, start);
-    await Task.Delay(hold, ct);
-    PostMessage(hwnd, (uint)MouseMessages.WM_MOUSEMOVE, 0, start);
-
+    // Calculate distance and duration
+    double distance = Math.Sqrt(
+      Math.Pow(end.X - actualStart.X, 2) + 
+      Math.Pow(end.Y - actualStart.Y, 2)
+    );
+    
+    // Fast movement - calculate based on step size, not time
+    int steps = (int)Math.Ceiling(distance / STEP_SIZE);
+    steps = Math.Max(5, steps); // Minimum 5 steps for smoothness
+    
+    // Generate control points for bezier curve
+    Point control1 = GenerateControlPoint(actualStart, end, 0.33);
+    Point control2 = GenerateControlPoint(actualStart, end, 0.67);
+    
+    // Randomized initial hold
+    int initialHold = _random.Next(MOUSE_DRAG_HOLD_MIN, MOUSE_DRAG_HOLD_MAX);
+    
+    // Start drag
+    int startLParam = MakeLong(actualStart.X, actualStart.Y);
+    PostMessage(hwnd, (uint)MouseMessages.WM_LBUTTONDOWN, 1, startLParam);
+    await Task.Delay(initialHold, ct);
+    
+    // Move along bezier curve
+    Point lastPoint = actualStart;
     for (int i = 1; i <= steps; i++) {
-      if (ct.IsCancellationRequested) return;
+      if (ct.IsCancellationRequested) {
+        PostMessage(hwnd, (uint)MouseMessages.WM_LBUTTONUP, 0, MakeLong(lastPoint.X, lastPoint.Y));
+        return;
+      }
 
-      int currentX = startX + (endX - startX) * i / steps;
-      int currentY = startY + (endY - startY) * i / steps;
-      int currentLParam = MakeLong(currentX, currentY);
-
-      PostMessage(hwnd, (uint)MouseMessages.WM_MOUSEMOVE, 0, currentLParam);
-      await Task.Delay(1, ct);
+      double t = (double)i / steps;
+      Point currentPoint = CalculateBezierPoint(t, actualStart, control1, control2, end);
+      
+      // Skip if point hasn't moved (prevents unnecessary messages)
+      if (currentPoint.X == lastPoint.X && currentPoint.Y == lastPoint.Y) {
+        continue;
+      }
+      
+      int currentLParam = MakeLong(currentPoint.X, currentPoint.Y);
+      PostMessage(hwnd, (uint)MouseMessages.WM_MOUSEMOVE, 1, currentLParam);
+      
+      lastPoint = currentPoint;
+      
+      // Variable delay between steps for more natural movement
+      int stepDelay = _random.Next(MIN_STEP_DELAY, MAX_STEP_DELAY);
+      await Task.Delay(stepDelay, ct);
     }
+    
+    // Ensure we end exactly at target
+    int endLParam = MakeLong(end.X, end.Y);
+    PostMessage(hwnd, (uint)MouseMessages.WM_MOUSEMOVE, 1, endLParam);
+    
+    // Randomized final hold
+    int finalHold = _random.Next(MOUSE_DRAG_HOLD_MIN, MOUSE_DRAG_HOLD_MAX);
+    await Task.Delay(finalHold, ct);
+    
+    // Release
+    PostMessage(hwnd, (uint)MouseMessages.WM_LBUTTONUP, 0, endLParam);
+    
+    // Final delay with variation
+    int actualInterval = interval + _random.Next(-(interval / 5), interval / 5);
+    await Task.Delay(actualInterval, ct);
+  }
 
-    PostMessage(hwnd, (uint)MouseMessages.WM_MOUSEMOVE, 0, end);
-    await Task.Delay(hold, ct);
-    PostMessage(hwnd, (uint)MouseMessages.WM_LBUTTONUP, 0, end);
+  /// <summary>
+  /// Generates a control point for bezier curve with random offset.
+  /// </summary>
+  private static Point GenerateControlPoint(Point start, Point end, double position) {
+    int midX = start.X + (int)((end.X - start.X) * position);
+    int midY = start.Y + (int)((end.Y - start.Y) * position);
+    
+    // Add perpendicular offset for more natural curve
+    int dx = end.X - start.X;
+    int dy = end.Y - start.Y;
+    double distance = Math.Sqrt(dx * dx + dy * dy);
+    
+    // Offset amount based on distance (longer drags = more curve)
+    int maxOffset = (int)(distance * 0.15);
+    maxOffset = Math.Min(maxOffset, 50); // Cap at 50 pixels
+    
+    int offsetX = _random.Next(-maxOffset, maxOffset);
+    int offsetY = _random.Next(-maxOffset, maxOffset);
+    
+    return new Point(midX + offsetX, midY + offsetY);
+  }
+
+  /// <summary>
+  /// Calculates a point on a cubic bezier curve.
+  /// </summary>
+  private static Point CalculateBezierPoint(double t, Point p0, Point p1, Point p2, Point p3) {
+    double u = 1 - t;
+    double tt = t * t;
+    double uu = u * u;
+    double uuu = uu * u;
+    double ttt = tt * t;
+    
+    int x = (int)(uuu * p0.X + 3 * uu * t * p1.X + 3 * u * tt * p2.X + ttt * p3.X);
+    int y = (int)(uuu * p0.Y + 3 * uu * t * p1.Y + 3 * u * tt * p2.Y + ttt * p3.Y);
+    
+    return new Point(x, y);
   }
 
   /// <summary>

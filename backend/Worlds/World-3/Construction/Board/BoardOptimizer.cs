@@ -12,10 +12,13 @@ public static class BoardOptimizer {
 
   // Store inventories per session/source
   private static readonly Dictionary<string, Inventory> inventories = new();
+  // Preserve original inventory for reconciliation/debugging
+  private static readonly Dictionary<string, Inventory> initialInventories = new();
 
-  public const int SPARE_COLUMNS = 5;
-  public const int SPARE_ROWS = 3;
-  public const int COGS_STEP = 47;
+  public const int SPARE_COLUMNS = 3;
+  public const int SPARE_ROWS = 5;
+  public const int COGS_STEP = 48;
+  
   public static readonly Point SPARE_FIRST_COORDS = new(25, 130);
   public static readonly Point BOARD_FIRST_COORDS = new(210, 130);
   public static readonly Point COLLECT_ULTIMATE_COGS = new(291, 420);
@@ -23,8 +26,9 @@ public static class BoardOptimizer {
   public static async Task<ScoreCardData> LoadJsonData(string data, string source, CancellationToken ct) {
       var inv = InventoryExtractor.ExtractFromJson(data);
 
-      // Store inventory for this session
-      inventories[source] = inv;
+      // Store inventory for this session and preserve the initial snapshot
+      initialInventories[source] = inv.Clone();
+      inventories[source] = inv.Clone();
 
       // Return formatted score in ScoreCard format
       var score = inv.Score;
@@ -37,6 +41,10 @@ public static class BoardOptimizer {
 
   public static Inventory? GetInventory(string source) {
     return inventories.TryGetValue(source, out var inv) ? inv : null;
+  }
+
+  public static Inventory? GetInitialInventory(string source) {
+    return initialInventories.TryGetValue(source, out var inv) ? inv.Clone() : null;
   }
 
   public static async Task<OptimizationResult> Optimize(
@@ -57,28 +65,14 @@ public static class BoardOptimizer {
 
     Score currentScore = inventory.Score;
     double currentScoreSum = Solver.GetScoreSum(currentScore, weights);
+    Console.WriteLine($"[Construction] Optimize start score: buildRate={currentScore.BuildRate}, expBonus={currentScore.ExpBonus}, flaggy={currentScore.Flaggy}, sum={currentScoreSum}");
 
     int timeoutMs = timeInSeconds * 1000;
     
-    // Run 4 solver instances in parallel and pick the best result
-    var solverTasks = new List<Task<Inventory>>();
-    for (int i = 0; i < 4; i++) {
-      solverTasks.Add(Solver.SolveAsync(inventory, timeoutMs, weights, ct));
-    }
-    
-    Inventory[] results = await Task.WhenAll(solverTasks);
-    
-    // Find the best inventory based on score sum
-    Inventory bestInv = results[0];
+    // Single solver instance (multi-instance did not provide value on single core)
+    Inventory bestInv = await Solver.SolveAsync(inventory, timeoutMs, weights, ct);
     double bestScoreSum = Solver.GetScoreSum(bestInv.Score, weights);
-    
-    for (int i = 1; i < results.Length; i++) {
-      double scoreSum = Solver.GetScoreSum(results[i].Score, weights);
-      if (scoreSum > bestScoreSum) {
-        bestScoreSum = scoreSum;
-        bestInv = results[i];
-      }
-    }
+    Console.WriteLine($"[Construction] Optimize best score: buildRate={bestInv.Score.BuildRate}, expBonus={bestInv.Score.ExpBonus}, flaggy={bestInv.Score.Flaggy}, sum={bestScoreSum}");
 
     Score bestScore = bestInv.Score;
 

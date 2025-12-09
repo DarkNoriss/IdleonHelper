@@ -1,7 +1,8 @@
 import * as React from "react"
 import { useJsonDataStore } from "@/stores/json-data"
+import { useWorkingStore } from "@/stores/working"
 import { useWebSocketStore, type WSMessage } from "@/stores/ws"
-import { Check, Loader2, Play, Save, Send } from "lucide-react"
+import { Check, Loader2, Play, Save, Send, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { ButtonWorkingAction } from "@/components/button-working-action"
 
 import { ScoreCard } from "./score-card"
 
@@ -45,6 +47,8 @@ const TIME_PRESETS: Record<string, TimePreset> = {
 export const Construction = (): React.ReactElement => {
   const { jsonData, setJsonData } = useJsonDataStore()
   const { isConnected, send, subscribe } = useWebSocketStore()
+  const { stopWorking } = useWorkingStore()
+
   const [textareaValue, setTextareaValue] = React.useState("")
   const [scoreCardData, setScoreCardData] =
     React.useState<ScoreCardData | null>(null)
@@ -52,7 +56,6 @@ export const Construction = (): React.ReactElement => {
   const [error, setError] = React.useState<string | null>(null)
   const [timePreset, setTimePreset] = React.useState<string>("medium")
   const [isOptimizing, setIsOptimizing] = React.useState(false)
-  const [isApplyingBoard, setIsApplyingBoard] = React.useState(false)
   const [remainingTime, setRemainingTime] = React.useState<number | null>(null)
   const countdownIntervalRef = React.useRef<NodeJS.Timeout | null>(null)
 
@@ -83,8 +86,12 @@ export const Construction = (): React.ReactElement => {
         const doneMessage = String(msg.data || "")
 
         // Check if this is the apply-board done message
-        if (doneMessage.includes("apply-board")) {
-          setIsApplyingBoard(false)
+        if (
+          doneMessage.includes("apply-board") ||
+          doneMessage.includes("collect-ultimate-cogs") ||
+          doneMessage.includes("trash-cogs")
+        ) {
+          stopWorking()
         } else if (doneMessage.includes("optimize")) {
           // Optimization finished - clear the timer
           setIsOptimizing(false)
@@ -105,7 +112,7 @@ export const Construction = (): React.ReactElement => {
         // Reset all processing states on error
         setIsProcessing(false)
         setIsOptimizing(false)
-        setIsApplyingBoard(false)
+        stopWorking()
         setRemainingTime(null)
         if (countdownIntervalRef.current) {
           clearInterval(countdownIntervalRef.current)
@@ -224,10 +231,10 @@ export const Construction = (): React.ReactElement => {
     })
   }
 
-  const handleApplyBoard = (): void => {
+  const handleApplyBoard = (): boolean => {
     if (!scoreCardData) {
       setError("Please load and optimize data first before applying board.")
-      return
+      return false
     }
 
     if (
@@ -236,16 +243,39 @@ export const Construction = (): React.ReactElement => {
       !scoreCardData.afterFlaggy
     ) {
       setError("No optimized board found. Please run optimization first.")
-      return
+      return false
     }
 
     setError(null)
-    setIsApplyingBoard(true)
 
     send({
       type: "world-3-construction-apply-board",
       source: SOURCE,
     })
+
+    return true
+  }
+
+  const handleCollectUltimateCogs = (): boolean => {
+    setError(null)
+
+    send({
+      type: "world-3-construction-collect-ultimate-cogs",
+      source: SOURCE,
+    })
+
+    return true
+  }
+
+  const handleTrashCogs = (): boolean => {
+    setError(null)
+
+    send({
+      type: "world-3-construction-trash-cogs",
+      source: SOURCE,
+    })
+
+    return true
   }
 
   const formatTime = (seconds: number): string => {
@@ -256,13 +286,15 @@ export const Construction = (): React.ReactElement => {
 
   return (
     <div className="flex h-full flex-col gap-3 p-3">
-      <Textarea
-        placeholder="Enter JSON data here..."
-        value={textareaValue}
-        onChange={(e) => setTextareaValue(e.target.value)}
-        rows={4}
-      />
-
+      <div>
+        <Textarea
+          variant="sm"
+          placeholder="Enter JSON data here..."
+          value={textareaValue}
+          onChange={(e) => setTextareaValue(e.target.value)}
+          rows={4}
+        />
+      </div>
       {error && (
         <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
           {error}
@@ -343,7 +375,13 @@ export const Construction = (): React.ReactElement => {
 
             <div className="grid grid-cols-2 gap-3">
               <Button
-                variant="outline"
+                variant={
+                  scoreCardData.afterBuildRate &&
+                  scoreCardData.afterExpBonus &&
+                  scoreCardData.afterFlaggy
+                    ? "outline"
+                    : "default"
+                }
                 onClick={handleOptimize}
                 disabled={!isConnected || isOptimizing}
               >
@@ -354,27 +392,51 @@ export const Construction = (): React.ReactElement => {
                 )}
                 {isOptimizing ? "Optimizing..." : "Optimize"}
               </Button>
-              <Button
-                onClick={handleApplyBoard}
-                disabled={
-                  !isConnected ||
-                  isApplyingBoard ||
-                  !scoreCardData.afterBuildRate ||
-                  !scoreCardData.afterExpBonus ||
-                  !scoreCardData.afterFlaggy
-                }
-              >
-                {isApplyingBoard ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Check className="size-4" />
+
+              {scoreCardData.afterBuildRate &&
+                scoreCardData.afterExpBonus &&
+                scoreCardData.afterFlaggy && (
+                  <ButtonWorkingAction
+                    actionKey="apply-board"
+                    label="Apply Board"
+                    workingLabel="Working..."
+                    icon={<Check className="size-4" />}
+                    workingIcon={<Loader2 className="size-4 animate-spin" />}
+                    disabled={!isConnected}
+                    onAction={handleApplyBoard}
+                  />
                 )}
-                {isApplyingBoard ? "Applying..." : "Apply Board"}
-              </Button>
             </div>
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Cog Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-3">
+          <ButtonWorkingAction
+            actionKey="collect-ultimate-cogs"
+            label="Collect ultimate cogs"
+            workingLabel="Collecting..."
+            icon={<Send className="size-4" />}
+            workingIcon={<Loader2 className="size-4 animate-spin" />}
+            disabled={!isConnected}
+            onAction={handleCollectUltimateCogs}
+          />
+          <ButtonWorkingAction
+            actionKey="trash-cogs"
+            label="Trash cogs"
+            workingLabel="Trashing..."
+            icon={<Trash2 className="size-4" />}
+            workingIcon={<Loader2 className="size-4 animate-spin" />}
+            variant="destructive"
+            disabled={!isConnected}
+            onAction={handleTrashCogs}
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }
