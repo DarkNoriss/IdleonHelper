@@ -1,6 +1,7 @@
 using System.Net.WebSockets;
 using System.Text.Json;
 using IdleonHelperBackend.Utils;
+using IdleonHelperBackend.Worlds.World3.Construction;
 using IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
 using static IdleonHelperBackend.Comms.Handlers.WsHandlerHelpers;
 
@@ -11,7 +12,9 @@ internal class World3ConstructionHandler : BaseHandler {
     var type = messageType.ToLowerInvariant();
     return type == "world-3-construction-load-json" ||
            type == "world-3-construction-optimize" ||
-           type == "world-3-construction-apply-board";
+           type == "world-3-construction-apply-board" ||
+           type == "world-3-construction-collect-ultimate-cogs" ||
+           type == "world-3-construction-trash-cogs";
   }
 
   public override async Task HandleAsync(WebSocket ws, WsRequest req) {
@@ -26,6 +29,12 @@ internal class World3ConstructionHandler : BaseHandler {
         break;
       case "world-3-construction-apply-board":
         await HandleApplyBoard(ws, req);
+        break;
+      case "world-3-construction-collect-ultimate-cogs":
+        await HandleCollectUltimateCogs(ws, req);
+        break;
+      case "world-3-construction-trash-cogs":
+        await HandleTrashCogs(ws, req);
         break;
     }
   }
@@ -176,5 +185,64 @@ internal class World3ConstructionHandler : BaseHandler {
       ));
     }
   }
+
+  private static async Task HandleCollectUltimateCogs(WebSocket ws, WsRequest req) {
+    try {
+      using var cts = new CancellationTokenSource();
+      var ct = cts.Token;
+
+      bool success = await CollectUltimateCogs.Collect(req.source, ct);
+
+      if (success) {
+        await Send(ws, new WsResponse(
+          type: "done",
+          source: req.source,
+          data: "world-3-construction-collect-ultimate-cogs finished"
+        ));
+      } else {
+        await Send(ws, new WsResponse(
+          type: "error",
+          source: req.source,
+          data: "Failed to collect ultimate cogs. Please check the logs for details."
+        ));
+      }
+    } catch (Exception ex) {
+      await Send(ws, new WsResponse(
+        type: "error",
+        source: req.source,
+        data: $"Failed to collect ultimate cogs: {ex.Message}"
+      ));
+    }
+  }
+
+  private static async Task HandleTrashCogs(WebSocket ws, WsRequest req) {
+    try {
+      using var cts = new CancellationTokenSource();
+      var ct = cts.Token;
+
+      bool success = await TrashCogs.Trash(req.source, ct);
+
+      if (success) {
+        await Send(ws, new WsResponse(
+          type: "done",
+          source: req.source,
+          data: "world-3-construction-trash-cogs finished"
+        ));
+      } else {
+        await Send(ws, new WsResponse(
+          type: "error",
+          source: req.source,
+          data: "Failed to trash cogs. Please check the logs for details."
+        ));
+      }
+    } catch (Exception ex) {
+      await Send(ws, new WsResponse(
+        type: "error",
+        source: req.source,
+        data: $"Failed to trash cogs: {ex.Message}"
+      ));
+    }
+  }
+
 }
 

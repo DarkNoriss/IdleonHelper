@@ -137,11 +137,11 @@ public static class BoardApplier {
   }
 
   private static int CalculateSparePage(int yPosition) {
-    return (yPosition / BoardOptimizer.SPARE_COLUMNS) + 1;
+    return (yPosition / BoardOptimizer.SPARE_ROWS) + 1;
   }
 
   private static int CalculateSpareLocalY(int yPosition) {
-    return yPosition % BoardOptimizer.SPARE_COLUMNS;
+    return yPosition % BoardOptimizer.SPARE_ROWS;
   }
 
   private static async Task<bool> PrepareConstructionInterface(CancellationToken ct) {

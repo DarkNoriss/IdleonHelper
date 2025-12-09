@@ -12,7 +12,7 @@ public static class Navigation {
   /// <summary>
   /// Gets the base path for assets. Tries multiple locations to support both development and production.
   /// </summary>
-  private static string GetAssetsBasePath() {
+  public static string GetAssetsBasePath() {
     // Try current directory first (for development)
     string devPath = Path.Combine(Directory.GetCurrentDirectory(), "Assets");
     if (Directory.Exists(devPath)) {
@@ -125,7 +125,7 @@ public static class Navigation {
   /// </summary>
   /// <param name="relativePath">Path relative to Assets folder (e.g., "ui/codex.png")</param>
   /// <returns>Full path to the asset file</returns>
-  private static string GetAssetPath(string relativePath) {
+  public static string GetAssetPath(string relativePath) {
     return Path.Combine(GetAssetsBasePath(), relativePath);
   }
 

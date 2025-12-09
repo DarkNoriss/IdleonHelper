@@ -15,8 +15,8 @@ public static class BoardOptimizer {
   // Preserve original inventory for reconciliation/debugging
   private static readonly Dictionary<string, Inventory> initialInventories = new();
 
-  public const int SPARE_COLUMNS = 5;
-  public const int SPARE_ROWS = 3;
+  public const int SPARE_COLUMNS = 3;
+  public const int SPARE_ROWS = 5;
   public const int COGS_STEP = 48;
   
   public static readonly Point SPARE_FIRST_COORDS = new(25, 130);
