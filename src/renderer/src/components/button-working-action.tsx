@@ -1,7 +1,6 @@
 import * as React from "react"
-import { Loader2 } from "lucide-react"
-
 import { useWorkingStore } from "@/stores/working"
+import { Loader2 } from "lucide-react"
 
 import { Button } from "./ui/button"
 
@@ -46,10 +45,9 @@ export const ButtonWorkingAction = ({
       disabled={disabled || isCurrentAction || isBlockedByOtherAction}
     >
       {isCurrentAction
-        ? workingIcon ?? <Loader2 className="size-4 animate-spin" />
+        ? (workingIcon ?? <Loader2 className="size-4 animate-spin" />)
         : icon}
       {isCurrentAction ? workingLabel : label}
     </Button>
   )
 }
-

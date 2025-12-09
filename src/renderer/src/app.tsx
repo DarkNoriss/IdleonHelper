@@ -8,6 +8,7 @@ import { Dashboard } from "./pages/dashboard"
 import { GameWindow } from "./pages/game-window"
 import { World1Temp } from "./pages/worlds/world-1/temp"
 import { World2Temp } from "./pages/worlds/world-2/temp"
+import { WeeklyBattle } from "./pages/worlds/world-2/weekly-battle"
 import { Construction } from "./pages/worlds/world-3/construction"
 import { World3Temp } from "./pages/worlds/world-3/temp"
 import { World4Temp } from "./pages/worlds/world-4/temp"
@@ -49,6 +50,10 @@ export const AppNew = (): ReactElement => {
                 <Route path="/game-window" element={<GameWindow />} />
                 <Route path="/world-1/temp" element={<World1Temp />} />
                 <Route path="/world-2/temp" element={<World2Temp />} />
+                <Route
+                  path="/world-2/weekly-battle"
+                  element={<WeeklyBattle />}
+                />
                 <Route path="/world-3/temp" element={<World3Temp />} />
                 <Route
                   path="/world-3/construction"

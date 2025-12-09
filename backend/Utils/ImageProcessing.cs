@@ -8,8 +8,8 @@ namespace IdleonHelperBackend.Utils;
 /// Provides methods for finding images on screen using template matching and performing actions on them.
 /// </summary>
 public static class ImageProcessing {
-  private const int DEFAULT_IMAGE_INTERVAL_MS = 50;
-  private const int DEFAULT_IMAGE_TIMEOUT_MS = 5000;
+  public const int DEFAULT_IMAGE_INTERVAL_MS = 50;
+  public const int DEFAULT_IMAGE_TIMEOUT_MS = 5000;
   public const double DEFAULT_IMAGE_THRESHOLD = 0.9;
 
   /// <summary>

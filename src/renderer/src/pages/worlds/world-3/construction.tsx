@@ -127,7 +127,7 @@ export const Construction = (): React.ReactElement => {
         clearInterval(countdownIntervalRef.current)
       }
     }
-  }, [subscribe])
+  }, [subscribe, stopWorking])
 
   const handleSave = (): void => {
     const trimmedValue = textareaValue.trim()

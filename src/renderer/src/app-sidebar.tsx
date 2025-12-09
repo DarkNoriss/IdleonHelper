@@ -44,22 +44,18 @@ const data = {
     //     },
     //   ],
     // },
-    // {
-    //   title: "World 2",
-    //   items: [
-    //     {
-    //       title: "Temp",
-    //       url: "/world-2/temp",
-    //     },
-    //   ],
-    // },
+    {
+      title: "World 2",
+      items: [
+        {
+          title: "Weekly Battle",
+          url: "/world-2/weekly-battle",
+        },
+      ],
+    },
     {
       title: "World 3",
       items: [
-        // {
-        //   title: "Temp",
-        //   url: "/world-3/temp",
-        // },
         {
           title: "Construction",
           url: "/world-3/construction",

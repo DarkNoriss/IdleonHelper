@@ -12,7 +12,8 @@ internal static class WsRouter {
 
   private static readonly IWsHandler[] Handlers = [
     new TestHandler(),
-    new World3ConstructionHandler()
+    new World3ConstructionHandler(),
+    new World2WeeklyBattleHandler()
   ];
 
   public static async Task HandleMessageAsync(WebSocket ws, string json) {

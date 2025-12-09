@@ -140,7 +140,7 @@ public static class Navigation {
   public static async Task<bool> IsVisible(
     string imagePath,
     CancellationToken ct,
-    int timeoutMs = 1000,
+    int timeoutMs = DEFAULT_TIMEOUT_MS,
     double threshold = ImageProcessing.DEFAULT_IMAGE_THRESHOLD
   ) {
     ct.ThrowIfCancellationRequested();

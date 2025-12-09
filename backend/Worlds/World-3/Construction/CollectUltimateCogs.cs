@@ -27,7 +27,6 @@ public static class CollectUltimateCogs {
 
         Console.WriteLine($"[Construction] Collect iteration {iteration}: clicking {COLLECT_CLICKS_PER_ITERATION} times at {COLLECT_BUTTON_COORDS}");
         await MouseSimulator.Click(COLLECT_BUTTON_COORDS, ct, times: COLLECT_CLICKS_PER_ITERATION);
-        await Task.Delay(200, ct);
 
         var matches = await ImageProcessing.FindAsync(
           boardEmptyTemplate,
