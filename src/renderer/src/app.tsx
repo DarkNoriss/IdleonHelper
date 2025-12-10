@@ -3,9 +3,11 @@ import { Activity, useEffect, useEffectEvent, type ReactElement } from "react"
 import { AppHeader } from "./app-header"
 import { AppSidebar } from "./app-sidebar"
 import { SidebarInset, SidebarProvider } from "./components/ui/sidebar"
+import { AccountData } from "./pages/account-data"
 import { Dashboard } from "./pages/dashboard"
 import { WeeklyBattle } from "./pages/worlds/world-2/weekly-battle"
 import { Construction } from "./pages/worlds/world-3/construction"
+import { ConstructionNew } from "./pages/worlds/world-3/construction-new"
 import { ThemeProvider } from "./providers/theme-provider"
 import { useNavigationStore, type NavigationPage } from "./stores/navigation"
 import { useWebSocketStore } from "./stores/ws"
@@ -16,8 +18,10 @@ export const AppNew = (): ReactElement => {
 
   const pageMap: Record<NavigationPage, ReactElement> = {
     dashboard: <Dashboard />,
+    "account-data": <AccountData />,
     "world-2/weekly-battle": <WeeklyBattle />,
     "world-3/construction": <Construction />,
+    "world-3/construction-new": <ConstructionNew />,
   }
   const pageEntries = Object.entries(pageMap) as Array<
     [NavigationPage, ReactElement]

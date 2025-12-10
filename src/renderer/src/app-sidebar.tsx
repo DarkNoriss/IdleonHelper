@@ -36,6 +36,10 @@ const navMain: NavItem[] = [
     title: "Dashboard",
     page: "dashboard",
   },
+  // {
+  //   title: "Account Data",
+  //   page: "account-data",
+  // },
   {
     title: "World 2",
     items: [
@@ -52,6 +56,10 @@ const navMain: NavItem[] = [
         title: "Construction",
         page: "world-3/construction",
       },
+      // {
+      //   title: "Construction New",
+      //   page: "world-3/construction-new",
+      // },
     ],
   },
 ]

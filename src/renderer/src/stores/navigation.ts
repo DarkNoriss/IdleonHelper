@@ -2,8 +2,10 @@ import { create } from "zustand"
 
 export type NavigationPage =
   | "dashboard"
+  | "account-data"
   | "world-2/weekly-battle"
   | "world-3/construction"
+  | "world-3/construction-new"
 
 interface NavigationState {
   currentPage: NavigationPage

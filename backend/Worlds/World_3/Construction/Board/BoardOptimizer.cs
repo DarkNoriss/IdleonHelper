@@ -41,6 +41,9 @@ public static class BoardOptimizer {
 
     // Return formatted score in ScoreCard format
     var score = inv.Score;
+    Console.WriteLine(
+      $"[Construction] Loaded score: buildRate={score.BuildRate}, expBonus={score.ExpBonus}, flaggy={score.Flaggy}");
+
     return Task.FromResult(new ScoreCardData {
       BuildRate = FormatScore(score.BuildRate),
       ExpBonus = FormatScore(score.ExpBonus),

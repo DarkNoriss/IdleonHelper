@@ -12,7 +12,7 @@ public static class InventoryExtractor {
 
     if (rawData["GemItemsPurchased"] is JValue gemItemValue) {
       var gemItemsPurchased = JArray.Parse(gemItemValue.ToString(CultureInfo.InvariantCulture));
-      inv.FlaggyShopUpgrades = (int)gemItemsPurchased[184];
+      inv.FlaggyShopUpgrades = (int)gemItemsPurchased[118];
     }
 
     if (rawData["CogM"] is JValue cogValue) {
