@@ -1,9 +1,6 @@
 using System.Net.WebSockets;
-using System.Text.Json;
-using IdleonHelperBackend.Utils;
-using IdleonHelperBackend.Worlds.World3.Construction;
-using IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
-using static IdleonHelperBackend.Comms.Handlers.WsHandlerHelpers;
+using IdleonHelperBackend.Worlds.World_3.Construction;
+using IdleonHelperBackend.Worlds.World_3.Construction.Board;
 
 namespace IdleonHelperBackend.Comms.Handlers;
 
@@ -54,7 +51,8 @@ internal class World3ConstructionHandler : BaseHandler {
     try {
       try {
         Newtonsoft.Json.Linq.JObject.Parse(dataString);
-      } catch (Newtonsoft.Json.JsonException jsonEx) {
+      }
+      catch (Newtonsoft.Json.JsonException jsonEx) {
         await Send(ws, new WsResponse(
           type: "error",
           source: req.source,
@@ -77,7 +75,8 @@ internal class World3ConstructionHandler : BaseHandler {
         source: req.source,
         data: "world-3-construction-load-json finished"
       ));
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       await Send(ws, new WsResponse(
         type: "error",
         source: req.source,
@@ -99,7 +98,7 @@ internal class World3ConstructionHandler : BaseHandler {
     try {
       var dataString = req.data.Value.GetRawText();
       var dataObj = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(dataString);
-      
+
       if (!dataObj.TryGetProperty("timeInSeconds", out var timeProperty)) {
         await Send(ws, new WsResponse(
           type: "error",
@@ -110,7 +109,7 @@ internal class World3ConstructionHandler : BaseHandler {
       }
 
       var timeInSeconds = timeProperty.GetInt32();
-      
+
       if (timeInSeconds <= 0) {
         await Send(ws, new WsResponse(
           type: "error",
@@ -121,7 +120,7 @@ internal class World3ConstructionHandler : BaseHandler {
       }
 
       var result = await BoardOptimizer.Optimize(req.source, timeInSeconds, CancellationToken.None);
-      
+
       // Convert OptimizationResult to ScoreCardData format
       var scoreCardData = new ScoreCardData {
         BuildRate = result.Before.BuildRate,
@@ -134,7 +133,7 @@ internal class World3ConstructionHandler : BaseHandler {
         ExpBonusDiff = result.ExpBonusDiff,
         FlaggyDiff = result.FlaggyDiff
       };
-      
+
       var resultJson = WsHandlerHelpers.SerializeToCamelCase(scoreCardData);
 
       await Send(ws, new WsResponse(
@@ -148,12 +147,13 @@ internal class World3ConstructionHandler : BaseHandler {
         source: req.source,
         data: "world-3-construction-optimize finished"
       ));
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       await Send(ws, new WsResponse(
         type: "error",
         source: req.source,
         data: $"Failed to optimize: {ex.Message}"
-      )      );
+      ));
     }
   }
 
@@ -162,7 +162,7 @@ internal class World3ConstructionHandler : BaseHandler {
       using var cts = new CancellationTokenSource();
       var ct = cts.Token;
 
-      bool success = await BoardApplier.ApplyBoard(req.source, ct);
+      var success = await BoardApplier.ApplyBoard(req.source, ct);
 
       if (success) {
         await Send(ws, new WsResponse(
@@ -170,14 +170,16 @@ internal class World3ConstructionHandler : BaseHandler {
           source: req.source,
           data: "world-3-construction-apply-board finished"
         ));
-      } else {
+      }
+      else {
         await Send(ws, new WsResponse(
           type: "error",
           source: req.source,
           data: "Failed to apply board. Please check the logs for details."
         ));
       }
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       await Send(ws, new WsResponse(
         type: "error",
         source: req.source,
@@ -199,14 +201,16 @@ internal class World3ConstructionHandler : BaseHandler {
           source: req.source,
           data: "world-3-construction-collect-ultimate-cogs finished"
         ));
-      } else {
+      }
+      else {
         await Send(ws, new WsResponse(
           type: "error",
           source: req.source,
           data: "Failed to collect ultimate cogs. Please check the logs for details."
         ));
       }
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       await Send(ws, new WsResponse(
         type: "error",
         source: req.source,
@@ -228,14 +232,16 @@ internal class World3ConstructionHandler : BaseHandler {
           source: req.source,
           data: "world-3-construction-trash-cogs finished"
         ));
-      } else {
+      }
+      else {
         await Send(ws, new WsResponse(
           type: "error",
           source: req.source,
           data: "Failed to trash cogs. Please check the logs for details."
         ));
       }
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       await Send(ws, new WsResponse(
         type: "error",
         source: req.source,
@@ -243,6 +249,5 @@ internal class World3ConstructionHandler : BaseHandler {
       ));
     }
   }
-
 }
 

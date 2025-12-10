@@ -1,22 +1,19 @@
-using System;
-using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text.Json;
-using IdleonHelperBackend.Worlds.World2.WeeklyBattle;
-using static IdleonHelperBackend.Comms.Handlers.WsHandlerHelpers;
+using IdleonHelperBackend.Worlds.World_2.WeeklyBattle;
 
 namespace IdleonHelperBackend.Comms.Handlers;
 
 internal class World2WeeklyBattleHandler : BaseHandler {
-  private const string MessageType = "world-2-weekly-battle-run";
+  private const string MESSAGE_TYPE = "world-2-weekly-battle-run";
 
   public override bool CanHandle(string messageType) {
-    return messageType == MessageType;
+    return messageType == MESSAGE_TYPE;
   }
 
   public override async Task HandleAsync(WebSocket ws, WsRequest req) {
     switch (req.type.ToLowerInvariant()) {
-      case MessageType:
+      case MESSAGE_TYPE:
         await HandleRun(ws, req);
         break;
     }
@@ -58,7 +55,8 @@ internal class World2WeeklyBattleHandler : BaseHandler {
         source: req.source,
         data: "world-2-weekly-battle-run finished"
       ));
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       await Send(ws, new WsResponse(
         type: "error",
         source: req.source,
@@ -91,6 +89,15 @@ internal class World2WeeklyBattleHandler : BaseHandler {
           if (int.TryParse(element.GetString(), out var parsed)) {
             numbers.Add(parsed);
           }
+
+          break;
+        case JsonValueKind.Undefined:
+        case JsonValueKind.Object:
+        case JsonValueKind.Array:
+        case JsonValueKind.True:
+        case JsonValueKind.False:
+        case JsonValueKind.Null:
+        default:
           break;
       }
     }

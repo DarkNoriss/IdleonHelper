@@ -1,4 +1,4 @@
-namespace IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+namespace IdleonHelperBackend.Worlds.World_3.Construction.Board;
 
 public static class Steps {
   public static List<Step> GetOptimalSteps(Dictionary<int, Cog> optimized, CancellationToken ct) {
@@ -12,20 +12,15 @@ public static class Steps {
       ct.ThrowIfCancellationRequested();
 
       // Find a cog that is not in its desired position (dictionary key is current position)
-      var kvp = working.FirstOrDefault(kvp => kvp.Key != kvp.Value.Key);
-      if (kvp.Value == null) {
+      var (from, outOfPlace) = working.FirstOrDefault(kvp => kvp.Key != kvp.Value.Key);
+      if (outOfPlace == null) {
         break;
       }
 
-      int from = kvp.Key;           // current position
-      var outOfPlace = kvp.Value;   // cog currently at 'from'
-      int to = outOfPlace.Key;      // desired position
-
-      // Identify the cog currently sitting at the target position
-      var targetCog = working[to];
+      var to = outOfPlace.Key;
 
       // Record the swap step
-      steps.Add(new Step(outOfPlace, targetCog, from, to));
+      steps.Add(new Step(outOfPlace, from, to));
 
       // Simulate the swap in the working inventory to keep positions consistent
       Swap(working, from, to);
@@ -39,17 +34,9 @@ public static class Steps {
   }
 }
 
-public class Step {
-  public Cog Cog { get; set; }
-  public Cog TargetCog { get; set; }
-  public int KeyFrom { get; set; }
-  public int KeyTo { get; set; }
-
-  public Step(Cog cog, Cog targetCog, int keyFrom, int keyTo) {
-    Cog = cog;
-    TargetCog = targetCog;
-    KeyFrom = keyFrom;
-    KeyTo = keyTo;
-  }
+public class Step(Cog cog, int keyFrom, int keyTo) {
+  public Cog Cog { get; set; } = cog;
+  public int KeyFrom { get; set; } = keyFrom;
+  public int KeyTo { get; set; } = keyTo;
 }
 

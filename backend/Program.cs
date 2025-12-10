@@ -1,16 +1,17 @@
 ﻿using System.Net.WebSockets;
+using System.Runtime.Versioning;
 using System.Text;
 using IdleonHelperBackend.Comms;
 using IdleonHelperBackend.Utils;
+
+[assembly: SupportedOSPlatform("windows")]
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
 // Register cleanup on application shutdown
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
-lifetime.ApplicationStopping.Register(() => {
-    WindowCapture.Cleanup();
-});
+lifetime.ApplicationStopping.Register(WindowCapture.Cleanup);
 
 app.UseWebSockets();
 
@@ -30,7 +31,7 @@ app.Map("/ws", async context => {
     try {
         while (ws.State == WebSocketState.Open && !ct.IsCancellationRequested) {
             using var ms = new MemoryStream();
-            WebSocketReceiveResult? result = null;
+            WebSocketReceiveResult? result;
 
             do {
                 result = await ws.ReceiveAsync(buffer, ct);
@@ -43,7 +44,7 @@ app.Map("/ws", async context => {
                 if (result.MessageType == WebSocketMessageType.Text) {
                     ms.Write(buffer, 0, result.Count);
                 }
-            } while (!result.EndOfMessage && result.MessageType == WebSocketMessageType.Text);
+            } while (result is { EndOfMessage: false, MessageType: WebSocketMessageType.Text });
 
             if (result.MessageType == WebSocketMessageType.Text && ms.Length > 0) {
                 ms.Position = 0;
@@ -51,11 +52,14 @@ app.Map("/ws", async context => {
                 await WsRouter.HandleMessageAsync(ws, json);
             }
         }
-    } catch (OperationCanceledException) {
+    }
+    catch (OperationCanceledException) {
         // Connection cancelled - normal shutdown
-    } catch (WebSocketException) {
+    }
+    catch (WebSocketException) {
         // WebSocket error - connection closed
-    } catch (Exception) {
+    }
+    catch (Exception) {
         // Unexpected error - connection closed
     }
 });

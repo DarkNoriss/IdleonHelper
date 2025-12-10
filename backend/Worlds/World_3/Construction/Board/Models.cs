@@ -1,4 +1,4 @@
-namespace IdleonHelperBackend.Worlds.World3.Construction.Board.BoardOptimizer;
+namespace IdleonHelperBackend.Worlds.World_3.Construction.Board;
 
 public class Cog {
   private int _key;
@@ -60,7 +60,7 @@ public class Cog {
   public double BuildRadiusBoost { get; set; }
   public double ExpRadiusBoost { get; set; }
   public double FlaggyRadiusBoost { get; set; }
-  public string BoostRadius { get; set; } = "";
+  public string BoostRadius { get; set; }
   public double FlagBoost { get; set; }
   public double Nothing { get; set; }
   public bool Fixed { get; set; }
@@ -75,12 +75,16 @@ public class Cog {
 
     keyNum ??= Key;
 
-    string location = GetLocation(keyNum.Value);
-    int perRow = location == "board" ? 12 : 3;
-    int offset = location == "board" ? 0 : (location == "build" ? 96 : 108);
+    var location = GetLocation(keyNum.Value);
+    var perRow = location == "board" ? 12 : 3;
+    var offset = location switch {
+      "board" => 0,
+      "build" => 96,
+      _ => 108
+    };
 
-    int y = (keyNum.Value - offset) / perRow;
-    int x = (keyNum.Value - offset) % perRow;
+    var y = (keyNum.Value - offset) / perRow;
+    var x = (keyNum.Value - offset) % perRow;
 
     if (isDefault) {
       _position = keyNum.Value;
@@ -90,9 +94,11 @@ public class Cog {
   }
 
   private static string GetLocation(int keyNum) {
-    if (keyNum >= 96 && keyNum <= 107) return "build";
-    else if (keyNum >= 108) return "spare";
-    return "board";
+    return keyNum switch {
+      >= 96 and <= 107 => "build",
+      >= 108 => "spare",
+      _ => "board"
+    };
   }
 
   private static int GetXValue(int keyNum) {
@@ -105,11 +111,11 @@ public class Cog {
 }
 
 public class Score {
-  public double BuildRate { get; set; } = 0;
-  public double ExpBonus { get; set; } = 0;
-  public double Flaggy { get; set; } = 0;
-  public double? ExpBoost { get; set; } = 0;
-  public double? FlagBoost { get; set; } = 0;
+  public double BuildRate { get; set; }
+  public double ExpBonus { get; set; }
+  public double Flaggy { get; set; }
+  public double? ExpBoost { get; set; }
+  public double? FlagBoost { get; set; }
 }
 
 public class Inventory {
@@ -118,23 +124,20 @@ public class Inventory {
   public Dictionary<int, Cog> Cogs { get; set; } = [];
   public Dictionary<int, Cog> Slots { get; set; } = [];
   public List<int> FlagPose { get; set; } = [];
-  public int FlaggyShopUpgrades { get; set; } = 0;
+  public int FlaggyShopUpgrades { get; set; }
   public List<int> AvailableSlotKeys { get; set; } = [];
-  private Score? _score { get; set; } = null;
+  private Score? InventoryScore { get; set; }
 
-  public List<int> CogKeys => new(Cogs.Keys);
+  public List<int> CogKeys => [..Cogs.Keys];
+
 
   public Cog Get(int key) {
-    if (Cogs.TryGetValue(key, out Cog? valueCog)) {
-      return valueCog;
-    }
-
-    return Slots[key];
+    return Cogs.TryGetValue(key, out var valueCog) ? valueCog : Slots[key];
   }
 
   public static Score? SaveGet(Score[][] arr, (int row, int col) indexes) {
-    int rowIndex = indexes.row;
-    int colIndex = indexes.col;
+    var rowIndex = indexes.row;
+    var colIndex = indexes.col;
 
     if (rowIndex < 0 || rowIndex >= INV_ROWS || colIndex < 0 || colIndex >= INV_COLUMNS) {
       return null;
@@ -167,8 +170,8 @@ public class Inventory {
 
   public Score Score {
     get {
-      if (_score != null) {
-        return _score;
+      if (InventoryScore != null) {
+        return InventoryScore;
       }
 
       Score result = new() {
@@ -179,27 +182,28 @@ public class Inventory {
         FlagBoost = 0
       };
 
-      Score[][] bonusGrid = Enumerable.Range(0, INV_ROWS)
-                                      .Select(i => Enumerable.Range(0, INV_COLUMNS)
-                                      .Select(j => new Score {
-                                        BuildRate = 0,
-                                        ExpBonus = 0,
-                                        Flaggy = 0,
-                                        ExpBoost = 0,
-                                        FlagBoost = 0
-                                      })
-                                      .ToArray())
-                                      .ToArray();
+      var bonusGrid = Enumerable.Range(0, INV_ROWS)
+        .Select(_ => Enumerable.Range(0, INV_COLUMNS)
+          .Select(_ => new Score {
+            BuildRate = 0,
+            ExpBonus = 0,
+            Flaggy = 0,
+            ExpBoost = 0,
+            FlagBoost = 0
+          })
+          .ToArray())
+        .ToArray();
 
       foreach (var key in AvailableSlotKeys) {
         var entry = Get(key);
         if (string.IsNullOrEmpty(entry.BoostRadius)) {
           continue;
         }
+
         var boosted = new List<(int, int)>();
-        var (Location, X, Y) = entry.Position();
-        int i = Y;
-        int j = X;
+        var (_, x, y) = entry.Position();
+        var i = y;
+        var j = x;
 
         switch (entry.BoostRadius) {
           case "diagonal":
@@ -247,20 +251,24 @@ public class Inventory {
             boosted.Add((i + 1, j - 1));
             break;
           case "row":
-            for (int k = 0; k < INV_COLUMNS; k++) {
+            for (var k = 0; k < INV_COLUMNS; k++) {
               if (j == k) {
                 continue;
               }
+
               boosted.Add((i, k));
             }
+
             break;
           case "column":
-            for (int k = 0; k < INV_ROWS; k++) {
+            for (var k = 0; k < INV_ROWS; k++) {
               if (i == k) {
                 continue;
               }
+
               boosted.Add((k, j));
             }
+
             break;
           case "corner":
             boosted.Add((i - 2, j - 2));
@@ -283,25 +291,20 @@ public class Inventory {
             boosted.Add((i + 2, j));
             break;
           case "everything":
-            for (int k = 0; k < INV_ROWS; k++) {
-              for (int l = 0; l < INV_COLUMNS; l++) {
+            for (var k = 0; k < INV_ROWS; k++) {
+              for (var l = 0; l < INV_COLUMNS; l++) {
                 if (i == k && j == l) {
                   continue;
                 }
+
                 boosted.Add((k, l));
               }
             }
-            break;
-          default:
+
             break;
         }
 
-        foreach (var boostCord in boosted) {
-          var bonus = SaveGet(bonusGrid, boostCord);
-          if (bonus == null) {
-            continue;
-          }
-
+        foreach (var bonus in boosted.Select(boostCord => SaveGet(bonusGrid, boostCord)).OfType<Score>()) {
           bonus.BuildRate += entry.BuildRadiusBoost;
           bonus.Flaggy += entry.FlaggyRadiusBoost;
           bonus.ExpBoost = (bonus.ExpBoost ?? 0) + entry.ExpRadiusBoost;
@@ -309,9 +312,7 @@ public class Inventory {
         }
       }
 
-      foreach (var key in AvailableSlotKeys) {
-        var entry = Get(key);
-
+      foreach (var entry in AvailableSlotKeys.Select(Get)) {
         result.BuildRate += entry.BuildRate;
         result.ExpBonus += entry.ExpBonus;
         result.Flaggy += entry.Flaggy;
@@ -319,47 +320,51 @@ public class Inventory {
         var pos = entry.Position();
         var bonus = bonusGrid[pos.Y][pos.X];
         var b = (bonus.BuildRate) / 100.0;
-        double mathCeil = Math.Ceiling(entry.BuildRate * b);
+        var mathCeil = Math.Ceiling(entry.BuildRate * b);
         result.BuildRate += mathCeil;
         if (entry.IsPlayer) {
           result.ExpBoost = (result.ExpBoost ?? 0) + (bonus.ExpBoost ?? 0);
         }
+
         var f = (bonus.Flaggy) / 100.0;
         result.Flaggy += Math.Ceiling(entry.Flaggy * f);
       }
 
-      foreach (var key in FlagPose) {
-        var entry = Get(key);
-        var pos = entry.Position();
-        var bonus = bonusGrid[pos.Y][pos.X];
+      foreach (var bonus in from key in FlagPose
+               select Get(key)
+               into entry
+               select entry.Position()
+               into pos
+               select bonusGrid[pos.Y][pos.X]) {
         result.FlagBoost = (result.FlagBoost ?? 0) + (bonus.FlagBoost ?? 0);
       }
-      double flaggy = result.Flaggy * (1 + FlaggyShopUpgrades * 0.5);
+
+      var flaggy = result.Flaggy * (1 + FlaggyShopUpgrades * 0.5);
       result.Flaggy = Math.Floor(flaggy);
 
-      return _score = result;
+      return InventoryScore = result;
     }
   }
 
   public void Move(int pos1, int pos2) {
-    _score = null;
+    InventoryScore = null;
 
-    Cogs.TryGetValue(pos1, out Cog? cog1);
-    Cogs.TryGetValue(pos2, out Cog? cog2);
-
-    Cog? temp = cog2;
+    Cogs.TryGetValue(pos1, out var cog1);
+    Cogs.TryGetValue(pos2, out var cog2);
 
     Cogs[pos2] = cog1!;
     if (cog1 != null) {
       cog1.Key = pos2;
-    } else {
+    }
+    else {
       Cogs.Remove(pos2);
     }
 
-    Cogs[pos1] = temp!;
-    if (temp != null) {
-      temp.Key = pos1;
-    } else {
+    Cogs[pos1] = cog2!;
+    if (cog2 != null) {
+      cog2.Key = pos1;
+    }
+    else {
       Cogs.Remove(pos1);
     }
   }
