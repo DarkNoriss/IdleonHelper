@@ -1,7 +1,6 @@
 import * as React from "react"
 import { useUpdateInitializer } from "@/stores/update"
 import { ChevronRight } from "lucide-react"
-import { Link } from "react-router-dom"
 
 import {
   Collapsible,
@@ -22,105 +21,66 @@ import {
 } from "@/components/ui/sidebar"
 
 import { BackendStatus } from "./backend-status"
+import { useNavigationStore, type NavigationPage } from "./stores/navigation"
 import { UpdateStatus } from "./update-status"
 
 // Navigation data with routes
-const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/",
-    },
-    // {
-    //   title: "Game Window",
-    //   url: "/game-window",
-    // },
-    // {
-    //   title: "World 1",
-    //   items: [
-    //     {
-    //       title: "Temp",
-    //       url: "/world-1/temp",
-    //     },
-    //   ],
-    // },
-    {
-      title: "World 2",
-      items: [
-        {
-          title: "Weekly Battle",
-          url: "/world-2/weekly-battle",
-        },
-      ],
-    },
-    {
-      title: "World 3",
-      items: [
-        {
-          title: "Construction",
-          url: "/world-3/construction",
-        },
-      ],
-    },
-    // {
-    //   title: "World 4",
-    //   items: [
-    //     {
-    //       title: "Temp",
-    //       url: "/world-4/temp",
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: "World 5",
-    //   items: [
-    //     {
-    //       title: "Temp",
-    //       url: "/world-5/temp",
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: "World 6",
-    //   items: [
-    //     {
-    //       title: "Temp",
-    //       url: "/world-6/temp",
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: "World 7",
-    //   items: [
-    //     {
-    //       title: "Temp",
-    //       url: "/world-7/temp",
-    //     },
-    //   ],
-    // },
-  ],
+type NavItem = {
+  title: string
+  page?: NavigationPage
+  items?: { title: string; page: NavigationPage }[]
 }
+
+const navMain: NavItem[] = [
+  {
+    title: "Dashboard",
+    page: "dashboard",
+  },
+  {
+    title: "World 2",
+    items: [
+      {
+        title: "Weekly Battle",
+        page: "world-2/weekly-battle",
+      },
+    ],
+  },
+  {
+    title: "World 3",
+    items: [
+      {
+        title: "Construction",
+        page: "world-3/construction",
+      },
+    ],
+  },
+]
 
 export function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>): React.ReactElement {
   // Initialize update checking on mount
   useUpdateInitializer()
+  const currentPage = useNavigationStore((state) => state.currentPage)
+  const setPage = useNavigationStore((state) => state.setPage)
 
   return (
     <Sidebar {...props} variant="inset">
       <SidebarContent className="gap-0">
-        {data.navMain.map((item) => {
+        {navMain.map((item) => {
           // If item has no children, render as a simple button
           if (!item.items || item.items.length === 0) {
-            if (!item.url) return null
+            if (!item.page) return null
 
             return (
               <SidebarGroup key={item.title}>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link to={item.url}>{item.title}</Link>
+                    <SidebarMenuButton
+                      isActive={currentPage === item.page}
+                      onClick={() => item.page && setPage(item.page)}
+                    >
+                      {item.title}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
@@ -151,8 +111,11 @@ export function AppSidebar({
                     <SidebarMenu>
                       {item.items.map((subItem) => (
                         <SidebarMenuItem key={subItem.title}>
-                          <SidebarMenuButton asChild>
-                            <Link to={subItem.url}>{subItem.title}</Link>
+                          <SidebarMenuButton
+                            isActive={currentPage === subItem.page}
+                            onClick={() => setPage(subItem.page)}
+                          >
+                            {subItem.title}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       ))}
