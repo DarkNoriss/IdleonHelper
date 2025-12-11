@@ -14,16 +14,16 @@ import {
 import { ButtonWorkingAction } from "@/components/button-working-action"
 
 const CURRENT_RUN_DATE_URL =
-  "https://docs.google.com/spreadsheets/d/1z1P2ouvYhe2pryWoF0kIQE7QichYpJt1GaPPos-e-aw/edit?gid=0#gid=0&range=F2:L2"
+  "https://docs.google.com/spreadsheets/d/1o4g1_CQCfjrVzhaMKBcpKDv-o1zqjH0bVt22KwTXeLA/edit?gid=0#gid=0&range=F2:L2"
 
 const BOSS_NAME_URL =
-  "https://docs.google.com/spreadsheets/d/1z1P2ouvYhe2pryWoF0kIQE7QichYpJt1GaPPos-e-aw/edit?gid=0#gid=0&range=H3:L4"
+  "https://docs.google.com/spreadsheets/d/1o4g1_CQCfjrVzhaMKBcpKDv-o1zqjH0bVt22KwTXeLA/edit?gid=0#gid=0&range=H3:L4"
 
 const SKULL_URL =
-  "https://docs.google.com/spreadsheets/d/1z1P2ouvYhe2pryWoF0kIQE7QichYpJt1GaPPos-e-aw/edit?gid=0#gid=0&range=F10:H28"
+  "https://docs.google.com/spreadsheets/d/1o4g1_CQCfjrVzhaMKBcpKDv-o1zqjH0bVt22KwTXeLA/edit?gid=0#gid=0&range=F10:H28"
 
 const TROPHY_URL =
-  "https://docs.google.com/spreadsheets/d/1z1P2ouvYhe2pryWoF0kIQE7QichYpJt1GaPPos-e-aw/edit?gid=0#gid=0&range=J10:L28"
+  "https://docs.google.com/spreadsheets/d/1o4g1_CQCfjrVzhaMKBcpKDv-o1zqjH0bVt22KwTXeLA/edit?gid=0#gid=0&range=J10:L28"
 
 const WS_SOURCE = "world-2-weekly-battle"
 const WS_MESSAGE_TYPE = "world-2-weekly-battle-run"
