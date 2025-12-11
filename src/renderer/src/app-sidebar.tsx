@@ -62,6 +62,15 @@ const navMain: NavItem[] = [
       // },
     ],
   },
+  {
+    title: "World 6",
+    items: [
+      {
+        title: "Summoning",
+        page: "world-6/summoning",
+      },
+    ],
+  },
 ]
 
 export function AppSidebar({

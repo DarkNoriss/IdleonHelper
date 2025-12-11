@@ -13,14 +13,16 @@ internal static class WsRouter {
   private static readonly IWsHandler[] Handlers = [
     new TestHandler(),
     new World3ConstructionHandler(),
-    new World2WeeklyBattleHandler()
+    new World2WeeklyBattleHandler(),
+    new World6SummoningHandler()
   ];
 
   public static async Task HandleMessageAsync(WebSocket ws, string json) {
     WsRequest? req;
     try {
-      req = System.Text.Json.JsonSerializer.Deserialize<WsRequest>(json, JsonOptions);
-    } catch (Exception) {
+      req = JsonSerializer.Deserialize<WsRequest>(json, JsonOptions);
+    }
+    catch (Exception) {
       return;
     }
 
@@ -34,13 +36,15 @@ internal static class WsRouter {
     if (handler != null) {
       try {
         await handler.HandleAsync(ws, req);
-      } catch (Exception ex) {
+      }
+      catch (Exception ex) {
         await Send(ws, new WsResponse(
           type: "error",
           source: req.source,
           data: $"Handler error: {ex.Message}"
         ));
       }
+
       return;
     }
 
@@ -52,7 +56,7 @@ internal static class WsRouter {
   }
 
   private static async Task Send(WebSocket ws, WsResponse response) {
-    var json = System.Text.Json.JsonSerializer.Serialize(response);
+    var json = JsonSerializer.Serialize(response);
     var bytes = Encoding.UTF8.GetBytes(json);
     await ws.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
   }

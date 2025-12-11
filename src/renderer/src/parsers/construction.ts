@@ -168,7 +168,7 @@ const evaluateBoard = (currentBoard: BoardSlot[], rawJson: IdleonJson) => {
     const cogBaseFlaggyRate = Number((cog?.stats?.c as CogStat)?.value) || 0
     const cogBasePlayerCharacterExp =
       Number((cog?.stats?.b as CogStat)?.value) || 0
-    let playerExp = 0
+    const playerExp = 0
 
     if (cog?.name?.includes("Player_")) {
       const character = characters?.find(
@@ -251,7 +251,7 @@ const getAllBoostedCogs = (
   relations: Record<number, number[]>
 } => {
   const relations: Record<number, number[]> = {}
-  let boosted: { e: CogStat; f: CogStat; g: CogStat }[] = new Array(
+  const boosted: { e: CogStat; f: CogStat; g: CogStat }[] = new Array(
     BOARD_X * BOARD_Y
   ).fill(0)
   for (let y = 0; y < BOARD_Y; y++) {
@@ -260,7 +260,7 @@ const getAllBoostedCogs = (
       const currentCog = board?.[index]?.cog
       const currentCogStats = board?.[index]?.cog?.stats || {}
 
-      let affected: [number, number][] = getAffectedIndexes(currentCog, x, y)
+      const affected: [number, number][] = getAffectedIndexes(currentCog, x, y)
 
       if (affected?.length > 0) {
         const affectedIndices = affected

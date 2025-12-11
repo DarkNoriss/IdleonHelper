@@ -8,6 +8,7 @@ import { Dashboard } from "./pages/dashboard"
 import { WeeklyBattle } from "./pages/worlds/world-2/weekly-battle"
 import { Construction } from "./pages/worlds/world-3/construction"
 import { ConstructionNew } from "./pages/worlds/world-3/construction-new"
+import { World6Summoning } from "./pages/worlds/world-6/summoning"
 import { ThemeProvider } from "./providers/theme-provider"
 import { useNavigationStore, type NavigationPage } from "./stores/navigation"
 import { useWebSocketStore } from "./stores/ws"
@@ -22,6 +23,7 @@ export const AppNew = (): ReactElement => {
     "world-2/weekly-battle": <WeeklyBattle />,
     "world-3/construction": <Construction />,
     "world-3/construction-new": <ConstructionNew />,
+    "world-6/summoning": <World6Summoning />,
   }
   const pageEntries = Object.entries(pageMap) as Array<
     [NavigationPage, ReactElement]

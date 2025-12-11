@@ -34,6 +34,29 @@ public static class UiInteraction {
     return true;
   }
 
+  public static async Task<(List<Point> matches, string? debugImagePath)> FindWithDebugImage(
+    string imagePath,
+    CancellationToken ct,
+    int? timeoutMs = null,
+    int? intervalMs = null,
+    ImageProcessing.ScreenOffset? offset = null,
+    double threshold = ImageProcessing.DEFAULT_IMAGE_THRESHOLD,
+    bool saveDebugImage = true,
+    string? debugFileName = null
+  ) {
+    var fullPath = Navigation.GetAssetPath(imagePath);
+    return await ImageProcessing.FindWithDebugImageAsync(
+      fullPath,
+      ct,
+      timeoutMs ?? ImageProcessing.DEFAULT_IMAGE_TIMEOUT_MS,
+      intervalMs ?? ImageProcessing.DEFAULT_IMAGE_INTERVAL_MS,
+      threshold,
+      offset,
+      saveDebugImage,
+      debugFileName
+    );
+  }
+
   public static async Task<List<Point>> Find(
     string imagePath,
     CancellationToken ct,
@@ -106,7 +129,8 @@ public static class UiInteraction {
     int? intervalMs = null,
     ImageProcessing.ScreenOffset? offset = null,
     int times = 1,
-    double threshold = ImageProcessing.DEFAULT_IMAGE_THRESHOLD
+    double threshold = ImageProcessing.DEFAULT_IMAGE_THRESHOLD,
+    bool debug = false
   ) {
     ct.ThrowIfCancellationRequested();
 
@@ -116,7 +140,8 @@ public static class UiInteraction {
       timeoutMs ?? FAST_VISIBLE_TIMEOUT_MS,
       intervalMs,
       offset,
-      threshold
+      threshold,
+      debug
     );
 
     if (matches.Count > 0) {

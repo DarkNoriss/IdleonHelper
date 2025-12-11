@@ -128,5 +128,57 @@ public static class ImageProcessing {
       return isWithinHorizontal && isWithinVertical;
     }).ToList();
   }
+
+  public static async Task<(List<Point> matches, string? debugImagePath)> FindWithDebugImageAsync(
+    string templateImagePath,
+    CancellationToken ct,
+    int timeoutMs = DEFAULT_IMAGE_TIMEOUT_MS,
+    int intervalMs = DEFAULT_IMAGE_INTERVAL_MS,
+    double threshold = DEFAULT_IMAGE_THRESHOLD,
+    ScreenOffset? offset = null,
+    bool saveDebugImage = true,
+    string? debugFileName = null
+  ) {
+    ct.ThrowIfCancellationRequested();
+
+    var template = LoadImage(templateImagePath);
+    var matches = await FindAsync(template, ct, timeoutMs, intervalMs, threshold, offset, debug: saveDebugImage);
+
+    string? debugPath = null;
+
+    if (!saveDebugImage || matches.Count <= 0) return (matches, debugPath);
+
+    using var screenshotGray = WindowCapture.CaptureScreenShot(ct);
+    using var screenshotColor = new Mat();
+    Cv2.CvtColor(screenshotGray, screenshotColor, ColorConversionCodes.GRAY2BGR);
+
+    var templateSize = template.Size();
+    for (var i = 0; i < matches.Count; i++) {
+      var p = matches[i];
+      var x = Math.Clamp(p.X - templateSize.Width / 2, 0, screenshotColor.Width - templateSize.Width);
+      var y = Math.Clamp(p.Y - templateSize.Height / 2, 0, screenshotColor.Height - templateSize.Height);
+      var rect = new Rect(x, y, templateSize.Width, templateSize.Height);
+
+      Console.WriteLine($"[ImageProcessing] Debug: index={i}, point={p}");
+
+      Cv2.Rectangle(screenshotColor, rect, new Scalar(0, 0, 255), 2);
+      Cv2.PutText(
+        screenshotColor,
+        i.ToString(),
+        new OpenCvSharp.Point(x, y - 4),
+        HersheyFonts.HersheySimplex,
+        0.5,
+        new Scalar(0, 0, 255)
+      );
+    }
+
+    var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff");
+    var baseName = Path.GetFileNameWithoutExtension(templateImagePath);
+    debugFileName ??= $"annotated-{baseName}-{timestamp}.png";
+    debugPath = Path.Combine(AppContext.BaseDirectory, debugFileName);
+    Cv2.ImWrite(debugPath, screenshotColor);
+
+    return (matches, debugPath);
+  }
 }
 

@@ -4,19 +4,14 @@ using System.Runtime.InteropServices;
 namespace IdleonHelperBackend.Utils;
 
 public static class MouseSimulator {
-  private static readonly Random Rand = new Random();
-
   public const int MOUSE_CLICK_DELAY = 200;
-  private const int MOUSE_CLICK_HOLD_MIN = 50;
-  private const int MOUSE_CLICK_HOLD_MAX = 50;
+  private const int MOUSE_CLICK_HOLD = 50;
 
   private const int MOUSE_DRAG_DELAY = 300;
-  private const int MOUSE_DRAG_HOLD_MIN = 150;
-  private const int MOUSE_DRAG_HOLD_MAX = 150;
+  private const int MOUSE_DRAG_HOLD = 150;
 
-  private const int MIN_STEP_DELAY = 1;
-  private const int MAX_STEP_DELAY = 3;
-  private const int STEP_SIZE = 3;
+  private const int STEP_DELAY = 6;
+  private const int STEP_SIZE = 5;
 
   public static async Task Click(
     Point point,
@@ -31,19 +26,12 @@ public static class MouseSimulator {
     for (var i = 0; i < times; i++) {
       ct.ThrowIfCancellationRequested();
 
-      var offsetX = Rand.Next(-2, 3);
-      var offsetY = Rand.Next(-2, 3);
-      var clickPoint = new Point(point.X + offsetX, point.Y + offsetY);
-      var lParam = MakeLong(clickPoint.X, clickPoint.Y);
-
-      var holdTime = Rand.Next(MOUSE_CLICK_HOLD_MIN, MOUSE_CLICK_HOLD_MAX);
-
-      var actualInterval = interval + Rand.Next(-(interval / 5), interval / 5);
+      var lParam = MakeLong(point.X, point.Y);
 
       PostMessage(hWnd, (uint)MouseMessages.WmLbuttondown, 1, lParam);
-      await Task.Delay(holdTime, ct);
+      await Task.Delay(MOUSE_CLICK_HOLD, ct);
       PostMessage(hWnd, (uint)MouseMessages.WmLbuttonup, 0, lParam);
-      await Task.Delay(actualInterval, ct);
+      await Task.Delay(interval, ct);
     }
   }
 
@@ -69,36 +57,29 @@ public static class MouseSimulator {
     Point start,
     Point end,
     CancellationToken ct,
-    int interval = MOUSE_DRAG_DELAY
+    int interval = MOUSE_DRAG_DELAY,
+    int stepSize = STEP_SIZE
   ) {
     ct.ThrowIfCancellationRequested();
 
     var hwnd = WindowCapture.GetWindowHandle();
 
-    var startOffsetX = Rand.Next(-1, 2);
-    var startOffsetY = Rand.Next(-1, 2);
-    var actualStart = new Point(start.X + startOffsetX, start.Y + startOffsetY);
-
-    Console.WriteLine($"[MouseSimulator] Human-like drag from {actualStart.X},{actualStart.Y} to {end.X},{end.Y}");
-
     var distance = Math.Sqrt(
-      Math.Pow(end.X - actualStart.X, 2) +
-      Math.Pow(end.Y - actualStart.Y, 2)
+      Math.Pow(end.X - start.X, 2) +
+      Math.Pow(end.Y - start.Y, 2)
     );
 
-    var steps = (int)Math.Ceiling(distance / STEP_SIZE);
+    var steps = (int)Math.Ceiling(distance / stepSize);
     steps = Math.Max(5, steps);
 
-    var control1 = GenerateControlPoint(actualStart, end, 0.33);
-    var control2 = GenerateControlPoint(actualStart, end, 0.67);
+    var control1 = GenerateControlPoint(start, end, 0.33);
+    var control2 = GenerateControlPoint(start, end, 0.67);
 
-    var initialHold = Rand.Next(MOUSE_DRAG_HOLD_MIN, MOUSE_DRAG_HOLD_MAX);
-
-    var startLParam = MakeLong(actualStart.X, actualStart.Y);
+    var startLParam = MakeLong(start.X, start.Y);
     PostMessage(hwnd, (uint)MouseMessages.WmLbuttondown, 1, startLParam);
-    await Task.Delay(initialHold, ct);
+    await Task.Delay(MOUSE_DRAG_HOLD, ct);
 
-    var lastPoint = actualStart;
+    var lastPoint = start;
     for (var i = 1; i <= steps; i++) {
       if (ct.IsCancellationRequested) {
         PostMessage(hwnd, (uint)MouseMessages.WmLbuttonup, 0, MakeLong(lastPoint.X, lastPoint.Y));
@@ -106,7 +87,7 @@ public static class MouseSimulator {
       }
 
       var t = (double)i / steps;
-      var currentPoint = CalculateBezierPoint(t, actualStart, control1, control2, end);
+      var currentPoint = CalculateBezierPoint(t, start, control1, control2, end);
 
       if (currentPoint.X == lastPoint.X && currentPoint.Y == lastPoint.Y) {
         continue;
@@ -117,20 +98,90 @@ public static class MouseSimulator {
 
       lastPoint = currentPoint;
 
-      var stepDelay = Rand.Next(MIN_STEP_DELAY, MAX_STEP_DELAY);
-      await Task.Delay(stepDelay, ct);
+      await Task.Delay(STEP_DELAY, ct);
     }
 
     var endLParam = MakeLong(end.X, end.Y);
     PostMessage(hwnd, (uint)MouseMessages.WmMousemove, 1, endLParam);
 
-    var finalHold = Rand.Next(MOUSE_DRAG_HOLD_MIN, MOUSE_DRAG_HOLD_MAX);
-    await Task.Delay(finalHold, ct);
+    await Task.Delay(MOUSE_DRAG_HOLD, ct);
 
     PostMessage(hwnd, (uint)MouseMessages.WmLbuttonup, 0, endLParam);
 
-    var actualInterval = interval + Rand.Next(-(interval / 5), interval / 5);
-    await Task.Delay(actualInterval, ct);
+    await Task.Delay(interval, ct);
+  }
+
+  public static async Task DragRepeat(
+    Point start,
+    Point end,
+    int durationSeconds,
+    CancellationToken ct,
+    int stepSize = STEP_SIZE
+  ) {
+    ct.ThrowIfCancellationRequested();
+
+    var hwnd = WindowCapture.GetWindowHandle();
+
+    var startLParam = MakeLong(start.X, start.Y);
+    PostMessage(hwnd, (uint)MouseMessages.WmLbuttondown, 1, startLParam);
+    await Task.Delay(MOUSE_DRAG_HOLD, ct);
+
+    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+    var durationMs = durationSeconds * 1000;
+
+    var goingToEnd = true;
+
+    while (stopwatch.ElapsedMilliseconds < durationMs) {
+      if (ct.IsCancellationRequested) {
+        PostMessage(hwnd, (uint)MouseMessages.WmLbuttonup, 0, MakeLong(start.X, start.Y));
+        return;
+      }
+
+      var from = goingToEnd ? start : end;
+      var to = goingToEnd ? end : start;
+
+      var distance = Math.Sqrt(
+        Math.Pow(to.X - from.X, 2) +
+        Math.Pow(to.Y - from.Y, 2)
+      );
+
+      var steps = (int)Math.Ceiling(distance / stepSize);
+      steps = Math.Max(5, steps);
+
+      var control1 = GenerateControlPoint(from, to, 0.33);
+      var control2 = GenerateControlPoint(from, to, 0.67);
+
+      for (var i = 1; i <= steps; i++) {
+        if (stopwatch.ElapsedMilliseconds >= durationMs) {
+          break;
+        }
+
+        if (ct.IsCancellationRequested) {
+          PostMessage(hwnd, (uint)MouseMessages.WmLbuttonup, 0, MakeLong(from.X, from.Y));
+          return;
+        }
+
+        var t = (double)i / steps;
+        var currentPoint = CalculateBezierPoint(t, from, control1, control2, to);
+
+        var currentLParam = MakeLong(currentPoint.X, currentPoint.Y);
+        PostMessage(hwnd, (uint)MouseMessages.WmMousemove, 1, currentLParam);
+
+        await Task.Delay(STEP_DELAY, ct);
+      }
+
+      if (stopwatch.ElapsedMilliseconds >= durationMs) {
+        break;
+      }
+
+      goingToEnd = !goingToEnd;
+    }
+
+    var currentPos = goingToEnd ? start : end;
+    var endLParam = MakeLong(currentPos.X, currentPos.Y);
+    PostMessage(hwnd, (uint)MouseMessages.WmLbuttonup, 0, endLParam);
+
+    stopwatch.Stop();
   }
 
   private static Point GenerateControlPoint(Point start, Point end, double position) {
@@ -141,13 +192,10 @@ public static class MouseSimulator {
     var dy = end.Y - start.Y;
     var distance = Math.Sqrt(dx * dx + dy * dy);
 
-    var maxOffset = (int)(distance * 0.15);
-    maxOffset = Math.Min(maxOffset, 50);
+    var offset = (int)(distance * 0.1);
+    offset = Math.Min(offset, 30);
 
-    var offsetX = Rand.Next(-maxOffset, maxOffset);
-    var offsetY = Rand.Next(-maxOffset, maxOffset);
-
-    return new Point(midX + offsetX, midY + offsetY);
+    return new Point(midX + offset, midY - offset);
   }
 
   private static Point CalculateBezierPoint(double t, Point p0, Point p1, Point p2, Point p3) {

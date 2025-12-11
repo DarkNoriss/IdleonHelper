@@ -6,6 +6,7 @@ export type NavigationPage =
   | "world-2/weekly-battle"
   | "world-3/construction"
   | "world-3/construction-new"
+  | "world-6/summoning"
 
 interface NavigationState {
   currentPage: NavigationPage

@@ -40,7 +40,7 @@ const cardVariants = cva(
 )
 
 const cardHeaderVariants = cva(
-  "flex items-center justify-between flex-wrap p-3 gap-2.5",
+  "flex flex-col justify-between flex-wrap p-3 gap-2.5",
   {
     variants: {
       variant: {
