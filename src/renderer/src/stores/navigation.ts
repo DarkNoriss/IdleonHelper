@@ -7,6 +7,7 @@ export type NavigationPage =
   | "world-3/construction"
   | "world-3/construction-new"
   | "world-6/summoning"
+  | "general/candy"
 
 interface NavigationState {
   currentPage: NavigationPage

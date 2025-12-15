@@ -41,6 +41,15 @@ const navMain: NavItem[] = [
   //   page: "account-data",
   // },
   {
+    title: "General",
+    items: [
+      {
+        title: "Candy",
+        page: "general/candy",
+      },
+    ],
+  },
+  {
     title: "World 2",
     items: [
       {

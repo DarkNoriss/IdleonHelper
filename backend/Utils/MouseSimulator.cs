@@ -5,7 +5,7 @@ namespace IdleonHelperBackend.Utils;
 
 public static class MouseSimulator {
   public const int MOUSE_CLICK_DELAY = 200;
-  private const int MOUSE_CLICK_HOLD = 50;
+  public const int MOUSE_CLICK_HOLD = 50;
 
   private const int MOUSE_DRAG_DELAY = 300;
   private const int MOUSE_DRAG_HOLD = 150;
@@ -17,7 +17,8 @@ public static class MouseSimulator {
     Point point,
     CancellationToken ct,
     int times = 1,
-    int interval = MOUSE_CLICK_DELAY
+    int interval = MOUSE_CLICK_DELAY,
+    int holdTime = MOUSE_CLICK_HOLD
   ) {
     ct.ThrowIfCancellationRequested();
 
@@ -29,7 +30,7 @@ public static class MouseSimulator {
       var lParam = MakeLong(point.X, point.Y);
 
       PostMessage(hWnd, (uint)MouseMessages.WmLbuttondown, 1, lParam);
-      await Task.Delay(MOUSE_CLICK_HOLD, ct);
+      await Task.Delay(holdTime, ct);
       PostMessage(hWnd, (uint)MouseMessages.WmLbuttonup, 0, lParam);
       await Task.Delay(interval, ct);
     }
@@ -39,7 +40,8 @@ public static class MouseSimulator {
     List<Point> points,
     CancellationToken ct,
     int times = 1,
-    int interval = MOUSE_CLICK_DELAY
+    int interval = MOUSE_CLICK_DELAY,
+    int holdTime = MOUSE_CLICK_HOLD
   ) {
     ct.ThrowIfCancellationRequested();
 
@@ -49,7 +51,7 @@ public static class MouseSimulator {
 
     foreach (var point in points) {
       ct.ThrowIfCancellationRequested();
-      await Click(point, ct, times, interval);
+      await Click(point, ct, times, interval, holdTime);
     }
   }
 

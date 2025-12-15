@@ -1,4 +1,4 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using IdleonHelperBackend.Comms.Handlers;
@@ -14,7 +14,8 @@ internal static class WsRouter {
     new TestHandler(),
     new World3ConstructionHandler(),
     new World2WeeklyBattleHandler(),
-    new World6SummoningHandler()
+    new World6SummoningHandler(),
+    new GeneralHandler()
   ];
 
   public static async Task HandleMessageAsync(WebSocket ws, string json) {

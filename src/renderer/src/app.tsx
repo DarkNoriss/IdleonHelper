@@ -5,6 +5,7 @@ import { AppSidebar } from "./app-sidebar"
 import { SidebarInset, SidebarProvider } from "./components/ui/sidebar"
 import { AccountData } from "./pages/account-data"
 import { Dashboard } from "./pages/dashboard"
+import { Candy } from "./pages/general/candy"
 import { WeeklyBattle } from "./pages/worlds/world-2/weekly-battle"
 import { Construction } from "./pages/worlds/world-3/construction"
 import { ConstructionNew } from "./pages/worlds/world-3/construction-new"
@@ -24,6 +25,7 @@ export const AppNew = (): ReactElement => {
     "world-3/construction": <Construction />,
     "world-3/construction-new": <ConstructionNew />,
     "world-6/summoning": <World6Summoning />,
+    "general/candy": <Candy />,
   }
   const pageEntries = Object.entries(pageMap) as Array<
     [NavigationPage, ReactElement]

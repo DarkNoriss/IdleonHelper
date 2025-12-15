@@ -10,10 +10,11 @@ public static class UiInteraction {
     string imagePath,
     CancellationToken ct,
     int? timeoutMs = null,
-    int? intervalMs = null,
+    int intervalMs = MouseSimulator.MOUSE_CLICK_DELAY,
     ImageProcessing.ScreenOffset? offset = null,
     int times = 1,
-    double threshold = ImageProcessing.DEFAULT_IMAGE_THRESHOLD
+    double threshold = ImageProcessing.DEFAULT_IMAGE_THRESHOLD,
+    int holdTimeMs = MouseSimulator.MOUSE_CLICK_HOLD
   ) {
     ct.ThrowIfCancellationRequested();
     using var template = LoadTemplate(imagePath);
@@ -21,7 +22,7 @@ public static class UiInteraction {
       template,
       ct,
       timeoutMs: timeoutMs ?? ImageProcessing.DEFAULT_IMAGE_TIMEOUT_MS,
-      intervalMs: intervalMs ?? ImageProcessing.DEFAULT_IMAGE_INTERVAL_MS,
+      intervalMs: intervalMs,
       offset: offset,
       threshold: threshold
     );
@@ -30,7 +31,7 @@ public static class UiInteraction {
       return false;
     }
 
-    await MouseSimulator.Click(matches[0], ct, times);
+    await MouseSimulator.Click(matches[0], ct, times, intervalMs, holdTimeMs);
     return true;
   }
 
