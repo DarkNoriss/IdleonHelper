@@ -1,17 +1,19 @@
 import { join } from "path"
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
-import { app, BrowserWindow, shell } from "electron"
+import { app, BrowserWindow, ipcMain, shell } from "electron"
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 958,
+    height: 570,
     show: false,
+    frame: false, // Remove default title bar
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
+      devTools: true, // Enable DevTools for debugging (F12 or Ctrl+Shift+I)
     },
   })
 
@@ -48,6 +50,12 @@ app.whenReady().then(() => {
   })
 
   createWindow()
+
+  // Window controls
+  ipcMain.on("window-close", () => {
+    const window = BrowserWindow.getFocusedWindow()
+    if (window) window.close()
+  })
 })
 
 // Quit when all windows are closed
