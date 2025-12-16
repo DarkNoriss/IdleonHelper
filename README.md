@@ -1,4 +1,4 @@
-# idleon
+# electron-app
 
 An Electron application with React and TypeScript
 
@@ -23,12 +23,6 @@ $ pnpm dev
 ### Build
 
 ```bash
-# For windows
+# For Windows
 $ pnpm build:win
-
-# For macOS
-$ pnpm build:mac
-
-# For Linux
-$ pnpm build:linux
 ```

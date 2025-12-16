@@ -1,3 +1,5 @@
+ 
+
 "use client"
 
 import * as React from "react"
@@ -72,7 +74,8 @@ const selectTriggerVariants = cva(
 )
 
 export interface SelectTriggerProps
-  extends React.ComponentProps<typeof SelectPrimitive.Trigger>,
+  extends
+    React.ComponentProps<typeof SelectPrimitive.Trigger>,
     VariantProps<typeof selectTriggerVariants> {}
 
 function SelectTrigger({

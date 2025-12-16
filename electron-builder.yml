@@ -1,5 +1,5 @@
-appId: com.electron.idleonhelper
-productName: IdleonHelper
+appId: com.electron.app
+productName: electron-app
 directories:
   buildResources: build
 files:
@@ -9,11 +9,10 @@ files:
   - "!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
   - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
-extraResources:
-  - from: resources/backend
-    to: backend
+asarUnpack:
+  - resources/**
 win:
-  executableName: IdleonHelper
+  executableName: electron-app
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -21,7 +20,5 @@ nsis:
   createDesktopShortcut: always
 npmRebuild: false
 publish:
-  provider: github
-  owner: DarkNoriss
-  repo: IdleonHelper
-  releaseType: release
+  provider: generic
+  url: https://example.com/auto-updates

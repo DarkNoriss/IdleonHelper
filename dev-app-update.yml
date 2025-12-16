@@ -1,4 +1,3 @@
-provider: github
-owner: DarkNoriss
-repo: IdleonHelper
-updaterCacheDirName: idleonhelper-updater
+provider: generic
+url: https://example.com/auto-updates
+updaterCacheDirName: electron-app-updater

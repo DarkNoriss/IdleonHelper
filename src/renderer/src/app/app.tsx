@@ -1,0 +1,38 @@
+import { Activity, type ReactElement } from "react"
+import { ThemeProvider } from "@/providers/theme-provider"
+import { useNavigationStore, type NavigationPage } from "@/store/navigation"
+
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+
+import { AppHeader } from "./app-header"
+import { AppSidebar } from "./app-sidebar"
+import { Dashboard } from "./pages/dashboard"
+
+export const App = () => {
+  const currentPage = useNavigationStore((state) => state.currentPage)
+
+  const pageMap: Record<NavigationPage, ReactElement> = {
+    dashboard: <Dashboard />,
+  }
+
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
+      <div className="flex h-screen flex-col">
+        <AppHeader />
+        <SidebarProvider className="min-h-0 flex-1">
+          <AppSidebar />
+          <SidebarInset>
+            {Object.entries(pageMap).map(([pageKey, page]) => (
+              <Activity
+                key={pageKey}
+                mode={currentPage === pageKey ? "visible" : "hidden"}
+              >
+                {page}
+              </Activity>
+            ))}
+          </SidebarInset>
+        </SidebarProvider>
+      </div>
+    </ThemeProvider>
+  )
+}

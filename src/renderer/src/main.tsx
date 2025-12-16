@@ -1,12 +1,12 @@
 import "./styles/globals.css"
 
-// import { StrictMode } from "react"
+import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 
-import { AppNew } from "./app"
+import { App } from "./app/app"
 
-createRoot(document.getElementById("root")!).render(
-  // <StrictMode>
-  <AppNew />
-  // </StrictMode>
+createRoot(document.getElementById("root") as HTMLElement).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
 )
