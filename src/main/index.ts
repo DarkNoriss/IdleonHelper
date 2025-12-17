@@ -2,6 +2,8 @@ import { join } from "path"
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
 import { app, BrowserWindow, ipcMain, shell } from "electron"
 
+import { startBackend, stopBackend } from "./backend-process"
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -38,7 +40,7 @@ function createWindow(): void {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId("com.electron")
 
@@ -49,6 +51,15 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // Start backend asynchronously (non-blocking)
+  startBackend().catch((error) => {
+    console.error(
+      "Backend error:",
+      error instanceof Error ? error.message : String(error)
+    )
+  })
+
+  // Create window immediately (doesn't wait for backend)
   createWindow()
 
   // Window controls
@@ -60,7 +71,13 @@ app.whenReady().then(() => {
 
 // Quit when all windows are closed
 app.on("window-all-closed", () => {
+  stopBackend()
   app.quit()
+})
+
+// Cleanup on app quit
+app.on("before-quit", () => {
+  stopBackend()
 })
 
 // In this file you can include the rest of your app's specific main process
