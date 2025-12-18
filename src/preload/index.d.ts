@@ -19,6 +19,14 @@ declare global {
           callback: (status: BackendStatus) => void
         ) => () => void
       }
+      script: {
+        navigation: {
+          ui: {
+            toCodex: () => Promise<boolean>
+            toItems: () => Promise<boolean>
+          }
+        }
+      }
     }
   }
 }

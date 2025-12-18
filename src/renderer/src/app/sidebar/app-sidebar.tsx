@@ -34,6 +34,10 @@ const navMain: NavItem[] = [
     title: "Dashboard",
     page: "dashboard",
   },
+  {
+    title: "Test",
+    page: "test",
+  },
 ]
 
 export const AppSidebar = ({

@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import { AppHeader } from "./app-header"
 import { Dashboard } from "./pages/dashboard"
+import { Test } from "./pages/test"
 import { AppSidebar } from "./sidebar/app-sidebar"
 
 export const App = () => {
@@ -13,6 +14,7 @@ export const App = () => {
 
   const pageMap: Record<NavigationPage, ReactElement> = {
     dashboard: <Dashboard />,
+    test: <Test />,
   }
 
   return (

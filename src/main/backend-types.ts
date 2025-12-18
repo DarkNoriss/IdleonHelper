@@ -19,6 +19,7 @@ export type WebSocketMessage = {
 }
 
 // WebSocket response structure
+// Note: Backend sends lowercase (id, type, data, error) in responses
 export type WebSocketResponse<T = unknown> = {
   id?: string
   type: "response" | "error"
@@ -108,10 +109,11 @@ export type CommandResponseMap = {
 }
 
 // Helper type for creating type-safe WebSocket messages
+// Note: Backend expects PascalCase (Id, Command, Data) due to case-sensitive deserialization
 export type WebSocketCommandMessage<T extends keyof CommandRequestMap> = {
-  id?: string
-  command: T
-  data: CommandRequestMap[T]
+  Id?: string
+  Command: T
+  Data: CommandRequestMap[T]
 }
 
 // Helper type for type-safe responses

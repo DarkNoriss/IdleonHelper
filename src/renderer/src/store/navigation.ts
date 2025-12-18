@@ -1,8 +1,8 @@
 import { create } from "zustand"
 
-export type NavigationPage = "dashboard"
+export type NavigationPage = "dashboard" | "test"
 
-interface NavigationState {
+type NavigationState = {
   currentPage: NavigationPage
   setPage: (page: NavigationPage) => void
 }

@@ -108,17 +108,46 @@ const waitForBackend = async (): Promise<void> => {
   throw new Error(lastError)
 }
 
+/**
+ * Converts PascalCase response data to camelCase to match TypeScript types
+ * Also filters out C#-specific properties like IsEmpty from Point objects
+ */
+const convertResponseToCamelCase = (data: unknown): unknown => {
+  if (!data || typeof data !== "object") return data
+
+  if (Array.isArray(data)) {
+    return data.map((item) => convertResponseToCamelCase(item))
+  }
+
+  const converted: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(data)) {
+    // Skip C# Point.IsEmpty property (not in our TypeScript Point type)
+    if (key === "IsEmpty" || key === "isEmpty") continue
+
+    // Convert PascalCase to camelCase
+    const camelKey = key.charAt(0).toLowerCase() + key.slice(1)
+    converted[camelKey] =
+      value && typeof value === "object"
+        ? convertResponseToCamelCase(value)
+        : value
+  }
+  return converted
+}
+
 const handleMessage = (data: Buffer): void => {
   try {
     const response = JSON.parse(data.toString()) as WebSocketResponse<unknown>
 
+    // Ignore messages without id (they're not command responses)
     if (!response.id) {
-      console.error("Received message without id")
       return
     }
 
     const handler = messageHandlers.get(response.id)
-    if (!handler) return
+    if (!handler) {
+      // Handler not found - might be a duplicate or already handled
+      return
+    }
 
     clearTimeout(handler.timeout)
     messageHandlers.delete(response.id)
@@ -126,7 +155,9 @@ const handleMessage = (data: Buffer): void => {
     if (response.type === "error") {
       handler.reject(new Error(response.error || "Unknown error"))
     } else {
-      handler.resolve(response.data)
+      // Convert PascalCase response data to camelCase
+      const convertedData = convertResponseToCamelCase(response.data)
+      handler.resolve(convertedData)
     }
   } catch (error) {
     console.error("Failed to parse message:", error)
@@ -207,7 +238,13 @@ export const sendCommand = async <T extends keyof CommandRequestMap>(
   }
 
   const messageId = id || randomUUID()
-  const message: WebSocketCommandMessage<T> = { id: messageId, command, data }
+  // Backend expects PascalCase property names (Id, Command, Data)
+  const message: WebSocketCommandMessage<T> = {
+    Id: messageId,
+    Command: command,
+    Data: data,
+  }
+  const messageJson = JSON.stringify(message)
 
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -220,7 +257,8 @@ export const sendCommand = async <T extends keyof CommandRequestMap>(
       reject,
       timeout,
     })
-    ws!.send(JSON.stringify(message))
+
+    ws!.send(messageJson)
   })
 }
 

@@ -8,6 +8,7 @@ import {
   onStatusChange,
 } from "./backend-client"
 import { stopBackend } from "./backend-process"
+import { scripts } from "./scripts"
 
 let mainWindow: BrowserWindow | null = null
 
@@ -86,6 +87,15 @@ app.whenReady().then(async () => {
   ipcMain.on("window-close", () => {
     const window = BrowserWindow.getFocusedWindow()
     if (window) window.close()
+  })
+
+  // Static script handlers - fully typed for each script
+  ipcMain.handle("script:navigation.ui.toCodex", async () => {
+    return await scripts.navigation.ui.toCodex()
+  })
+
+  ipcMain.handle("script:navigation.ui.toItems", async () => {
+    return await scripts.navigation.ui.toItems()
   })
 
   // Wait for window to be ready before subscribing to status changes

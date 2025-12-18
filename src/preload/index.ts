@@ -21,6 +21,18 @@ const api = {
       }
     },
   },
+  script: {
+    navigation: {
+      ui: {
+        toCodex: () => {
+          return ipcRenderer.invoke("script:navigation.ui.toCodex")
+        },
+        toItems: () => {
+          return ipcRenderer.invoke("script:navigation.ui.toItems")
+        },
+      },
+    },
+  },
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
