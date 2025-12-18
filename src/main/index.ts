@@ -2,11 +2,30 @@ import { join } from "path"
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
 import { app, BrowserWindow, ipcMain, shell } from "electron"
 
-import { startBackend, stopBackend } from "./backend-process"
+import {
+  closeConnection,
+  initializeBackend,
+  onStatusChange,
+} from "./backend-client"
+import { stopBackend } from "./backend-process"
+
+let mainWindow: BrowserWindow | null = null
+
+/**
+ * Notifies the renderer process about backend status changes
+ */
+function notifyBackendStatus(status: string, error: string | null): void {
+  if (!mainWindow) return
+
+  mainWindow.webContents.send("backend-status-changed", {
+    status,
+    error,
+  })
+}
 
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 958,
     height: 570,
     show: false,
@@ -20,7 +39,11 @@ function createWindow(): void {
   })
 
   mainWindow.on("ready-to-show", () => {
-    mainWindow.show()
+    mainWindow?.show()
+  })
+
+  mainWindow.on("closed", () => {
+    mainWindow = null
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -51,12 +74,9 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // Start backend asynchronously (non-blocking)
-  startBackend().catch((error) => {
-    console.error(
-      "Backend error:",
-      error instanceof Error ? error.message : String(error)
-    )
+  // Initialize backend and WebSocket connection asynchronously (non-blocking)
+  initializeBackend().catch(() => {
+    // Errors are handled via status change callbacks
   })
 
   // Create window immediately (doesn't wait for backend)
@@ -67,16 +87,30 @@ app.whenReady().then(async () => {
     const window = BrowserWindow.getFocusedWindow()
     if (window) window.close()
   })
+
+  // Wait for window to be ready before subscribing to status changes
+  // This ensures the renderer's IPC listener is set up before we send status updates
+  if (mainWindow) {
+    mainWindow.webContents.once("dom-ready", () => {
+      // Subscribe to backend status changes after renderer is ready
+      onStatusChange(notifyBackendStatus)
+    })
+  } else {
+    // Fallback: subscribe immediately if window creation failed
+    onStatusChange(notifyBackendStatus)
+  }
 })
 
 // Quit when all windows are closed
 app.on("window-all-closed", () => {
+  closeConnection()
   stopBackend()
   app.quit()
 })
 
 // Cleanup on app quit
 app.on("before-quit", () => {
+  closeConnection()
   stopBackend()
 })
 

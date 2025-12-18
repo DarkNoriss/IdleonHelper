@@ -10,6 +10,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -18,6 +19,8 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
+
+import { SidebarBackendStatus } from "./backend-status"
 
 // Navigation data with routes
 type NavItem = {
@@ -33,9 +36,9 @@ const navMain: NavItem[] = [
   },
 ]
 
-export function AppSidebar({
+export const AppSidebar = ({
   ...props
-}: React.ComponentProps<typeof Sidebar>): React.ReactElement {
+}: React.ComponentProps<typeof Sidebar>) => {
   const currentPage = useNavigationStore((state) => state.currentPage)
   const setPage = useNavigationStore((state) => state.setPage)
 
@@ -102,11 +105,11 @@ export function AppSidebar({
           )
         })}
       </SidebarContent>
-      {/* 
+
       <SidebarFooter>
-        <UpdateStatus />
-        <BackendStatus />
-      </SidebarFooter> */}
+        {/* <UpdateStatus /> */}
+        <SidebarBackendStatus />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

@@ -5,8 +5,8 @@ import { useNavigationStore, type NavigationPage } from "@/store/navigation"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import { AppHeader } from "./app-header"
-import { AppSidebar } from "./app-sidebar"
 import { Dashboard } from "./pages/dashboard"
+import { AppSidebar } from "./sidebar/app-sidebar"
 
 export const App = () => {
   const currentPage = useNavigationStore((state) => state.currentPage)

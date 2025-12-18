@@ -8,6 +8,19 @@ const api = {
       ipcRenderer.send("window-close")
     },
   },
+  backend: {
+    onStatusChange: (
+      callback: (status: { status: string; error: string | null }) => void
+    ) => {
+      ipcRenderer.on("backend-status-changed", (_event, status) =>
+        callback(status)
+      )
+      // Return cleanup function
+      return () => {
+        ipcRenderer.removeAllListeners("backend-status-changed")
+      }
+    },
+  },
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

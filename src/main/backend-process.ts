@@ -1,129 +1,141 @@
 import { ChildProcess, spawn } from "child_process"
+import { existsSync } from "fs"
 import { join } from "path"
 import { is } from "@electron-toolkit/utils"
 
-let backendProcess: ChildProcess | null = null
+const BACKEND_PORT = 5000
+const BACKEND_EXECUTABLE = "IdleonHelperBackend.exe"
+const STARTUP_CHECK_DELAY = 100
+const GRACEFUL_SHUTDOWN_TIMEOUT = 2000
 
-export interface BackendProcessInfo {
-  process: ChildProcess | null
+export type BackendProcessInfo = {
+  process: ChildProcess
   port: number
   isRunning: boolean
 }
 
-const getBackendPath = (): string => {
-  if (is.dev) {
-    return join(
-      process.cwd(),
-      "resources",
-      "backend",
-      "IdleonHelperBackend.exe"
-    )
-  } else {
-    return join(process.resourcesPath, "backend", "IdleonHelperBackend.exe")
+let backendProcess: ChildProcess | null = null
+
+const getExecutablePath = (): string => {
+  const basePath = is.dev
+    ? join(process.cwd(), "resources", "backend")
+    : join(process.resourcesPath, "backend")
+
+  return join(basePath, BACKEND_EXECUTABLE)
+}
+
+const validatePlatform = (): void => {
+  if (process.platform !== "win32") {
+    throw new Error("Backend only supports Windows platform")
   }
 }
 
-/**
- * Starts the backend process asynchronously without blocking
- * @returns Promise that resolves when the backend process is spawned (not necessarily ready)
- */
-export async function startBackend(): Promise<BackendProcessInfo> {
-  if (backendProcess && !backendProcess.killed) {
-    return {
-      process: backendProcess,
-      port: 5000, // Default port, adjust if needed
-      isRunning: true,
-    }
+const validateExecutable = (path: string): void => {
+  if (!existsSync(path)) {
+    throw new Error(`Backend executable not found at: ${path}`)
   }
+}
 
-  if (process.platform !== "win32") {
-    throw new Error("Backend only supports Windows")
-  }
+const isRunning = (): boolean => {
+  return backendProcess !== null && !backendProcess.killed
+}
 
-  const backendPath = getBackendPath()
-  if (!backendPath) {
-    throw new Error("Backend executable path not found")
-  }
+const cleanup = (): void => {
+  backendProcess = null
+}
 
-  console.log("Connecting backend...")
+const setupProcessHandlers = (process: ChildProcess): void => {
+  process.on("exit", () => {
+    cleanup()
+  })
 
+  process.on("error", () => {
+    cleanup()
+  })
+}
+
+const spawnProcess = (execPath: string): Promise<BackendProcessInfo> => {
   return new Promise((resolve, reject) => {
     try {
-      backendProcess = spawn(backendPath, [], {
+      backendProcess = spawn(execPath, [], {
         stdio: "ignore",
         detached: false,
+        windowsHide: true,
       })
 
-      backendProcess.on("exit", () => {
-        backendProcess = null
-      })
+      setupProcessHandlers(backendProcess)
 
-      backendProcess.on("error", (error) => {
-        console.error("Backend error:", error.message)
-        backendProcess = null
-        reject(error)
-      })
-
-      // Small delay to check if process starts successfully
       setTimeout(() => {
-        if (backendProcess && !backendProcess.killed) {
-          console.log("Backend connected")
+        if (isRunning()) {
           resolve({
-            process: backendProcess,
-            port: 5000,
+            process: backendProcess!,
+            port: BACKEND_PORT,
             isRunning: true,
           })
         } else {
           reject(new Error("Backend process failed to start"))
         }
-      }, 100)
+      }, STARTUP_CHECK_DELAY)
     } catch (error) {
-      console.error(
-        "Backend error:",
-        error instanceof Error ? error.message : String(error)
-      )
-      reject(error)
+      cleanup()
+      const message = error instanceof Error ? error.message : String(error)
+      reject(new Error(`Failed to spawn backend: ${message}`))
     }
   })
 }
 
-/**
- * Stops the backend process
- */
-export function stopBackend(): void {
-  if (backendProcess && !backendProcess.killed) {
-    try {
-      if (process.platform === "win32") {
-        backendProcess.kill()
-      } else {
-        backendProcess.kill("SIGTERM")
-        setTimeout(() => {
-          if (backendProcess && !backendProcess.killed) {
-            backendProcess.kill("SIGKILL")
-          }
-        }, 2000)
-      }
-    } catch (error) {
-      console.error(
-        "Backend error:",
-        error instanceof Error ? error.message : String(error)
-      )
+const gracefulShutdown = (process: ChildProcess): void => {
+  process.kill("SIGTERM")
+
+  setTimeout(() => {
+    if (backendProcess && !backendProcess.killed) {
+      console.warn("Backend didn't stop gracefully, forcing shutdown")
+      backendProcess.kill("SIGKILL")
     }
-    backendProcess = null
+  }, GRACEFUL_SHUTDOWN_TIMEOUT)
+}
+
+export const startBackend = async (): Promise<BackendProcessInfo> => {
+  if (isRunning()) {
+    return {
+      process: backendProcess!,
+      port: BACKEND_PORT,
+      isRunning: true,
+    }
+  }
+
+  validatePlatform()
+  const execPath = getExecutablePath()
+  validateExecutable(execPath)
+
+  return spawnProcess(execPath)
+}
+
+export const stopBackend = (): void => {
+  if (!backendProcess || backendProcess.killed) return
+
+  try {
+    if (process.platform === "win32") {
+      backendProcess.kill()
+    } else {
+      gracefulShutdown(backendProcess)
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error("Failed to stop backend:", message)
+  } finally {
+    cleanup()
   }
 }
 
-/**
- * Gets the current backend process info
- */
-export function getBackendProcess(): BackendProcessInfo | null {
-  if (!backendProcess) {
-    return null
-  }
+export const getBackendProcess = (): BackendProcessInfo | null => {
+  if (!backendProcess) return null
 
   return {
     process: backendProcess,
-    port: 5000,
+    port: BACKEND_PORT,
     isRunning: !backendProcess.killed,
   }
 }
+
+export const isBackendRunning = (): boolean => isRunning()
