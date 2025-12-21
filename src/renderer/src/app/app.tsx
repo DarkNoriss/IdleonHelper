@@ -7,6 +7,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AppHeader } from "./app-header"
 import { Dashboard } from "./pages/dashboard"
 import { Test } from "./pages/test"
+import { WeeklyBattle } from "./pages/world-2/weekly-battle"
 import { AppSidebar } from "./sidebar/app-sidebar"
 
 export const App = () => {
@@ -15,6 +16,7 @@ export const App = () => {
   const pageMap: Record<NavigationPage, ReactElement> = {
     dashboard: <Dashboard />,
     test: <Test />,
+    weeklyBattle: <WeeklyBattle />,
   }
 
   return (

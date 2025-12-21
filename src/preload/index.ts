@@ -33,6 +33,25 @@ const api = {
       },
     },
   },
+  weeklyBattle: {
+    get: () => {
+      return ipcRenderer.invoke("weekly-battle:get")
+    },
+    fetch: () => {
+      return ipcRenderer.invoke("weekly-battle:fetch")
+    },
+    onDataChange: (
+      callback: (data: unknown) => void
+    ) => {
+      ipcRenderer.on("weekly-battle-data-changed", (_event, data) =>
+        callback(data)
+      )
+      // Return cleanup function
+      return () => {
+        ipcRenderer.removeAllListeners("weekly-battle-data-changed")
+      }
+    },
+  },
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -9,8 +9,13 @@ import {
 } from "./backend-client"
 import { stopBackend } from "./backend-process"
 import { scripts } from "./scripts"
+import {
+  fetchWeeklyBattleData,
+  type WeeklyBattleData,
+} from "./weekly-battle-data"
 
 let mainWindow: BrowserWindow | null = null
+let weeklyBattleData: WeeklyBattleData | null = null
 
 /**
  * Notifies the renderer process about backend status changes
@@ -22,6 +27,15 @@ function notifyBackendStatus(status: string, error: string | null): void {
     status,
     error,
   })
+}
+
+/**
+ * Notifies the renderer process about weekly battle data updates
+ */
+function notifyWeeklyBattleData(data: WeeklyBattleData | null): void {
+  if (!mainWindow) return
+
+  mainWindow.webContents.send("weekly-battle-data-changed", data)
 }
 
 function createWindow(): void {
@@ -98,12 +112,43 @@ app.whenReady().then(async () => {
     return await scripts.navigation.ui.toItems()
   })
 
+  // Weekly battle data handlers
+  ipcMain.handle("weekly-battle:get", async () => {
+    return weeklyBattleData
+  })
+
+  ipcMain.handle("weekly-battle:fetch", async () => {
+    try {
+      weeklyBattleData = await fetchWeeklyBattleData()
+      notifyWeeklyBattleData(weeklyBattleData)
+      return weeklyBattleData
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
+      throw new Error(`Failed to fetch weekly battle data: ${errorMessage}`)
+    }
+  })
+
+  // Fetch data on app launch
+  fetchWeeklyBattleData()
+    .then((data) => {
+      weeklyBattleData = data
+      if (mainWindow) {
+        notifyWeeklyBattleData(weeklyBattleData)
+      }
+    })
+    .catch((error) => {
+      console.error("Failed to fetch weekly battle data on launch:", error)
+    })
+
   // Wait for window to be ready before subscribing to status changes
   // This ensures the renderer's IPC listener is set up before we send status updates
   if (mainWindow) {
     mainWindow.webContents.once("dom-ready", () => {
       // Subscribe to backend status changes after renderer is ready
       onStatusChange(notifyBackendStatus)
+      // Send initial weekly battle data (may be null if fetch is still in progress)
+      notifyWeeklyBattleData(weeklyBattleData)
     })
   } else {
     // Fallback: subscribe immediately if window creation failed

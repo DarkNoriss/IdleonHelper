@@ -7,6 +7,24 @@ type BackendStatus = {
   error: string | null
 }
 
+type WeeklyBattleStep = {
+  stepName: string
+  steps: number[]
+  rawSteps: string[]
+}
+
+type WeeklyBattleInfo = {
+  dateFrom: string
+  dateTo: string
+  bossName: string
+  steps: WeeklyBattleStep[]
+}
+
+type WeeklyBattleData = {
+  fetchedAt: string
+  info: WeeklyBattleInfo
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
@@ -26,6 +44,13 @@ declare global {
             toItems: () => Promise<boolean>
           }
         }
+      }
+      weeklyBattle: {
+        get: () => Promise<WeeklyBattleData | null>
+        fetch: () => Promise<WeeklyBattleData>
+        onDataChange: (
+          callback: (data: WeeklyBattleData | null) => void
+        ) => () => void
       }
     }
   }

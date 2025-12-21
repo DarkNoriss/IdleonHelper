@@ -1,6 +1,6 @@
 import { create } from "zustand"
 
-export type NavigationPage = "dashboard" | "test"
+export type NavigationPage = "dashboard" | "test" | "weeklyBattle"
 
 type NavigationState = {
   currentPage: NavigationPage

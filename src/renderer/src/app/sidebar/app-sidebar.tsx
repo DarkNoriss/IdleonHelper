@@ -38,6 +38,10 @@ const navMain: NavItem[] = [
     title: "Test",
     page: "test",
   },
+  {
+    title: "Weekly Battle",
+    page: "weeklyBattle",
+  },
 ]
 
 export const AppSidebar = ({
