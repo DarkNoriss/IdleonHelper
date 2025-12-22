@@ -15,7 +15,14 @@ export const SidebarBackendStatus = () => {
   })
 
   useEffect(() => {
-    // Listen for status changes from backend (includes initial status)
+    // Request current status immediately (handles case where connection completed before component mounted)
+    window.api.backend.getStatus().then((currentStatus) => {
+      setStatus(currentStatus)
+    }).catch(() => {
+      // Silently handle errors - component will show "connecting" state
+    })
+    
+    // Listen for status changes from backend
     const cleanup = window.api.backend.onStatusChange((newStatus) => {
       setStatus(newStatus)
     })

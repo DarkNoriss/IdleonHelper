@@ -1,7 +1,6 @@
 import { electronAPI } from "@electron-toolkit/preload"
 import { contextBridge, ipcRenderer } from "electron"
 
-// Custom APIs for renderer
 const api = {
   window: {
     close: () => {
@@ -9,13 +8,15 @@ const api = {
     },
   },
   backend: {
+    getStatus: () => {
+      return ipcRenderer.invoke("backend:getStatus")
+    },
     onStatusChange: (
       callback: (status: { status: string; error: string | null }) => void
     ) => {
       ipcRenderer.on("backend-status-changed", (_event, status) =>
         callback(status)
       )
-      // Return cleanup function
       return () => {
         ipcRenderer.removeAllListeners("backend-status-changed")
       }
@@ -32,31 +33,27 @@ const api = {
         },
       },
     },
-  },
-  weeklyBattle: {
-    get: () => {
-      return ipcRenderer.invoke("weekly-battle:get")
-    },
-    fetch: () => {
-      return ipcRenderer.invoke("weekly-battle:fetch")
-    },
-    onDataChange: (
-      callback: (data: unknown) => void
-    ) => {
-      ipcRenderer.on("weekly-battle-data-changed", (_event, data) =>
-        callback(data)
-      )
-      // Return cleanup function
-      return () => {
-        ipcRenderer.removeAllListeners("weekly-battle-data-changed")
-      }
+    "world-2": {
+      weeklyBattle: {
+        fetch: () => {
+          return ipcRenderer.invoke("script:world-2.weekly-battle.fetch")
+        },
+        get: () => {
+          return ipcRenderer.invoke("script:world-2.weekly-battle.get")
+        },
+        onChange: (callback: (data: unknown) => void) => {
+          ipcRenderer.on("weekly-battle-data-changed", (_event, data) =>
+            callback(data)
+          )
+          return () => {
+            ipcRenderer.removeAllListeners("weekly-battle-data-changed")
+          }
+        },
+      },
     },
   },
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld("electron", electronAPI)

@@ -171,7 +171,9 @@ const setupMessageHandler = (): void => {
 
 const setupWebSocket = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if (!ws) return reject(new Error("WebSocket is null"))
+    if (!ws) {
+      return reject(new Error("WebSocket is null"))
+    }
 
     ws.once("open", () => {
       connectionStatus = "connected"

@@ -33,6 +33,7 @@ declare global {
         close: () => void
       }
       backend: {
+        getStatus: () => Promise<BackendStatus>
         onStatusChange: (
           callback: (status: BackendStatus) => void
         ) => () => void
@@ -44,13 +45,15 @@ declare global {
             toItems: () => Promise<boolean>
           }
         }
-      }
-      weeklyBattle: {
-        get: () => Promise<WeeklyBattleData | null>
-        fetch: () => Promise<WeeklyBattleData>
-        onDataChange: (
-          callback: (data: WeeklyBattleData | null) => void
-        ) => () => void
+        "world-2": {
+          weeklyBattle: {
+            fetch: () => Promise<WeeklyBattleData>
+            get: () => Promise<WeeklyBattleData | null>
+            onChange: (
+              callback: (data: WeeklyBattleData | null) => void
+            ) => () => void
+          }
+        }
       }
     }
   }
