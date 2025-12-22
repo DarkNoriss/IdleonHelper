@@ -28,8 +28,7 @@ export const WeeklyBattle = () => {
 
   const loadData = async () => {
     try {
-      const result = await window.api.weeklyBattle.get()
-      console.log("Weekly battle data:", result)
+      const result = await window.api.script["world-2"].weeklyBattle.get()
       setData(result)
       setError(null)
     } catch (err) {
@@ -43,7 +42,7 @@ export const WeeklyBattle = () => {
     setLoading(true)
     setError(null)
     try {
-      const result = await window.api.weeklyBattle.fetch()
+      const result = await window.api.script["world-2"].weeklyBattle.fetch()
       setData(result)
     } catch (err) {
       setError(
@@ -57,13 +56,13 @@ export const WeeklyBattle = () => {
   }
 
   useEffect(() => {
-    // Load initial data
     loadData()
 
-    // Subscribe to data changes
-    const cleanup = window.api.weeklyBattle.onDataChange((newData) => {
-      setData(newData)
-    })
+    const cleanup = window.api.script["world-2"].weeklyBattle.onChange(
+      (newData) => {
+        setData(newData)
+      }
+    )
 
     return cleanup
   }, [])
@@ -110,7 +109,6 @@ export const WeeklyBattle = () => {
 
         {data && (
           <div className="space-y-6">
-            {/* Steps - Side by Side */}
             {data.info.steps && data.info.steps.length > 0 && (
               <div className="grid grid-cols-2 gap-6">
                 {data.info.steps.map((step, index) => (

@@ -1,16 +1,9 @@
 import { navigation } from "./scripts/navigation/navigation"
+import { world2 } from "./scripts/world-2"
 
-/**
- * Script registry - all available scripts that can be run from the frontend
- * Organized by category for better structure
- *
- * This structure is used to generate fully-typed IPC handlers and preload methods
- */
 export const scripts = {
   navigation,
+  "world-2": world2,
 } as const
 
-/**
- * Type helper to extract the scripts structure for type-safe access
- */
 export type Scripts = typeof scripts
