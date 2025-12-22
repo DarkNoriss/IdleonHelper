@@ -45,7 +45,7 @@ declare global {
             toItems: () => Promise<boolean>
           }
         }
-        "world-2": {
+        world2: {
           weeklyBattle: {
             fetch: () => Promise<WeeklyBattleData>
             get: () => Promise<WeeklyBattleData | null>

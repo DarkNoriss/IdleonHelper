@@ -28,7 +28,7 @@ export const WeeklyBattle = () => {
 
   const loadData = async () => {
     try {
-      const result = await window.api.script["world-2"].weeklyBattle.get()
+      const result = await window.api.script.world2.weeklyBattle.get()
       setData(result)
       setError(null)
     } catch (err) {
@@ -42,7 +42,7 @@ export const WeeklyBattle = () => {
     setLoading(true)
     setError(null)
     try {
-      const result = await window.api.script["world-2"].weeklyBattle.fetch()
+      const result = await window.api.script.world2.weeklyBattle.fetch()
       setData(result)
     } catch (err) {
       setError(
@@ -58,7 +58,7 @@ export const WeeklyBattle = () => {
   useEffect(() => {
     loadData()
 
-    const cleanup = window.api.script["world-2"].weeklyBattle.onChange(
+    const cleanup = window.api.script.world2.weeklyBattle.onChange(
       (newData) => {
         setData(newData)
       }
