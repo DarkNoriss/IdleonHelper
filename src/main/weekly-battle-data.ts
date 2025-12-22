@@ -8,7 +8,7 @@ const getSheetUrl = (range: string): string => {
 export type WeeklyBattleStep = {
   stepName: string
   steps: number[]
-  rawSteps: string[] // Original format from Google Sheets
+  rawSteps: string[]
 }
 
 export type WeeklyBattleInfo = {
@@ -23,9 +23,6 @@ export type WeeklyBattleData = {
   info: WeeklyBattleInfo
 }
 
-/**
- * Fetches CSV data from Google Sheets for a specific range
- */
 const fetchRange = async (range: string): Promise<string[][]> => {
   const url = getSheetUrl(range)
   const response = await fetch(url)
@@ -38,9 +35,6 @@ const fetchRange = async (range: string): Promise<string[][]> => {
   return parseCSV(csv)
 }
 
-/**
- * Parses CSV string into 2D array
- */
 const parseCSV = (csv: string): string[][] => {
   const lines: string[][] = []
   const rows = csv.split("\n")
@@ -77,9 +71,6 @@ const parseCSV = (csv: string): string[][] => {
   return lines
 }
 
-/**
- * Parses a date string like "18 Dec 25" to ISO format "2025-12-18"
- */
 const parseDate = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === "" || dateStr === "—") {
     return null
@@ -115,15 +106,12 @@ const parseDate = (dateStr: string): string | null => {
   return date.toISOString().split("T")[0]
 }
 
-/**
- * Extracts numbers from a step string like "2 3 2 - 1 1 3" or "1 (FR)"
- */
 const extractNumbers = (str: string): number[] => {
   if (!str || str.trim() === "") return []
 
   const cleaned = str
-    .replace(/\([^)]*\)/g, "") // Remove (FR) and similar
-    .replace(/[^\d\s-]/g, "") // Keep only digits, spaces, and dashes
+    .replace(/\([^)]*\)/g, "")
+    .replace(/[^\d\s-]/g, "")
     .trim()
 
   const numbers: number[] = []
@@ -139,23 +127,16 @@ const extractNumbers = (str: string): number[] => {
   return numbers
 }
 
-/**
- * Fetches and parses weekly battle data from Google Sheets
- */
 export const fetchWeeklyBattleData = async (): Promise<WeeklyBattleData> => {
-  // Fetch all 3 ranges in parallel
   const [headerData, skullsData, trophyData] = await Promise.all([
-    fetchRange("F2:L4"), // Dates and boss name
-    fetchRange("F10:H50"), // Skulls data
-    fetchRange("J10:L50"), // Trophy data
+    fetchRange("F2:L4"),
+    fetchRange("F10:H50"),
+    fetchRange("J10:L50"),
   ])
 
-  // Parse dates and boss name from header data
   let dateFrom: string | null = null
   let dateTo: string | null = null
   let bossName: string | null = null
-
-  // Look for date range in header data (usually row 1 or 2)
   for (const row of headerData) {
     const dateIndices: number[] = []
     let dashIndex = -1
@@ -183,7 +164,6 @@ export const fetchWeeklyBattleData = async (): Promise<WeeklyBattleData> => {
       dateTo = parseDate(row[dateIndices[1]]) || row[dateIndices[1]]
     }
 
-    // Find boss name (non-empty cell that's not a date)
     for (const cell of row) {
       const trimmed = (cell || "").trim()
       if (
@@ -203,7 +183,6 @@ export const fetchWeeklyBattleData = async (): Promise<WeeklyBattleData> => {
     throw new Error("Failed to parse dates or boss name from header data")
   }
 
-  // Parse Skulls data (first column of skullsData)
   const skullsNumbers: number[] = []
   const skullsRawSteps: string[] = []
   for (const row of skullsData) {
@@ -220,7 +199,6 @@ export const fetchWeeklyBattleData = async (): Promise<WeeklyBattleData> => {
     }
   }
 
-  // Parse Trophy data (first column of trophyData)
   const trophyNumbers: number[] = []
   const trophyRawSteps: string[] = []
   for (const row of trophyData) {
@@ -239,13 +217,8 @@ export const fetchWeeklyBattleData = async (): Promise<WeeklyBattleData> => {
     }
   }
 
-  // Extract skulls and trophy numbers
-  // Skulls number is in the first row of skullsData (row 9 in sheet, which is row 0 in array)
-  // Trophy number is in headerData or first row of trophyData
   let skullsNumber = ""
   let trophyNumber = ""
-
-  // Extract skulls number from first row of skullsData (contains "5 Skulls")
   if (skullsData.length > 0) {
     for (let i = 0; i < skullsData[0].length; i++) {
       const cell = (skullsData[0][i] || "").trim()
@@ -259,12 +232,10 @@ export const fetchWeeklyBattleData = async (): Promise<WeeklyBattleData> => {
     }
   }
 
-  // Extract trophy number from headerData or first row of trophyData
   for (const row of headerData) {
     for (let i = 0; i < row.length; i++) {
       const cell = (row[i] || "").trim()
       if (cell.toLowerCase().includes("trophy")) {
-        // Look for number in nearby cells
         for (let offset = 1; offset <= 3 && i + offset < row.length; offset++) {
           const numCell = (row[i + offset] || "").trim()
           if (/^\d+$/.test(numCell)) {
@@ -276,12 +247,10 @@ export const fetchWeeklyBattleData = async (): Promise<WeeklyBattleData> => {
     }
   }
 
-  // Also check first row of trophyData if not found in headerData
   if (!trophyNumber && trophyData.length > 0) {
     for (let i = 0; i < trophyData[0].length; i++) {
       const cell = (trophyData[0][i] || "").trim()
       if (cell.toLowerCase().includes("trophy")) {
-        // Look for number in nearby cells
         for (
           let offset = 1;
           offset <= 3 && i + offset < trophyData[0].length;
