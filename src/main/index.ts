@@ -73,7 +73,10 @@ app.whenReady().then(async () => {
   createWindow()
 
   setupHandlers()
-  initializeApp(notifyBackendStatus)
+  // Initialize app in background (fire-and-forget) to avoid blocking window creation
+  setImmediate(() => {
+    initializeApp(notifyBackendStatus)
+  })
 })
 
 app.on("window-all-closed", () => {

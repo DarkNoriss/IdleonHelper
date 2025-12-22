@@ -99,7 +99,9 @@ const waitForBackend = async (): Promise<void> => {
   connectionStatus = "connecting"
   notifyStatusChange()
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    if (await testConnection()) return
+    if (await testConnection()) {
+      return
+    }
     await sleep(RETRY_DELAY)
   }
   connectionStatus = "error"
