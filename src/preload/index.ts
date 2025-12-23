@@ -36,13 +36,13 @@ const api = {
     world2: {
       weeklyBattle: {
         fetch: () => {
-          return ipcRenderer.invoke("script:world2.weekly-battle.fetch")
+          return ipcRenderer.invoke("script:world-2.weekly-battle.fetch")
         },
         get: () => {
-          return ipcRenderer.invoke("script:world2.weekly-battle.get")
+          return ipcRenderer.invoke("script:world-2.weekly-battle.get")
         },
         run: (steps: number[]) => {
-          return ipcRenderer.invoke("script:world2.weekly-battle.run", steps)
+          return ipcRenderer.invoke("script:world-2.weekly-battle.run", steps)
         },
         onChange: (callback: (data: unknown) => void) => {
           ipcRenderer.on("weekly-battle-data-changed", (_event, data) =>
