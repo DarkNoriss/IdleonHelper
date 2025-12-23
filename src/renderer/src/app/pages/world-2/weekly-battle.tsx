@@ -25,6 +25,8 @@ export const WeeklyBattle = () => {
   const [data, setData] = useState<WeeklyBattleData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isWorking, setIsWorking] = useState(false)
+  const [runningStep, setRunningStep] = useState<string | null>(null)
 
   const loadData = async () => {
     try {
@@ -55,13 +57,43 @@ export const WeeklyBattle = () => {
     }
   }
 
-  const handleRun = async (steps: number[]) => {
+  const handleRun = async (steps: number[], stepName: string) => {
+    // If already working and this is the running step, cancel it
+    if (isWorking && runningStep === stepName) {
+      try {
+        await window.api.script.cancel()
+        setRunningStep(null)
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to cancel operation"
+        )
+      }
+      return
+    }
+
+    // If already working with a different step, show error
+    if (isWorking) {
+      setError("Another operation is already running")
+      return
+    }
+
+    setError(null)
+    setRunningStep(stepName)
+
     try {
       await window.api.script.world2.weeklyBattle.run(steps)
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to run weekly battle steps"
-      )
+      if (err instanceof Error && err.message === "Operation was cancelled") {
+        // User cancelled, don't show error
+        setRunningStep(null)
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to run weekly battle steps"
+        )
+        setRunningStep(null)
+      }
     }
   }
 
@@ -73,6 +105,26 @@ export const WeeklyBattle = () => {
         setData(newData)
       }
     )
+
+    return cleanup
+  }, [])
+
+  useEffect(() => {
+    // Get initial status
+    window.api.script.getStatus().then((status) => {
+      setIsWorking(status.isWorking)
+      if (!status.isWorking) {
+        setRunningStep(null)
+      }
+    })
+
+    // Listen for status changes
+    const cleanup = window.api.script.onStatusChange((status) => {
+      setIsWorking(status.isWorking)
+      if (!status.isWorking) {
+        setRunningStep(null)
+      }
+    })
 
     return cleanup
   }, [])
@@ -127,13 +179,16 @@ export const WeeklyBattle = () => {
                       {step.stepName}
                     </div>
                     <Button
-                      onClick={() => handleRun(step.steps)}
+                      onClick={() => handleRun(step.steps, step.stepName)}
                       size="sm"
                       className="w-full"
+                      disabled={isWorking && runningStep !== step.stepName}
                     >
-                      {step.stepName.toLowerCase().includes("skull")
-                        ? "Start skulls"
-                        : "Start trophy"}
+                      {runningStep === step.stepName
+                        ? "Running... (Click to stop)"
+                        : step.stepName.toLowerCase().includes("skull")
+                          ? "Start skulls"
+                          : "Start trophy"}
                     </Button>
                     <div className="space-y-2">
                       {step.rawSteps && step.rawSteps.length > 0 ? (

@@ -1,3 +1,4 @@
+import { cancellationManager, delay } from "../../cancellation-token"
 import { getMainWindow } from "../../index"
 import {
   fetchWeeklyBattleData,
@@ -28,7 +29,34 @@ export const weeklyBattle = {
   },
 
   run: async (steps: number[]): Promise<void> => {
-    console.log("Weekly battle steps:", steps)
+    // Check if already working
+    if (cancellationManager.getStatus().isWorking) {
+      throw new Error("Another operation is already running")
+    }
+
+    // Create cancellation token
+    const token = cancellationManager.createToken()
+
+    try {
+      console.log("Weekly battle steps:", steps)
+
+      // Simulate work with 30-second delay
+      await delay(30000, token)
+    } catch (error) {
+      // Handle cancellation silently - it's a user action, not an error
+      if (
+        error instanceof Error &&
+        error.message === "Operation was cancelled"
+      ) {
+        console.log("Operation was cancelled")
+        return // Return gracefully without throwing
+      }
+      // Re-throw actual errors
+      throw error
+    } finally {
+      // Clean up
+      cancellationManager.clearToken()
+    }
   },
 
   onChange: (

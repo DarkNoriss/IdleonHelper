@@ -23,6 +23,20 @@ const api = {
     },
   },
   script: {
+    getStatus: () => {
+      return ipcRenderer.invoke("script:get-status")
+    },
+    cancel: () => {
+      return ipcRenderer.invoke("script:cancel")
+    },
+    onStatusChange: (callback: (status: { isWorking: boolean }) => void) => {
+      ipcRenderer.on("script-status-changed", (_event, status) =>
+        callback(status)
+      )
+      return () => {
+        ipcRenderer.removeAllListeners("script-status-changed")
+      }
+    },
     navigation: {
       ui: {
         toCodex: () => {

@@ -1,6 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron"
 
 import { getConnectionStatus, getLastError } from "./backend-client"
+import { cancellationManager } from "./cancellation-token"
 import { scripts } from "./scripts"
 
 export const setupHandlers = (): void => {
@@ -31,6 +32,14 @@ export const setupHandlers = (): void => {
       return await scripts.world2.weeklyBattle.run(steps)
     }
   )
+
+  ipcMain.handle("script:get-status", async () => {
+    return cancellationManager.getStatus()
+  })
+
+  ipcMain.handle("script:cancel", async () => {
+    cancellationManager.cancelCurrent()
+  })
 
   ipcMain.handle("backend:getStatus", async () => {
     return {

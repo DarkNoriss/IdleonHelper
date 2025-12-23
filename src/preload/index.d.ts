@@ -39,6 +39,11 @@ declare global {
         ) => () => void
       }
       script: {
+        getStatus: () => Promise<{ isWorking: boolean }>
+        cancel: () => Promise<void>
+        onStatusChange: (
+          callback: (status: { isWorking: boolean }) => void
+        ) => () => void
         navigation: {
           ui: {
             toCodex: () => Promise<boolean>
