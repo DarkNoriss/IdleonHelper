@@ -1,9 +1,15 @@
+import { backendCommand } from "../../backend/backend-command"
 import { getMainWindow } from "../../index"
 import { cancellationManager, delay, logger } from "../../utils"
 import {
   fetchWeeklyBattleData,
   type WeeklyBattleData,
 } from "./weekly-battle-data"
+
+// Coordinate constants for weekly battle steps
+const STEP_1_COORDS = { x: 613, y: 337 }
+const STEP_2_COORDS = { x: 613, y: 398 }
+const STEP_3_COORDS = { x: 613, y: 459 }
 
 let data: WeeklyBattleData | null = null
 const onChangeCallbacks: Array<(data: WeeklyBattleData | null) => void> = []
@@ -43,8 +49,75 @@ export const weeklyBattle = {
     try {
       logger.log(`Weekly battle steps: ${steps.join(", ")}`)
 
-      // Simulate work with 30-second delay
-      await delay(30000, token)
+      // Step 1: Check if weekly battle is on cooldown
+      token.throwIfCancelled()
+      logger.log("Checking if weekly battle is on cooldown...")
+      const isOnCooldown = await backendCommand.isVisible("weekly-battle/wait")
+      if (isOnCooldown) {
+        logger.log("Weekly battle is on cooldown - cannot proceed")
+        return
+      }
+
+      // Step 2: Check if restart is needed
+      token.throwIfCancelled()
+      logger.log("Checking if restart is needed...")
+      const needsRestart = await backendCommand.isVisible(
+        "weekly-battle/restart"
+      )
+      if (needsRestart) {
+        logger.log("Restarting weekly battle...")
+        const restartResult = await backendCommand.find("weekly-battle/restart")
+        if (restartResult.matches.length > 0) {
+          token.throwIfCancelled()
+          await backendCommand.click(restartResult.matches[0])
+          logger.log("Weekly battle restarted successfully")
+        } else {
+          logger.error("Restart image found but no matches returned")
+        }
+      }
+
+      // Step 3: Verify we're on the select screen
+      token.throwIfCancelled()
+      logger.log("Verifying select screen is visible...")
+      const isSelectVisible = await backendCommand.isVisible(
+        "weekly-battle/select"
+      )
+      if (!isSelectVisible) {
+        logger.error("Weekly battle select screen not found")
+        throw new Error("Weekly battle select screen not found")
+      }
+      logger.log("Select screen confirmed")
+
+      // Step 4: Execute steps by clicking coordinates
+      logger.log(`Executing ${steps.length} steps...`)
+      const stepCoords = [STEP_1_COORDS, STEP_2_COORDS, STEP_3_COORDS]
+
+      for (let i = 0; i < steps.length; i++) {
+        const stepNumber = steps[i]
+        token.throwIfCancelled()
+
+        // Validate step number (should be 1, 2, or 3)
+        if (stepNumber < 1 || stepNumber > 3) {
+          logger.error(
+            `Invalid step number: ${stepNumber}. Expected 1, 2, or 3.`
+          )
+          throw new Error(`Invalid step number: ${stepNumber}`)
+        }
+
+        const coords = stepCoords[stepNumber - 1]
+        logger.log(
+          `Clicking step ${stepNumber} at coordinates (${coords.x}, ${coords.y})`
+        )
+
+        await backendCommand.click(coords)
+        token.throwIfCancelled()
+
+        // Add 500ms delay between clicks (except after the last one)
+        if (i < steps.length - 1) {
+          await delay(500, token)
+        }
+      }
+
       logger.log("Weekly battle run completed successfully")
     } catch (error) {
       // Handle cancellation silently - it's a user action, not an error
