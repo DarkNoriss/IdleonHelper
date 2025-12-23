@@ -27,6 +27,10 @@ export const weeklyBattle = {
     return data
   },
 
+  run: async (steps: number[]): Promise<void> => {
+    console.log("Weekly battle steps:", steps)
+  },
+
   onChange: (
     callback: (data: WeeklyBattleData | null) => void
   ): (() => void) => {

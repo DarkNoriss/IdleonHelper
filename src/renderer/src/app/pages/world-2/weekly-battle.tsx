@@ -55,6 +55,16 @@ export const WeeklyBattle = () => {
     }
   }
 
+  const handleRun = async (steps: number[]) => {
+    try {
+      await window.api.script.world2.weeklyBattle.run(steps)
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to run weekly battle steps"
+      )
+    }
+  }
+
   useEffect(() => {
     loadData()
 
@@ -116,6 +126,15 @@ export const WeeklyBattle = () => {
                     <div className="text-center text-sm font-semibold uppercase">
                       {step.stepName}
                     </div>
+                    <Button
+                      onClick={() => handleRun(step.steps)}
+                      size="sm"
+                      className="w-full"
+                    >
+                      {step.stepName.toLowerCase().includes("skull")
+                        ? "Start skulls"
+                        : "Start trophy"}
+                    </Button>
                     <div className="space-y-2">
                       {step.rawSteps && step.rawSteps.length > 0 ? (
                         step.rawSteps.map((rawStep, stepIndex) => (

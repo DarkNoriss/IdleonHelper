@@ -41,6 +41,9 @@ const api = {
         get: () => {
           return ipcRenderer.invoke("script:world2.weekly-battle.get")
         },
+        run: (steps: number[]) => {
+          return ipcRenderer.invoke("script:world2.weekly-battle.run", steps)
+        },
         onChange: (callback: (data: unknown) => void) => {
           ipcRenderer.on("weekly-battle-data-changed", (_event, data) =>
             callback(data)

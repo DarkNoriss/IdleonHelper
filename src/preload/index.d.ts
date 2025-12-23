@@ -49,6 +49,7 @@ declare global {
           weeklyBattle: {
             fetch: () => Promise<WeeklyBattleData>
             get: () => Promise<WeeklyBattleData | null>
+            run: (steps: number[]) => Promise<void>
             onChange: (
               callback: (data: WeeklyBattleData | null) => void
             ) => () => void
