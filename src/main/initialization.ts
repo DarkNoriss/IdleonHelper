@@ -3,9 +3,9 @@ import {
   getLastError,
   initializeBackend,
   onStatusChange,
-} from "./backend-client"
+} from "./backend"
 import { getMainWindow } from "./index"
-import { logger } from "./logger"
+import { logger } from "./utils"
 
 // import { scripts } from "./scripts"
 

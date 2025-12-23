@@ -1,9 +1,8 @@
 import { BrowserWindow, ipcMain } from "electron"
 
-import { getConnectionStatus, getLastError } from "./backend-client"
-import { cancellationManager } from "./cancellation-token"
-import { logger } from "./logger"
+import { getConnectionStatus, getLastError } from "./backend"
 import { scripts } from "./scripts"
+import { cancellationManager, logger } from "./utils"
 
 export const setupHandlers = (): void => {
   logger.log("Setting up IPC handlers")

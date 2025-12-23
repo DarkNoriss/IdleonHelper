@@ -1,5 +1,5 @@
-import { backendCommand } from "../../backend-command"
-import { logger } from "../../logger"
+import { backendCommand } from "../../backend"
+import { logger } from "../../utils"
 
 export const ui = {
   toCodex: async (): Promise<boolean> => {

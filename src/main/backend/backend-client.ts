@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto"
 import WebSocket from "ws"
 
+import { logger } from "../utils"
 import { startBackend } from "./backend-process"
 import type {
   CommandRequestMap,
@@ -8,7 +9,6 @@ import type {
   WebSocketCommandMessage,
   WebSocketResponse,
 } from "./backend-types"
-import { logger } from "./logger"
 
 const BACKEND_PORT = 5000
 const WS_URL = `ws://localhost:${BACKEND_PORT}/ws`

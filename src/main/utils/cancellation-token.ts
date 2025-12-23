@@ -1,4 +1,4 @@
-import { getMainWindow } from "./index"
+import { getMainWindow } from "../index"
 import { logger } from "./logger"
 
 type CancellationToken = {

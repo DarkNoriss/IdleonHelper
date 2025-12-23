@@ -1,10 +1,9 @@
-import { cancellationManager, delay } from "../../cancellation-token"
 import { getMainWindow } from "../../index"
-import { logger } from "../../logger"
+import { cancellationManager, delay, logger } from "../../utils"
 import {
   fetchWeeklyBattleData,
   type WeeklyBattleData,
-} from "../../weekly-battle-data"
+} from "./weekly-battle-data"
 
 let data: WeeklyBattleData | null = null
 const onChangeCallbacks: Array<(data: WeeklyBattleData | null) => void> = []

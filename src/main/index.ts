@@ -2,11 +2,10 @@ import { join } from "path"
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
 import { app, BrowserWindow, shell } from "electron"
 
-import { closeConnection } from "./backend-client"
-import { stopBackend } from "./backend-process"
+import { closeConnection, stopBackend } from "./backend"
 import { setupHandlers } from "./handlers"
 import { initializeApp } from "./initialization"
-import { logger } from "./logger"
+import { logger } from "./utils"
 
 let mainWindow: BrowserWindow | null = null
 
