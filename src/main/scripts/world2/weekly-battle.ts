@@ -1,5 +1,6 @@
 import { cancellationManager, delay } from "../../cancellation-token"
 import { getMainWindow } from "../../index"
+import { logger } from "../../logger"
 import {
   fetchWeeklyBattleData,
   type WeeklyBattleData,
@@ -19,8 +20,10 @@ const notifyChange = (newData: WeeklyBattleData | null): void => {
 
 export const weeklyBattle = {
   fetch: async (): Promise<WeeklyBattleData> => {
+    logger.log("Fetching weekly battle data...")
     const fetchedData = await fetchWeeklyBattleData()
     notifyChange(fetchedData)
+    logger.log("Weekly battle data fetched successfully")
     return fetchedData
   },
 
@@ -34,21 +37,23 @@ export const weeklyBattle = {
       throw new Error("Another operation is already running")
     }
 
+    logger.log(`Starting weekly battle run with ${steps.length} steps`)
     // Create cancellation token
     const token = cancellationManager.createToken()
 
     try {
-      console.log("Weekly battle steps:", steps)
+      logger.log(`Weekly battle steps: ${steps.join(", ")}`)
 
       // Simulate work with 30-second delay
       await delay(30000, token)
+      logger.log("Weekly battle run completed successfully")
     } catch (error) {
       // Handle cancellation silently - it's a user action, not an error
       if (
         error instanceof Error &&
         error.message === "Operation was cancelled"
       ) {
-        console.log("Operation was cancelled")
+        logger.log("Weekly battle operation was cancelled")
         return // Return gracefully without throwing
       }
       // Re-throw actual errors

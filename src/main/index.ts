@@ -6,6 +6,7 @@ import { closeConnection } from "./backend-client"
 import { stopBackend } from "./backend-process"
 import { setupHandlers } from "./handlers"
 import { initializeApp } from "./initialization"
+import { logger } from "./logger"
 
 let mainWindow: BrowserWindow | null = null
 
@@ -28,6 +29,7 @@ function notifyBackendStatus(status: string, error: string | null): void {
 }
 
 function createWindow(): void {
+  logger.log("Creating main window")
   const window = new BrowserWindow({
     width: 958,
     height: 570,
@@ -64,6 +66,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(async () => {
+  logger.log("Electron app ready")
   electronApp.setAppUserModelId("com.electron")
 
   app.on("browser-window-created", (_, window) => {
@@ -80,12 +83,14 @@ app.whenReady().then(async () => {
 })
 
 app.on("window-all-closed", () => {
+  logger.log("All windows closed, shutting down...")
   closeConnection()
   stopBackend()
   app.quit()
 })
 
 app.on("before-quit", () => {
+  logger.log("App quitting...")
   closeConnection()
   stopBackend()
 })

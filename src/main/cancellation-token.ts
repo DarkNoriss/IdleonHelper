@@ -1,4 +1,5 @@
 import { getMainWindow } from "./index"
+import { logger } from "./logger"
 
 type CancellationToken = {
   isCancelled: () => boolean
@@ -76,6 +77,7 @@ export const cancellationManager = {
     const token = createCancellationToken()
     currentToken = token
     isWorking = true
+    logger.log("Operation started (cancellation token created)")
     notifyStatusChange()
 
     return token
@@ -86,6 +88,7 @@ export const cancellationManager = {
       currentToken.cancel()
       currentToken = null
       isWorking = false
+      logger.log("Operation cancelled")
       notifyStatusChange()
     }
   },
@@ -93,6 +96,7 @@ export const cancellationManager = {
   clearToken: (): void => {
     currentToken = null
     isWorking = false
+    logger.log("Operation completed (cancellation token cleared)")
     notifyStatusChange()
   },
 

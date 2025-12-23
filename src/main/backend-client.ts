@@ -8,6 +8,7 @@ import type {
   WebSocketCommandMessage,
   WebSocketResponse,
 } from "./backend-types"
+import { logger } from "./logger"
 
 const BACKEND_PORT = 5000
 const WS_URL = `ws://localhost:${BACKEND_PORT}/ws`
@@ -98,14 +99,22 @@ const testConnection = (): Promise<boolean> => {
 const waitForBackend = async (): Promise<void> => {
   connectionStatus = "connecting"
   notifyStatusChange()
+  logger.log("Waiting for backend to be ready...")
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     if (await testConnection()) {
+      logger.log("Backend is ready")
       return
+    }
+    if (attempt % 5 === 0 && attempt > 0) {
+      logger.log(
+        `Waiting for backend... (attempt ${attempt + 1}/${MAX_RETRIES})`
+      )
     }
     await sleep(RETRY_DELAY)
   }
   connectionStatus = "error"
   lastError = "Backend failed to start"
+  logger.error(`Backend failed to start after ${MAX_RETRIES} attempts`)
   notifyStatusChange()
   throw new Error(lastError)
 }
@@ -162,7 +171,7 @@ const handleMessage = (data: Buffer): void => {
       handler.resolve(convertedData)
     }
   } catch (error) {
-    console.error("Failed to parse message:", error)
+    logger.error("Failed to parse message:", error)
   }
 }
 
@@ -181,6 +190,7 @@ const setupWebSocket = (): Promise<void> => {
       connectionStatus = "connected"
       lastError = null
       setupMessageHandler()
+      logger.log("WebSocket connection established")
       notifyStatusChange()
       resolve()
     })
@@ -188,6 +198,7 @@ const setupWebSocket = (): Promise<void> => {
     ws.once("error", (error) => {
       connectionStatus = "error"
       lastError = error.message
+      logger.error(`WebSocket connection error: ${error.message}`)
       notifyStatusChange()
       reject(error)
     })
@@ -199,6 +210,7 @@ const setupWebSocket = (): Promise<void> => {
       if (wasConnected) {
         connectionStatus = "error"
         lastError = "Connection closed unexpectedly"
+        logger.error("WebSocket connection closed unexpectedly")
       }
       notifyStatusChange()
     })
@@ -211,6 +223,7 @@ const connect = async (): Promise<void> => {
 
   isConnecting = true
   connectionStatus = "connecting"
+  logger.log(`Attempting WebSocket connection to ${WS_URL}`)
   notifyStatusChange()
 
   try {
@@ -219,6 +232,7 @@ const connect = async (): Promise<void> => {
   } catch (error) {
     connectionStatus = "error"
     lastError = error instanceof Error ? error.message : String(error)
+    logger.error(`WebSocket connection failed: ${lastError}`)
     notifyStatusChange()
     throw error
   } finally {
@@ -227,9 +241,11 @@ const connect = async (): Promise<void> => {
 }
 
 export const initializeBackend = async (): Promise<void> => {
+  logger.log("Initializing backend connection...")
   await startBackend()
   await waitForBackend()
   await connect()
+  logger.log("Backend initialization completed")
 }
 
 export const sendCommand = async <T extends keyof CommandRequestMap>(
@@ -253,6 +269,7 @@ export const sendCommand = async <T extends keyof CommandRequestMap>(
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       messageHandlers.delete(messageId)
+      logger.error(`Command timeout: ${command} (${COMMAND_TIMEOUT}ms)`)
       reject(new Error("Command timeout"))
     }, COMMAND_TIMEOUT)
 
@@ -267,6 +284,7 @@ export const sendCommand = async <T extends keyof CommandRequestMap>(
 }
 
 export const closeConnection = (): void => {
+  logger.log("Closing WebSocket connection")
   cleanup()
   ws?.close()
 }

@@ -5,17 +5,28 @@ import {
   onStatusChange,
 } from "./backend-client"
 import { getMainWindow } from "./index"
+import { logger } from "./logger"
+
 // import { scripts } from "./scripts"
 
 export const initializeApp = (
   notifyBackendStatus: (status: string, error: string | null) => void
 ): void => {
+  logger.log("Initializing application...")
   onStatusChange(notifyBackendStatus)
 
-  initializeBackend().catch(() => {})
+  initializeBackend()
+    .then(() => {
+      logger.log("Application initialization completed successfully")
+    })
+    .catch((error) => {
+      logger.error(
+        `Application initialization failed: ${error instanceof Error ? error.message : String(error)}`
+      )
+    })
 
   // scripts.world2.weeklyBattle.fetch().catch((error) => {
-  //   console.error("Failed to fetch weekly battle data on launch:", error)
+  //   logger.error("Failed to fetch weekly battle data on launch:", error)
   // })
 
   const mainWindow = getMainWindow()
