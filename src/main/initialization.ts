@@ -5,7 +5,7 @@ import {
   onStatusChange,
 } from "./backend-client"
 import { getMainWindow } from "./index"
-import { scripts } from "./scripts"
+// import { scripts } from "./scripts"
 
 export const initializeApp = (
   notifyBackendStatus: (status: string, error: string | null) => void
@@ -14,9 +14,9 @@ export const initializeApp = (
 
   initializeBackend().catch(() => {})
 
-  scripts.world2.weeklyBattle.fetch().catch((error) => {
-    console.error("Failed to fetch weekly battle data on launch:", error)
-  })
+  // scripts.world2.weeklyBattle.fetch().catch((error) => {
+  //   console.error("Failed to fetch weekly battle data on launch:", error)
+  // })
 
   const mainWindow = getMainWindow()
   if (mainWindow) {
