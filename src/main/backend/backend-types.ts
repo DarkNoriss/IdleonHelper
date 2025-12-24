@@ -73,6 +73,8 @@ export type DragRequest = {
   end: Point
   interval?: number
   stepSize?: number
+  stepDelay?: number
+  holdTime?: number
 }
 
 export type DragResponse = {
@@ -85,6 +87,8 @@ export type DragRepeatRequest = {
   end: Point
   durationSeconds: number
   stepSize?: number
+  stepDelay?: number
+  holdTime?: number
 }
 
 export type DragRepeatResponse = {

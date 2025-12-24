@@ -67,6 +67,8 @@ internal class DragRequest
   public Point End { get; set; }
   public int? Interval { get; set; }
   public int? StepSize { get; set; }
+  public int? StepDelay { get; set; }
+  public int? HoldTime { get; set; }
 }
 
 internal class DragResponse
@@ -80,6 +82,8 @@ internal class DragRepeatRequest
   public Point End { get; set; }
   public int DurationSeconds { get; set; }
   public int? StepSize { get; set; }
+  public int? StepDelay { get; set; }
+  public int? HoldTime { get; set; }
 }
 
 internal class DragRepeatResponse

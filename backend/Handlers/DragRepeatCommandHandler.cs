@@ -32,12 +32,20 @@ internal static class DragRepeatCommandHandler
         return;
       }
 
+      if (!dragRepeatRequest.StepSize.HasValue || !dragRepeatRequest.StepDelay.HasValue || !dragRepeatRequest.HoldTime.HasValue)
+      {
+        await MessageHandler.SendError(ws, message.Id, "Missing required fields: StepSize, StepDelay, or HoldTime", ct);
+        return;
+      }
+
       await MouseSimulator.DragRepeat(
         dragRepeatRequest.Start,
         dragRepeatRequest.End,
         dragRepeatRequest.DurationSeconds,
         ct,
-        dragRepeatRequest.StepSize ?? 3
+        dragRepeatRequest.StepSize.Value,
+        dragRepeatRequest.StepDelay.Value,
+        dragRepeatRequest.HoldTime.Value
       );
 
       var response = new DragRepeatResponse

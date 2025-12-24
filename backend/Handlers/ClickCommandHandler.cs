@@ -26,12 +26,18 @@ internal static class ClickCommandHandler
         return;
       }
 
+      if (!clickRequest.Times.HasValue || !clickRequest.Interval.HasValue || !clickRequest.HoldTime.HasValue)
+      {
+        await MessageHandler.SendError(ws, message.Id, "Missing required fields: Times, Interval, or HoldTime", ct);
+        return;
+      }
+
       await MouseSimulator.Click(
         clickRequest.Point,
         ct,
-        clickRequest.Times ?? 1,
-        clickRequest.Interval ?? MouseSimulator.MouseClickDelay,
-        clickRequest.HoldTime ?? MouseSimulator.MouseClickHold
+        clickRequest.Times.Value,
+        clickRequest.Interval.Value,
+        clickRequest.HoldTime.Value
       );
 
       var response = new ClickResponse

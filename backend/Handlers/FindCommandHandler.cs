@@ -26,6 +26,12 @@ internal static class FindCommandHandler
         return;
       }
 
+      if (!findRequest.TimeoutMs.HasValue || !findRequest.IntervalMs.HasValue || !findRequest.Threshold.HasValue)
+      {
+        await MessageHandler.SendError(ws, message.Id, "Missing required fields: TimeoutMs, IntervalMs, or Threshold", ct);
+        return;
+      }
+
       var offset = findRequest.Offset != null
         ? new ImageProcessing.ScreenOffset(
           findRequest.Offset.Left,
@@ -38,9 +44,9 @@ internal static class FindCommandHandler
       var matches = await ImageProcessing.Find(
         findRequest.ImagePath,
         ct,
-        findRequest.TimeoutMs ?? ImageProcessing.DefaultImageTimeoutMs,
-        findRequest.IntervalMs ?? ImageProcessing.DefaultImageIntervalMs,
-        findRequest.Threshold ?? ImageProcessing.DefaultImageThreshold,
+        findRequest.TimeoutMs.Value,
+        findRequest.IntervalMs.Value,
+        findRequest.Threshold.Value,
         offset,
         findRequest.Debug ?? false
       );

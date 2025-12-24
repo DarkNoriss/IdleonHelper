@@ -6,10 +6,6 @@ namespace IdleonHelperBackend.Utils;
 
 public static class ImageProcessing
 {
-  public const int DefaultImageIntervalMs = 50;
-  public const int DefaultImageTimeoutMs = 5000;
-  public const double DefaultImageThreshold = 0.925;
-
   public record ScreenOffset(
     int Left = 0,
     int Right = 0,
@@ -20,11 +16,11 @@ public static class ImageProcessing
   public static async Task<List<Point>> Find(
     string imagePath,
     CancellationToken ct,
-    int timeoutMs = DefaultImageTimeoutMs,
-    int intervalMs = DefaultImageIntervalMs,
-    double threshold = DefaultImageThreshold,
-    ScreenOffset? offset = null,
-    bool debug = false
+    int timeoutMs,
+    int intervalMs,
+    double threshold,
+    ScreenOffset? offset,
+    bool debug
   )
   {
     ct.ThrowIfCancellationRequested();
@@ -153,10 +149,10 @@ public static class ImageProcessing
   public static async Task<(List<Point> matches, string? debugImagePath)> FindWithDebug(
     string templateImagePath,
     CancellationToken ct,
-    int timeoutMs = DefaultImageTimeoutMs,
-    int intervalMs = DefaultImageIntervalMs,
-    double threshold = DefaultImageThreshold,
-    ScreenOffset? offset = null
+    int timeoutMs,
+    int intervalMs,
+    double threshold,
+    ScreenOffset? offset
   )
   {
     ct.ThrowIfCancellationRequested();

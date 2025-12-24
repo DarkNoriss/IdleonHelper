@@ -5,18 +5,12 @@ namespace IdleonHelperBackend.Utils;
 
 public static class MouseSimulator
 {
-  public const int MouseClickDelay = 200;
-  public const int MouseClickHold = 50;
-
-  private const int StepDelay = 2;
-  private const int StepSize = 3;
-
   public static async Task Click(
     Point point,
     CancellationToken ct,
-    int times = 1,
-    int interval = MouseClickDelay,
-    int holdTime = MouseClickHold
+    int times,
+    int interval,
+    int holdTime
   )
   {
     ct.ThrowIfCancellationRequested();
@@ -40,8 +34,10 @@ public static class MouseSimulator
     Point start,
     Point end,
     CancellationToken ct,
-    int interval = MouseClickDelay,
-    int stepSize = StepSize
+    int interval,
+    int stepSize,
+    int stepDelay,
+    int holdTime
   )
   {
     ct.ThrowIfCancellationRequested();
@@ -61,7 +57,7 @@ public static class MouseSimulator
 
     var startLParam = MakeLong(start.X, start.Y);
     PostMessage(hwnd, (uint)MouseMessages.WmLbuttondown, 1, startLParam);
-    await Task.Delay(MouseClickHold, ct);
+    await Task.Delay(holdTime, ct);
 
     var lastPoint = start;
     for (var i = 1; i <= steps; i++)
@@ -85,13 +81,13 @@ public static class MouseSimulator
 
       lastPoint = currentPoint;
 
-      await Task.Delay(StepDelay, ct);
+      await Task.Delay(stepDelay, ct);
     }
 
     var endLParam = MakeLong(end.X, end.Y);
     PostMessage(hwnd, (uint)MouseMessages.WmMousemove, 1, endLParam);
 
-    await Task.Delay(MouseClickHold, ct);
+    await Task.Delay(holdTime, ct);
 
     PostMessage(hwnd, (uint)MouseMessages.WmLbuttonup, 0, endLParam);
 
@@ -103,7 +99,9 @@ public static class MouseSimulator
     Point end,
     int durationSeconds,
     CancellationToken ct,
-    int stepSize = StepSize
+    int stepSize,
+    int stepDelay,
+    int holdTime
   )
   {
     ct.ThrowIfCancellationRequested();
@@ -112,7 +110,7 @@ public static class MouseSimulator
 
     var startLParam = MakeLong(start.X, start.Y);
     PostMessage(hwnd, (uint)MouseMessages.WmLbuttondown, 1, startLParam);
-    await Task.Delay(MouseClickHold, ct);
+    await Task.Delay(holdTime, ct);
 
     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
     var durationMs = durationSeconds * 1000;
@@ -160,7 +158,7 @@ public static class MouseSimulator
         var currentLParam = MakeLong(currentPoint.X, currentPoint.Y);
         PostMessage(hwnd, (uint)MouseMessages.WmMousemove, 1, currentLParam);
 
-        await Task.Delay(StepDelay, ct);
+        await Task.Delay(stepDelay, ct);
       }
 
       if (stopwatch.ElapsedMilliseconds >= durationMs)

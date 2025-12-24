@@ -46,3 +46,6 @@ export type {
   WebSocketCommandMessage,
   WebSocketCommandResponse,
 } from "./backend-types"
+
+// Backend config exports
+export { backendConfig } from "./backend-config"

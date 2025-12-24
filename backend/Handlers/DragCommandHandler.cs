@@ -26,12 +26,20 @@ internal static class DragCommandHandler
         return;
       }
 
+      if (!dragRequest.Interval.HasValue || !dragRequest.StepSize.HasValue || !dragRequest.StepDelay.HasValue || !dragRequest.HoldTime.HasValue)
+      {
+        await MessageHandler.SendError(ws, message.Id, "Missing required fields: Interval, StepSize, StepDelay, or HoldTime", ct);
+        return;
+      }
+
       await MouseSimulator.Drag(
         dragRequest.Start,
         dragRequest.End,
         ct,
-        dragRequest.Interval ?? MouseSimulator.MouseClickDelay,
-        dragRequest.StepSize ?? 3
+        dragRequest.Interval.Value,
+        dragRequest.StepSize.Value,
+        dragRequest.StepDelay.Value,
+        dragRequest.HoldTime.Value
       );
 
       var response = new DragResponse
