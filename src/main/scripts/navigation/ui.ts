@@ -1,38 +1,51 @@
 import { backendCommand } from "../../backend"
 import { logger } from "../../utils"
+import type { CancellationToken } from "../../utils/cancellation-token"
 
 export const ui = {
-  toCodex: async (): Promise<boolean> => {
+  toCodex: async (token: CancellationToken): Promise<boolean> => {
     logger.log("Navigating to Codex...")
-    const initialCheck = await backendCommand.isVisible("codex/quik-ref")
+    const initialCheck = await backendCommand.isVisible(
+      "codex/quik-ref",
+      undefined,
+      token
+    )
     if (initialCheck) {
       logger.log("Codex already visible")
       return true
     }
 
-    const result = await backendCommand.find("ui/codex")
+    const result = await backendCommand.find("ui/codex", undefined, token)
     if (result.matches.length > 0) {
-      await backendCommand.click(result.matches[0])
+      await backendCommand.click(result.matches[0], undefined, token)
     } else {
       logger.log("Codex button not found on screen")
       return false
     }
 
-    const secondCheck = await backendCommand.isVisible("codex/quik-ref")
+    const secondCheck = await backendCommand.isVisible(
+      "codex/quik-ref",
+      undefined,
+      token
+    )
     if (secondCheck) {
       logger.log("Codex opened successfully after first attempt")
       return true
     }
 
-    const secondResult = await backendCommand.find("ui/codex")
+    const secondResult = await backendCommand.find("ui/codex", undefined, token)
     if (secondResult.matches.length > 0) {
-      await backendCommand.click(secondResult.matches[0])
+      await backendCommand.click(secondResult.matches[0], undefined, token)
     } else {
       logger.log("Codex button not found on second attempt")
       return false
     }
 
-    const finalCheck = await backendCommand.isVisible("codex/quik-ref")
+    const finalCheck = await backendCommand.isVisible(
+      "codex/quik-ref",
+      undefined,
+      token
+    )
     if (finalCheck) {
       logger.log("Codex opened successfully after second attempt")
       return true
@@ -44,37 +57,49 @@ export const ui = {
     return false
   },
 
-  toItems: async (): Promise<boolean> => {
+  toItems: async (token: CancellationToken): Promise<boolean> => {
     logger.log("Navigating to Items...")
-    const initialCheck = await backendCommand.isVisible("items/lock")
+    const initialCheck = await backendCommand.isVisible(
+      "items/lock",
+      undefined,
+      token
+    )
     if (initialCheck) {
       logger.log("Items already visible")
       return true
     }
 
-    const result = await backendCommand.find("ui/items")
+    const result = await backendCommand.find("ui/items", undefined, token)
     if (result.matches.length > 0) {
-      await backendCommand.click(result.matches[0])
+      await backendCommand.click(result.matches[0], undefined, token)
     } else {
       logger.log("Items button not found on screen")
       return false
     }
 
-    const secondCheck = await backendCommand.isVisible("items/lock")
+    const secondCheck = await backendCommand.isVisible(
+      "items/lock",
+      undefined,
+      token
+    )
     if (secondCheck) {
       logger.log("Items opened successfully after first attempt")
       return true
     }
 
-    const secondResult = await backendCommand.find("ui/items")
+    const secondResult = await backendCommand.find("ui/items", undefined, token)
     if (secondResult.matches.length > 0) {
-      await backendCommand.click(secondResult.matches[0])
+      await backendCommand.click(secondResult.matches[0], undefined, token)
     } else {
       logger.log("Items button not found on second attempt")
       return false
     }
 
-    const finalCheck = await backendCommand.isVisible("items/lock")
+    const finalCheck = await backendCommand.isVisible(
+      "items/lock",
+      undefined,
+      token
+    )
     if (finalCheck) {
       logger.log("Items opened successfully after second attempt")
       return true

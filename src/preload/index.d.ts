@@ -44,12 +44,6 @@ declare global {
         onStatusChange: (
           callback: (status: { isWorking: boolean }) => void
         ) => () => void
-        navigation: {
-          ui: {
-            toCodex: () => Promise<boolean>
-            toItems: () => Promise<boolean>
-          }
-        }
         world2: {
           weeklyBattle: {
             fetch: () => Promise<WeeklyBattleData>

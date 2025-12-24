@@ -1,7 +1,7 @@
 import { getMainWindow } from "../index"
 import { logger } from "./logger"
 
-type CancellationToken = {
+export type CancellationToken = {
   isCancelled: () => boolean
   cancel: () => void
   throwIfCancelled: () => void

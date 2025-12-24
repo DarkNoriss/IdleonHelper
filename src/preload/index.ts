@@ -37,16 +37,6 @@ const api = {
         ipcRenderer.removeAllListeners("script-status-changed")
       }
     },
-    navigation: {
-      ui: {
-        toCodex: () => {
-          return ipcRenderer.invoke("script:navigation.ui.toCodex")
-        },
-        toItems: () => {
-          return ipcRenderer.invoke("script:navigation.ui.toItems")
-        },
-      },
-    },
     world2: {
       weeklyBattle: {
         fetch: () => {

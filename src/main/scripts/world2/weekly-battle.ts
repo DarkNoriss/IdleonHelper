@@ -50,26 +50,33 @@ export const weeklyBattle = {
       logger.log(`Weekly battle steps: ${steps.join(", ")}`)
 
       // Step 1: Check if weekly battle is on cooldown
-      token.throwIfCancelled()
       logger.log("Checking if weekly battle is on cooldown...")
-      const isOnCooldown = await backendCommand.isVisible("weekly-battle/wait")
+      const isOnCooldown = await backendCommand.isVisible(
+        "weekly-battle/wait",
+        undefined,
+        token
+      )
       if (isOnCooldown) {
         logger.log("Weekly battle is on cooldown - cannot proceed")
         return
       }
 
       // Step 2: Check if restart is needed
-      token.throwIfCancelled()
       logger.log("Checking if restart is needed...")
       const needsRestart = await backendCommand.isVisible(
-        "weekly-battle/restart"
+        "weekly-battle/restart",
+        undefined,
+        token
       )
       if (needsRestart) {
         logger.log("Restarting weekly battle...")
-        const restartResult = await backendCommand.find("weekly-battle/restart")
+        const restartResult = await backendCommand.find(
+          "weekly-battle/restart",
+          undefined,
+          token
+        )
         if (restartResult.matches.length > 0) {
-          token.throwIfCancelled()
-          await backendCommand.click(restartResult.matches[0])
+          await backendCommand.click(restartResult.matches[0], undefined, token)
           logger.log("Weekly battle restarted successfully")
         } else {
           logger.error("Restart image found but no matches returned")
@@ -77,10 +84,11 @@ export const weeklyBattle = {
       }
 
       // Step 3: Verify we're on the select screen
-      token.throwIfCancelled()
       logger.log("Verifying select screen is visible...")
       const isSelectVisible = await backendCommand.isVisible(
-        "weekly-battle/select"
+        "weekly-battle/select",
+        undefined,
+        token
       )
       if (!isSelectVisible) {
         logger.error("Weekly battle select screen not found")
@@ -94,7 +102,6 @@ export const weeklyBattle = {
 
       for (let i = 0; i < steps.length; i++) {
         const stepNumber = steps[i]
-        token.throwIfCancelled()
 
         // Validate step number (should be 1, 2, or 3)
         if (stepNumber < 1 || stepNumber > 3) {
@@ -109,8 +116,7 @@ export const weeklyBattle = {
           `Clicking step ${stepNumber} at coordinates (${coords.x}, ${coords.y})`
         )
 
-        await backendCommand.click(coords)
-        token.throwIfCancelled()
+        await backendCommand.click(coords, undefined, token)
 
         // Add 500ms delay between clicks (except after the last one)
         if (i < steps.length - 1) {
