@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useScriptStatusStore } from "@/store/script-status"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,8 +26,14 @@ export const WeeklyBattle = () => {
   const [data, setData] = useState<WeeklyBattleData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isWorking, setIsWorking] = useState(false)
+  const { currentScript, setCurrentScript } = useScriptStatusStore((state) => ({
+    currentScript: state.currentScript,
+    setCurrentScript: state.setCurrentScript,
+  }))
   const [runningStep, setRunningStep] = useState<string | null>(null)
+
+  const isWeeklyBattleRunning = currentScript === "weeklyBattle"
+  const isWorking = currentScript !== null
 
   const loadData = async () => {
     try {
@@ -59,9 +66,10 @@ export const WeeklyBattle = () => {
 
   const handleRun = async (steps: number[], stepName: string) => {
     // If already working and this is the running step, cancel it
-    if (isWorking && runningStep === stepName) {
+    if (isWeeklyBattleRunning && runningStep === stepName) {
       try {
         await window.api.script.cancel()
+        setCurrentScript(null)
         setRunningStep(null)
       } catch (err) {
         setError(
@@ -79,12 +87,14 @@ export const WeeklyBattle = () => {
 
     setError(null)
     setRunningStep(stepName)
+    setCurrentScript("weeklyBattle")
 
     try {
       await window.api.script.world2.weeklyBattle.run(steps)
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         // User cancelled, don't show error
+        setCurrentScript(null)
         setRunningStep(null)
       } else {
         setError(
@@ -92,6 +102,7 @@ export const WeeklyBattle = () => {
             ? err.message
             : "Failed to run weekly battle steps"
         )
+        setCurrentScript(null)
         setRunningStep(null)
       }
     }
@@ -110,24 +121,11 @@ export const WeeklyBattle = () => {
   }, [])
 
   useEffect(() => {
-    // Get initial status
-    window.api.script.getStatus().then((status) => {
-      setIsWorking(status.isWorking)
-      if (!status.isWorking) {
-        setRunningStep(null)
-      }
-    })
-
-    // Listen for status changes
-    const cleanup = window.api.script.onStatusChange((status) => {
-      setIsWorking(status.isWorking)
-      if (!status.isWorking) {
-        setRunningStep(null)
-      }
-    })
-
-    return cleanup
-  }, [])
+    // Reset running step when weekly battle stops
+    if (!isWeeklyBattleRunning) {
+      setRunningStep(null)
+    }
+  }, [isWeeklyBattleRunning])
 
   return (
     <Card className="relative">
