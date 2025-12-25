@@ -1,6 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron"
 
 import { getConnectionStatus, getLastError } from "./backend"
+import { backendCommand } from "./backend/backend-command"
 import { scripts } from "./scripts"
 import { cancellationManager, logger } from "./utils"
 
@@ -40,6 +41,13 @@ export const setupHandlers = (): void => {
   ipcMain.handle("script:cancel", async () => {
     logger.log("IPC: script:cancel")
     cancellationManager.cancelCurrent()
+    try {
+      await backendCommand.stop()
+    } catch (error) {
+      logger.error(
+        `Failed to send stop command to backend: ${error instanceof Error ? error.message : String(error)}`
+      )
+    }
   })
 
   ipcMain.handle("backend:getStatus", async () => {

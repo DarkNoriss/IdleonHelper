@@ -17,6 +17,8 @@ import type {
   FindWithDebugResponse,
   Point,
   ScreenOffset,
+  StopRequest,
+  StopResponse,
 } from "./backend-types"
 
 const resolveImagePath = (imagePath: string): string => {
@@ -177,5 +179,10 @@ export const backendCommand = {
       holdTime: options?.holdTime ?? backendConfig.click.holdTime,
     }
     return sendCommand("dragRepeat", request)
+  },
+
+  stop: async (): Promise<StopResponse> => {
+    const request: StopRequest = {}
+    return sendCommand("stop", request)
   },
 }

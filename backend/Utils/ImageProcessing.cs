@@ -157,7 +157,7 @@ public static class ImageProcessing
   {
     ct.ThrowIfCancellationRequested();
 
-    var matches = await Find(templateImagePath, ct, timeoutMs, intervalMs, threshold, offset);
+    var matches = await Find(templateImagePath, ct, timeoutMs, intervalMs, threshold, offset, false);
 
     using var template = LoadImage(templateImagePath);
 

@@ -51,6 +51,11 @@ internal static class MessageHandler
           await DragRepeatCommandHandler.Handle(ws, message, ct);
           break;
         }
+        case "stop":
+        {
+          await StopCommandHandler.Handle(ws, message, ct);
+          break;
+        }
         default:
         {
           await SendError(ws, message.Id, $"Unknown command: {message.Command}", ct);

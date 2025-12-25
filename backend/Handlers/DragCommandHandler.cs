@@ -11,6 +11,9 @@ internal static class DragCommandHandler
   {
     try
     {
+      OperationCancellationManager.Reset();
+      var linkedCt = OperationCancellationManager.GetToken(ct);
+
       if (!message.Data.HasValue)
       {
         await MessageHandler.SendError(ws, message.Id, "Missing data field", ct);
@@ -35,7 +38,7 @@ internal static class DragCommandHandler
       await MouseSimulator.Drag(
         dragRequest.Start,
         dragRequest.End,
-        ct,
+        linkedCt,
         dragRequest.Interval.Value,
         dragRequest.StepSize.Value,
         dragRequest.StepDelay.Value,
@@ -48,6 +51,10 @@ internal static class DragCommandHandler
       };
 
       await MessageHandler.SendResponse(ws, message.Id, response, ct);
+    }
+    catch (OperationCanceledException)
+    {
+      await MessageHandler.SendError(ws, message.Id, "Operation was cancelled", ct);
     }
     catch (ArgumentException ex)
     {

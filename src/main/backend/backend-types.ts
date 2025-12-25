@@ -95,6 +95,13 @@ export type DragRepeatResponse = {
   success: boolean
 }
 
+// Stop command
+export type StopRequest = {}
+
+export type StopResponse = {
+  success: boolean
+}
+
 // Command type mapping for type safety
 export type CommandRequestMap = {
   find: FindRequest
@@ -102,6 +109,7 @@ export type CommandRequestMap = {
   click: ClickRequest
   drag: DragRequest
   dragRepeat: DragRepeatRequest
+  stop: StopRequest
 }
 
 export type CommandResponseMap = {
@@ -110,6 +118,7 @@ export type CommandResponseMap = {
   click: ClickResponse
   drag: DragResponse
   dragRepeat: DragRepeatResponse
+  stop: StopResponse
 }
 
 // Helper type for creating type-safe WebSocket messages

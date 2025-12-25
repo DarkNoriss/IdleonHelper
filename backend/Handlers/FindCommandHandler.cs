@@ -1,3 +1,4 @@
+using System;
 using System.Net.WebSockets;
 using System.Text.Json;
 using IdleonHelperBackend.Models;
@@ -11,6 +12,9 @@ internal static class FindCommandHandler
   {
     try
     {
+      OperationCancellationManager.Reset();
+      var linkedCt = OperationCancellationManager.GetToken(ct);
+
       if (!message.Data.HasValue)
       {
         await MessageHandler.SendError(ws, message.Id, "Missing data field", ct);
@@ -43,7 +47,7 @@ internal static class FindCommandHandler
 
       var matches = await ImageProcessing.Find(
         findRequest.ImagePath,
-        ct,
+        linkedCt,
         findRequest.TimeoutMs.Value,
         findRequest.IntervalMs.Value,
         findRequest.Threshold.Value,
@@ -57,6 +61,10 @@ internal static class FindCommandHandler
       };
 
       await MessageHandler.SendResponse(ws, message.Id, response, ct);
+    }
+    catch (OperationCanceledException)
+    {
+      await MessageHandler.SendError(ws, message.Id, "Operation was cancelled", ct);
     }
     catch (FileNotFoundException ex)
     {

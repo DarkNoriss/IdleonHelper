@@ -11,6 +11,9 @@ internal static class ClickCommandHandler
   {
     try
     {
+      OperationCancellationManager.Reset();
+      var linkedCt = OperationCancellationManager.GetToken(ct);
+
       if (!message.Data.HasValue)
       {
         await MessageHandler.SendError(ws, message.Id, "Missing data field", ct);
@@ -34,7 +37,7 @@ internal static class ClickCommandHandler
 
       await MouseSimulator.Click(
         clickRequest.Point,
-        ct,
+        linkedCt,
         clickRequest.Times.Value,
         clickRequest.Interval.Value,
         clickRequest.HoldTime.Value
@@ -46,6 +49,10 @@ internal static class ClickCommandHandler
       };
 
       await MessageHandler.SendResponse(ws, message.Id, response, ct);
+    }
+    catch (OperationCanceledException)
+    {
+      await MessageHandler.SendError(ws, message.Id, "Operation was cancelled", ct);
     }
     catch (ArgumentException ex)
     {

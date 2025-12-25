@@ -90,3 +90,13 @@ internal class DragRepeatResponse
 {
   public bool Success { get; set; }
 }
+
+internal class StopRequest
+{
+  // Empty request - no data needed
+}
+
+internal class StopResponse
+{
+  public bool Success { get; set; }
+}
