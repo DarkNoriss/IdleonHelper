@@ -58,6 +58,20 @@ const api = {
         },
       },
     },
+    world6: {
+      summoning: {
+        startEndlessAutobattler: () => {
+          return ipcRenderer.invoke(
+            "script:world-6.summoning.start-endless-autobattler"
+          )
+        },
+        startAutobattler: () => {
+          return ipcRenderer.invoke(
+            "script:world-6.summoning.start-autobattler"
+          )
+        },
+      },
+    },
   },
 }
 

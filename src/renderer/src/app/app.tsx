@@ -8,6 +8,7 @@ import { AppHeader } from "./app-header"
 import { Dashboard } from "./pages/dashboard"
 import { Test } from "./pages/test"
 import { WeeklyBattle } from "./pages/world-2/weekly-battle"
+import { Summoning } from "./pages/world-6/summoning"
 import { AppSidebar } from "./sidebar/app-sidebar"
 
 export const App = () => {
@@ -17,6 +18,7 @@ export const App = () => {
     dashboard: <Dashboard />,
     test: <Test />,
     weeklyBattle: <WeeklyBattle />,
+    summoning: <Summoning />,
   }
 
   return (

@@ -33,6 +33,19 @@ export const setupHandlers = (): void => {
     }
   )
 
+  ipcMain.handle(
+    "script:world-6.summoning.start-endless-autobattler",
+    async () => {
+      logger.log("IPC: script:world-6.summoning.start-endless-autobattler")
+      return await scripts.world6.summoning.startEndlessAutobattler()
+    }
+  )
+
+  ipcMain.handle("script:world-6.summoning.start-autobattler", async () => {
+    logger.log("IPC: script:world-6.summoning.start-autobattler")
+    return await scripts.world6.summoning.startAutobattler()
+  })
+
   ipcMain.handle("script:get-status", async () => {
     logger.log("IPC: script:get-status")
     return cancellationManager.getStatus()

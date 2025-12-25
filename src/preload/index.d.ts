@@ -54,6 +54,12 @@ declare global {
             ) => () => void
           }
         }
+        world6: {
+          summoning: {
+            startEndlessAutobattler: () => Promise<void>
+            startAutobattler: () => Promise<void>
+          }
+        }
       }
     }
   }
