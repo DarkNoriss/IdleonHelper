@@ -1,5 +1,4 @@
-import { useEffect } from "react"
-import { Activity, type ReactElement } from "react"
+import { Activity, useEffect, type ReactElement } from "react"
 import { ThemeProvider } from "@/providers/theme-provider"
 import { useNavigationStore, type NavigationPage } from "@/store/navigation"
 import { useScriptStatusStore } from "@/store/script-status"
