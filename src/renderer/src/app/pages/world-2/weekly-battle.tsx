@@ -30,7 +30,6 @@ export const WeeklyBattle = () => {
   const setCurrentScript = useScriptStatusStore(
     (state) => state.setCurrentScript
   )
-  const [runningStep, setRunningStep] = useState<string | null>(null)
 
   const isWeeklyBattleRunning = currentScript === "weeklyBattle"
   const isWorking = currentScript !== null
@@ -64,13 +63,12 @@ export const WeeklyBattle = () => {
     }
   }
 
-  const handleRun = async (steps: number[], stepName: string) => {
-    // If already working and this is the running step, cancel it
-    if (isWeeklyBattleRunning && runningStep === stepName) {
+  const handleRun = async (steps: number[]) => {
+    // If weekly battle is already running, cancel it
+    if (isWeeklyBattleRunning) {
       try {
         await window.api.script.cancel()
         setCurrentScript(null)
-        setRunningStep(null)
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -79,14 +77,13 @@ export const WeeklyBattle = () => {
       return
     }
 
-    // If already working with a different step, show error
+    // If already working with a different script, show error
     if (isWorking) {
       setError("Another operation is already running")
       return
     }
 
     setError(null)
-    setRunningStep(stepName)
     setCurrentScript("weeklyBattle")
 
     try {
@@ -95,7 +92,6 @@ export const WeeklyBattle = () => {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         // User cancelled, don't show error
         setCurrentScript(null)
-        setRunningStep(null)
       } else {
         setError(
           err instanceof Error
@@ -103,7 +99,6 @@ export const WeeklyBattle = () => {
             : "Failed to run weekly battle steps"
         )
         setCurrentScript(null)
-        setRunningStep(null)
       }
     }
   }
@@ -119,13 +114,6 @@ export const WeeklyBattle = () => {
 
     return cleanup
   }, [])
-
-  useEffect(() => {
-    // Reset running step when weekly battle stops
-    if (!isWeeklyBattleRunning) {
-      setRunningStep(null)
-    }
-  }, [isWeeklyBattleRunning])
 
   return (
     <Card className="relative">
@@ -177,12 +165,12 @@ export const WeeklyBattle = () => {
                       {step.stepName}
                     </div>
                     <Button
-                      onClick={() => handleRun(step.steps, step.stepName)}
+                      onClick={() => handleRun(step.steps)}
                       size="sm"
                       className="w-full"
-                      disabled={isWorking && runningStep !== step.stepName}
+                      disabled={isWorking && !isWeeklyBattleRunning}
                     >
-                      {runningStep === step.stepName
+                      {isWeeklyBattleRunning
                         ? "Running... (Click to stop)"
                         : step.stepName.toLowerCase().includes("skull")
                           ? "Start skulls"
