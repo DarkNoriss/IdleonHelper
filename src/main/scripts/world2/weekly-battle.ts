@@ -1,6 +1,6 @@
 import { backendCommand } from "../../backend/backend-command"
 import { getMainWindow } from "../../index"
-import { cancellationManager, delay, logger } from "../../utils"
+import { cancellationManager, logger } from "../../utils"
 import {
   fetchWeeklyBattleData,
   type WeeklyBattleData,
@@ -117,11 +117,6 @@ export const weeklyBattle = {
         )
 
         await backendCommand.click(coords, undefined, token)
-
-        // Add 500ms delay between clicks (except after the last one)
-        if (i < steps.length - 1) {
-          await delay(500, token)
-        }
       }
 
       logger.log("Weekly battle run completed successfully")
