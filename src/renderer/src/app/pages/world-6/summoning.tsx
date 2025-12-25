@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export const Summoning = () => {
   const [error, setError] = useState<string | null>(null)
-  const { currentScript, setCurrentScript } = useScriptStatusStore((state) => ({
-    currentScript: state.currentScript,
-    setCurrentScript: state.setCurrentScript,
-  }))
+  const currentScript = useScriptStatusStore((state) => state.currentScript)
+  const setCurrentScript = useScriptStatusStore(
+    (state) => state.setCurrentScript
+  )
 
   const isEndlessRunning = currentScript === "summoning.endless"
   const isAutobattlerRunning = currentScript === "summoning.autobattler"

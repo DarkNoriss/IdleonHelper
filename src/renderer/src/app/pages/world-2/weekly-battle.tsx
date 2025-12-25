@@ -26,10 +26,10 @@ export const WeeklyBattle = () => {
   const [data, setData] = useState<WeeklyBattleData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { currentScript, setCurrentScript } = useScriptStatusStore((state) => ({
-    currentScript: state.currentScript,
-    setCurrentScript: state.setCurrentScript,
-  }))
+  const currentScript = useScriptStatusStore((state) => state.currentScript)
+  const setCurrentScript = useScriptStatusStore(
+    (state) => state.setCurrentScript
+  )
   const [runningStep, setRunningStep] = useState<string | null>(null)
 
   const isWeeklyBattleRunning = currentScript === "weeklyBattle"

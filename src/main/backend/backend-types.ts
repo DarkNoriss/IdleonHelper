@@ -96,7 +96,7 @@ export type DragRepeatResponse = {
 }
 
 // Stop command
-export type StopRequest = {}
+export type StopRequest = Record<string, never>
 
 export type StopResponse = {
   success: boolean

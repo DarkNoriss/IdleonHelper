@@ -15,4 +15,3 @@ export const useScriptStatusStore = create<ScriptStatusState>((set) => ({
   currentScript: null,
   setCurrentScript: (script) => set({ currentScript: script }),
 }))
-
