@@ -61,6 +61,45 @@ declare global {
           }
         }
       }
+      update: {
+        getVersion: () => Promise<string>
+        checkForUpdates: () => Promise<void>
+        downloadUpdate: () => Promise<void>
+        installUpdate: () => Promise<void>
+        getStatus: () => Promise<{
+          version: string
+          status:
+            | "idle"
+            | "checking"
+            | "update-available"
+            | "update-not-available"
+            | "downloading"
+            | "update-downloaded"
+            | "error"
+          error?: string
+        }>
+        onStatusChange: (
+          callback: (status: {
+            version: string
+            status:
+              | "idle"
+              | "checking"
+              | "update-available"
+              | "update-not-available"
+              | "downloading"
+              | "update-downloaded"
+              | "error"
+            error?: string
+          }) => void
+        ) => () => void
+        onDownloadProgress: (
+          callback: (progress: {
+            percent: number
+            transferred: number
+            total: number
+          }) => void
+        ) => () => void
+      }
     }
   }
 }

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { SidebarBackendStatus } from "./backend-status"
+import { UpdateStatus } from "./update-status"
 
 // Navigation data with routes
 type NavItem = {
@@ -119,7 +120,7 @@ export const AppSidebar = ({
       </SidebarContent>
 
       <SidebarFooter>
-        {/* <UpdateStatus /> */}
+        <UpdateStatus />
         <SidebarBackendStatus />
       </SidebarFooter>
       <SidebarRail />

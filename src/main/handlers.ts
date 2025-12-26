@@ -3,7 +3,15 @@ import { BrowserWindow, ipcMain } from "electron"
 import { getConnectionStatus, getLastError } from "./backend"
 import { backendCommand } from "./backend/backend-command"
 import { scripts } from "./scripts"
-import { cancellationManager, logger } from "./utils"
+import {
+  cancellationManager,
+  checkForUpdates,
+  downloadUpdate,
+  getCurrentVersion,
+  getUpdateStatus,
+  installUpdate,
+  logger,
+} from "./utils"
 
 export const setupHandlers = (): void => {
   logger.log("Setting up IPC handlers")
@@ -69,6 +77,31 @@ export const setupHandlers = (): void => {
       status: getConnectionStatus(),
       error: getLastError(),
     }
+  })
+
+  ipcMain.handle("update:check", async () => {
+    logger.log("IPC: update:check")
+    await checkForUpdates()
+  })
+
+  ipcMain.handle("update:download", async () => {
+    logger.log("IPC: update:download")
+    await downloadUpdate()
+  })
+
+  ipcMain.handle("update:install", () => {
+    logger.log("IPC: update:install")
+    installUpdate()
+  })
+
+  ipcMain.handle("update:get-status", async () => {
+    logger.log("IPC: update:get-status")
+    return getUpdateStatus()
+  })
+
+  ipcMain.handle("update:get-version", () => {
+    logger.log("IPC: update:get-version")
+    return getCurrentVersion()
   })
 
   logger.log("IPC handlers registered")

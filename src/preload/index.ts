@@ -73,6 +73,51 @@ const api = {
       },
     },
   },
+  update: {
+    getVersion: () => {
+      return ipcRenderer.invoke("update:get-version")
+    },
+    checkForUpdates: () => {
+      return ipcRenderer.invoke("update:check")
+    },
+    downloadUpdate: () => {
+      return ipcRenderer.invoke("update:download")
+    },
+    installUpdate: () => {
+      return ipcRenderer.invoke("update:install")
+    },
+    getStatus: () => {
+      return ipcRenderer.invoke("update:get-status")
+    },
+    onStatusChange: (
+      callback: (status: {
+        version: string
+        status: string
+        error?: string
+      }) => void
+    ) => {
+      ipcRenderer.on("update-status-changed", (_event, status) =>
+        callback(status)
+      )
+      return () => {
+        ipcRenderer.removeAllListeners("update-status-changed")
+      }
+    },
+    onDownloadProgress: (
+      callback: (progress: {
+        percent: number
+        transferred: number
+        total: number
+      }) => void
+    ) => {
+      ipcRenderer.on("update-download-progress", (_event, progress) =>
+        callback(progress)
+      )
+      return () => {
+        ipcRenderer.removeAllListeners("update-download-progress")
+      }
+    },
+  },
 }
 
 if (process.contextIsolated) {
