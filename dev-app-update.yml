@@ -1,4 +1,4 @@
 provider: github
 owner: DarkNoriss
 repo: IdleonHelper
-updaterCacheDirName: electron-app-updater
+updaterCacheDirName: idleon-helper-updater
