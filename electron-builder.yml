@@ -1,5 +1,5 @@
 appId: com.idleon.helper
-productName: idleon-helper
+productName: IdleonHelper
 directories:
   buildResources: build
 files:
@@ -12,7 +12,8 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: idleon-helper
+  executableName: IdleonHelper
+  companyName: MyAngelCamellia
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
