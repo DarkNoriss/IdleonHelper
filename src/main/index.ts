@@ -66,7 +66,7 @@ function createWindow(): void {
 
 app.whenReady().then(async () => {
   logger.log("Electron app ready")
-  electronApp.setAppUserModelId("com.electron")
+  electronApp.setAppUserModelId("com.idleon.helper")
 
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window)
