@@ -13,12 +13,13 @@ asarUnpack:
   - resources/**
 win:
   executableName: IdleonHelper
-  companyName: MyAngelCamellia
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  oneClick: false
+  allowToChangeInstallationDirectory: true
 npmRebuild: false
 publish:
   provider: github
