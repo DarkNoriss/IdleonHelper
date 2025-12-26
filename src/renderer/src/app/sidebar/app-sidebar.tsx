@@ -36,16 +36,31 @@ const navMain: NavItem[] = [
     page: "dashboard",
   },
   {
-    title: "Test",
-    page: "test",
+    title: "General",
+    items: [
+      {
+        title: "Test",
+        page: "test",
+      },
+    ],
   },
   {
-    title: "Weekly Battle",
-    page: "weeklyBattle",
+    title: "World 2",
+    items: [
+      {
+        title: "Weekly Battle",
+        page: "weeklyBattle",
+      },
+    ],
   },
   {
-    title: "Summoning",
-    page: "summoning",
+    title: "World 6",
+    items: [
+      {
+        title: "Summoning",
+        page: "summoning",
+      },
+    ],
   },
 ]
 
