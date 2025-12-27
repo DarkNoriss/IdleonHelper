@@ -118,6 +118,17 @@ const api = {
       }
     },
   },
+  logs: {
+    get: () => {
+      return ipcRenderer.invoke("logs:get")
+    },
+    onChange: (callback: (logs: unknown[]) => void) => {
+      ipcRenderer.on("logs-changed", (_event, logs) => callback(logs))
+      return () => {
+        ipcRenderer.removeAllListeners("logs-changed")
+      }
+    },
+  },
 }
 
 if (process.contextIsolated) {

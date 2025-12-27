@@ -36,6 +36,10 @@ const navMain: NavItem[] = [
     page: "dashboard",
   },
   {
+    title: "Logs",
+    page: "logs",
+  },
+  {
     title: "World 2",
     items: [
       {
