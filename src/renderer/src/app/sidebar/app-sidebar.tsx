@@ -1,4 +1,4 @@
-import * as React from "react"
+import { useEffect, useState } from "react"
 import { useNavigationStore, type NavigationPage } from "@/store/navigation"
 import { ChevronRight } from "lucide-react"
 
@@ -30,40 +30,67 @@ type NavItem = {
   items?: { title: string; page: NavigationPage }[]
 }
 
-const navMain: NavItem[] = [
-  {
-    title: "Dashboard",
-    page: "dashboard",
-  },
-  {
-    title: "Logs",
-    page: "logs",
-  },
-  {
-    title: "World 2",
-    items: [
-      {
-        title: "Weekly Battle",
-        page: "weeklyBattle",
-      },
-    ],
-  },
-  {
-    title: "World 6",
-    items: [
-      {
-        title: "Summoning",
-        page: "summoning",
-      },
-    ],
-  },
-]
+const getNavItems = (isDev: boolean): NavItem[] => {
+  const baseNav: NavItem[] = [
+    {
+      title: "Dashboard",
+      page: "dashboard",
+    },
+    {
+      title: "Logs",
+      page: "logs",
+    },
+    {
+      title: "World 2",
+      items: [
+        {
+          title: "Weekly Battle",
+          page: "weeklyBattle",
+        },
+      ],
+    },
+    {
+      title: "World 6",
+      items: [
+        {
+          title: "Summoning",
+          page: "summoning",
+        },
+      ],
+    },
+  ]
+
+  if (isDev) {
+    baseNav.push({
+      title: "General",
+      items: [
+        {
+          title: "Test",
+          page: "general/test",
+        },
+      ],
+    })
+  }
+
+  return baseNav
+}
 
 export const AppSidebar = ({
   ...props
 }: React.ComponentProps<typeof Sidebar>) => {
   const currentPage = useNavigationStore((state) => state.currentPage)
   const setPage = useNavigationStore((state) => state.setPage)
+  const [isDev, setIsDev] = useState(false)
+
+  useEffect(() => {
+    // Check if we're in dev mode
+    window.api.app
+      .isDev()
+      .then(setIsDev)
+      .catch(() => setIsDev(false))
+  }, [])
+
+  const navMain = getNavItems(isDev)
 
   return (
     <Sidebar {...props} variant="inset">

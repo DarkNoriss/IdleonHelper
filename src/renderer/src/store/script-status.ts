@@ -6,6 +6,7 @@ export type ScriptName =
   | "weeklyBattle"
   | "weeklyBattle.skulls"
   | "weeklyBattle.trophy"
+  | "general.test"
   | null
 
 type ScriptStatusState = {

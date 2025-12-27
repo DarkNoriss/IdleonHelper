@@ -72,6 +72,18 @@ const api = {
         },
       },
     },
+    general: {
+      test: {
+        run: () => {
+          return ipcRenderer.invoke("script:general.test.run")
+        },
+      },
+    },
+  },
+  app: {
+    isDev: () => {
+      return ipcRenderer.invoke("app:isDev")
+    },
   },
   update: {
     getVersion: () => {

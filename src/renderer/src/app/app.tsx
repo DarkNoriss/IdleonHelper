@@ -1,4 +1,4 @@
-import { Activity, useEffect, type ReactElement } from "react"
+import { Activity, useEffect, useState, type ReactElement } from "react"
 import { ThemeProvider } from "@/providers/theme-provider"
 import { useNavigationStore, type NavigationPage } from "@/store/navigation"
 import { useScriptStatusStore } from "@/store/script-status"
@@ -7,6 +7,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import { AppHeader } from "./app-header"
 import { Dashboard } from "./pages/dashboard"
+import { Test } from "./pages/general/test"
 import { Logs } from "./pages/logs"
 import { WeeklyBattle } from "./pages/world-2/weekly-battle"
 import { Summoning } from "./pages/world-6/summoning"
@@ -17,8 +18,15 @@ export const App = () => {
   const setCurrentScript = useScriptStatusStore(
     (state) => state.setCurrentScript
   )
+  const [isDev, setIsDev] = useState(false)
 
   useEffect(() => {
+    // Check if we're in dev mode
+    window.api.app
+      .isDev()
+      .then(setIsDev)
+      .catch(() => setIsDev(false))
+
     // Get initial status
     window.api.script.getStatus().then((status) => {
       if (!status.isWorking) {
@@ -36,11 +44,12 @@ export const App = () => {
     return cleanup
   }, [setCurrentScript])
 
-  const pageMap: Record<NavigationPage, ReactElement> = {
+  const pageMap: Partial<Record<NavigationPage, ReactElement>> = {
     dashboard: <Dashboard />,
     logs: <Logs />,
     weeklyBattle: <WeeklyBattle />,
     summoning: <Summoning />,
+    ...(isDev && { "general/test": <Test /> }),
   }
 
   return (

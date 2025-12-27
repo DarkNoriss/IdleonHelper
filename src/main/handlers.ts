@@ -1,3 +1,4 @@
+import { is } from "@electron-toolkit/utils"
 import { BrowserWindow, ipcMain } from "electron"
 
 import { getConnectionStatus, getLastError } from "./backend"
@@ -108,6 +109,15 @@ export const setupHandlers = (): void => {
   ipcMain.handle("logs:get", async () => {
     logger.log("IPC: logs:get")
     return getLogs()
+  })
+
+  ipcMain.handle("script:general.test.run", async () => {
+    logger.log("IPC: script:general.test.run")
+    return await scripts.general.test.run()
+  })
+
+  ipcMain.handle("app:isDev", () => {
+    return is.dev
   })
 
   logger.log("IPC handlers registered")

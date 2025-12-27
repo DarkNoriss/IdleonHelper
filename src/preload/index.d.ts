@@ -68,6 +68,14 @@ declare global {
             startAutobattler: () => Promise<void>
           }
         }
+        general: {
+          test: {
+            run: () => Promise<void>
+          }
+        }
+      }
+      app: {
+        isDev: () => Promise<boolean>
       }
       update: {
         getVersion: () => Promise<string>
