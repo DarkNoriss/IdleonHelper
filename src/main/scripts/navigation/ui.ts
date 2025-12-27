@@ -23,12 +23,12 @@ export const ui = {
       return false
     }
 
-    const secondCheck = await backendCommand.isVisible(
+    const secondCheck = await backendCommand.find(
       "codex/quik-ref",
       undefined,
       token
     )
-    if (secondCheck) {
+    if (secondCheck.matches.length > 0) {
       logger.log("Codex opened successfully after first attempt")
       return true
     }
@@ -77,12 +77,12 @@ export const ui = {
       return false
     }
 
-    const secondCheck = await backendCommand.isVisible(
+    const secondCheck = await backendCommand.find(
       "items/lock",
       undefined,
       token
     )
-    if (secondCheck) {
+    if (secondCheck.matches.length > 0) {
       logger.log("Items opened successfully after first attempt")
       return true
     }
