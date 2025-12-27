@@ -83,6 +83,7 @@ declare global {
             | "update-not-available"
             | "downloading"
             | "update-downloaded"
+            | "installing"
             | "error"
           error?: string
         }>
@@ -96,6 +97,7 @@ declare global {
               | "update-not-available"
               | "downloading"
               | "update-downloaded"
+              | "installing"
               | "error"
             error?: string
           }) => void

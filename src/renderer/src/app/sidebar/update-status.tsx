@@ -10,6 +10,7 @@ type UpdateStatus =
   | "update-not-available"
   | "downloading"
   | "update-downloaded"
+  | "installing"
   | "error"
 
 type UpdateInfo = {
@@ -101,6 +102,7 @@ export const UpdateStatus = () => {
   const isUpdateAvailable = updateInfo.status === "update-available"
   const isDownloading = updateInfo.status === "downloading"
   const isDownloaded = updateInfo.status === "update-downloaded"
+  const isInstalling = updateInfo.status === "installing"
   const isError = updateInfo.status === "error"
   const isNotAvailable = updateInfo.status === "update-not-available"
 
@@ -182,9 +184,26 @@ export const UpdateStatus = () => {
             size="sm"
             onClick={handleInstall}
             className="h-7 text-xs"
+            disabled={isInstalling}
           >
-            Install & Restart
+            {isInstalling ? (
+              <>
+                <RefreshCw className="h-3 w-3 animate-spin" />
+                Installing...
+              </>
+            ) : (
+              "Install & Restart"
+            )}
           </Button>
+        </div>
+      )}
+
+      {isInstalling && (
+        <div className="flex flex-col gap-2">
+          <div className="text-foreground flex items-center gap-2 text-xs">
+            <RefreshCw className="h-3 w-3 animate-spin text-blue-500" />
+            <span>Installing update and restarting...</span>
+          </div>
         </div>
       )}
 

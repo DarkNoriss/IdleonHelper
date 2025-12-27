@@ -11,6 +11,7 @@ export type UpdateStatus =
   | "update-not-available"
   | "downloading"
   | "update-downloaded"
+  | "installing"
   | "error"
 
 type UpdateInfo = {
@@ -137,11 +138,19 @@ export const installUpdate = (): void => {
       throw new Error("No update downloaded to install")
     }
 
+    logger.log("Preparing to install update...")
+    notifyRenderer("installing")
+
+    // quitAndInstall will trigger the app's before-quit handler
+    // which will automatically stop the backend and close connections
     logger.log("Installing update silently and restarting...")
     // quitAndInstall(isSilent, isForceRunAfter)
     // isSilent: true = silent installation (no installer UI)
     // isForceRunAfter: true = automatically restart app after installation
-    autoUpdater.quitAndInstall(true, true)
+    // Use setImmediate to make this non-blocking and prevent UI freeze
+    setImmediate(() => {
+      autoUpdater.quitAndInstall(true, true)
+    })
   } catch (error) {
     logger.error(
       `Failed to install update: ${error instanceof Error ? error.message : String(error)}`
