@@ -4,6 +4,8 @@ export type ScriptName =
   | "summoning.endless"
   | "summoning.autobattler"
   | "weeklyBattle"
+  | "weeklyBattle.skulls"
+  | "weeklyBattle.trophy"
   | null
 
 type ScriptStatusState = {

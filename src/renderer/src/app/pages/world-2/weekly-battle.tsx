@@ -31,7 +31,6 @@ export const WeeklyBattle = () => {
     (state) => state.setCurrentScript
   )
 
-  const isWeeklyBattleRunning = currentScript === "weeklyBattle"
   const isWorking = currentScript !== null
 
   const loadData = async () => {
@@ -63,9 +62,14 @@ export const WeeklyBattle = () => {
     }
   }
 
-  const handleRun = async (steps: number[]) => {
-    // If weekly battle is already running, cancel it
-    if (isWeeklyBattleRunning) {
+  const handleRun = async (steps: number[], stepName: string) => {
+    // Determine which script name to use based on step name
+    const scriptName = stepName.toLowerCase().includes("skull")
+      ? "weeklyBattle.skulls"
+      : "weeklyBattle.trophy"
+    const isThisButtonRunning = currentScript === scriptName
+    // If this specific button is already running, cancel it
+    if (isThisButtonRunning) {
       try {
         await window.api.script.cancel()
         setCurrentScript(null)
@@ -84,7 +88,9 @@ export const WeeklyBattle = () => {
     }
 
     setError(null)
-    setCurrentScript("weeklyBattle")
+    setCurrentScript(
+      scriptName as "weeklyBattle.skulls" | "weeklyBattle.trophy"
+    )
 
     try {
       await window.api.script.world2.weeklyBattle.run(steps)
@@ -159,41 +165,51 @@ export const WeeklyBattle = () => {
           <div className="space-y-6">
             {data.info.steps && data.info.steps.length > 0 && (
               <div className="grid grid-cols-2 gap-6">
-                {data.info.steps.map((step, index) => (
-                  <div key={index} className="space-y-3">
-                    <div className="text-center text-sm font-semibold uppercase">
-                      {step.stepName}
-                    </div>
-                    <Button
-                      onClick={() => handleRun(step.steps)}
-                      size="sm"
-                      className="w-full"
-                      disabled={isWorking && !isWeeklyBattleRunning}
-                    >
-                      {isWeeklyBattleRunning
-                        ? "Running... (Click to stop)"
-                        : step.stepName.toLowerCase().includes("skull")
-                          ? "Start skulls"
-                          : "Start trophy"}
-                    </Button>
-                    <div className="space-y-2">
-                      {step.rawSteps && step.rawSteps.length > 0 ? (
-                        step.rawSteps.map((rawStep, stepIndex) => (
-                          <div
-                            key={stepIndex}
-                            className="text-muted-foreground bg-background/50 rounded p-2 text-center text-xs"
-                          >
-                            {rawStep}
+                {data.info.steps.map((step, index) => {
+                  const isSkulls = step.stepName.toLowerCase().includes("skull")
+                  const scriptName = isSkulls
+                    ? "weeklyBattle.skulls"
+                    : "weeklyBattle.trophy"
+                  const isThisButtonRunning = currentScript === scriptName
+                  // Disable if another script is working, or if the other weekly battle button is running
+                  const isDisabled = isWorking && !isThisButtonRunning
+                  const buttonText = isThisButtonRunning
+                    ? "Running... (Click to stop)"
+                    : isSkulls
+                      ? "Start skulls"
+                      : "Start trophy"
+                  return (
+                    <div key={index} className="space-y-3">
+                      <div className="text-center text-sm font-semibold uppercase">
+                        {step.stepName}
+                      </div>
+                      <Button
+                        onClick={() => handleRun(step.steps, step.stepName)}
+                        size="sm"
+                        className="w-full"
+                        disabled={isDisabled}
+                      >
+                        {buttonText}
+                      </Button>
+                      <div className="space-y-2">
+                        {step.rawSteps && step.rawSteps.length > 0 ? (
+                          step.rawSteps.map((rawStep, stepIndex) => (
+                            <div
+                              key={stepIndex}
+                              className="text-muted-foreground bg-background/50 rounded p-2 text-center text-xs"
+                            >
+                              {rawStep}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-muted-foreground text-center text-xs">
+                            No steps available
                           </div>
-                        ))
-                      ) : (
-                        <div className="text-muted-foreground text-center text-xs">
-                          No steps available
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
