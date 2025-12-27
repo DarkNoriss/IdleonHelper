@@ -25,6 +25,14 @@ type WeeklyBattleData = {
   info: WeeklyBattleInfo
 }
 
+type LogLevel = "log" | "error" | "warn" | "info"
+
+type LogEntry = {
+  timestamp: number
+  level: LogLevel
+  message: string
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
@@ -100,6 +108,10 @@ declare global {
           }) => void
         ) => () => void
       }
+    }
+    logs: {
+      get: () => Promise<LogEntry[]>
+      onChange: (callback: (logs: LogEntry[]) => void) => () => void
     }
   }
 }

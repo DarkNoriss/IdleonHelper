@@ -8,6 +8,7 @@ import {
   checkForUpdates,
   downloadUpdate,
   getCurrentVersion,
+  getLogs,
   getUpdateStatus,
   installUpdate,
   logger,
@@ -102,6 +103,11 @@ export const setupHandlers = (): void => {
   ipcMain.handle("update:get-version", () => {
     logger.log("IPC: update:get-version")
     return getCurrentVersion()
+  })
+
+  ipcMain.handle("logs:get", async () => {
+    logger.log("IPC: logs:get")
+    return getLogs()
   })
 
   logger.log("IPC handlers registered")

@@ -5,7 +5,7 @@ import { app, BrowserWindow, shell } from "electron"
 import { closeConnection, stopBackend } from "./backend"
 import { setupHandlers } from "./handlers"
 import { initializeApp } from "./initialization"
-import { logger } from "./utils"
+import { logger, setLogsChangeNotifier } from "./utils"
 
 let mainWindow: BrowserWindow | null = null
 
@@ -43,6 +43,13 @@ function createWindow(): void {
   })
 
   setMainWindow(window)
+
+  // Set up log change notifier for real-time updates
+  setLogsChangeNotifier((logs) => {
+    if (window && !window.isDestroyed()) {
+      window.webContents.send("logs-changed", logs)
+    }
+  })
 
   window.on("ready-to-show", () => {
     window?.show()
