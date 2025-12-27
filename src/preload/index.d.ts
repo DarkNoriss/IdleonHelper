@@ -113,5 +113,9 @@ declare global {
         onChange: (callback: (logs: LogEntry[]) => void) => () => void
       }
     }
+    logs: {
+      get: () => Promise<LogEntry[]>
+      onChange: (callback: (logs: LogEntry[]) => void) => () => void
+    }
   }
 }
