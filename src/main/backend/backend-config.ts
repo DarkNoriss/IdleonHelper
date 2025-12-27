@@ -1,7 +1,7 @@
 export const backendConfig = {
   find: {
     timeoutMs: 5000,
-    intervalMs: 50,
+    intervalMs: 100,
     threshold: 0.925,
   },
   isVisible: {
