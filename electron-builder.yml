@@ -21,8 +21,7 @@ nsis:
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
-  oneClick: false
-  allowToChangeInstallationDirectory: true
+  oneClick: true
 npmRebuild: false
 publish:
   provider: github

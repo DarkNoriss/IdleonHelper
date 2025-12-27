@@ -137,8 +137,11 @@ export const installUpdate = (): void => {
       throw new Error("No update downloaded to install")
     }
 
-    logger.log("Installing update and quitting...")
-    autoUpdater.quitAndInstall(false, true)
+    logger.log("Installing update silently and restarting...")
+    // quitAndInstall(isSilent, isForceRunAfter)
+    // isSilent: true = silent installation (no installer UI)
+    // isForceRunAfter: true = automatically restart app after installation
+    autoUpdater.quitAndInstall(true, true)
   } catch (error) {
     logger.error(
       `Failed to install update: ${error instanceof Error ? error.message : String(error)}`
