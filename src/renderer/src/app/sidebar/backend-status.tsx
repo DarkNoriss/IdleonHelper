@@ -35,7 +35,6 @@ export const SidebarBackendStatus = () => {
 
   const isConnected = status.status === "connected"
   const isConnecting = status.status === "connecting"
-  const isError = status.status === "error"
 
   return (
     <div className="flex items-center gap-2">
@@ -68,7 +67,7 @@ export const SidebarBackendStatus = () => {
         ) : (
           <>
             <WifiOff className="h-3 w-3" />
-            {isError && status.error ? status.error : "Disconnected"}
+            Disconnected
           </>
         )}
       </span>

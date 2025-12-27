@@ -242,10 +242,17 @@ const connect = async (): Promise<void> => {
 
 export const initializeBackend = async (): Promise<void> => {
   logger.log("Initializing backend connection...")
-  await startBackend()
-  await waitForBackend()
-  await connect()
-  logger.log("Backend initialization completed")
+  try {
+    await startBackend()
+    await waitForBackend()
+    await connect()
+    logger.log("Backend initialization completed")
+  } catch (error) {
+    connectionStatus = "error"
+    lastError = error instanceof Error ? error.message : String(error)
+    notifyStatusChange()
+    throw error
+  }
 }
 
 export const sendCommand = async <T extends keyof CommandRequestMap>(
