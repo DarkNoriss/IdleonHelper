@@ -53,7 +53,7 @@ export const Test = () => {
   }
 
   return (
-    <Card className="relative m-4">
+    <Card>
       <CardHeader>
         <CardTitle className="text-center">Test</CardTitle>
       </CardHeader>
