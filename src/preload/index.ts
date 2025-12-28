@@ -72,6 +72,13 @@ const api = {
         },
       },
     },
+    world3: {
+      construction: {
+        run: () => {
+          return ipcRenderer.invoke("script:world-3.construction.run")
+        },
+      },
+    },
     general: {
       test: {
         run: () => {

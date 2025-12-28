@@ -50,6 +50,15 @@ const getNavItems = (isDev: boolean): NavItem[] => {
       ],
     },
     {
+      title: "World 3",
+      items: [
+        {
+          title: "Construction",
+          page: "world3/construction",
+        },
+      ],
+    },
+    {
       title: "World 6",
       items: [
         {

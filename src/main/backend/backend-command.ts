@@ -107,6 +107,39 @@ export const backendCommand = {
     return response.matches.length > 0
   },
 
+  findAndClick: async (
+    imagePath: string,
+    options:
+      | {
+          timeoutMs?: number
+          intervalMs?: number
+          threshold?: number
+          offset?: ScreenOffset
+          debug?: boolean
+          clickTimes?: number
+          clickInterval?: number
+          clickHoldTime?: number
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<boolean> => {
+    token.throwIfCancelled()
+    const findResponse = await backendCommand.find(imagePath, options, token)
+    if (findResponse.matches.length > 0) {
+      await backendCommand.click(
+        findResponse.matches[0],
+        {
+          times: options?.clickTimes,
+          interval: options?.clickInterval,
+          holdTime: options?.clickHoldTime,
+        },
+        token
+      )
+      return true
+    }
+    return false
+  },
+
   findWithDebug: async (
     imagePath: string,
     options:

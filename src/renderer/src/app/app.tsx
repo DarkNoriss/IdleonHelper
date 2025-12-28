@@ -10,6 +10,7 @@ import { Dashboard } from "./pages/dashboard"
 import { Test } from "./pages/general/test"
 import { Logs } from "./pages/logs"
 import { WeeklyBattle } from "./pages/world-2/weekly-battle"
+import { Construction } from "./pages/world-3/construction"
 import { Summoning } from "./pages/world-6/summoning"
 import { AppSidebar } from "./sidebar/app-sidebar"
 
@@ -49,6 +50,7 @@ export const App = () => {
     logs: <Logs />,
     weeklyBattle: <WeeklyBattle />,
     summoning: <Summoning />,
+    "world3/construction": <Construction />,
     ...(isDev && { "general/test": <Test /> }),
   }
 

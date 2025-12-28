@@ -4,6 +4,7 @@ export type NavigationPage =
   | "dashboard"
   | "weeklyBattle"
   | "summoning"
+  | "world3/construction"
   | "logs"
   | "general/test"
 

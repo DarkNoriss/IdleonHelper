@@ -6,6 +6,7 @@ export type ScriptName =
   | "weeklyBattle"
   | "weeklyBattle.skulls"
   | "weeklyBattle.trophy"
+  | "world3.construction"
   | "general.test"
   | null
 

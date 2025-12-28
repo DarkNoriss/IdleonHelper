@@ -1,3 +1,5 @@
+import { codex } from "./codex"
+import { construction } from "./construction"
 import { ui } from "./ui"
 
 /**
@@ -5,4 +7,6 @@ import { ui } from "./ui"
  */
 export const navigation = {
   ui,
+  codex,
+  construction,
 } as const

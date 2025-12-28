@@ -1,12 +1,14 @@
 import { general } from "./general"
 import { navigation } from "./navigation/navigation"
 import { world2 } from "./world2"
+import { world3 } from "./world3"
 import { world6 } from "./world6"
 
 export const scripts = {
   general,
   navigation,
   world2,
+  world3,
   world6,
 } as const
 
