@@ -116,10 +116,18 @@ export const setupHandlers = (): void => {
     return await scripts.general.test.run()
   })
 
-  ipcMain.handle("script:world-3.construction.run", async () => {
-    logger.log("IPC: script:world-3.construction.run")
-    return await scripts.world3.construction.run()
-  })
+  ipcMain.handle(
+    "script:world-3.construction.run",
+    async (
+      _event,
+      weights: { buildRate: number; exp: number; flaggy: number }
+    ) => {
+      logger.log(
+        `IPC: script:world-3.construction.run (weights: Build Rate=${weights.buildRate}, Exp=${weights.exp}, Flaggy=${weights.flaggy})`
+      )
+      return await scripts.world3.construction.run(weights)
+    }
+  )
 
   ipcMain.handle("app:isDev", () => {
     return is.dev

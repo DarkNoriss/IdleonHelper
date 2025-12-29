@@ -74,8 +74,8 @@ const api = {
     },
     world3: {
       construction: {
-        run: () => {
-          return ipcRenderer.invoke("script:world-3.construction.run")
+        run: (weights: { buildRate: number; exp: number; flaggy: number }) => {
+          return ipcRenderer.invoke("script:world-3.construction.run", weights)
         },
       },
     },
