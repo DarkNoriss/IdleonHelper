@@ -70,13 +70,13 @@ export const weeklyBattle = {
       )
       if (needsRestart) {
         logger.log("Restarting weekly battle...")
-        const restartResult = await backendCommand.find(
-          "weekly-battle/restart",
+
+        const clicked = await backendCommand.click(
+          STEP_1_COORDS,
           undefined,
           token
         )
-        if (restartResult.matches.length > 0) {
-          await backendCommand.click(restartResult.matches[0], undefined, token)
+        if (clicked) {
           logger.log("Weekly battle restarted successfully")
         } else {
           logger.error("Restart image found but no matches returned")
