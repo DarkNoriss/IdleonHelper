@@ -124,7 +124,7 @@ export const backendCommand = {
     token: CancellationToken
   ): Promise<boolean> => {
     token.throwIfCancelled()
-    const findResponse = await backendCommand.find(imagePath, options, token)
+    const findResponse = await backendCommand.findWithDebug(imagePath, options, token)
     if (findResponse.matches.length > 0) {
       await backendCommand.click(
         findResponse.matches[0],

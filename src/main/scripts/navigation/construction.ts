@@ -62,7 +62,11 @@ const ensurePage = async (
     return true
   }
 
-  const result = await backendCommand.find(buttonImage, undefined, token)
+  const result = await backendCommand.findWithDebug(
+    buttonImage,
+    undefined,
+    token
+  )
 
   if (result.matches.length === 0) {
     logger.log(`${buttonName} not found, assuming we're on ${pageName}`)
@@ -82,7 +86,7 @@ const ensurePage = async (
     token
   )
 
-  const finalCheck = await backendCommand.find(
+  const finalCheck = await backendCommand.findWithDebug(
     confirmationImage,
     undefined,
     token

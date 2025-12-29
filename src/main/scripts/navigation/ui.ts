@@ -15,7 +15,11 @@ export const ui = {
       return true
     }
 
-    const result = await backendCommand.find("ui/codex", undefined, token)
+    const result = await backendCommand.findWithDebug(
+      "ui/codex",
+      undefined,
+      token
+    )
     if (result.matches.length > 0) {
       await backendCommand.click(result.matches[0], undefined, token)
     } else {
@@ -23,7 +27,7 @@ export const ui = {
       return false
     }
 
-    const secondCheck = await backendCommand.find(
+    const secondCheck = await backendCommand.findWithDebug(
       "codex/quik-ref",
       undefined,
       token
@@ -33,7 +37,11 @@ export const ui = {
       return true
     }
 
-    const secondResult = await backendCommand.find("ui/codex", undefined, token)
+    const secondResult = await backendCommand.findWithDebug(
+      "ui/codex",
+      undefined,
+      token
+    )
     if (secondResult.matches.length > 0) {
       await backendCommand.click(secondResult.matches[0], undefined, token)
     } else {
@@ -69,7 +77,11 @@ export const ui = {
       return true
     }
 
-    const result = await backendCommand.find("ui/items", undefined, token)
+    const result = await backendCommand.findWithDebug(
+      "ui/items",
+      undefined,
+      token
+    )
     if (result.matches.length > 0) {
       await backendCommand.click(result.matches[0], undefined, token)
     } else {
@@ -77,7 +89,7 @@ export const ui = {
       return false
     }
 
-    const secondCheck = await backendCommand.find(
+    const secondCheck = await backendCommand.findWithDebug(
       "items/lock",
       undefined,
       token
@@ -87,7 +99,11 @@ export const ui = {
       return true
     }
 
-    const secondResult = await backendCommand.find("ui/items", undefined, token)
+    const secondResult = await backendCommand.findWithDebug(
+      "ui/items",
+      undefined,
+      token
+    )
     if (secondResult.matches.length > 0) {
       await backendCommand.click(secondResult.matches[0], undefined, token)
     } else {
