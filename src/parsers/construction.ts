@@ -64,13 +64,11 @@ export type ParsedCog = {
 }
 
 export type ParsedConstructionData = {
-  cogs: ParsedCog[] | null
-  flaggyShopUpgrades: number
-  flagPose: number[]
-  flagSlots: ParsedCog[]
+  cogs: Record<number, ParsedCog>
   slots: Record<number, ParsedCog>
+  flagPose: number[]
+  flaggyShopUpgrades: number
   availableSlotKeys: number[]
-  cogsMap: Record<number, ParsedCog> | null
   score: Score | null
 }
 
@@ -85,7 +83,7 @@ export type Score = {
 export const parseConstruction = (
   jsonData: RawJson
 ): ParsedConstructionData => {
-  const cogs = extractCogs(jsonData)
+  const cogsArray = extractCogs(jsonData)
   const flaggyShopUpgrades = extractFlaggyShopUpgrades(jsonData)
   const flagPose = extractFlagPose(jsonData)
   const flagSlots = extractFlagSlots(jsonData, flagPose)
@@ -101,47 +99,28 @@ export const parseConstruction = (
   }
 
   // Map cogs to a key -> obj map
-  const cogsMap: Record<number, ParsedCog> | null =
-    cogs === null
-      ? null
-      : (() => {
-          const map: Record<number, ParsedCog> = {}
-          for (const cog of cogs) {
-            map[cog.key] = cog
-          }
-          return map
-        })()
+  const cogs: Record<number, ParsedCog> = {}
+  if (cogsArray !== null) {
+    for (const cog of cogsArray) {
+      cogs[cog.key] = cog
+    }
+  }
 
   // Calculate score
   const score = calculateScore({
     cogs,
     flaggyShopUpgrades,
     flagPose,
-    flagSlots,
     slots,
     availableSlotKeys,
-    cogsMap,
-  })
-
-  console.log({
-    cogs,
-    flaggyShopUpgrades,
-    flagPose,
-    flagSlots,
-    slots,
-    availableSlotKeys,
-    cogsMap,
-    score,
   })
 
   return {
     cogs,
-    flaggyShopUpgrades,
-    flagPose,
-    flagSlots,
     slots,
+    flagPose,
+    flaggyShopUpgrades,
     availableSlotKeys,
-    cogsMap,
     score,
   }
 }
@@ -350,19 +329,15 @@ const safeGet = <T>(arr: unknown, ...indexes: number[]): T | undefined => {
 
 const getEntry = (
   key: number,
-  cogsMap: Record<number, ParsedCog> | null,
+  cogs: Record<number, ParsedCog>,
   slots: Record<number, ParsedCog>
 ): ParsedCog | undefined => {
-  return cogsMap?.[key] ?? slots[key]
+  return cogs[key] ?? slots[key]
 }
 
 export const calculateScore = (
   data: Omit<ParsedConstructionData, "score">
 ): Score | null => {
-  if (data.cogsMap === null) {
-    return null
-  }
-
   const result: Score = {
     buildRate: 0,
     expBonus: 0,
@@ -384,7 +359,7 @@ export const calculateScore = (
 
   // First pass: Calculate bonuses from boostRadius
   for (const key of data.availableSlotKeys) {
-    const entry = getEntry(key, data.cogsMap, data.slots)
+    const entry = getEntry(key, data.cogs, data.slots)
     if (!entry) continue
     if (!entry.boostRadius || typeof entry.boostRadius !== "string") continue
 
@@ -515,7 +490,7 @@ export const calculateScore = (
 
   // Second pass: Sum up base stats and apply bonuses
   for (const key of data.availableSlotKeys) {
-    const entry = getEntry(key, data.cogsMap, data.slots)
+    const entry = getEntry(key, data.cogs, data.slots)
     if (!entry) continue
 
     const buildRate = typeof entry.buildRate === "number" ? entry.buildRate : 0
@@ -545,7 +520,7 @@ export const calculateScore = (
 
   // Third pass: Sum flag bonuses
   for (const key of data.flagPose) {
-    const entry = getEntry(key, data.cogsMap, data.slots)
+    const entry = getEntry(key, data.cogs, data.slots)
     if (!entry) continue
 
     const pos = getPosition(key)
