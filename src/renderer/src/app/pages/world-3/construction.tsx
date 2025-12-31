@@ -1,14 +1,17 @@
 import { useState } from "react"
+import { useGameDataStore } from "@/store/game-data"
+import { useRawJsonStore } from "@/store/raw-json"
 import { useScriptStatusStore } from "@/store/script-status"
 
+import { notateNumber } from "@/lib/notateNumber"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 
 export const Construction = () => {
   const [error, setError] = useState<string | null>(null)
-  const [gamedata, setGamedata] = useState<string>("")
+  const parsedJson = useRawJsonStore((state) => state.parsedJson)
+  const constructionData = useGameDataStore((state) => state.construction)
   const [buildRateWeight, setBuildRateWeight] = useState<string>("1")
   const [expWeight, setExpWeight] = useState<string>("100")
   const [flaggyWeight, setFlaggyWeight] = useState<string>("250")
@@ -19,6 +22,7 @@ export const Construction = () => {
 
   const isConstructionRunning = currentScript === "world3.construction"
   const isWorking = currentScript !== null
+  const score = constructionData?.score
 
   const handleConstruction = async () => {
     // If already working and this is the running mode, cancel it
@@ -81,22 +85,59 @@ export const Construction = () => {
 
         <div className="flex flex-col items-center gap-4">
           <div className="text-muted-foreground text-center text-sm">
-            Navigate to the construction screen
+            Navigate to the construction screen. Make sure to save your data on
+            the Raw Data page first.
           </div>
 
-          <div className="flex w-full flex-col gap-2">
-            <label className="text-sm font-medium">Gamedata</label>
-            <Textarea
-              value={gamedata}
-              onChange={(e) => setGamedata(e.target.value)}
-              rows={8}
-              disabled={isWorking}
-              placeholder="Paste game data JSON here..."
-              className="font-mono text-xs"
-            />
-          </div>
+          {!parsedJson && (
+            <div className="w-full rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-400">
+              No data available. Please go to the Raw Data page and save your
+              JSON data first.
+            </div>
+          )}
 
-          <div className="grid grid-cols-3 gap-3">
+          {score && (
+            <div className="grid w-full grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">
+                      {notateNumber(score.buildRate)}
+                    </div>
+                    <div className="text-muted-foreground mt-1 text-sm">
+                      Build Rate
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">
+                      {notateNumber(score.expBonus)}
+                    </div>
+                    <div className="text-muted-foreground mt-1 text-sm">
+                      Exp Bonus
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">
+                      {notateNumber(score.flaggy)}
+                    </div>
+                    <div className="text-muted-foreground mt-1 text-sm">
+                      Flaggy
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          <div className="grid w-full grid-cols-3 gap-3">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium">Build Rate Weight</label>
               <Input
@@ -132,7 +173,7 @@ export const Construction = () => {
             onClick={handleConstruction}
             size="lg"
             className="min-w-48"
-            disabled={!gamedata.trim() || (isWorking && !isConstructionRunning)}
+            disabled={!parsedJson || (isWorking && !isConstructionRunning)}
           >
             {isConstructionRunning
               ? "Running... (Click to stop)"

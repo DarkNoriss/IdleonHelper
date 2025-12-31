@@ -38,6 +38,10 @@ const getNavItems = (): NavItem[] => {
       page: "dashboard",
     },
     {
+      title: "Raw Data",
+      page: "rawData",
+    },
+    {
       title: "General",
       items: [
         {

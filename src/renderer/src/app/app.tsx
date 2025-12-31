@@ -1,4 +1,5 @@
-import { Activity, useEffect, useState, type ReactElement } from "react"
+import { useEffect, useState, type ReactElement } from "react"
+import { GameDataProvider } from "@/providers/game-data-provider"
 import { ThemeProvider } from "@/providers/theme-provider"
 import { useNavigationStore, type NavigationPage } from "@/store/navigation"
 import { useScriptStatusStore } from "@/store/script-status"
@@ -9,6 +10,7 @@ import { AppHeader } from "./app-header"
 import { Dashboard } from "./pages/dashboard"
 import { Test } from "./pages/general/test"
 import { Logs } from "./pages/logs"
+import { RawData } from "./pages/raw-data"
 import { WeeklyBattle } from "./pages/world-2/weekly-battle"
 import { Construction } from "./pages/world-3/construction"
 import { Summoning } from "./pages/world-6/summoning"
@@ -47,6 +49,7 @@ export const App = () => {
 
   const pageMap: Partial<Record<NavigationPage, ReactElement>> = {
     dashboard: <Dashboard />,
+    rawData: <RawData />,
     logs: <Logs />,
     weeklyBattle: <WeeklyBattle />,
     summoning: <Summoning />,
@@ -56,22 +59,26 @@ export const App = () => {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
-      <div className="flex h-screen flex-col">
-        <AppHeader />
-        <SidebarProvider className="min-h-0 flex-1">
-          <AppSidebar />
-          <SidebarInset>
-            {Object.entries(pageMap).map(([pageKey, page]) => (
-              <Activity
-                key={pageKey}
-                mode={currentPage === pageKey ? "visible" : "hidden"}
-              >
-                {page}
-              </Activity>
-            ))}
-          </SidebarInset>
-        </SidebarProvider>
-      </div>
+      <GameDataProvider>
+        <div className="flex h-screen flex-col">
+          <AppHeader />
+          <SidebarProvider className="min-h-0 flex-1">
+            <AppSidebar />
+            <SidebarInset>
+              {Object.entries(pageMap).map(([pageKey, page]) => (
+                <div
+                  key={pageKey}
+                  className={
+                    currentPage === pageKey ? "block h-full" : "hidden"
+                  }
+                >
+                  {page}
+                </div>
+              ))}
+            </SidebarInset>
+          </SidebarProvider>
+        </div>
+      </GameDataProvider>
     </ThemeProvider>
   )
 }

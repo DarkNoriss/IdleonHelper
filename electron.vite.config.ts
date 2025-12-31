@@ -14,9 +14,16 @@ export default defineConfig({
   preload: {},
   renderer: {
     resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src/renderer/src"),
-      },
+      alias: [
+        {
+          find: /^@\/parsers\/?(.*)$/,
+          replacement: path.resolve(__dirname, "./src/parsers/$1"),
+        },
+        {
+          find: "@",
+          replacement: path.resolve(__dirname, "./src/renderer/src"),
+        },
+      ],
     },
     plugins: [
       react({

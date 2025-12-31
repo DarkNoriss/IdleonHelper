@@ -2,6 +2,7 @@ import { create } from "zustand"
 
 export type NavigationPage =
   | "dashboard"
+  | "rawData"
   | "weeklyBattle"
   | "summoning"
   | "world3/construction"
