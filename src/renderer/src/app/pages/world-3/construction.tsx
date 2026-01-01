@@ -15,18 +15,38 @@ export const Construction = () => {
   const [buildRateWeight, setBuildRateWeight] = useState<string>("1")
   const [expWeight, setExpWeight] = useState<string>("100")
   const [flaggyWeight, setFlaggyWeight] = useState<string>("250")
+  const [isSolving, setIsSolving] = useState(false)
   const currentScript = useScriptStatusStore((state) => state.currentScript)
   const setCurrentScript = useScriptStatusStore(
     (state) => state.setCurrentScript
   )
 
-  const isConstructionRunning = currentScript === "world3.construction"
+  const isApplying = currentScript === "world3.construction.apply"
   const isWorking = currentScript !== null
   const score = constructionData?.score
 
-  const handleConstruction = async () => {
-    // If already working and this is the running mode, cancel it
-    if (isConstructionRunning) {
+  const handleSolve = async () => {
+    setError(null)
+    setIsSolving(true)
+
+    try {
+      await window.api.script.world3.construction.solver()
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to solve construction"
+      )
+    } finally {
+      setIsSolving(false)
+    }
+  }
+
+  const handleApply = async () => {
+    if (isWorking) {
+      setError("Another operation is already running")
+      return
+    }
+
+    if (isApplying) {
       try {
         await window.api.script.cancel()
         setCurrentScript(null)
@@ -38,32 +58,17 @@ export const Construction = () => {
       return
     }
 
-    // If already working with a different mode, show error
-    if (isWorking) {
-      setError("Another operation is already running")
-      return
-    }
-
     setError(null)
-    setCurrentScript("world3.construction")
-
-    const weights = {
-      buildRate: Number.parseFloat(buildRateWeight) || 1,
-      exp: Number.parseFloat(expWeight) || 100,
-      flaggy: Number.parseFloat(flaggyWeight) || 250,
-    }
+    setCurrentScript("world3.construction.apply")
 
     try {
-      await window.api.script.world3.construction.run(weights)
+      await window.api.script.world3.construction.apply()
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
-        // User cancelled, don't show error
         setCurrentScript(null)
       } else {
         setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to run construction script"
+          err instanceof Error ? err.message : "Failed to apply optimized board"
         )
         setCurrentScript(null)
       }
@@ -97,43 +102,48 @@ export const Construction = () => {
           )}
 
           {score && (
-            <div className="grid w-full grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">
-                      {notateNumber(score.buildRate)}
+            <div className="w-full">
+              <div className="mb-2 text-center text-sm font-medium">
+                Current Score
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">
+                        {notateNumber(score.buildRate)}
+                      </div>
+                      <div className="text-muted-foreground mt-1 text-sm">
+                        Build Rate
+                      </div>
                     </div>
-                    <div className="text-muted-foreground mt-1 text-sm">
-                      Build Rate
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">
+                        {notateNumber(score.expBonus)}
+                      </div>
+                      <div className="text-muted-foreground mt-1 text-sm">
+                        Exp Bonus
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">
-                      {notateNumber(score.expBonus)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">
+                        {notateNumber(score.flaggy)}
+                      </div>
+                      <div className="text-muted-foreground mt-1 text-sm">
+                        Flaggy
+                      </div>
                     </div>
-                    <div className="text-muted-foreground mt-1 text-sm">
-                      Exp Bonus
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">
-                      {notateNumber(score.flaggy)}
-                    </div>
-                    <div className="text-muted-foreground mt-1 text-sm">
-                      Flaggy
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           )}
 
@@ -169,16 +179,28 @@ export const Construction = () => {
             </div>
           </div>
 
-          <Button
-            onClick={handleConstruction}
-            size="lg"
-            className="min-w-48"
-            disabled={!parsedJson || (isWorking && !isConstructionRunning)}
-          >
-            {isConstructionRunning
-              ? "Running... (Click to stop)"
-              : "Start Construction"}
-          </Button>
+          <div className="flex w-full flex-col gap-3">
+            <Button
+              onClick={handleSolve}
+              size="lg"
+              className="min-w-48"
+              disabled={!constructionData || isSolving || isWorking}
+            >
+              {isSolving ? "Solving..." : "Solve Construction"}
+            </Button>
+
+            <Button
+              onClick={handleApply}
+              size="lg"
+              className="min-w-48"
+              disabled={isWorking && !isApplying}
+              variant="default"
+            >
+              {isApplying
+                ? "Applying... (Click to stop)"
+                : "Apply Optimized Board"}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

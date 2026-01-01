@@ -64,11 +64,8 @@ declare global {
         }
         world3: {
           construction: {
-            run: (weights: {
-              buildRate: number
-              exp: number
-              flaggy: number
-            }) => Promise<void>
+            solver: () => Promise<null>
+            apply: () => Promise<void>
           }
         }
         world6: {

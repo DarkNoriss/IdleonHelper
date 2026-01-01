@@ -1,5 +1,9 @@
-import { construction } from "./construction"
+import { apply } from "./construction-apply"
+import { solver } from "./construction-solver"
 
 export const world3 = {
-  construction,
+  construction: {
+    solver,
+    apply,
+  },
 } as const
