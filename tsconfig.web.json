@@ -30,7 +30,8 @@
     "baseUrl": ".",
     "paths": {
       "@/parsers/*": ["./src/parsers/*"],
-      "@/*": ["./src/renderer/src/*"]
+      "@/*": ["./src/renderer/src/*"],
+      "@/types/*": ["src/types/*"]
     }
   }
 }

@@ -1,5 +1,6 @@
-import type { ParsedConstructionData } from "@/parsers/construction"
 import { create } from "zustand"
+
+import type { ParsedConstructionData } from "@/types/construction"
 
 type GameDataState = {
   construction: ParsedConstructionData | null

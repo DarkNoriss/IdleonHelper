@@ -1,6 +1,11 @@
 import { is } from "@electron-toolkit/utils"
 import { BrowserWindow, ipcMain } from "electron"
 
+import type {
+  OptimalStep,
+  ParsedConstructionData,
+  SolverWeights,
+} from "../types/construction"
 import { getConnectionStatus, getLastError } from "./backend"
 import { backendCommand } from "./backend/backend-command"
 import { scripts } from "./scripts"
@@ -120,25 +125,28 @@ export const setupHandlers = (): void => {
     "script:world-3.construction.solver",
     async (
       _event,
-      inventory: unknown,
-      weights: { buildRate: number; exp: number; flaggy: number },
+      inventory: ParsedConstructionData,
+      weights: SolverWeights,
       solveTime?: number
     ) => {
       logger.log(
         `IPC: script:world-3.construction.solver (solveTime: ${solveTime ?? 1000})`
       )
       return await scripts.world3.construction.solver(
-        inventory as Parameters<typeof scripts.world3.construction.solver>[0],
+        inventory,
         weights,
         solveTime
       )
     }
   )
 
-  ipcMain.handle("script:world-3.construction.apply", async () => {
-    logger.log("IPC: script:world-3.construction.apply")
-    return await scripts.world3.construction.apply()
-  })
+  ipcMain.handle(
+    "script:world-3.construction.apply",
+    async (_event, steps: OptimalStep[]) => {
+      logger.log("IPC: script:world-3.construction.apply")
+      return await scripts.world3.construction.apply(steps)
+    }
+  )
 
   ipcMain.handle("app:isDev", () => {
     return is.dev

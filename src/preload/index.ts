@@ -1,6 +1,8 @@
 import { electronAPI } from "@electron-toolkit/preload"
 import { contextBridge, ipcRenderer } from "electron"
 
+import type { OptimalStep } from "../types/construction"
+
 const api = {
   window: {
     close: () => {
@@ -86,8 +88,8 @@ const api = {
             solveTime
           )
         },
-        apply: () => {
-          return ipcRenderer.invoke("script:world-3.construction.apply")
+        apply: (steps: OptimalStep[]) => {
+          return ipcRenderer.invoke("script:world-3.construction.apply", steps)
         },
       },
     },

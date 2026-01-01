@@ -1,7 +1,9 @@
+import type { OptimalStep } from "../../../types/construction"
 import { cancellationManager, logger } from "../../utils"
 import { navigation } from "../navigation/navigation"
 
-export const apply = async (): Promise<void> => {
+export const apply = async (steps: OptimalStep[]): Promise<void> => {
+  console.log("Apply steps:", steps)
   // Check if already working
   if (cancellationManager.getStatus().isWorking) {
     throw new Error("Another operation is already running")

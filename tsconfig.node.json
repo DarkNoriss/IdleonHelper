@@ -12,7 +12,8 @@
     "types": ["electron-vite/node"],
     "baseUrl": ".",
     "paths": {
-      "@/parsers/*": ["./src/parsers/*"]
+      "@/parsers/*": ["./src/parsers/*"],
+      "@/types/*": ["src/types/*"]
     }
   }
 }

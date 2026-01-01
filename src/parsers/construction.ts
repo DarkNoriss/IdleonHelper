@@ -1,3 +1,8 @@
+import type {
+  ParsedCog,
+  ParsedConstructionData,
+  Score,
+} from "../types/construction"
 import type { RawJson } from "../types/raw-json"
 
 export const INV_ROWS = 8
@@ -44,40 +49,6 @@ type CogRaw = {
   h?: unknown
   j?: unknown
   k?: unknown
-}
-
-export type ParsedCog = {
-  key: number
-  buildRate: unknown
-  isPlayer: boolean
-  expGain: unknown
-  flaggy: unknown
-  expBonus: unknown
-  buildRadiusBoost: unknown
-  expRadiusBoost: unknown
-  flaggyRadiusBoost: unknown
-  boostRadius: unknown
-  flagBoost: unknown
-  nothing: unknown
-  fixed: boolean
-  blocked: boolean
-}
-
-export type ParsedConstructionData = {
-  cogs: Record<number, ParsedCog>
-  slots: Record<number, ParsedCog>
-  flagPose: number[]
-  flaggyShopUpgrades: number
-  availableSlotKeys: number[]
-  score: Score | null
-}
-
-export type Score = {
-  buildRate: number
-  expBonus: number
-  flaggy: number
-  expBoost: number
-  flagBoost: number
 }
 
 export const parseConstruction = (

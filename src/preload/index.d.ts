@@ -1,5 +1,12 @@
 import { ElectronAPI } from "@electron-toolkit/preload"
 
+import type {
+  OptimalStep,
+  ParsedConstructionData,
+  Score,
+  SolverWeights,
+} from "../types/construction"
+
 type ConnectionStatus = "connecting" | "connected" | "error"
 
 type BackendStatus = {
@@ -65,15 +72,14 @@ declare global {
         world3: {
           construction: {
             solver: (
-              inventory: unknown,
-              weights: {
-                buildRate: number
-                exp: number
-                flaggy: number
-              },
+              inventory: ParsedConstructionData,
+              weights: SolverWeights,
               solveTime?: number
-            ) => Promise<null>
-            apply: () => Promise<void>
+            ) => Promise<{
+              score: Score
+              steps: OptimalStep[]
+            } | null>
+            apply: (steps: OptimalStep[]) => Promise<void>
           }
         }
         world6: {
