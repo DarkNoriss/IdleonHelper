@@ -64,7 +64,15 @@ declare global {
         }
         world3: {
           construction: {
-            solver: () => Promise<null>
+            solver: (
+              inventory: unknown,
+              weights: {
+                buildRate: number
+                exp: number
+                flaggy: number
+              },
+              solveTime?: number
+            ) => Promise<null>
             apply: () => Promise<void>
           }
         }

@@ -74,8 +74,17 @@ const api = {
     },
     world3: {
       construction: {
-        solver: () => {
-          return ipcRenderer.invoke("script:world-3.construction.solver")
+        solver: (
+          inventory: unknown,
+          weights: { buildRate: number; exp: number; flaggy: number },
+          solveTime?: number
+        ) => {
+          return ipcRenderer.invoke(
+            "script:world-3.construction.solver",
+            inventory,
+            weights,
+            solveTime
+          )
         },
         apply: () => {
           return ipcRenderer.invoke("script:world-3.construction.apply")

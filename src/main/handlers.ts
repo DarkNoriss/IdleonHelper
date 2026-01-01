@@ -116,10 +116,24 @@ export const setupHandlers = (): void => {
     return await scripts.general.test.run()
   })
 
-  ipcMain.handle("script:world-3.construction.solver", async () => {
-    logger.log("IPC: script:world-3.construction.solver")
-    return await scripts.world3.construction.solver()
-  })
+  ipcMain.handle(
+    "script:world-3.construction.solver",
+    async (
+      _event,
+      inventory: unknown,
+      weights: { buildRate: number; exp: number; flaggy: number },
+      solveTime?: number
+    ) => {
+      logger.log(
+        `IPC: script:world-3.construction.solver (solveTime: ${solveTime ?? 1000})`
+      )
+      return await scripts.world3.construction.solver(
+        inventory as Parameters<typeof scripts.world3.construction.solver>[0],
+        weights,
+        solveTime
+      )
+    }
+  )
 
   ipcMain.handle("script:world-3.construction.apply", async () => {
     logger.log("IPC: script:world-3.construction.apply")

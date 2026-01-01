@@ -26,11 +26,25 @@ export const Construction = () => {
   const score = constructionData?.score
 
   const handleSolve = async () => {
+    if (!constructionData) {
+      setError("No construction data available")
+      return
+    }
+
     setError(null)
     setIsSolving(true)
 
     try {
-      await window.api.script.world3.construction.solver()
+      const weights = {
+        buildRate: Number.parseFloat(buildRateWeight) || 1,
+        exp: Number.parseFloat(expWeight) || 100,
+        flaggy: Number.parseFloat(flaggyWeight) || 250,
+      }
+
+      await window.api.script.world3.construction.solver(
+        constructionData,
+        weights
+      )
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to solve construction"
