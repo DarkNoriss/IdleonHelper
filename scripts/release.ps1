@@ -81,7 +81,7 @@ if (-not $env:GH_TOKEN) {
     }
 }
 
-Write-Host "Cleaning and building backend..." -ForegroundColor Green
+Write-Host "Cleaning and building..." -ForegroundColor Green
 Write-Host ""
 
 # Remove resources/backend completely
@@ -99,28 +99,17 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-Write-Host "Backend build complete!" -ForegroundColor Green
-Write-Host ""
-
+# Build application
 Write-Host "Building application..." -ForegroundColor Green
-Write-Host ""
-
-# Build
 pnpm build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "Application build complete!" -ForegroundColor Green
-Write-Host ""
-
+# Publish to GitHub
 Write-Host "Publishing to GitHub..." -ForegroundColor Green
-Write-Host ""
-
-# Publish to GitHub as release
 electron-builder --win --publish always
-
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Publish failed!" -ForegroundColor Red
     exit 1

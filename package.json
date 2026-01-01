@@ -1,6 +1,6 @@
 {
   "name": "idleon-helper",
-  "version": "0.4.10",
+  "version": "0.4.11",
   "description": "IdleonHelper is a automated helper for the game Idleon",
   "main": "./out/main/index.js",
   "author": "MyAngelCamellia",
@@ -16,7 +16,6 @@
     "build": "pnpm typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:backend": "powershell -ExecutionPolicy Bypass -File .\\scripts\\build-backend.ps1",
-    "build:win": "pnpm build:backend && pnpm build && electron-builder --win",
     "release": "powershell -ExecutionPolicy Bypass -File .\\scripts\\release.ps1"
   },
   "dependencies": {

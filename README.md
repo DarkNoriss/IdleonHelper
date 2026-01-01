@@ -23,6 +23,12 @@ $ pnpm dev
 ### Build
 
 ```bash
-# For Windows
-$ pnpm build:win
+# Build backend only
+$ pnpm build:backend
+
+# Build application
+$ pnpm build
+
+# Release (builds backend, builds app, and publishes to GitHub)
+$ pnpm release
 ```
