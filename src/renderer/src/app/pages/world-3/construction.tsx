@@ -1,4 +1,5 @@
 import { useState } from "react"
+import type { SolverResult, SolverWeights } from "@/../../types/construction"
 import { useGameDataStore } from "@/store/game-data"
 import { useRawJsonStore } from "@/store/raw-json"
 import { useScriptStatusStore } from "@/store/script-status"
@@ -14,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { SolverResult, SolverWeights } from "@/../../types/construction"
 
 export const Construction = () => {
   const [error, setError] = useState<string | null>(null)

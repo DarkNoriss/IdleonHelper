@@ -1,3 +1,4 @@
+import { calculateScore, getPosition } from "../../../parsers/construction"
 import type {
   OptimalStep,
   ParsedCog,
@@ -6,7 +7,6 @@ import type {
   SolverResult,
   SolverWeights,
 } from "../../../types/construction"
-import { calculateScore, getPosition } from "../../../parsers/construction"
 import { logger } from "../../utils"
 
 const getScoreSum = (score: Score, weights: SolverWeights): number => {
