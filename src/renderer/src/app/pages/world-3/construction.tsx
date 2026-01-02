@@ -335,7 +335,12 @@ export const Construction = () => {
               onClick={handleApply}
               size="lg"
               className="min-w-48"
-              disabled={isWorking && !isApplying}
+              disabled={
+                (isWorking && !isApplying) ||
+                !solverResult ||
+                !solverResult.steps ||
+                solverResult.steps.length === 0
+              }
               variant="default"
             >
               {isApplying
