@@ -15,7 +15,17 @@ export const apply = async (steps: OptimalStep[]): Promise<void> => {
 
   try {
     logger.log("Navigating to construction screen...")
-    await navigation.construction.toCogsTab(token)
+    const navigationSuccess = await navigation.construction.toCogsTab(token)
+    if (!navigationSuccess) {
+      logger.log("Failed to navigate to cogs tab, stopping script")
+      return
+    }
+
+    logger.log("Ensuring cog shelf is off...")
+    await navigation.construction.ensureCogShelfOff(token)
+
+    logger.log("Ensuring trash is off...")
+    await navigation.construction.ensureTrashOff(token)
 
     logger.log("Ensuring first page...")
     await navigation.construction.ensureFirstPage(token)

@@ -41,6 +41,42 @@ export const construction = {
       token
     )
   },
+  ensureCogShelfOff: async (token: CancellationToken): Promise<boolean> => {
+    return await ensureToggle(
+      "construction/cogs-shelf-off",
+      "construction/cogs-shelf",
+      "cog shelf",
+      "off",
+      token
+    )
+  },
+  ensureCogShelfOn: async (token: CancellationToken): Promise<boolean> => {
+    return await ensureToggle(
+      "construction/cogs-shelf",
+      "construction/cogs-shelf-off",
+      "cog shelf",
+      "on",
+      token
+    )
+  },
+  ensureTrashOff: async (token: CancellationToken): Promise<boolean> => {
+    return await ensureToggle(
+      "construction/cogs-trash-off",
+      "construction/cogs-trash",
+      "trash",
+      "off",
+      token
+    )
+  },
+  ensureTrashOn: async (token: CancellationToken): Promise<boolean> => {
+    return await ensureToggle(
+      "construction/cogs-trash",
+      "construction/cogs-trash-off",
+      "trash",
+      "on",
+      token
+    )
+  },
 } as const
 
 const ensurePage = async (
@@ -97,5 +133,50 @@ const ensurePage = async (
   }
 
   logger.log(`Still not on ${pageName} after 12 clicks`)
+  return false
+}
+
+const ensureToggle = async (
+  confirmationImage: string,
+  buttonImage: string,
+  itemName: string,
+  targetState: string,
+  token: CancellationToken
+): Promise<boolean> => {
+  logger.log(`Ensuring ${itemName} is ${targetState}...`)
+
+  const isInTargetState = await backendCommand.isVisible(
+    confirmationImage,
+    undefined,
+    token
+  )
+  if (isInTargetState) {
+    logger.log(`${itemName} is already ${targetState}`)
+    return true
+  }
+
+  const clicked = await backendCommand.findAndClick(
+    buttonImage,
+    undefined,
+    token
+  )
+  if (!clicked) {
+    logger.log(
+      `${itemName} button not found, assuming it's already ${targetState}`
+    )
+    return true
+  }
+
+  const finalCheck = await backendCommand.isVisible(
+    confirmationImage,
+    undefined,
+    token
+  )
+  if (finalCheck) {
+    logger.log(`${itemName} is now ${targetState}`)
+    return true
+  }
+
+  logger.log(`Failed to turn ${itemName} ${targetState}`)
   return false
 }
