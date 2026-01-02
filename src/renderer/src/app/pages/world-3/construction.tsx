@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { SolverResult, SolverWeights } from "@/../../types/construction"
 import { useGameDataStore } from "@/store/game-data"
 import { useRawJsonStore } from "@/store/raw-json"
 import { useScriptStatusStore } from "@/store/script-status"
+import { RefreshCw } from "lucide-react"
 
 import { notateNumber } from "@/lib/notateNumber"
 import { Button } from "@/components/ui/button"
@@ -25,6 +26,7 @@ export const Construction = () => {
   const [flaggyWeight, setFlaggyWeight] = useState<string>("250")
   const [solveTime, setSolveTime] = useState<string>("5")
   const [isSolving, setIsSolving] = useState(false)
+  const [remainingTime, setRemainingTime] = useState<number>(0)
   const [solverResult, setSolverResult] = useState<SolverResult | null>(null)
   const currentScript = useScriptStatusStore((state) => state.currentScript)
   const setCurrentScript = useScriptStatusStore(
@@ -34,6 +36,24 @@ export const Construction = () => {
   const isApplying = currentScript === "world3.construction.apply"
   const isWorking = currentScript !== null
   const score = constructionData?.score
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (!isSolving || remainingTime <= 0) {
+      return
+    }
+
+    const interval = setInterval(() => {
+      setRemainingTime((prev) => {
+        if (prev <= 1) {
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [isSolving, remainingTime])
 
   // Calculate differences between current and optimized scores
   const getDifference = (
@@ -67,6 +87,8 @@ export const Construction = () => {
     }
 
     setError(null)
+    const solveTimeSeconds = Number.parseInt(solveTime, 10) || 5
+    setRemainingTime(solveTimeSeconds)
     setIsSolving(true)
 
     try {
@@ -76,7 +98,7 @@ export const Construction = () => {
         flaggy: Number.parseFloat(flaggyWeight) || 250,
       }
 
-      const solveTimeMs = Number.parseInt(solveTime, 10) * 1000
+      const solveTimeMs = solveTimeSeconds * 1000
 
       const result = await window.api.script.world3.construction.solver(
         constructionData,
@@ -93,6 +115,7 @@ export const Construction = () => {
       )
     } finally {
       setIsSolving(false)
+      setRemainingTime(0)
     }
   }
 
@@ -328,7 +351,16 @@ export const Construction = () => {
               className="min-w-48"
               disabled={!constructionData || isSolving || isWorking}
             >
-              {isSolving ? "Solving..." : "Solve Construction"}
+              {isSolving ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  {remainingTime > 0
+                    ? `Solving... (${remainingTime}s)`
+                    : "Solving..."}
+                </>
+              ) : (
+                "Solve Construction"
+              )}
             </Button>
 
             <Button
