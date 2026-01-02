@@ -255,10 +255,9 @@ export const Construction = () => {
                   <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
                     {solverResult.steps.map((step, index) => (
                       <div key={index} className="text-sm">
-                        Step {index + 1}: Switch {step.fromPos.location} [
-                        {step.fromPos.x + 1}|{step.fromPos.y + 1}] with{" "}
-                        {step.toPos.location} [{step.toPos.x + 1}|
-                        {step.toPos.y + 1}]
+                        Step {index + 1}: Switch {step.from.location} [
+                        {step.from.x + 1}|{step.from.y + 1}] with{" "}
+                        {step.to.location} [{step.to.x + 1}|{step.to.y + 1}]
                       </div>
                     ))}
                   </div>

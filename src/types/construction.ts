@@ -33,12 +33,12 @@ export type Score = {
 }
 
 export type OptimalStep = {
-  fromPos: {
+  from: {
     location: "board" | "build" | "spare"
     x: number
     y: number
   }
-  toPos: {
+  to: {
     location: "board" | "build" | "spare"
     x: number
     y: number

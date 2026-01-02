@@ -327,12 +327,12 @@ const getOptimalSteps = (
       const fromPos = getPosition(keyFrom)
       const toPos = getPosition(keyTo)
       steps.push({
-        fromPos: {
+        from: {
           location: fromPos.location,
           x: fromPos.x,
           y: fromPos.y,
         },
-        toPos: {
+        to: {
           location: toPos.location,
           x: toPos.x,
           y: toPos.y,
@@ -344,12 +344,12 @@ const getOptimalSteps = (
       const fromPos = getPosition(keyFrom)
       const toPos = getPosition(keyTo)
       steps.push({
-        fromPos: {
+        from: {
           location: fromPos.location,
           x: fromPos.x,
           y: fromPos.y,
         },
-        toPos: {
+        to: {
           location: toPos.location,
           x: toPos.x,
           y: toPos.y,
