@@ -46,6 +46,8 @@ public static class MouseSimulator
     var hwnd = WindowCapture.GetWindowHandle();
 
     var startLParam = MakeLong(start.X, start.Y);
+    var endLParam = MakeLong(end.X, end.Y);
+    
     PostMessage(hwnd, (uint)MouseMessages.WmLbuttondown, 1, startLParam);
     await Task.Delay(holdTime, ct);
 
@@ -58,7 +60,6 @@ public static class MouseSimulator
         return;
       }
 
-      var endLParam = MakeLong(end.X, end.Y);
       PostMessage(hwnd, (uint)MouseMessages.WmMousemove, 1, endLParam);
 
       await Task.Delay(holdTime, ct);
@@ -106,7 +107,6 @@ public static class MouseSimulator
       await Task.Delay(stepDelay, ct);
     }
 
-    var endLParam = MakeLong(end.X, end.Y);
     PostMessage(hwnd, (uint)MouseMessages.WmMousemove, 1, endLParam);
 
     await Task.Delay(holdTime, ct);
