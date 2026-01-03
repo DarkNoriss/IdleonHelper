@@ -52,6 +52,14 @@ export const initializeUpdateService = (): void => {
   autoUpdater.autoDownload = false // Don't auto-download, let user decide
   autoUpdater.autoInstallOnAppQuit = true // Auto-install on quit if downloaded
 
+  // Add cache-busting headers to force fresh update checks
+  // This prevents GitHub API/CDN caching from delaying update detection
+  autoUpdater.requestHeaders = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+  }
+
   // Event handlers
   autoUpdater.on("checking-for-update", () => {
     logger.log("Checking for updates...")
