@@ -27,20 +27,18 @@ const getSparePage = (y: number): number => {
   return Math.floor(y / SPARE_ROWS) + 1
 }
 
-const getSpareRowInPage = (y: number): number => {
-  return (y % SPARE_ROWS) + 1
-}
-
 const formatLocation = (
   location: OptimalStep["from"] | OptimalStep["to"]
 ): string => {
+  const x = location.x + 1
+  const y = location.y + 1
+  const locationType = location.location
+
   if (location.location === "spare") {
-    const page = getSparePage(location.y)
-    const row = getSpareRowInPage(location.y)
-    const col = location.x + 1
-    return `spare [col ${col}, row ${row}, page ${page}]`
+    const page = getSparePage(location.y) // location.y is 0-indexed
+    return `spare [${x}|${y}] {${page}}`
   }
-  return `${location.location} [${location.x + 1}|${location.y + 1}]`
+  return `${locationType} [${x}|${y}]`
 }
 
 export const Construction = () => {
