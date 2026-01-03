@@ -242,207 +242,115 @@ const removeUselessMoves = (
   return optimized
 }
 
+/** Checks if two cogs have the same properties (identity match) */
+const cogsMatch = (
+  a: ParsedCog | undefined,
+  b: ParsedCog | undefined
+): boolean => {
+  if (!a || !b) return false
+  return (
+    a.buildRate === b.buildRate &&
+    a.expBonus === b.expBonus &&
+    a.flaggy === b.flaggy &&
+    a.isPlayer === b.isPlayer
+  )
+}
+
+/**
+ * Calculates the minimal swap steps to transform initial state into final state.
+ * Since moveCog is a swap operation, we track state changes after each swap.
+ */
 const getOptimalSteps = (
   initial: ParsedConstructionData,
   final: ParsedConstructionData
 ): OptimalStep[] => {
   logger.log("Calculating optimal steps...")
 
-  const cogMovements = new Map<number, number>()
+  const steps: OptimalStep[] = []
+  const currentState = cloneInventory(initial)
 
-  for (const [keyStr, initialCog] of Object.entries(initial.cogs)) {
-    const initialKey = Number.parseInt(keyStr, 10)
-    if (!initialCog) {
+  // Process each position that needs a specific cog in the final state
+  for (const [targetKeyStr, finalCog] of Object.entries(final.cogs)) {
+    const targetKey = Number.parseInt(targetKeyStr, 10)
+    if (!finalCog) continue
+
+    const currentCogAtTarget = currentState.cogs[targetKey]
+
+    // Skip if the correct cog is already at this position
+    if (cogsMatch(currentCogAtTarget, finalCog)) {
       continue
     }
 
-    const finalCogAtKey = final.cogs[initialKey]
-
-    let cogMoved = false
-    if (!finalCogAtKey) {
-      cogMoved = true
-    } else {
-      cogMoved =
-        initialCog.key !== finalCogAtKey.key ||
-        initialCog.buildRate !== finalCogAtKey.buildRate ||
-        initialCog.expBonus !== finalCogAtKey.expBonus ||
-        initialCog.flaggy !== finalCogAtKey.flaggy ||
-        initialCog.isPlayer !== finalCogAtKey.isPlayer
-    }
-
-    if (cogMoved) {
-      for (const [finalKey, finalCog] of Object.entries(final.cogs)) {
-        if (!finalCog) {
-          continue
-        }
-
-        if (
-          initialCog.buildRate === finalCog.buildRate &&
-          initialCog.expBonus === finalCog.expBonus &&
-          initialCog.flaggy === finalCog.flaggy &&
-          initialCog.isPlayer === finalCog.isPlayer
-        ) {
-          const finalKeyNum = Number.parseInt(finalKey, 10)
-          if (initialKey !== finalKeyNum) {
-            cogMovements.set(initialKey, finalKeyNum)
-            break
-          }
+    // Find where the required cog currently is in our working state
+    let sourceKey: number | null = null
+    for (const [srcKeyStr, srcCog] of Object.entries(currentState.cogs)) {
+      if (cogsMatch(srcCog, finalCog)) {
+        const srcKey = Number.parseInt(srcKeyStr, 10)
+        if (srcKey !== targetKey) {
+          sourceKey = srcKey
+          break
         }
       }
     }
-  }
 
-  logger.log(`Found ${cogMovements.size} cogs that moved`)
-
-  const steps: OptimalStep[] = []
-  const interimCogs = new Map<number, number>()
-
-  for (const [initialKey, finalKey] of cogMovements.entries()) {
-    interimCogs.set(initialKey, finalKey)
-  }
-
-  while (interimCogs.size > 0) {
-    const firstEntry = Array.from(interimCogs.entries())[0]
-    if (!firstEntry) {
-      break
+    // If we can't find the cog or it's already in place, skip
+    if (sourceKey === null) {
+      continue
     }
 
-    const [keyFrom, keyTo] = firstEntry
-    const targetCogFinalKey = interimCogs.get(keyTo)
+    // Generate and record the swap step
+    const fromPos = getPosition(sourceKey)
+    const toPos = getPosition(targetKey)
+    steps.push({
+      from: { location: fromPos.location, x: fromPos.x, y: fromPos.y },
+      to: { location: toPos.location, x: toPos.x, y: toPos.y },
+    })
 
-    if (targetCogFinalKey && targetCogFinalKey !== keyFrom) {
-      let currentKey = keyTo
-      const chainPath = [keyFrom, keyTo]
-
-      while (interimCogs.has(currentKey) && currentKey !== keyFrom) {
-        const nextKey = interimCogs.get(currentKey)
-        if (!nextKey || nextKey === keyFrom) break
-        chainPath.push(nextKey)
-        currentKey = nextKey
-      }
-
-      for (let i = 0; i < chainPath.length - 1; i++) {
-        const fromKey = chainPath[i]
-        const toKey = chainPath[i + 1]
-        const fromPos = getPosition(fromKey)
-        const toPos = getPosition(toKey)
-        const step = {
-          from: {
-            location: fromPos.location,
-            x: fromPos.x,
-            y: fromPos.y,
-          },
-          to: {
-            location: toPos.location,
-            x: toPos.x,
-            y: toPos.y,
-          },
-        }
-        steps.push(step)
-      }
-
-      for (const key of chainPath) {
-        interimCogs.delete(key)
-      }
-    } else {
-      const fromPos = getPosition(keyFrom)
-      const toPos = getPosition(keyTo)
-      const step = {
-        from: {
-          location: fromPos.location,
-          x: fromPos.x,
-          y: fromPos.y,
-        },
-        to: {
-          location: toPos.location,
-          x: toPos.x,
-          y: toPos.y,
-        },
-      }
-      steps.push(step)
-      interimCogs.delete(keyFrom)
-    }
+    // Apply the swap to our working state so subsequent lookups are correct
+    moveCog(currentState, sourceKey, targetKey)
   }
 
   logger.log(`Calculated ${steps.length} optimal steps`)
 
-  const reversiblePairs: Array<{ step1: number; step2: number }> = []
-  for (let i = 0; i < steps.length; i++) {
-    for (let j = i + 1; j < steps.length; j++) {
-      const s1 = steps[i],
-        s2 = steps[j]
-      if (
-        s1.from.location === s2.to.location &&
-        s1.from.x === s2.to.x &&
-        s1.from.y === s2.to.y &&
-        s1.to.location === s2.from.location &&
-        s1.to.x === s2.from.x &&
-        s1.to.y === s2.from.y
-      ) {
-        reversiblePairs.push({ step1: i, step2: j })
-      }
-    }
-  }
-
-  const stepsToRemove = new Set<number>()
-  for (const pair of reversiblePairs) {
-    stepsToRemove.add(pair.step2)
-  }
-
-  const filteredSteps = steps.filter((_, index) => !stepsToRemove.has(index))
-
-  logger.log(
-    `Filtered ${steps.length - filteredSteps.length} reversible step pairs, ${filteredSteps.length} steps remaining`
-  )
-
-  const testState = cloneInventory(initial)
-  for (const step of filteredSteps) {
+  // Verify the steps produce the correct final state
+  const verifyState = cloneInventory(initial)
+  for (const step of steps) {
     const fromKey = getKeyFromPosition(
       step.from.location,
       step.from.x,
       step.from.y
     )
     const toKey = getKeyFromPosition(step.to.location, step.to.x, step.to.y)
-    moveCog(testState, fromKey, toKey)
+    moveCog(verifyState, fromKey, toKey)
   }
 
   let matchesFinal = true
-  const mismatches: Array<{
-    key: number
-    initial: unknown
-    test: unknown
-    final: unknown
-  }> = []
-  for (const key of new Set([
-    ...Object.keys(initial.cogs).map(Number.parseInt),
-    ...Object.keys(final.cogs).map(Number.parseInt),
-    ...Object.keys(testState.cogs).map(Number.parseInt),
-  ])) {
-    const testCog = testState.cogs[key]
+  const allKeys = new Set([
+    ...Object.keys(final.cogs).map((k) => Number.parseInt(k, 10)),
+    ...Object.keys(verifyState.cogs).map((k) => Number.parseInt(k, 10)),
+  ])
+
+  for (const key of allKeys) {
+    const verifyCog = verifyState.cogs[key]
     const finalCog = final.cogs[key]
 
-    if (!testCog && !finalCog) continue
-
-    const testKey = testCog?.key
-    const finalKey = finalCog?.key
-    if (testKey !== finalKey) {
+    if (!cogsMatch(verifyCog, finalCog)) {
       matchesFinal = false
-      mismatches.push({
-        key,
-        initial: initial.cogs[key]?.key,
-        test: testKey,
-        final: finalKey,
-      })
+      logger.log(
+        `Mismatch at key ${key}: verify=${JSON.stringify(verifyCog)}, final=${JSON.stringify(finalCog)}`
+      )
     }
   }
 
   if (!matchesFinal) {
     logger.log(
-      `Warning: Filtered steps do not match final state. Mismatches: ${mismatches.length}`
+      "Warning: Generated steps do not produce the expected final state"
     )
+  } else {
+    logger.log("Steps verified successfully")
   }
 
-  return filteredSteps
+  return steps
 }
 
 export const solver = async (
