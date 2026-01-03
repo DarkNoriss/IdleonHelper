@@ -1,4 +1,9 @@
-import { calculateScore, getPosition } from "../../../parsers/construction"
+import {
+  calculateScore,
+  getPosition,
+  INV_COLUMNS,
+  SPARE_START,
+} from "../../../parsers/construction"
 import type {
   OptimalStep,
   ParsedCog,
@@ -8,6 +13,20 @@ import type {
   SolverWeights,
 } from "../../../types/construction"
 import { logger } from "../../utils"
+
+const getKeyFromPosition = (
+  location: "board" | "build" | "spare",
+  x: number,
+  y: number
+): number => {
+  if (location === "board") {
+    return y * INV_COLUMNS + x
+  } else if (location === "build") {
+    return 96 + y * 3 + x
+  } else {
+    return SPARE_START + y * 3 + x
+  }
+}
 
 const getScoreSum = (score: Score, weights: SolverWeights): number => {
   let res = 0
@@ -45,7 +64,6 @@ const moveCog = (
   fromKey: number,
   toKey: number
 ): void => {
-  // Swap cogs between positions
   const temp = inventory.cogs[toKey]
   inventory.cogs[toKey] = inventory.cogs[fromKey]
 
@@ -62,7 +80,6 @@ const moveCog = (
     inventory.cogs[fromKey] = { ...inventory.cogs[fromKey], key: fromKey }
   }
 
-  // Invalidate score cache
   inventory.score = null
 }
 
@@ -108,13 +125,9 @@ const removeUselessMoves = (
 ): ParsedConstructionData => {
   logger.log("Removing useless moves...")
 
-  // Calculate moves needed to go from initial to final
   const moves: Move[] = []
-
-  // Compare initial and final states to find actual moves
   const initialCogs = new Set(Object.keys(initial.cogs).map(Number.parseInt))
 
-  // Find cogs that moved
   for (const key of initialCogs) {
     const initialCog = initial.cogs[key]
     if (!initialCog) {
@@ -123,8 +136,6 @@ const removeUselessMoves = (
 
     const finalCogAtKey = final.cogs[key]
 
-    // Check if cog moved to a different position
-    // If no cog at this position in final, or different cog, it moved
     let cogMoved = false
     if (!finalCogAtKey) {
       cogMoved = true
@@ -138,13 +149,11 @@ const removeUselessMoves = (
     }
 
     if (cogMoved) {
-      // Find where this cog ended up in final state
       for (const [finalKey, finalCog] of Object.entries(final.cogs)) {
         if (!finalCog) {
           continue
         }
 
-        // Match by properties (not key, since key changes)
         if (
           initialCog.buildRate === finalCog.buildRate &&
           initialCog.expBonus === finalCog.expBonus &&
@@ -163,14 +172,11 @@ const removeUselessMoves = (
 
   logger.log(`Found ${moves.length} potential moves`)
 
-  // Test each move to see if it improves the score
   const usefulMoves: Move[] = []
 
   for (const move of moves) {
-    // Test each move independently from the initial state
     const testState = cloneInventory(initial)
 
-    // Calculate score before move
     testState.score = calculateScore({
       cogs: testState.cogs,
       slots: testState.slots,
@@ -188,10 +194,8 @@ const removeUselessMoves = (
 
     const scoreBefore = getScoreSum(testState.score, weights)
 
-    // Apply the move
     moveCog(testState, move.fromKey, move.toKey)
 
-    // Calculate score after move
     testState.score = calculateScore({
       cogs: testState.cogs,
       slots: testState.slots,
@@ -222,13 +226,11 @@ const removeUselessMoves = (
     `Removed ${moves.length - usefulMoves.length} useless moves, kept ${usefulMoves.length} useful moves`
   )
 
-  // Apply only useful moves to create optimized final state
   const optimized = cloneInventory(initial)
   for (const move of usefulMoves) {
     moveCog(optimized, move.fromKey, move.toKey)
   }
 
-  // Recalculate final score
   optimized.score = calculateScore({
     cogs: optimized.cogs,
     slots: optimized.slots,
@@ -246,11 +248,8 @@ const getOptimalSteps = (
 ): OptimalStep[] => {
   logger.log("Calculating optimal steps...")
 
-  // Track which cogs moved from their initial positions
-  // Map: initialKey -> finalKey
   const cogMovements = new Map<number, number>()
 
-  // Find all cogs that moved
   for (const [keyStr, initialCog] of Object.entries(initial.cogs)) {
     const initialKey = Number.parseInt(keyStr, 10)
     if (!initialCog) {
@@ -259,7 +258,6 @@ const getOptimalSteps = (
 
     const finalCogAtKey = final.cogs[initialKey]
 
-    // Check if cog moved
     let cogMoved = false
     if (!finalCogAtKey) {
       cogMoved = true
@@ -273,13 +271,11 @@ const getOptimalSteps = (
     }
 
     if (cogMoved) {
-      // Find where this cog ended up in final state
       for (const [finalKey, finalCog] of Object.entries(final.cogs)) {
         if (!finalCog) {
           continue
         }
 
-        // Match by properties
         if (
           initialCog.buildRate === finalCog.buildRate &&
           initialCog.expBonus === finalCog.expBonus &&
@@ -298,17 +294,13 @@ const getOptimalSteps = (
 
   logger.log(`Found ${cogMovements.size} cogs that moved`)
 
-  // Handle multi-step movements (chains)
-  // Similar to the reference implementation
   const steps: OptimalStep[] = []
   const interimCogs = new Map<number, number>()
 
-  // Initialize interimCogs with all movements
   for (const [initialKey, finalKey] of cogMovements.entries()) {
     interimCogs.set(initialKey, finalKey)
   }
 
-  // Process chains of movements
   while (interimCogs.size > 0) {
     const firstEntry = Array.from(interimCogs.entries())[0]
     if (!firstEntry) {
@@ -316,34 +308,46 @@ const getOptimalSteps = (
     }
 
     const [keyFrom, keyTo] = firstEntry
-
-    // Check if there's a chain (the cog at keyTo also moved)
     const targetCogFinalKey = interimCogs.get(keyTo)
 
     if (targetCogFinalKey && targetCogFinalKey !== keyFrom) {
-      // Chain detected: cog at keyTo also moved
-      // Update the mapping to follow the chain
-      interimCogs.set(keyFrom, targetCogFinalKey)
-      const fromPos = getPosition(keyFrom)
-      const toPos = getPosition(keyTo)
-      steps.push({
-        from: {
-          location: fromPos.location,
-          x: fromPos.x,
-          y: fromPos.y,
-        },
-        to: {
-          location: toPos.location,
-          x: toPos.x,
-          y: toPos.y,
-        },
-      })
-      interimCogs.delete(keyTo)
+      let currentKey = keyTo
+      const chainPath = [keyFrom, keyTo]
+
+      while (interimCogs.has(currentKey) && currentKey !== keyFrom) {
+        const nextKey = interimCogs.get(currentKey)
+        if (!nextKey || nextKey === keyFrom) break
+        chainPath.push(nextKey)
+        currentKey = nextKey
+      }
+
+      for (let i = 0; i < chainPath.length - 1; i++) {
+        const fromKey = chainPath[i]
+        const toKey = chainPath[i + 1]
+        const fromPos = getPosition(fromKey)
+        const toPos = getPosition(toKey)
+        const step = {
+          from: {
+            location: fromPos.location,
+            x: fromPos.x,
+            y: fromPos.y,
+          },
+          to: {
+            location: toPos.location,
+            x: toPos.x,
+            y: toPos.y,
+          },
+        }
+        steps.push(step)
+      }
+
+      for (const key of chainPath) {
+        interimCogs.delete(key)
+      }
     } else {
-      // No chain, simple move
       const fromPos = getPosition(keyFrom)
       const toPos = getPosition(keyTo)
-      steps.push({
+      const step = {
         from: {
           location: fromPos.location,
           x: fromPos.x,
@@ -354,14 +358,91 @@ const getOptimalSteps = (
           x: toPos.x,
           y: toPos.y,
         },
-      })
+      }
+      steps.push(step)
       interimCogs.delete(keyFrom)
     }
   }
 
   logger.log(`Calculated ${steps.length} optimal steps`)
 
-  return steps
+  const reversiblePairs: Array<{ step1: number; step2: number }> = []
+  for (let i = 0; i < steps.length; i++) {
+    for (let j = i + 1; j < steps.length; j++) {
+      const s1 = steps[i],
+        s2 = steps[j]
+      if (
+        s1.from.location === s2.to.location &&
+        s1.from.x === s2.to.x &&
+        s1.from.y === s2.to.y &&
+        s1.to.location === s2.from.location &&
+        s1.to.x === s2.from.x &&
+        s1.to.y === s2.from.y
+      ) {
+        reversiblePairs.push({ step1: i, step2: j })
+      }
+    }
+  }
+
+  const stepsToRemove = new Set<number>()
+  for (const pair of reversiblePairs) {
+    stepsToRemove.add(pair.step2)
+  }
+
+  const filteredSteps = steps.filter((_, index) => !stepsToRemove.has(index))
+
+  logger.log(
+    `Filtered ${steps.length - filteredSteps.length} reversible step pairs, ${filteredSteps.length} steps remaining`
+  )
+
+  const testState = cloneInventory(initial)
+  for (const step of filteredSteps) {
+    const fromKey = getKeyFromPosition(
+      step.from.location,
+      step.from.x,
+      step.from.y
+    )
+    const toKey = getKeyFromPosition(step.to.location, step.to.x, step.to.y)
+    moveCog(testState, fromKey, toKey)
+  }
+
+  let matchesFinal = true
+  const mismatches: Array<{
+    key: number
+    initial: unknown
+    test: unknown
+    final: unknown
+  }> = []
+  for (const key of new Set([
+    ...Object.keys(initial.cogs).map(Number.parseInt),
+    ...Object.keys(final.cogs).map(Number.parseInt),
+    ...Object.keys(testState.cogs).map(Number.parseInt),
+  ])) {
+    const testCog = testState.cogs[key]
+    const finalCog = final.cogs[key]
+
+    if (!testCog && !finalCog) continue
+
+    const testKey = testCog?.key
+    const finalKey = finalCog?.key
+    if (testKey !== finalKey) {
+      matchesFinal = false
+      mismatches.push({
+        key,
+        initial: initial.cogs[key]?.key,
+        test: testKey,
+        final: finalKey,
+      })
+    }
+  }
+
+  if (!matchesFinal) {
+    logger.log(
+      `Warning: Filtered steps do not match final state. Mismatches: ${mismatches.length}`
+    )
+  }
+
+  return filteredSteps
 }
 
 export const solver = async (
@@ -488,10 +569,7 @@ export const solver = async (
 
   logger.log("Solver optimization completed, processing results...")
 
-  // Remove useless moves from the best solution
   const optimized = removeUselessMoves(inventory, best, weights)
-
-  // Calculate optimal steps
   const steps = getOptimalSteps(inventory, optimized)
 
   if (!optimized.score) {

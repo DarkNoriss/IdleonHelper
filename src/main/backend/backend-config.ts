@@ -9,11 +9,11 @@ export const backendConfig = {
   },
   click: {
     times: 1,
-    interval: 250,
-    holdTime: 100,
+    interval: 260,
+    holdTime: 80,
   },
   drag: {
-    stepSize: 3,
+    stepSize: 2,
     stepDelay: 2,
   },
 } as const

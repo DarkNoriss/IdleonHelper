@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react"
-import type { SolverResult, SolverWeights } from "@/../../types/construction"
+import type {
+  OptimalStep,
+  SolverResult,
+  SolverWeights,
+} from "@/../../types/construction"
 import { useGameDataStore } from "@/store/game-data"
 import { useRawJsonStore } from "@/store/raw-json"
 import { useScriptStatusStore } from "@/store/script-status"
@@ -16,6 +20,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+
+const SPARE_ROWS = 5
+
+const getSparePage = (y: number): number => {
+  return Math.floor(y / SPARE_ROWS) + 1
+}
+
+const getSpareRowInPage = (y: number): number => {
+  return (y % SPARE_ROWS) + 1
+}
+
+const formatLocation = (
+  location: OptimalStep["from"] | OptimalStep["to"]
+): string => {
+  if (location.location === "spare") {
+    const page = getSparePage(location.y)
+    const row = getSpareRowInPage(location.y)
+    const col = location.x + 1
+    return `spare [col ${col}, row ${row}, page ${page}]`
+  }
+  return `${location.location} [${location.x + 1}|${location.y + 1}]`
+}
 
 export const Construction = () => {
   const [error, setError] = useState<string | null>(null)
@@ -87,6 +113,7 @@ export const Construction = () => {
     }
 
     setError(null)
+    setSolverResult(null)
     const solveTimeSeconds = Number.parseInt(solveTime, 10) || 5
     setRemainingTime(solveTimeSeconds)
     setIsSolving(true)
@@ -269,23 +296,6 @@ export const Construction = () => {
                   </CardContent>
                 </Card>
               </div>
-
-              {solverResult && solverResult.steps.length > 0 && (
-                <div className="mt-4 w-full">
-                  <div className="mb-2 text-center text-sm font-medium">
-                    Steps ({solverResult.steps.length})
-                  </div>
-                  <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
-                    {solverResult.steps.map((step, index) => (
-                      <div key={index} className="text-sm">
-                        Step {index + 1}: Switch {step.from.location} [
-                        {step.from.x + 1}|{step.from.y + 1}] with{" "}
-                        {step.to.location} [{step.to.x + 1}|{step.to.y + 1}]
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -380,6 +390,22 @@ export const Construction = () => {
                 : "Apply Optimized Board"}
             </Button>
           </div>
+
+          {solverResult && solverResult.steps.length > 0 && (
+            <div className="mt-4 w-full">
+              <div className="mb-2 text-center text-sm font-medium">
+                Steps ({solverResult.steps.length})
+              </div>
+              <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
+                {solverResult.steps.map((step, index) => (
+                  <div key={index} className="text-sm">
+                    Step {index + 1}: Switch {formatLocation(step.from)} with{" "}
+                    {formatLocation(step.to)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

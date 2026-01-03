@@ -1,5 +1,5 @@
 import { backendCommand } from "../../backend"
-import { logger } from "../../utils"
+import { delay, logger } from "../../utils"
 import type { CancellationToken } from "../../utils/cancellation-token"
 import { codex } from "./codex"
 import { navigateTo } from "./helpers"
@@ -77,7 +77,105 @@ export const construction = {
       token
     )
   },
+  navigateToPage: async (
+    targetPage: number,
+    token: CancellationToken
+  ): Promise<number> => {
+    const isOnTargetPage = await backendCommand.isVisible(
+      `construction/page-${targetPage}`,
+      { threshold: 0.975 },
+      token
+    )
+    if (isOnTargetPage) {
+      logger.log(`Already on page ${targetPage}`)
+      return targetPage
+    }
+
+    let attempts = 0
+    const maxAttempts = 5
+
+    while (attempts < maxAttempts) {
+      attempts++
+
+      const detectedPage = await detectCurrentPage(token)
+      if (detectedPage === null) {
+        throw new Error(
+          `Cannot detect current page after navigation attempt ${attempts}`
+        )
+      }
+
+      if (detectedPage === targetPage) {
+        logger.log(`Successfully navigated to page ${targetPage}`)
+        return targetPage
+      }
+
+      const pageDiff = targetPage - detectedPage
+      const buttonImage =
+        pageDiff > 0
+          ? "construction/cogs-page-next"
+          : "construction/cogs-page-prev"
+
+      const result = await backendCommand.find(buttonImage, undefined, token)
+      if (result.matches.length === 0) {
+        throw new Error(
+          `Page navigation button not found. Target: ${targetPage}, Detected: ${detectedPage}, Attempt: ${attempts}`
+        )
+      }
+
+      const buttonPoint = result.matches[0]
+      const clicksNeeded = Math.abs(pageDiff)
+
+      logger.log(
+        `Attempt ${attempts}: Navigating from page ${detectedPage} to page ${targetPage} (${clicksNeeded} clicks)`
+      )
+
+      await backendCommand.click(
+        buttonPoint,
+        { times: clicksNeeded, interval: 25, holdTime: 10 },
+        token
+      )
+
+      await delay(100, token)
+
+      const verifyPage = await backendCommand.isVisible(
+        `construction/page-${targetPage}`,
+        { threshold: 0.975 },
+        token
+      )
+      if (verifyPage) {
+        logger.log(
+          `Successfully navigated to page ${targetPage} on attempt ${attempts}`
+        )
+        return targetPage
+      }
+
+      logger.log(
+        `Attempt ${attempts} failed: Still not on page ${targetPage} after navigation`
+      )
+    }
+
+    const finalDetectedPage = await detectCurrentPage(token)
+    throw new Error(
+      `Failed to navigate to page ${targetPage} after ${maxAttempts} attempts. Final detected page: ${finalDetectedPage ?? "unknown"}`
+    )
+  },
 } as const
+
+const detectCurrentPage = async (
+  token: CancellationToken
+): Promise<number | null> => {
+  for (let page = 1; page <= 7; page++) {
+    const isVisible = await backendCommand.isVisible(
+      `construction/page-${page}`,
+      { threshold: 0.975 },
+      token
+    )
+    if (isVisible) {
+      return page
+    }
+  }
+  return null
+}
 
 const ensurePage = async (
   buttonImage: string,
@@ -98,11 +196,7 @@ const ensurePage = async (
     return true
   }
 
-  const result = await backendCommand.findWithDebug(
-    buttonImage,
-    undefined,
-    token
-  )
+  const result = await backendCommand.find(buttonImage, undefined, token)
 
   if (result.matches.length === 0) {
     logger.log(`${buttonName} not found, assuming we're on ${pageName}`)
@@ -122,7 +216,7 @@ const ensurePage = async (
     token
   )
 
-  const finalCheck = await backendCommand.findWithDebug(
+  const finalCheck = await backendCommand.find(
     confirmationImage,
     undefined,
     token
