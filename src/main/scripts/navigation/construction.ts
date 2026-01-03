@@ -16,7 +16,7 @@ export const construction = {
   },
   toCogsTab: async (token: CancellationToken): Promise<boolean> => {
     return await navigateTo(
-      "construction/total-build-rate",
+      "construction/flaggy-rate",
       "construction/cogs_tab",
       construction.toConstruction,
       token,
