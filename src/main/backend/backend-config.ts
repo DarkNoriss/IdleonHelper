@@ -14,6 +14,6 @@ export const backendConfig = {
   },
   drag: {
     stepSize: 6,
-    stepDelay: 1,
+    stepDelay: 2,
   },
 } as const
