@@ -105,7 +105,7 @@ export const apply = async (steps: OptimalStep[]): Promise<void> => {
       logger.log(
         `Dragging from (${fromCoords.x}, ${fromCoords.y}) to (${toCoords.x}, ${toCoords.y})`
       )
-      await backendCommand.drag(fromCoords, toCoords, undefined, token)
+      await backendCommand.drag(fromCoords, toCoords, { instant: true }, token)
     }
 
     logger.log("Optimized board applied successfully")
