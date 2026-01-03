@@ -42,7 +42,8 @@ internal static class DragCommandHandler
         dragRequest.Interval.Value,
         dragRequest.StepSize.Value,
         dragRequest.StepDelay.Value,
-        dragRequest.HoldTime.Value
+        dragRequest.HoldTime.Value,
+        dragRequest.Instant ?? false
       );
 
       var response = new DragResponse

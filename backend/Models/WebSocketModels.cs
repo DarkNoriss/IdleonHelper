@@ -69,6 +69,7 @@ internal class DragRequest
   public int? StepSize { get; set; }
   public int? StepDelay { get; set; }
   public int? HoldTime { get; set; }
+  public bool? Instant { get; set; }
 }
 
 internal class DragResponse

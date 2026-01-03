@@ -37,13 +37,39 @@ public static class MouseSimulator
     int interval,
     int stepSize,
     int stepDelay,
-    int holdTime
+    int holdTime,
+    bool instant = false
   )
   {
     ct.ThrowIfCancellationRequested();
 
     var hwnd = WindowCapture.GetWindowHandle();
 
+    var startLParam = MakeLong(start.X, start.Y);
+    PostMessage(hwnd, (uint)MouseMessages.WmLbuttondown, 1, startLParam);
+    await Task.Delay(holdTime, ct);
+
+    if (instant)
+    {
+      // Instant drag: move directly to end point
+      if (ct.IsCancellationRequested)
+      {
+        PostMessage(hwnd, (uint)MouseMessages.WmLbuttonup, 0, startLParam);
+        return;
+      }
+
+      var endLParam = MakeLong(end.X, end.Y);
+      PostMessage(hwnd, (uint)MouseMessages.WmMousemove, 1, endLParam);
+
+      await Task.Delay(holdTime, ct);
+
+      PostMessage(hwnd, (uint)MouseMessages.WmLbuttonup, 0, endLParam);
+
+      await Task.Delay(interval, ct);
+      return;
+    }
+
+    // Smooth drag: use Bezier curve with intermediate steps
     var distance = Math.Sqrt(
       Math.Pow(end.X - start.X, 2) +
       Math.Pow(end.Y - start.Y, 2)
@@ -54,10 +80,6 @@ public static class MouseSimulator
 
     var control1 = GenerateControlPoint(start, end, 0.33);
     var control2 = GenerateControlPoint(start, end, 0.67);
-
-    var startLParam = MakeLong(start.X, start.Y);
-    PostMessage(hwnd, (uint)MouseMessages.WmLbuttondown, 1, startLParam);
-    await Task.Delay(holdTime, ct);
 
     var lastPoint = start;
     for (var i = 1; i <= steps; i++)

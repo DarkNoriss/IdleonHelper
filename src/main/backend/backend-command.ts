@@ -173,6 +173,7 @@ export const backendCommand = {
           stepSize?: number
           stepDelay?: number
           holdTime?: number
+          instant?: boolean
         }
       | undefined,
     token: CancellationToken
@@ -185,6 +186,7 @@ export const backendCommand = {
       stepSize: options?.stepSize ?? backendConfig.drag.stepSize,
       stepDelay: options?.stepDelay ?? backendConfig.drag.stepDelay,
       holdTime: options?.holdTime ?? backendConfig.click.holdTime,
+      instant: options?.instant ?? false,
     }
     return sendCommand("drag", request)
   },

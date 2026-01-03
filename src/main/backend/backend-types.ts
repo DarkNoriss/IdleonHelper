@@ -75,6 +75,7 @@ export type DragRequest = {
   stepSize?: number
   stepDelay?: number
   holdTime?: number
+  instant?: boolean
 }
 
 export type DragResponse = {
