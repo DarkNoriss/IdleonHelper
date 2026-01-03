@@ -13,7 +13,7 @@ export const backendConfig = {
     holdTime: 80,
   },
   drag: {
-    stepSize: 2,
-    stepDelay: 2,
+    stepSize: 6,
+    stepDelay: 1,
   },
 } as const
