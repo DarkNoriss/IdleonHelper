@@ -36,7 +36,7 @@ const formatLocation = (
 
   if (location.location === "spare") {
     const page = getSparePage(location.y) // location.y is 0-indexed
-    return `spare [${x}|${y}] {${page}}`
+    return `spare [${x}|${y}] page ${page}`
   }
   return `${locationType} [${x}|${y}]`
 }
