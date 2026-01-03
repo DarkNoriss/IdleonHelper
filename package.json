@@ -1,6 +1,6 @@
 {
   "name": "idleon-helper",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "IdleonHelper is a automated helper for the game Idleon",
   "main": "./out/main/index.js",
   "author": "MyAngelCamellia",
