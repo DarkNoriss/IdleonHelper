@@ -94,7 +94,7 @@ const getEntry = (
   return inventory.cogs[key] ?? inventory.slots[key]
 }
 
-export const shuffle = (inventory: ParsedConstructionData, n = 500): void => {
+export const shuffle = (inventory: ParsedConstructionData, n = 2000): void => {
   const allSlots = inventory.availableSlotKeys
   for (let i = 0; i < n; i++) {
     const slotKey = allSlots[Math.floor(Math.random() * allSlots.length)]
@@ -473,9 +473,15 @@ export const solver = async (
     return null
   }
 
-  logger.log("Starting solver optimization...")
+  const totalCogs = Object.keys(inventory.cogs).length
+  const totalSlots = allSlots.length
+  logger.log(
+    `Starting solver optimization... (${totalCogs} cogs, ${totalSlots} available slots)`
+  )
 
   let currentScore = getScoreSum(state.score, weights)
+  let bestScoreEver = currentScore
+  let improvementCount = 0
   let lastYield = Date.now()
 
   while (Date.now() - startTime < solveTime) {
@@ -488,6 +494,12 @@ export const solver = async (
     }
 
     if (counter % 10000 === 0) {
+      // Save current optimized state BEFORE restarting
+      if (state.score) {
+        solutions.push(cloneInventory(state))
+      }
+
+      // Restart from a new random state
       state = cloneInventory(inventory)
       shuffle(state)
       state.score = calculateScore({
@@ -499,7 +511,6 @@ export const solver = async (
       })
       if (state.score) {
         currentScore = getScoreSum(state.score, weights)
-        solutions.push(state)
       }
     }
 
@@ -534,6 +545,10 @@ export const solver = async (
     const scoreSumUpdate = getScoreSum(state.score, weights)
     if (scoreSumUpdate > currentScore) {
       currentScore = scoreSumUpdate
+      improvementCount++
+      if (scoreSumUpdate > bestScoreEver) {
+        bestScoreEver = scoreSumUpdate
+      }
     } else {
       // Revert move if score didn't improve
       moveCog(state, slotKey, cogKey)
@@ -546,6 +561,17 @@ export const solver = async (
       })
     }
   }
+
+  // Save final optimized state
+  if (state.score) {
+    solutions.push(cloneInventory(state))
+  }
+
+  const elapsedTime = Date.now() - startTime
+  const iterationsPerSecond = Math.round(counter / (elapsedTime / 1000))
+  logger.log(
+    `Solver stats: ${counter} iterations in ${elapsedTime}ms (${iterationsPerSecond}/sec), ${improvementCount} improvements, ${solutions.length} solutions`
+  )
 
   // Find best solution
   const scores = solutions
