@@ -61,6 +61,21 @@ export const Construction = () => {
   const isWorking = currentScript !== null
   const score = constructionData?.score
 
+  // Detect if all slots are unlocked
+  const allSlotsUnlocked =
+    constructionData !== null
+      ? constructionData.availableSlotKeys.length ===
+        Object.keys(constructionData.slots).length -
+          constructionData.flagPose.length
+      : false
+
+  // Auto-set flaggy weight to 0 when all slots are unlocked
+  useEffect(() => {
+    if (allSlotsUnlocked) {
+      setFlaggyWeight("0")
+    }
+  }, [allSlotsUnlocked])
+
   // Timer countdown effect
   useEffect(() => {
     if (!isSolving || remainingTime <= 0) {
@@ -324,7 +339,12 @@ export const Construction = () => {
                 type="number"
                 value={flaggyWeight}
                 onChange={(e) => setFlaggyWeight(e.target.value)}
-                disabled={isWorking}
+                disabled={isWorking || allSlotsUnlocked}
+                title={
+                  allSlotsUnlocked
+                    ? "Disabled: All slots are unlocked"
+                    : undefined
+                }
               />
             </div>
 
@@ -338,7 +358,7 @@ export const Construction = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Select time" />
                 </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
+                <SelectContent className="max-h-[258px]">
                   {Array.from({ length: 24 }, (_, i) => {
                     const seconds = (i + 1) * 5
                     return (
