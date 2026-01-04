@@ -65,6 +65,8 @@ export const collectCogs = async (): Promise<void> => {
         break
       }
 
+      await delay(250, token)
+
       iteration++
       logger.log(
         `Board is empty, clicking collect ultimate cogs button 10 times (iteration ${iteration}/${MAX_ITERATIONS})...`
@@ -74,8 +76,6 @@ export const collectCogs = async (): Promise<void> => {
         { times: 10, interval: 25, holdTime: 10 },
         token
       )
-
-      await delay(250, token)
     }
 
     if (iteration >= MAX_ITERATIONS) {
