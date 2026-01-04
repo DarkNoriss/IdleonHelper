@@ -80,6 +80,9 @@ export const collectCogs = async (): Promise<void> => {
       logger.log(`Reached maximum iterations (${MAX_ITERATIONS}), stopping`)
     }
 
+    logger.log("Closing cog shelf...")
+    await navigation.construction.ensureCogShelfOff(token)
+
     logger.log("Collect cogs completed successfully")
   } catch (error) {
     // Handle cancellation silently - it's a user action, not an error

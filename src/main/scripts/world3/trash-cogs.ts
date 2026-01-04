@@ -74,6 +74,9 @@ export const trashCogs = async (): Promise<void> => {
       }
     }
 
+    logger.log("Closing trash...")
+    await navigation.construction.ensureTrashOff(token)
+
     logger.log("Trash cogs completed successfully")
   } catch (error) {
     // Handle cancellation silently - it's a user action, not an error
