@@ -196,236 +196,222 @@ export const Construction = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-center">Construction</CardTitle>
-      </CardHeader>
+    <div className="flex flex-col items-center gap-4">
+      <h1 className="text-center text-2xl font-bold">Construction</h1>
 
-      <CardContent>
-        {error && (
-          <div className="bg-destructive/10 text-destructive mb-4 rounded-md p-3 text-sm">
-            {error}
-          </div>
-        )}
-
-        <div className="flex flex-col items-center gap-4">
-          <div className="text-muted-foreground text-center text-sm">
-            Navigate to the construction screen. Make sure to save your data on
-            the Raw Data page first.
-          </div>
-
-          {!parsedJson && (
-            <div className="w-full rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-400">
-              No data available. Please go to the Raw Data page and save your
-              JSON data first.
-            </div>
-          )}
-
-          {score && (
-            <div className="w-full">
-              <div className="mb-2 text-center text-sm font-medium">
-                {solverResult ? "Optimized Score" : "Current Score"}
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">
-                        {notateNumber(
-                          solverResult
-                            ? solverResult.score.buildRate
-                            : score.buildRate
-                        )}
-                      </div>
-                      {buildRateDiff && (
-                        <div
-                          className={`mt-1 text-sm font-medium ${
-                            buildRateDiff.value >= 0
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-red-600 dark:text-red-400"
-                          }`}
-                        >
-                          {buildRateDiff.formatted}
-                        </div>
-                      )}
-                      <div className="text-muted-foreground mt-1 text-sm">
-                        Build Rate
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">
-                        {notateNumber(
-                          solverResult
-                            ? solverResult.score.expBonus
-                            : score.expBonus
-                        )}
-                      </div>
-                      {expBonusDiff && (
-                        <div
-                          className={`mt-1 text-sm font-medium ${
-                            expBonusDiff.value >= 0
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-red-600 dark:text-red-400"
-                          }`}
-                        >
-                          {expBonusDiff.formatted}
-                        </div>
-                      )}
-                      <div className="text-muted-foreground mt-1 text-sm">
-                        Exp Bonus
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">
-                        {notateNumber(
-                          solverResult
-                            ? solverResult.score.flaggy
-                            : score.flaggy
-                        )}
-                      </div>
-                      {flaggyDiff && (
-                        <div
-                          className={`mt-1 text-sm font-medium ${
-                            flaggyDiff.value >= 0
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-red-600 dark:text-red-400"
-                          }`}
-                        >
-                          {flaggyDiff.formatted}
-                        </div>
-                      )}
-                      <div className="text-muted-foreground mt-1 text-sm">
-                        Flaggy
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-
-          <div className="grid w-full grid-cols-4 gap-3">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Build Rate Weight</label>
-              <Input
-                type="number"
-                value={buildRateWeight}
-                onChange={(e) => setBuildRateWeight(e.target.value)}
-                disabled={isWorking}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Exp Weight</label>
-              <Input
-                type="number"
-                value={expWeight}
-                onChange={(e) => setExpWeight(e.target.value)}
-                disabled={isWorking}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Flaggy Weight</label>
-              <Input
-                type="number"
-                value={flaggyWeight}
-                onChange={(e) => setFlaggyWeight(e.target.value)}
-                disabled={isWorking || allSlotsUnlocked}
-                title={
-                  allSlotsUnlocked
-                    ? "Disabled: All slots are unlocked"
-                    : undefined
-                }
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Solve Time (sec)</label>
-              <Select
-                value={solveTime}
-                onValueChange={setSolveTime}
-                disabled={isWorking}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[258px]">
-                  {Array.from({ length: 24 }, (_, i) => {
-                    const seconds = (i + 1) * 5
-                    return (
-                      <SelectItem key={seconds} value={seconds.toString()}>
-                        {seconds}s
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex w-full flex-col gap-3">
-            <Button
-              onClick={handleSolve}
-              size="lg"
-              className="min-w-48"
-              disabled={!constructionData || isSolving || isWorking}
-            >
-              {isSolving ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  {remainingTime > 0
-                    ? `Solving... (${remainingTime}s)`
-                    : "Solving..."}
-                </>
-              ) : (
-                "Solve Construction"
-              )}
-            </Button>
-
-            <Button
-              onClick={handleApply}
-              size="lg"
-              className="min-w-48"
-              disabled={
-                (isWorking && !isApplying) ||
-                !solverResult ||
-                !solverResult.steps ||
-                solverResult.steps.length === 0
-              }
-              variant="default"
-            >
-              {isApplying
-                ? "Applying... (Click to stop)"
-                : "Apply Optimized Board"}
-            </Button>
-          </div>
-
-          {solverResult && solverResult.steps.length > 0 && (
-            <div className="mt-4 w-full">
-              <div className="mb-2 text-center text-sm font-medium">
-                Steps ({solverResult.steps.length})
-              </div>
-              <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
-                {solverResult.steps.map((step, index) => (
-                  <div key={index} className="text-sm">
-                    Step {index + 1}: Switch {formatLocation(step.from)} with{" "}
-                    {formatLocation(step.to)}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+      {error && (
+        <div className="bg-destructive/10 text-destructive mb-4 w-full rounded-md p-3 text-sm">
+          {error}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <div className="text-muted-foreground text-center text-sm">
+        Navigate to the construction screen. Make sure to save your data on
+        the Raw Data page first.
+      </div>
+
+      {!parsedJson && (
+        <div className="w-full rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-400">
+          No data available. Please go to the Raw Data page and save your
+          JSON data first.
+        </div>
+      )}
+
+      {score && (
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-center">
+              {solverResult ? "Optimized Score" : "Current Score"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold">
+                  {notateNumber(
+                    solverResult
+                      ? solverResult.score.buildRate
+                      : score.buildRate
+                  )}
+                </div>
+                {buildRateDiff && (
+                  <div
+                    className={`mt-1 text-sm font-medium ${
+                      buildRateDiff.value >= 0
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {buildRateDiff.formatted}
+                  </div>
+                )}
+                <div className="text-muted-foreground mt-1 text-sm">
+                  Build Rate
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">
+                  {notateNumber(
+                    solverResult
+                      ? solverResult.score.expBonus
+                      : score.expBonus
+                  )}
+                </div>
+                {expBonusDiff && (
+                  <div
+                    className={`mt-1 text-sm font-medium ${
+                      expBonusDiff.value >= 0
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {expBonusDiff.formatted}
+                  </div>
+                )}
+                <div className="text-muted-foreground mt-1 text-sm">
+                  Exp Bonus
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">
+                  {notateNumber(
+                    solverResult
+                      ? solverResult.score.flaggy
+                      : score.flaggy
+                  )}
+                </div>
+                {flaggyDiff && (
+                  <div
+                    className={`mt-1 text-sm font-medium ${
+                      flaggyDiff.value >= 0
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {flaggyDiff.formatted}
+                  </div>
+                )}
+                <div className="text-muted-foreground mt-1 text-sm">
+                  Flaggy
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid w-full grid-cols-4 gap-3">
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Build Rate Weight</label>
+          <Input
+            type="number"
+            value={buildRateWeight}
+            onChange={(e) => setBuildRateWeight(e.target.value)}
+            disabled={isWorking}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Exp Weight</label>
+          <Input
+            type="number"
+            value={expWeight}
+            onChange={(e) => setExpWeight(e.target.value)}
+            disabled={isWorking}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Flaggy Weight</label>
+          <Input
+            type="number"
+            value={flaggyWeight}
+            onChange={(e) => setFlaggyWeight(e.target.value)}
+            disabled={isWorking || allSlotsUnlocked}
+            title={
+              allSlotsUnlocked
+                ? "Disabled: All slots are unlocked"
+                : undefined
+            }
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Solve Time (sec)</label>
+          <Select
+            value={solveTime}
+            onValueChange={setSolveTime}
+            disabled={isWorking}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select time" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[258px]">
+              {Array.from({ length: 24 }, (_, i) => {
+                const seconds = (i + 1) * 5
+                return (
+                  <SelectItem key={seconds} value={seconds.toString()}>
+                    {seconds}s
+                  </SelectItem>
+                )
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="flex w-full flex-col gap-3">
+        <Button
+          onClick={handleSolve}
+          size="lg"
+          className="min-w-48"
+          disabled={!constructionData || isSolving || isWorking}
+        >
+          {isSolving ? (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              {remainingTime > 0
+                ? `Solving... (${remainingTime}s)`
+                : "Solving..."}
+            </>
+          ) : (
+            "Solve Construction"
+          )}
+        </Button>
+
+        <Button
+          onClick={handleApply}
+          size="lg"
+          className="min-w-48"
+          disabled={
+            (isWorking && !isApplying) ||
+            !solverResult ||
+            !solverResult.steps ||
+            solverResult.steps.length === 0
+          }
+          variant="default"
+        >
+          {isApplying
+            ? "Applying... (Click to stop)"
+            : "Apply Optimized Board"}
+        </Button>
+      </div>
+
+      {solverResult && solverResult.steps.length > 0 && (
+        <div className="mt-4 w-full">
+          <div className="mb-2 text-center text-sm font-medium">
+            Steps ({solverResult.steps.length})
+          </div>
+          <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
+            {solverResult.steps.map((step, index) => (
+              <div key={index} className="text-sm">
+                Step {index + 1}: Switch {formatLocation(step.from)} with{" "}
+                {formatLocation(step.to)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
