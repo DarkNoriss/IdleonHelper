@@ -58,6 +58,8 @@ export const Construction = () => {
   )
 
   const isApplying = currentScript === "world3.construction.apply"
+  const isCollectingCogs = currentScript === "world3.construction.collect-cogs"
+  const isTrashingCogs = currentScript === "world3.construction.trash-cogs"
   const isWorking = currentScript !== null
   const score = constructionData?.score
 
@@ -195,6 +197,72 @@ export const Construction = () => {
     }
   }
 
+  const handleCollectCogs = async () => {
+    if (isWorking) {
+      setError("Another operation is already running")
+      return
+    }
+
+    if (isCollectingCogs) {
+      try {
+        await window.api.script.cancel()
+        setCurrentScript(null)
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to cancel operation"
+        )
+      }
+      return
+    }
+
+    setError(null)
+    setCurrentScript("world3.construction.collect-cogs")
+
+    try {
+      await window.api.script.world3.construction.collectCogs()
+    } catch (err) {
+      if (err instanceof Error && err.message === "Operation was cancelled") {
+        setCurrentScript(null)
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to collect cogs")
+        setCurrentScript(null)
+      }
+    }
+  }
+
+  const handleTrashCogs = async () => {
+    if (isWorking) {
+      setError("Another operation is already running")
+      return
+    }
+
+    if (isTrashingCogs) {
+      try {
+        await window.api.script.cancel()
+        setCurrentScript(null)
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to cancel operation"
+        )
+      }
+      return
+    }
+
+    setError(null)
+    setCurrentScript("world3.construction.trash-cogs")
+
+    try {
+      await window.api.script.world3.construction.trashCogs()
+    } catch (err) {
+      if (err instanceof Error && err.message === "Operation was cancelled") {
+        setCurrentScript(null)
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to trash cogs")
+        setCurrentScript(null)
+      }
+    }
+  }
+
   return (
     <div className="flex flex-col items-center gap-4">
       <h1 className="text-center text-2xl font-bold">Construction</h1>
@@ -206,14 +274,14 @@ export const Construction = () => {
       )}
 
       <div className="text-muted-foreground text-center text-sm">
-        Navigate to the construction screen. Make sure to save your data on
-        the Raw Data page first.
+        Navigate to the construction screen. Make sure to save your data on the
+        Raw Data page first.
       </div>
 
       {!parsedJson && (
         <div className="w-full rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-400">
-          No data available. Please go to the Raw Data page and save your
-          JSON data first.
+          No data available. Please go to the Raw Data page and save your JSON
+          data first.
         </div>
       )}
 
@@ -252,9 +320,7 @@ export const Construction = () => {
               <div className="text-center">
                 <div className="text-2xl font-bold">
                   {notateNumber(
-                    solverResult
-                      ? solverResult.score.expBonus
-                      : score.expBonus
+                    solverResult ? solverResult.score.expBonus : score.expBonus
                   )}
                 </div>
                 {expBonusDiff && (
@@ -275,9 +341,7 @@ export const Construction = () => {
               <div className="text-center">
                 <div className="text-2xl font-bold">
                   {notateNumber(
-                    solverResult
-                      ? solverResult.score.flaggy
-                      : score.flaggy
+                    solverResult ? solverResult.score.flaggy : score.flaggy
                   )}
                 </div>
                 {flaggyDiff && (
@@ -291,9 +355,7 @@ export const Construction = () => {
                     {flaggyDiff.formatted}
                   </div>
                 )}
-                <div className="text-muted-foreground mt-1 text-sm">
-                  Flaggy
-                </div>
+                <div className="text-muted-foreground mt-1 text-sm">Flaggy</div>
               </div>
             </div>
           </CardContent>
@@ -329,9 +391,7 @@ export const Construction = () => {
             onChange={(e) => setFlaggyWeight(e.target.value)}
             disabled={isWorking || allSlotsUnlocked}
             title={
-              allSlotsUnlocked
-                ? "Disabled: All slots are unlocked"
-                : undefined
+              allSlotsUnlocked ? "Disabled: All slots are unlocked" : undefined
             }
           />
         </div>
@@ -391,9 +451,29 @@ export const Construction = () => {
           }
           variant="default"
         >
-          {isApplying
-            ? "Applying... (Click to stop)"
-            : "Apply Optimized Board"}
+          {isApplying ? "Applying... (Click to stop)" : "Apply Optimized Board"}
+        </Button>
+      </div>
+
+      <div className="flex w-full gap-3">
+        <Button
+          onClick={handleCollectCogs}
+          size="lg"
+          className="flex-1"
+          disabled={isWorking && !isCollectingCogs}
+          variant="default"
+        >
+          {isCollectingCogs ? "Collecting... (Click to stop)" : "Collect cogs"}
+        </Button>
+
+        <Button
+          onClick={handleTrashCogs}
+          size="lg"
+          className="flex-1"
+          disabled={isWorking && !isTrashingCogs}
+          variant="default"
+        >
+          {isTrashingCogs ? "Trashing... (Click to stop)" : "Trash cogs"}
         </Button>
       </div>
 

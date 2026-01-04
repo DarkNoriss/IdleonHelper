@@ -148,6 +148,16 @@ export const setupHandlers = (): void => {
     }
   )
 
+  ipcMain.handle("script:world-3.construction.collect-cogs", async () => {
+    logger.log("IPC: script:world-3.construction.collect-cogs")
+    return await scripts.world3.construction.collectCogs()
+  })
+
+  ipcMain.handle("script:world-3.construction.trash-cogs", async () => {
+    logger.log("IPC: script:world-3.construction.trash-cogs")
+    return await scripts.world3.construction.trashCogs()
+  })
+
   ipcMain.handle("app:isDev", () => {
     return is.dev
   })

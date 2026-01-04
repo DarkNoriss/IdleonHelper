@@ -8,6 +8,8 @@ export type ScriptName =
   | "weeklyBattle.trophy"
   | "world3.construction"
   | "world3.construction.apply"
+  | "world3.construction.collect-cogs"
+  | "world3.construction.trash-cogs"
   | "general.test"
   | null
 

@@ -91,6 +91,12 @@ const api = {
         apply: (steps: OptimalStep[]) => {
           return ipcRenderer.invoke("script:world-3.construction.apply", steps)
         },
+        collectCogs: () => {
+          return ipcRenderer.invoke("script:world-3.construction.collect-cogs")
+        },
+        trashCogs: () => {
+          return ipcRenderer.invoke("script:world-3.construction.trash-cogs")
+        },
       },
     },
     general: {

@@ -80,6 +80,8 @@ declare global {
               steps: OptimalStep[]
             } | null>
             apply: (steps: OptimalStep[]) => Promise<void>
+            collectCogs: () => Promise<void>
+            trashCogs: () => Promise<void>
           }
         }
         world6: {
