@@ -27,7 +27,7 @@ export const RawData = () => {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
+    <div className="flex flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Raw Data</h1>
         <div className="flex gap-2">
@@ -44,6 +44,7 @@ export const RawData = () => {
         onChange={(e) => setLocalJson(e.target.value)}
         placeholder="Paste game data JSON here..."
         className="flex-1 resize-none font-mono text-xs"
+        rows={23}
       />
     </div>
   )
