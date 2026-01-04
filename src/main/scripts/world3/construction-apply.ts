@@ -2,14 +2,12 @@ import type { OptimalStep } from "../../../types/construction"
 import { backendCommand } from "../../backend"
 import { cancellationManager, logger } from "../../utils"
 import { navigation } from "../navigation/navigation"
-
-// Constants for future use
-// const SPARE_COLUMNS = 3
-const SPARE_ROWS = 5
-const COGS_STEP = 48
-
-const BOARD_FIRST_COORDS = { x: 210, y: 130 }
-const SPARE_FIRST_COORDS = { x: 25, y: 130 }
+import {
+  BOARD_FIRST_COORDS,
+  COGS_STEP,
+  SPARE_FIRST_COORDS,
+  SPARE_ROWS,
+} from "./construction-constants"
 
 export const getSparePage = (y: number): number => {
   return Math.floor(y / SPARE_ROWS) + 1
