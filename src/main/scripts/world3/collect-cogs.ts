@@ -1,5 +1,5 @@
 import { backendCommand } from "../../backend"
-import { cancellationManager, logger } from "../../utils"
+import { cancellationManager, delay, logger } from "../../utils"
 import { navigation } from "../navigation/navigation"
 import {
   COGS_STEP,
@@ -60,20 +60,22 @@ export const collectCogs = async (): Promise<void> => {
         token
       )
 
-      if (isBoardEmpty) {
-        logger.log("Board is empty, collection complete")
+      if (!isBoardEmpty) {
+        logger.log("Board is not empty (spare is full), collection complete")
         break
       }
 
       iteration++
       logger.log(
-        `Clicking collect ultimate cogs button 10 times (iteration ${iteration}/${MAX_ITERATIONS})...`
+        `Board is empty, clicking collect ultimate cogs button 10 times (iteration ${iteration}/${MAX_ITERATIONS})...`
       )
       await backendCommand.click(
         COLLECT_ULTIMATE_COGS,
         { times: 10, interval: 25, holdTime: 10 },
         token
       )
+
+      await delay(250, token)
     }
 
     if (iteration >= MAX_ITERATIONS) {
