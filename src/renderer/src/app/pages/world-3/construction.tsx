@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select"
 
 const SPARE_ROWS = 5
+const TIME_OPTIONS = [5, 30, 60, 120, 240, 480]
 
 const getSparePage = (y: number): number => {
   return Math.floor(y / SPARE_ROWS) + 1
@@ -48,7 +49,7 @@ export const Construction = () => {
   const [buildRateWeight, setBuildRateWeight] = useState<string>("1")
   const [expWeight, setExpWeight] = useState<string>("100")
   const [flaggyWeight, setFlaggyWeight] = useState<string>("250")
-  const [solveTime, setSolveTime] = useState<string>("5")
+  const [solveTime, setSolveTime] = useState<string>("30")
   const [isSolving, setIsSolving] = useState(false)
   const [remainingTime, setRemainingTime] = useState<number>(0)
   const [solverResult, setSolverResult] = useState<SolverResult | null>(null)
@@ -97,15 +98,8 @@ export const Construction = () => {
   }, [isSolving, remainingTime])
 
   // Calculate differences between current and optimized scores
-  const getDifference = (
-    current: number,
-    optimized: number
-  ): { value: number; formatted: string } => {
-    const diff = optimized - current
-    return {
-      value: diff,
-      formatted: diff >= 0 ? `+${notateNumber(diff)}` : notateNumber(diff),
-    }
+  const getDifference = (current: number, optimized: number) => {
+    return optimized - current
   }
 
   const buildRateDiff =
@@ -305,12 +299,12 @@ export const Construction = () => {
                 {buildRateDiff && (
                   <div
                     className={`mt-1 text-sm font-medium ${
-                      buildRateDiff.value >= 0
+                      buildRateDiff >= 0
                         ? "text-green-600 dark:text-green-400"
                         : "text-red-600 dark:text-red-400"
                     }`}
                   >
-                    {buildRateDiff.formatted}
+                    {notateNumber(buildRateDiff)}
                   </div>
                 )}
                 <div className="text-muted-foreground mt-1 text-sm">
@@ -326,12 +320,12 @@ export const Construction = () => {
                 {expBonusDiff && (
                   <div
                     className={`mt-1 text-sm font-medium ${
-                      expBonusDiff.value >= 0
+                      expBonusDiff >= 0
                         ? "text-green-600 dark:text-green-400"
                         : "text-red-600 dark:text-red-400"
                     }`}
                   >
-                    {expBonusDiff.formatted}
+                    {notateNumber(expBonusDiff)}
                   </div>
                 )}
                 <div className="text-muted-foreground mt-1 text-sm">
@@ -347,12 +341,12 @@ export const Construction = () => {
                 {flaggyDiff && (
                   <div
                     className={`mt-1 text-sm font-medium ${
-                      flaggyDiff.value >= 0
+                      flaggyDiff >= 0
                         ? "text-green-600 dark:text-green-400"
                         : "text-red-600 dark:text-red-400"
                     }`}
                   >
-                    {flaggyDiff.formatted}
+                    {notateNumber(flaggyDiff)}
                   </div>
                 )}
                 <div className="text-muted-foreground mt-1 text-sm">Flaggy</div>
@@ -407,8 +401,7 @@ export const Construction = () => {
               <SelectValue placeholder="Select time" />
             </SelectTrigger>
             <SelectContent className="max-h-[258px]">
-              {Array.from({ length: 24 }, (_, i) => {
-                const seconds = (i + 1) * 5
+              {TIME_OPTIONS.map((seconds) => {
                 return (
                   <SelectItem key={seconds} value={seconds.toString()}>
                     {seconds}s
