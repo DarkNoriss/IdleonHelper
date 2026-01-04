@@ -145,7 +145,6 @@ export const AppSidebar = ({
                 <Collapsible
                   key={item.title}
                   title={item.title}
-                  defaultOpen
                   className="group/collapsible"
                 >
                   <SidebarGroup>
