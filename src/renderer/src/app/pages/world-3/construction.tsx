@@ -162,11 +162,6 @@ export const Construction = () => {
   }
 
   const handleApply = async () => {
-    if (isWorking) {
-      setError("Another operation is already running")
-      return
-    }
-
     if (isApplying) {
       try {
         await window.api.script.cancel()
@@ -176,6 +171,11 @@ export const Construction = () => {
           err instanceof Error ? err.message : "Failed to cancel operation"
         )
       }
+      return
+    }
+
+    if (isWorking) {
+      setError("Another operation is already running")
       return
     }
 
@@ -198,11 +198,6 @@ export const Construction = () => {
   }
 
   const handleCollectCogs = async () => {
-    if (isWorking) {
-      setError("Another operation is already running")
-      return
-    }
-
     if (isCollectingCogs) {
       try {
         await window.api.script.cancel()
@@ -212,6 +207,11 @@ export const Construction = () => {
           err instanceof Error ? err.message : "Failed to cancel operation"
         )
       }
+      return
+    }
+
+    if (isWorking) {
+      setError("Another operation is already running")
       return
     }
 
@@ -231,11 +231,6 @@ export const Construction = () => {
   }
 
   const handleTrashCogs = async () => {
-    if (isWorking) {
-      setError("Another operation is already running")
-      return
-    }
-
     if (isTrashingCogs) {
       try {
         await window.api.script.cancel()
@@ -245,6 +240,11 @@ export const Construction = () => {
           err instanceof Error ? err.message : "Failed to cancel operation"
         )
       }
+      return
+    }
+
+    if (isWorking) {
+      setError("Another operation is already running")
       return
     }
 
