@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select"
 
 const SPARE_ROWS = 5
-const TIME_OPTIONS = [5, 30, 60, 120, 240, 480]
+const TIME_OPTIONS = [30, 60, 120, 240, 480]
 
 const getSparePage = (y: number): number => {
   return Math.floor(y / SPARE_ROWS) + 1
@@ -121,7 +121,7 @@ export const Construction = () => {
 
     setError(null)
     setSolverResult(null)
-    const solveTimeSeconds = Number.parseInt(solveTime, 10) || 5
+    const solveTimeSeconds = Number.parseInt(solveTime, 10) || 30
     setRemainingTime(solveTimeSeconds)
     setIsSolving(true)
 
