@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import type {
   OptimalStep,
+  SolverFocus,
   SolverResult,
   SolverWeights,
 } from "@/../../types/construction"
@@ -12,7 +13,6 @@ import { RefreshCw } from "lucide-react"
 import { notateNumber } from "@/lib/notateNumber"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -46,9 +46,7 @@ export const Construction = () => {
   const [error, setError] = useState<string | null>(null)
   const parsedJson = useRawJsonStore((state) => state.parsedJson)
   const constructionData = useGameDataStore((state) => state.construction)
-  const [buildRateWeight, setBuildRateWeight] = useState<string>("1")
-  const [expWeight, setExpWeight] = useState<string>("100")
-  const [flaggyWeight, setFlaggyWeight] = useState<string>("250")
+  const [focus, setFocus] = useState<SolverFocus>("exp")
   const [solveTime, setSolveTime] = useState<string>("30")
   const [isSolving, setIsSolving] = useState(false)
   const [remainingTime, setRemainingTime] = useState<number>(0)
@@ -72,12 +70,12 @@ export const Construction = () => {
           constructionData.flagPose.length
       : false
 
-  // Auto-set flaggy weight to 0 when all slots are unlocked
+  // Switch focus away from flaggy if flaggy is no longer needed
   useEffect(() => {
-    if (allSlotsUnlocked) {
-      setFlaggyWeight("0")
+    if (allSlotsUnlocked && focus === "flaggy") {
+      setFocus("exp") // Switch to exp focus if flaggy was selected
     }
-  }, [allSlotsUnlocked])
+  }, [allSlotsUnlocked, focus])
 
   // Timer countdown effect
   useEffect(() => {
@@ -129,9 +127,8 @@ export const Construction = () => {
 
     try {
       const weights: SolverWeights = {
-        buildRate: Number.parseFloat(buildRateWeight) || 1,
-        exp: Number.parseFloat(expWeight) || 100,
-        flaggy: Number.parseFloat(flaggyWeight) || 250,
+        focus: focus,
+        flaggy: 0, // Will be set to 0 by solver if needed
       }
 
       const solveTimeMs = solveTimeSeconds * 1000
@@ -356,38 +353,29 @@ export const Construction = () => {
         </Card>
       )}
 
-      <div className="grid w-full grid-cols-4 gap-3">
+      <div className="grid w-full grid-cols-2 gap-3">
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium">Build Rate Weight</label>
-          <Input
-            type="number"
-            value={buildRateWeight}
-            onChange={(e) => setBuildRateWeight(e.target.value)}
+          <label className="text-sm font-medium">Focus</label>
+          <Select
+            value={focus}
+            onValueChange={(value) => setFocus(value as SolverFocus)}
             disabled={isWorking}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium">Exp Weight</label>
-          <Input
-            type="number"
-            value={expWeight}
-            onChange={(e) => setExpWeight(e.target.value)}
-            disabled={isWorking}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium">Flaggy Weight</label>
-          <Input
-            type="number"
-            value={flaggyWeight}
-            onChange={(e) => setFlaggyWeight(e.target.value)}
-            disabled={isWorking || allSlotsUnlocked}
-            title={
-              allSlotsUnlocked ? "Disabled: All slots are unlocked" : undefined
-            }
-          />
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select focus" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="exp">
+                Focus: Exp (Exp first, Build Rate second)
+              </SelectItem>
+              <SelectItem value="buildRate">
+                Focus: Build Rate (Build Rate first, Exp second)
+              </SelectItem>
+              <SelectItem value="flaggy" disabled={allSlotsUnlocked}>
+                Focus: Flaggy (Flaggy first, Exp second)
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex flex-col gap-2">

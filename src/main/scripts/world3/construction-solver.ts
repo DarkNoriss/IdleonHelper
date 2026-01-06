@@ -5,7 +5,6 @@ import {
   SPARE_START,
 } from "../../../parsers/construction"
 import type {
-  OptimalStep,
   ParsedCog,
   ParsedConstructionData,
   Score,
@@ -13,8 +12,17 @@ import type {
   SolverWeights,
 } from "../../../types/construction"
 import { logger } from "../../utils"
+import { getOptimalSteps } from "./construction-steps"
 
-const getKeyFromPosition = (
+const COOLING_RATE = 0.96
+const INITIAL_ACCEPTANCE_RATE = 0.8
+const TEMPERATURE_SAMPLES = 100
+const MIN_RESTARTS = 1
+const RESTART_TIME_MS = 2500
+const YIELD_INTERVAL_MS = 100
+const COOLING_INTERVAL = 50
+
+export const getKeyFromPosition = (
   location: "board" | "build" | "spare",
   x: number,
   y: number
@@ -28,15 +36,48 @@ const getKeyFromPosition = (
   }
 }
 
-const getScoreSum = (score: Score, weights: SolverWeights): number => {
+export const getScoreSum = (score: Score, weights: SolverWeights): number => {
+  const expValue = (score.expBonus * (score.expBoost + 10)) / 10 // Assuming 10 players
+  const buildRateValue = score.buildRate
+  const flaggyValue = (score.flaggy * (score.flagBoost + 4)) / 4
+
+  // Huge multiplier for primary priority (ensures it dominates)
+  const PRIMARY_MULTIPLIER = 1e15
+  // Small multiplier for secondary priority (tiebreaker)
+  const SECONDARY_MULTIPLIER = 1
+
   let res = 0
-  res += score.buildRate * weights.buildRate
-  res += (score.expBonus * weights.exp * (score.expBoost + 10)) / 10 // Assuming 10 players
-  res += (score.flaggy * weights.flaggy * (score.flagBoost + 4)) / 4
+
+  switch (weights.focus) {
+    case "exp": {
+      // Exp is primary, buildRate is secondary
+      res += expValue * PRIMARY_MULTIPLIER
+      res += buildRateValue * SECONDARY_MULTIPLIER
+      // Flaggy is optional (weight can be 0)
+      res += flaggyValue * weights.flaggy
+      break
+    }
+    case "buildRate": {
+      // BuildRate is primary, exp is secondary
+      res += buildRateValue * PRIMARY_MULTIPLIER
+      res += expValue * SECONDARY_MULTIPLIER
+      // Flaggy is optional (weight can be 0)
+      res += flaggyValue * weights.flaggy
+      break
+    }
+    case "flaggy": {
+      // Flaggy is primary, exp is secondary
+      res += flaggyValue * PRIMARY_MULTIPLIER
+      res += expValue * SECONDARY_MULTIPLIER
+      // BuildRate is not considered when focusing flaggy
+      break
+    }
+  }
+
   return res
 }
 
-const cloneInventory = (
+export const cloneInventory = (
   inventory: ParsedConstructionData
 ): ParsedConstructionData => {
   const clonedCogs: Record<number, ParsedCog> = {}
@@ -55,29 +96,43 @@ const cloneInventory = (
     flagPose: [...inventory.flagPose],
     flaggyShopUpgrades: inventory.flaggyShopUpgrades,
     availableSlotKeys: [...inventory.availableSlotKeys],
-    score: null, // Will be recalculated
+    score: null,
   }
 }
 
-const moveCog = (
+export const moveCog = (
   inventory: ParsedConstructionData,
   fromKey: number,
   toKey: number
 ): void => {
-  const temp = inventory.cogs[toKey]
-  inventory.cogs[toKey] = inventory.cogs[fromKey]
+  // Get cogs from both cogs and slots (like getEntry does)
+  const fromCog = inventory.cogs[fromKey] ?? inventory.slots[fromKey]
+  const toCog = inventory.cogs[toKey] ?? inventory.slots[toKey]
 
-  if (!inventory.cogs[toKey]) {
-    delete inventory.cogs[toKey]
-  } else {
-    inventory.cogs[toKey] = { ...inventory.cogs[toKey], key: toKey }
+  if (!fromCog) {
+    return
   }
 
-  inventory.cogs[fromKey] = temp
-  if (!inventory.cogs[fromKey]) {
-    delete inventory.cogs[fromKey]
+  // Swap cogs
+  const temp = toCog
+  if (fromCog) {
+    inventory.cogs[toKey] = { ...fromCog, key: toKey }
+    // Remove from slots if it was there
+    if (inventory.slots[fromKey]) {
+      delete inventory.slots[fromKey]
+    }
   } else {
-    inventory.cogs[fromKey] = { ...inventory.cogs[fromKey], key: fromKey }
+    delete inventory.cogs[toKey]
+  }
+
+  if (temp) {
+    inventory.cogs[fromKey] = { ...temp, key: fromKey }
+    // Remove from slots if it was there
+    if (inventory.slots[toKey]) {
+      delete inventory.slots[toKey]
+    }
+  } else {
+    delete inventory.cogs[fromKey]
   }
 
   inventory.score = null
@@ -113,9 +168,204 @@ export const shuffle = (inventory: ParsedConstructionData, n = 2000): void => {
   }
 }
 
+export const calculateStateScore = (
+  state: ParsedConstructionData
+): Score | null => {
+  return calculateScore({
+    cogs: state.cogs,
+    slots: state.slots,
+    flagPose: state.flagPose,
+    flaggyShopUpgrades: state.flaggyShopUpgrades,
+    availableSlotKeys: state.availableSlotKeys,
+  })
+}
+
+const generateRandomMove = (
+  state: ParsedConstructionData
+): { cogKey: number; slotKey: number } | null => {
+  const allSlots = state.availableSlotKeys
+  const allKeys = getCogKeys(state)
+
+  if (allSlots.length === 0 || allKeys.length === 0) return null
+
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const slotKey = allSlots[Math.floor(Math.random() * allSlots.length)]
+    const cogKey = allKeys[Math.floor(Math.random() * allKeys.length)]
+    const slot = getEntry(slotKey, state)
+    const cog = getEntry(cogKey, state)
+
+    if (!slot || !cog) continue
+    if (slot.fixed || cog.fixed) continue
+
+    const cogPosition = getPosition(cogKey)
+    if (cogPosition.location === "build") continue
+
+    return { cogKey, slotKey }
+  }
+
+  return null
+}
+
+const shouldAcceptMove = (scoreDelta: number, temperature: number): boolean => {
+  if (scoreDelta > 0) {
+    return true
+  }
+
+  if (temperature <= 0) {
+    return false
+  }
+
+  const acceptanceProbability = Math.exp(scoreDelta / temperature)
+  return Math.random() < acceptanceProbability
+}
+
+const calculateInitialTemperature = (
+  inventory: ParsedConstructionData,
+  weights: SolverWeights
+): number => {
+  const state = cloneInventory(inventory)
+  shuffle(state)
+
+  state.score = calculateStateScore(state)
+  if (!state.score) return 100
+
+  const baseScore = getScoreSum(state.score, weights)
+  const scoreDeltas: number[] = []
+
+  for (let i = 0; i < TEMPERATURE_SAMPLES; i++) {
+    const move = generateRandomMove(state)
+    if (!move) continue
+
+    const { cogKey, slotKey } = move
+
+    moveCog(state, cogKey, slotKey)
+    state.score = calculateStateScore(state)
+
+    if (state.score) {
+      const newScore = getScoreSum(state.score, weights)
+      const delta = newScore - baseScore
+      if (delta < 0) {
+        scoreDeltas.push(Math.abs(delta))
+      }
+    }
+
+    moveCog(state, slotKey, cogKey)
+    state.score = calculateStateScore(state)
+  }
+
+  if (scoreDeltas.length === 0) {
+    return Math.max(baseScore * 0.1, 100)
+  }
+
+  const avgDelta = scoreDeltas.reduce((a, b) => a + b, 0) / scoreDeltas.length
+  const initialTemp = -avgDelta / Math.log(INITIAL_ACCEPTANCE_RATE)
+
+  return Math.max(initialTemp, 1)
+}
+
+const simulatedAnnealingRun = async (
+  inventory: ParsedConstructionData,
+  weights: SolverWeights,
+  timeAllocationMs: number,
+  initialTemperature: number,
+  startFromShuffle: boolean
+): Promise<{
+  bestState: ParsedConstructionData
+  bestScore: number
+  iterations: number
+  improvements: number
+}> => {
+  const state = cloneInventory(inventory)
+  if (startFromShuffle) {
+    shuffle(state)
+  }
+
+  state.score = calculateStateScore(state)
+  if (!state.score) {
+    return {
+      bestState: state,
+      bestScore: -Infinity,
+      iterations: 0,
+      improvements: 0,
+    }
+  }
+
+  let currentScore = getScoreSum(state.score, weights)
+  let bestState = cloneInventory(state)
+  let bestScore = currentScore
+
+  const startTime = Date.now()
+  let lastYield = Date.now()
+  let iterations = 0
+  let improvements = 0
+  let temperature = initialTemperature
+
+  while (Date.now() - startTime < timeAllocationMs) {
+    iterations++
+
+    if (Date.now() - lastYield > YIELD_INTERVAL_MS) {
+      await new Promise((resolve) => setImmediate(resolve))
+      lastYield = Date.now()
+    }
+
+    if (iterations % COOLING_INTERVAL === 0) {
+      const progress = (Date.now() - startTime) / timeAllocationMs
+      temperature = initialTemperature * Math.pow(COOLING_RATE, progress * 100)
+    }
+
+    const move = generateRandomMove(state)
+    if (!move) continue
+
+    const { cogKey, slotKey } = move
+
+    moveCog(state, cogKey, slotKey)
+    state.score = calculateStateScore(state)
+
+    if (!state.score) {
+      moveCog(state, slotKey, cogKey)
+      state.score = calculateStateScore(state)
+      continue
+    }
+
+    const newScore = getScoreSum(state.score, weights)
+    const scoreDelta = newScore - currentScore
+
+    if (shouldAcceptMove(scoreDelta, temperature)) {
+      currentScore = newScore
+
+      if (scoreDelta > 0) {
+        improvements++
+      }
+
+      if (currentScore > bestScore) {
+        bestScore = currentScore
+        bestState = cloneInventory(state)
+      }
+    } else {
+      moveCog(state, slotKey, cogKey)
+      state.score = calculateStateScore(state)
+    }
+  }
+
+  return { bestState, bestScore, iterations, improvements }
+}
+
 type Move = {
   fromKey: number
   toKey: number
+}
+
+const cogsMatch = (
+  a: ParsedCog | undefined,
+  b: ParsedCog | undefined
+): boolean => {
+  if (!a || !b) return false
+  return (
+    a.buildRate === b.buildRate &&
+    a.expBonus === b.expBonus &&
+    a.flaggy === b.flaggy &&
+    a.isPlayer === b.isPlayer
+  )
 }
 
 const removeUselessMoves = (
@@ -124,6 +374,33 @@ const removeUselessMoves = (
   weights: SolverWeights
 ): ParsedConstructionData => {
   logger.log("Removing useless moves...")
+
+  // Calculate scores
+  const initialStateScore = calculateStateScore(initial)
+  const finalStateScore = calculateStateScore(final)
+  const initialScoreSum = initialStateScore
+    ? getScoreSum(initialStateScore, weights)
+    : -Infinity
+  const finalScoreSum = finalStateScore
+    ? getScoreSum(finalStateScore, weights)
+    : -Infinity
+
+  if (finalScoreSum > initialScoreSum) {
+    logger.log(
+      `Final state score (${finalScoreSum.toFixed(2)}) is better than initial (${initialScoreSum.toFixed(2)}), returning final state directly`
+    )
+    const optimized = cloneInventory(final)
+    optimized.score = calculateStateScore(optimized)
+
+    if (!optimized.score) {
+      logger.log(
+        "Warning: Failed to recalculate score for optimized state, but final state had valid score"
+      )
+      optimized.score = finalStateScore
+    }
+
+    return optimized
+  }
 
   const moves: Move[] = []
   const initialCogs = new Set(Object.keys(initial.cogs).map(Number.parseInt))
@@ -172,185 +449,111 @@ const removeUselessMoves = (
 
   logger.log(`Found ${moves.length} potential moves`)
 
+  if (finalScoreSum > initialScoreSum && moves.length > 0) {
+    const testAllMovesState = cloneInventory(initial)
+    for (const move of moves) {
+      moveCog(testAllMovesState, move.fromKey, move.toKey)
+    }
+    testAllMovesState.score = calculateStateScore(testAllMovesState)
+
+    if (testAllMovesState.score) {
+      const allMovesScore = getScoreSum(testAllMovesState.score, weights)
+
+      let stateMatches = true
+      const mismatches: string[] = []
+      const allKeys = new Set([
+        ...Object.keys(final.cogs).map((k) => Number.parseInt(k, 10)),
+        ...Object.keys(testAllMovesState.cogs).map((k) =>
+          Number.parseInt(k, 10)
+        ),
+      ])
+
+      for (const key of allKeys) {
+        const testCog = testAllMovesState.cogs[key]
+        const finalCog = final.cogs[key]
+        if (!cogsMatch(testCog, finalCog)) {
+          stateMatches = false
+          const testStr = testCog
+            ? `${testCog.buildRate}-${testCog.expBonus}-${testCog.flaggy}`
+            : "null"
+          const finalStr = finalCog
+            ? `${finalCog.buildRate}-${finalCog.expBonus}-${finalCog.flaggy}`
+            : "null"
+          mismatches.push(`key ${key}: test=[${testStr}], final=[${finalStr}]`)
+          if (mismatches.length >= 10) break
+        }
+      }
+
+      const scoreClose =
+        allMovesScore >= finalScoreSum * 0.99 ||
+        Math.abs(allMovesScore - finalScoreSum) < Math.abs(finalScoreSum * 0.01)
+
+      if (scoreClose && stateMatches) {
+        logger.log(
+          `Keeping all ${moves.length} moves: together they produce score ${allMovesScore.toFixed(2)} matching final state (final: ${finalScoreSum.toFixed(2)})`
+        )
+        testAllMovesState.score = calculateStateScore(testAllMovesState)
+        return testAllMovesState
+      } else if (scoreClose) {
+        logger.log(
+          `Warning: All ${moves.length} moves produce score ${allMovesScore.toFixed(2)} close to final ${finalScoreSum.toFixed(2)}, but state doesn't match (${mismatches.length} mismatches). Using all moves anyway.`
+        )
+        testAllMovesState.score = calculateStateScore(testAllMovesState)
+        return testAllMovesState
+      } else {
+        logger.log(
+          `Not keeping all moves: together they produce score ${allMovesScore.toFixed(2)} (final: ${finalScoreSum.toFixed(2)}, difference: ${(finalScoreSum - allMovesScore).toFixed(2)})`
+        )
+      }
+    }
+  }
+
   const usefulMoves: Move[] = []
 
   for (const move of moves) {
     const testState = cloneInventory(initial)
-
-    testState.score = calculateScore({
-      cogs: testState.cogs,
-      slots: testState.slots,
-      flagPose: testState.flagPose,
-      flaggyShopUpgrades: testState.flaggyShopUpgrades,
-      availableSlotKeys: testState.availableSlotKeys,
-    })
+    testState.score = calculateStateScore(testState)
 
     if (!testState.score) {
-      logger.log(
-        `Removed useless move: ${move.fromKey} -> ${move.toKey} (initial score calculation failed)`
-      )
+      usefulMoves.push(move)
       continue
     }
 
     const scoreBefore = getScoreSum(testState.score, weights)
 
     moveCog(testState, move.fromKey, move.toKey)
-
-    testState.score = calculateScore({
-      cogs: testState.cogs,
-      slots: testState.slots,
-      flagPose: testState.flagPose,
-      flaggyShopUpgrades: testState.flaggyShopUpgrades,
-      availableSlotKeys: testState.availableSlotKeys,
-    })
+    testState.score = calculateStateScore(testState)
 
     if (!testState.score) {
-      logger.log(
-        `Removed useless move: ${move.fromKey} -> ${move.toKey} (score calculation failed)`
-      )
+      usefulMoves.push(move)
       continue
     }
 
     const scoreAfter = getScoreSum(testState.score, weights)
+    const scoreDelta = scoreAfter - scoreBefore
 
-    if (scoreAfter > scoreBefore) {
+    if (scoreDelta !== 0) {
       usefulMoves.push(move)
     } else {
       logger.log(
-        `Removed useless move: ${move.fromKey} -> ${move.toKey} (score: ${scoreBefore} -> ${scoreAfter}, no improvement)`
+        `Removed zero-impact move: ${move.fromKey} -> ${move.toKey} (score unchanged)`
       )
     }
   }
 
   logger.log(
-    `Removed ${moves.length - usefulMoves.length} useless moves, kept ${usefulMoves.length} useful moves`
+    `Removed ${moves.length - usefulMoves.length} zero-impact moves, kept ${usefulMoves.length} moves`
   )
 
+  // Apply all useful moves
   const optimized = cloneInventory(initial)
   for (const move of usefulMoves) {
     moveCog(optimized, move.fromKey, move.toKey)
   }
 
-  optimized.score = calculateScore({
-    cogs: optimized.cogs,
-    slots: optimized.slots,
-    flagPose: optimized.flagPose,
-    flaggyShopUpgrades: optimized.flaggyShopUpgrades,
-    availableSlotKeys: optimized.availableSlotKeys,
-  })
+  optimized.score = calculateStateScore(optimized)
 
   return optimized
-}
-
-/** Checks if two cogs have the same properties (identity match) */
-const cogsMatch = (
-  a: ParsedCog | undefined,
-  b: ParsedCog | undefined
-): boolean => {
-  if (!a || !b) return false
-  return (
-    a.buildRate === b.buildRate &&
-    a.expBonus === b.expBonus &&
-    a.flaggy === b.flaggy &&
-    a.isPlayer === b.isPlayer
-  )
-}
-
-/**
- * Calculates the minimal swap steps to transform initial state into final state.
- * Since moveCog is a swap operation, we track state changes after each swap.
- */
-const getOptimalSteps = (
-  initial: ParsedConstructionData,
-  final: ParsedConstructionData
-): OptimalStep[] => {
-  logger.log("Calculating optimal steps...")
-
-  const steps: OptimalStep[] = []
-  const currentState = cloneInventory(initial)
-
-  // Process each position that needs a specific cog in the final state
-  for (const [targetKeyStr, finalCog] of Object.entries(final.cogs)) {
-    const targetKey = Number.parseInt(targetKeyStr, 10)
-    if (!finalCog) continue
-
-    const currentCogAtTarget = currentState.cogs[targetKey]
-
-    // Skip if the correct cog is already at this position
-    if (cogsMatch(currentCogAtTarget, finalCog)) {
-      continue
-    }
-
-    // Find where the required cog currently is in our working state
-    let sourceKey: number | null = null
-    for (const [srcKeyStr, srcCog] of Object.entries(currentState.cogs)) {
-      if (cogsMatch(srcCog, finalCog)) {
-        const srcKey = Number.parseInt(srcKeyStr, 10)
-        if (srcKey !== targetKey) {
-          sourceKey = srcKey
-          break
-        }
-      }
-    }
-
-    // If we can't find the cog or it's already in place, skip
-    if (sourceKey === null) {
-      continue
-    }
-
-    // Generate and record the swap step
-    const fromPos = getPosition(sourceKey)
-    const toPos = getPosition(targetKey)
-    steps.push({
-      from: { location: fromPos.location, x: fromPos.x, y: fromPos.y },
-      to: { location: toPos.location, x: toPos.x, y: toPos.y },
-    })
-
-    // Apply the swap to our working state so subsequent lookups are correct
-    moveCog(currentState, sourceKey, targetKey)
-  }
-
-  logger.log(`Calculated ${steps.length} optimal steps`)
-
-  // Verify the steps produce the correct final state
-  const verifyState = cloneInventory(initial)
-  for (const step of steps) {
-    const fromKey = getKeyFromPosition(
-      step.from.location,
-      step.from.x,
-      step.from.y
-    )
-    const toKey = getKeyFromPosition(step.to.location, step.to.x, step.to.y)
-    moveCog(verifyState, fromKey, toKey)
-  }
-
-  let matchesFinal = true
-  const allKeys = new Set([
-    ...Object.keys(final.cogs).map((k) => Number.parseInt(k, 10)),
-    ...Object.keys(verifyState.cogs).map((k) => Number.parseInt(k, 10)),
-  ])
-
-  for (const key of allKeys) {
-    const verifyCog = verifyState.cogs[key]
-    const finalCog = final.cogs[key]
-
-    if (!cogsMatch(verifyCog, finalCog)) {
-      matchesFinal = false
-      logger.log(
-        `Mismatch at key ${key}: verify=${JSON.stringify(verifyCog)}, final=${JSON.stringify(finalCog)}`
-      )
-    }
-  }
-
-  if (!matchesFinal) {
-    logger.log(
-      "Warning: Generated steps do not produce the expected final state"
-    )
-  } else {
-    logger.log("Steps verified successfully")
-  }
-
-  return steps
 }
 
 export const solver = async (
@@ -360,155 +563,221 @@ export const solver = async (
 ): Promise<SolverResult | null> => {
   if (inventory.flagPose.length === 0) {
     weights = { ...weights, flaggy: 0 }
+    if (weights.focus === "flaggy") {
+      weights = { ...weights, focus: "exp" }
+    }
   }
 
-  let state = cloneInventory(inventory)
-  const solutions: ParsedConstructionData[] = [state]
   const startTime = Date.now()
-  const allSlots = inventory.availableSlotKeys
-  let counter = 0
+  const totalCogs = Object.keys(inventory.cogs).length
+  const totalSlots = inventory.availableSlotKeys.length
 
-  // Calculate initial score
-  state.score = calculateScore({
-    cogs: state.cogs,
-    slots: state.slots,
-    flagPose: state.flagPose,
-    flaggyShopUpgrades: state.flaggyShopUpgrades,
-    availableSlotKeys: state.availableSlotKeys,
-  })
+  logger.log(
+    `Starting simulated annealing solver... (${totalCogs} cogs, ${totalSlots} available slots)`
+  )
 
-  if (!state.score) {
+  const initialState = cloneInventory(inventory)
+  initialState.score = calculateStateScore(initialState)
+
+  if (!initialState.score) {
+    logger.log("Failed to calculate initial score")
     return null
   }
 
-  const totalCogs = Object.keys(inventory.cogs).length
-  const totalSlots = allSlots.length
+  const initialScore = getScoreSum(initialState.score, weights)
+  logger.log(`Initial score: ${initialScore.toFixed(2)}`)
+
+  const numRestarts = Math.max(
+    MIN_RESTARTS,
+    Math.floor(solveTime / RESTART_TIME_MS)
+  )
+  const timePerRestart = Math.floor(solveTime / numRestarts)
+
   logger.log(
-    `Starting solver optimization... (${totalCogs} cogs, ${totalSlots} available slots)`
+    `Running ${numRestarts} restart(s), ${timePerRestart}ms per restart`
   )
 
-  let currentScore = getScoreSum(state.score, weights)
-  let bestScoreEver = currentScore
-  let improvementCount = 0
-  let lastYield = Date.now()
+  const initialTemperature = calculateInitialTemperature(inventory, weights)
+  logger.log(`Initial temperature: ${initialTemperature.toFixed(2)}`)
 
-  while (Date.now() - startTime < solveTime) {
-    counter++
+  const solutions: {
+    state: ParsedConstructionData
+    score: number
+    iterations: number
+    improvements: number
+  }[] = []
 
-    // Yield to event loop every 100ms to prevent blocking
-    if (Date.now() - lastYield > 100) {
-      await new Promise((resolve) => setImmediate(resolve))
-      lastYield = Date.now()
+  solutions.push({
+    state: initialState,
+    score: initialScore,
+    iterations: 0,
+    improvements: 0,
+  })
+
+  let totalIterations = 0
+  let totalImprovements = 0
+
+  for (let restart = 0; restart < numRestarts; restart++) {
+    if (Date.now() - startTime >= solveTime) {
+      logger.log(`Time limit reached after ${restart} restarts`)
+      break
     }
 
-    if (counter % 10000 === 0) {
-      // Save current optimized state BEFORE restarting
-      if (state.score) {
-        solutions.push(cloneInventory(state))
-      }
+    const elapsed = Date.now() - startTime
+    const remainingTime = solveTime - elapsed
+    const thisRestartTime = Math.min(timePerRestart, remainingTime)
 
-      // Restart from a new random state
-      state = cloneInventory(inventory)
-      shuffle(state)
-      state.score = calculateScore({
-        cogs: state.cogs,
-        slots: state.slots,
-        flagPose: state.flagPose,
-        flaggyShopUpgrades: state.flaggyShopUpgrades,
-        availableSlotKeys: state.availableSlotKeys,
-      })
-      if (state.score) {
-        currentScore = getScoreSum(state.score, weights)
-      }
+    if (thisRestartTime < 50) {
+      break
     }
 
-    const slotKey = allSlots[Math.floor(Math.random() * allSlots.length)]
-    const allKeys = getCogKeys(state)
-    const cogKey = allKeys[Math.floor(Math.random() * allKeys.length)]
-    const slot = getEntry(slotKey, state)
-    const cog = getEntry(cogKey, state)
+    const restartTemp = initialTemperature * (0.8 + Math.random() * 0.4)
+    const startFromShuffle = restart > 0
 
-    if (!slot || !cog) continue
-    if (slot.fixed || cog.fixed) continue
+    logger.log(
+      `Restart ${restart + 1}/${numRestarts}: ${thisRestartTime}ms, temp=${restartTemp.toFixed(2)}, shuffle=${startFromShuffle}`
+    )
 
-    const cogPosition = getPosition(cogKey)
-    if (cogPosition.location === "build") continue
+    const result = await simulatedAnnealingRun(
+      inventory,
+      weights,
+      thisRestartTime,
+      restartTemp,
+      startFromShuffle
+    )
 
-    moveCog(state, cogKey, slotKey)
+    totalIterations += result.iterations
+    totalImprovements += result.improvements
 
-    state.score = calculateScore({
-      cogs: state.cogs,
-      slots: state.slots,
-      flagPose: state.flagPose,
-      flaggyShopUpgrades: state.flaggyShopUpgrades,
-      availableSlotKeys: state.availableSlotKeys,
+    solutions.push({
+      state: result.bestState,
+      score: result.bestScore,
+      iterations: result.iterations,
+      improvements: result.improvements,
     })
 
-    if (!state.score) {
-      // Revert move if score calculation failed
-      moveCog(state, slotKey, cogKey)
-      continue
-    }
-
-    const scoreSumUpdate = getScoreSum(state.score, weights)
-    if (scoreSumUpdate > currentScore) {
-      currentScore = scoreSumUpdate
-      improvementCount++
-      if (scoreSumUpdate > bestScoreEver) {
-        bestScoreEver = scoreSumUpdate
-      }
-    } else {
-      // Revert move if score didn't improve
-      moveCog(state, slotKey, cogKey)
-      state.score = calculateScore({
-        cogs: state.cogs,
-        slots: state.slots,
-        flagPose: state.flagPose,
-        flaggyShopUpgrades: state.flaggyShopUpgrades,
-        availableSlotKeys: state.availableSlotKeys,
-      })
-    }
-  }
-
-  // Save final optimized state
-  if (state.score) {
-    solutions.push(cloneInventory(state))
+    logger.log(
+      `Restart ${restart + 1} complete: score=${result.bestScore.toFixed(2)}, iterations=${result.iterations}, improvements=${result.improvements}`
+    )
   }
 
   const elapsedTime = Date.now() - startTime
-  const iterationsPerSecond = Math.round(counter / (elapsedTime / 1000))
+  const iterationsPerSecond =
+    elapsedTime > 0 ? Math.round(totalIterations / (elapsedTime / 1000)) : 0
+
   logger.log(
-    `Solver stats: ${counter} iterations in ${elapsedTime}ms (${iterationsPerSecond}/sec), ${improvementCount} improvements, ${solutions.length} solutions`
+    `Solver stats: ${totalIterations} iterations in ${elapsedTime}ms (${iterationsPerSecond}/sec), ${totalImprovements} improvements, ${solutions.length} solutions`
   )
 
-  // Find best solution
-  const scores = solutions
-    .map((s) => {
-      if (!s.score) return -Infinity
-      return getScoreSum(s.score, weights)
-    })
-    .filter((s) => s !== -Infinity)
+  // Find best solution across all restarts
+  let bestSolution = solutions[0]
+  for (const solution of solutions) {
+    if (solution.score > bestSolution.score) {
+      bestSolution = solution
+    }
+  }
 
-  if (scores.length === 0) {
+  if (!bestSolution || bestSolution.score === -Infinity) {
+    logger.log("No valid solution found")
     return null
   }
 
-  const bestScore = Math.max(...scores)
-  const bestIndex = scores.indexOf(bestScore)
-  const best = solutions[bestIndex]
+  const improvement = bestSolution.score - initialScore
+  logger.log(
+    `Best score: ${bestSolution.score.toFixed(2)} (improvement: ${improvement >= 0 ? "+" : ""}${improvement.toFixed(2)})`
+  )
 
-  if (!best) {
-    return null
+  // Ensure best solution state has a score calculated
+  if (!bestSolution.state.score) {
+    bestSolution.state.score = calculateStateScore(bestSolution.state)
+    if (!bestSolution.state.score) {
+      logger.log("Failed to calculate best solution score")
+      return null
+    }
   }
+
+  const initialScoreObj = initialState.score!
+  const bestScoreObj = bestSolution.state.score!
+  const initialBuildRateScore = initialScoreObj.buildRate
+  const initialExpScore =
+    (initialScoreObj.expBonus * (initialScoreObj.expBoost + 10)) / 10
+  const initialFlaggyScore =
+    (initialScoreObj.flaggy * (initialScoreObj.flagBoost + 4)) / 4
+  const bestBuildRateScore = bestScoreObj.buildRate
+  const bestExpScore =
+    (bestScoreObj.expBonus * (bestScoreObj.expBoost + 10)) / 10
+  const bestFlaggyScore =
+    (bestScoreObj.flaggy * (bestScoreObj.flagBoost + 4)) / 4
+
+  logger.log(`Weights: focus=${weights.focus}, flaggy=${weights.flaggy}`)
+  logger.log(
+    `Initial score breakdown: total=${initialScore.toFixed(2)}, buildRate=${initialBuildRateScore.toFixed(2)}, exp=${initialExpScore.toFixed(2)}, flaggy=${initialFlaggyScore.toFixed(2)}`
+  )
+  logger.log(
+    `Best score breakdown: total=${bestSolution.score.toFixed(2)}, buildRate=${bestBuildRateScore.toFixed(2)}, exp=${bestExpScore.toFixed(2)}, flaggy=${bestFlaggyScore.toFixed(2)}`
+  )
+  logger.log(
+    `Score improvements: buildRate=${(bestBuildRateScore - initialBuildRateScore).toFixed(2)}, exp=${(bestExpScore - initialExpScore).toFixed(2)}, flaggy=${(bestFlaggyScore - initialFlaggyScore).toFixed(2)}`
+  )
 
   logger.log("Solver optimization completed, processing results...")
 
-  const optimized = removeUselessMoves(inventory, best, weights)
-  const steps = getOptimalSteps(inventory, optimized)
+  const optimized = removeUselessMoves(inventory, bestSolution.state, weights)
+  const steps = getOptimalSteps(inventory, optimized, weights)
+
+  const verifyStateFromSteps = cloneInventory(inventory)
+  for (const step of steps) {
+    const fromKey = getKeyFromPosition(
+      step.from.location,
+      step.from.x,
+      step.from.y
+    )
+    const toKey = getKeyFromPosition(step.to.location, step.to.x, step.to.y)
+    moveCog(verifyStateFromSteps, fromKey, toKey)
+  }
+  verifyStateFromSteps.score = calculateStateScore(verifyStateFromSteps)
+
+  if (verifyStateFromSteps.score && optimized.score) {
+    const verifyScoreSum = getScoreSum(verifyStateFromSteps.score, weights)
+    const optimizedScoreSum = getScoreSum(optimized.score, weights)
+    const scoreMatches = verifyScoreSum === optimizedScoreSum
+
+    if (!scoreMatches) {
+      logger.log(
+        `Warning: Steps produce score ${verifyScoreSum.toFixed(2)} but expected ${optimizedScoreSum.toFixed(2)}`
+      )
+    } else {
+      logger.log(
+        `Steps verified: applying steps to initial inventory produces score ${verifyScoreSum.toFixed(2)} matching optimized score`
+      )
+    }
+  }
 
   if (!optimized.score) {
+    logger.log("Failed to calculate optimized score")
     return null
   }
+
+  const optimizedScoreSum = getScoreSum(optimized.score, weights)
+  const optimizedScoreObj = optimized.score
+  const optimizedBuildRateScore = optimizedScoreObj.buildRate
+  const optimizedExpScore =
+    (optimizedScoreObj.expBonus * (optimizedScoreObj.expBoost + 10)) / 10
+  const optimizedFlaggyScore =
+    (optimizedScoreObj.flaggy * (optimizedScoreObj.flagBoost + 4)) / 4
+
+  logger.log(
+    `Optimized score breakdown: total=${optimizedScoreSum.toFixed(2)}, buildRate=${optimizedBuildRateScore.toFixed(2)}, exp=${optimizedExpScore.toFixed(2)}, flaggy=${optimizedFlaggyScore.toFixed(2)}`
+  )
+  logger.log(
+    `Score change from best: ${(optimizedScoreSum - bestSolution.score).toFixed(2)}`
+  )
+  logger.log(
+    `Score change from initial: ${(optimizedScoreSum - initialScore).toFixed(2)}`
+  )
+  logger.log(
+    `Component changes from best: buildRate=${(optimizedBuildRateScore - bestBuildRateScore).toFixed(2)}, exp=${(optimizedExpScore - bestExpScore).toFixed(2)}, flaggy=${(optimizedFlaggyScore - bestFlaggyScore).toFixed(2)}`
+  )
 
   return {
     score: optimized.score,

@@ -45,9 +45,10 @@ export type OptimalStep = {
   }
 }
 
+export type SolverFocus = "exp" | "buildRate" | "flaggy"
+
 export type SolverWeights = {
-  buildRate: number
-  exp: number
+  focus: SolverFocus
   flaggy: number
 }
 
