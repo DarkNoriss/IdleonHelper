@@ -13,6 +13,7 @@ import { RefreshCw } from "lucide-react"
 import { notateNumber } from "@/lib/notateNumber"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Select,
   SelectContent,
@@ -365,14 +366,10 @@ export const Construction = () => {
               <SelectValue placeholder="Select focus" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="exp">
-                Focus: Exp (Exp first, Build Rate second)
-              </SelectItem>
-              <SelectItem value="buildRate">
-                Focus: Build Rate (Build Rate first, Exp second)
-              </SelectItem>
+              <SelectItem value="exp">Exp</SelectItem>
+              <SelectItem value="buildRate">Build Rate</SelectItem>
               <SelectItem value="flaggy" disabled={allSlotsUnlocked}>
-                Focus: Flaggy (Flaggy first, Exp second)
+                Flaggy
               </SelectItem>
             </SelectContent>
           </Select>
@@ -463,14 +460,16 @@ export const Construction = () => {
           <div className="mb-2 text-center text-sm font-medium">
             Steps ({solverResult.steps.length})
           </div>
-          <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
-            {solverResult.steps.map((step, index) => (
-              <div key={index} className="text-sm">
-                Step {index + 1}: Switch {formatLocation(step.from)} with{" "}
-                {formatLocation(step.to)}
-              </div>
-            ))}
-          </div>
+          <ScrollArea className="h-64 rounded-md border">
+            <div className="space-y-2 p-3">
+              {solverResult.steps.map((step, index) => (
+                <div key={index} className="text-sm">
+                  Step {index + 1}: Switch {formatLocation(step.from)} with{" "}
+                  {formatLocation(step.to)}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
       )}
     </div>

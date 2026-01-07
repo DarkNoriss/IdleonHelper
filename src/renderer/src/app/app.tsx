@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/providers/theme-provider"
 import { useNavigationStore, type NavigationPage } from "@/store/navigation"
 import { useScriptStatusStore } from "@/store/script-status"
 
+import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
@@ -66,15 +67,14 @@ export const App = () => {
           <SidebarProvider className="min-h-0 flex-1">
             <AppSidebar />
             <SidebarInset>
-              <ScrollArea className="h-full max-h-full p-2">
+              <ScrollArea className="h-full max-h-full">
                 {Object.entries(pageMap).map(([pageKey, page]) => (
                   <div
                     key={pageKey}
-                    className={
-                      currentPage === pageKey
-                        ? "block h-full max-h-full min-h-0"
-                        : "hidden"
-                    }
+                    className={cn(
+                      "block h-full max-h-full min-h-0 flex-1 p-2",
+                      currentPage === pageKey ? "block" : "hidden"
+                    )}
                   >
                     {page}
                   </div>

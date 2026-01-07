@@ -64,14 +64,14 @@ export const Logs = () => {
   }, [])
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex h-full flex-col gap-4">
       <h1 className="shrink-0 text-center text-2xl font-bold">
         Application Logs
       </h1>
 
       <ScrollArea
         ref={scrollAreaRef}
-        className="min-h-0 flex-1 rounded-md border"
+        className="h-[calc(100vh-8px*13)] rounded-md border"
       >
         <div className="bg-muted/50 p-4 font-mono text-sm">
           {logs.length === 0 ? (
