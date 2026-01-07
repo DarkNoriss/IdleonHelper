@@ -160,8 +160,6 @@ export const getOptimalSteps = (
   final: ParsedConstructionData,
   weights: SolverWeights
 ): OptimalStep[] => {
-  logger.log("Calculating steps from initial to final state...")
-
   const steps: OptimalStep[] = []
   const currentState = cloneInventory(initial)
   const maxSpareKey = Math.max(getMaxSpareKey(initial), getMaxSpareKey(final))
@@ -239,11 +237,7 @@ export const getOptimalSteps = (
   // Verify steps produce correct final state
   const verification = verifySteps(initial, final, steps, weights)
 
-  if (verification.scoreMatches && verification.boardMatches) {
-    logger.log(
-      `Steps verified: score matches expected ${verification.finalScore?.toFixed(2)}`
-    )
-  } else {
+  if (!verification.scoreMatches || !verification.boardMatches) {
     logger.log(
       `Warning: Steps produce score ${verification.verifyScore?.toFixed(2)} but expected ${verification.finalScore?.toFixed(2)}`
     )

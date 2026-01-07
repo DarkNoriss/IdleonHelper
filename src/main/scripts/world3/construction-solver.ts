@@ -38,7 +38,9 @@ export const getKeyFromPosition = (
 }
 
 export const getScoreSum = (score: Score, weights: SolverWeights): number => {
-  const expValue = (score.expBonus * (score.expBoost + 10)) / 10 // Assuming 10 players
+  // Use playerExpRate for exp optimization (actual exp gain)
+  // Fall back to old calculation for other focuses
+  const expValue = score.playerExpRate || 0
   const buildRateValue = score.buildRate
   const flaggyValue = (score.flaggy * (score.flagBoost + 4)) / 4
 
@@ -52,6 +54,7 @@ export const getScoreSum = (score: Score, weights: SolverWeights): number => {
   switch (weights.focus) {
     case "exp": {
       // Exp is primary, buildRate is secondary
+      // Use playerExpRate which includes actual expGain values
       res += expValue * PRIMARY_MULTIPLIER
       res += buildRateValue * SECONDARY_MULTIPLIER
       // Flaggy is optional (weight can be 0)
@@ -390,6 +393,14 @@ const simulatedAnnealingRun = async (
     }
   }
 
+  // Log exp value for this annealing run
+  if (bestState.score) {
+    const expValue = bestState.score.playerExpRate || 0
+    logger.log(
+      `Annealing run complete: iterations=${iterations}, improvements=${improvements}, exp=${expValue.toFixed(2)}`
+    )
+  }
+
   return { bestState, bestScore, iterations, improvements }
 }
 
@@ -416,8 +427,6 @@ const removeUselessMoves = (
   final: ParsedConstructionData,
   weights: SolverWeights
 ): ParsedConstructionData => {
-  logger.log("Removing useless moves...")
-
   // Calculate scores
   const initialStateScore = calculateStateScore(initial)
   const finalStateScore = calculateStateScore(final)
@@ -489,8 +498,6 @@ const removeUselessMoves = (
       }
     }
   }
-
-  logger.log(`Found ${moves.length} potential moves`)
 
   if (finalScoreSum > initialScoreSum && moves.length > 0) {
     const testAllMovesState = cloneInventory(initial)
@@ -577,10 +584,6 @@ const removeUselessMoves = (
 
     if (scoreDelta !== 0) {
       usefulMoves.push(move)
-    } else {
-      logger.log(
-        `Removed zero-impact move: ${move.fromKey} -> ${move.toKey} (score unchanged)`
-      )
     }
   }
 
@@ -672,10 +675,6 @@ export const solver = async (
     Math.min(10, Math.floor(numRestarts * 0.15))
   )
 
-  logger.log(
-    `Early termination: will trigger after ${minRestartsBeforeEarlyTerm} restarts if no improvement for ${maxRestartsWithoutImprovement} consecutive restarts`
-  )
-
   for (let restart = 0; restart < numRestarts; restart++) {
     if (Date.now() - startTime >= solveTime) {
       logger.log(`Time limit reached after ${restart} restarts`)
@@ -709,9 +708,6 @@ export const solver = async (
       // If last restart had good improvement rate, allocate more time
       if (improvementRate > 0.1) {
         thisRestartTime = Math.floor(baseTimePerRestart * 1.5)
-        logger.log(
-          `Adaptive allocation: increasing time to ${thisRestartTime}ms (improvement rate: ${(improvementRate * 100).toFixed(1)}%)`
-        )
       }
     }
 
@@ -794,32 +790,6 @@ export const solver = async (
     }
   }
 
-  const initialScoreObj = initialState.score!
-  const bestScoreObj = bestSolution.state.score!
-  const initialBuildRateScore = initialScoreObj.buildRate
-  const initialExpScore =
-    (initialScoreObj.expBonus * (initialScoreObj.expBoost + 10)) / 10
-  const initialFlaggyScore =
-    (initialScoreObj.flaggy * (initialScoreObj.flagBoost + 4)) / 4
-  const bestBuildRateScore = bestScoreObj.buildRate
-  const bestExpScore =
-    (bestScoreObj.expBonus * (bestScoreObj.expBoost + 10)) / 10
-  const bestFlaggyScore =
-    (bestScoreObj.flaggy * (bestScoreObj.flagBoost + 4)) / 4
-
-  logger.log(`Weights: focus=${weights.focus}, flaggy=${weights.flaggy}`)
-  logger.log(
-    `Initial score breakdown: total=${initialScore.toFixed(2)}, buildRate=${initialBuildRateScore.toFixed(2)}, exp=${initialExpScore.toFixed(2)}, flaggy=${initialFlaggyScore.toFixed(2)}`
-  )
-  logger.log(
-    `Best score breakdown: total=${bestSolution.score.toFixed(2)}, buildRate=${bestBuildRateScore.toFixed(2)}, exp=${bestExpScore.toFixed(2)}, flaggy=${bestFlaggyScore.toFixed(2)}`
-  )
-  logger.log(
-    `Score improvements: buildRate=${(bestBuildRateScore - initialBuildRateScore).toFixed(2)}, exp=${(bestExpScore - initialExpScore).toFixed(2)}, flaggy=${(bestFlaggyScore - initialFlaggyScore).toFixed(2)}`
-  )
-
-  logger.log("Solver optimization completed, processing results...")
-
   const optimized = removeUselessMoves(inventory, bestSolution.state, weights)
   const steps = getOptimalSteps(inventory, optimized, weights)
 
@@ -844,10 +814,6 @@ export const solver = async (
       logger.log(
         `Warning: Steps produce score ${verifyScoreSum.toFixed(2)} but expected ${optimizedScoreSum.toFixed(2)}`
       )
-    } else {
-      logger.log(
-        `Steps verified: applying steps to initial inventory produces score ${verifyScoreSum.toFixed(2)} matching optimized score`
-      )
     }
   }
 
@@ -857,24 +823,9 @@ export const solver = async (
   }
 
   const optimizedScoreSum = getScoreSum(optimized.score, weights)
-  const optimizedScoreObj = optimized.score
-  const optimizedBuildRateScore = optimizedScoreObj.buildRate
-  const optimizedExpScore =
-    (optimizedScoreObj.expBonus * (optimizedScoreObj.expBoost + 10)) / 10
-  const optimizedFlaggyScore =
-    (optimizedScoreObj.flaggy * (optimizedScoreObj.flagBoost + 4)) / 4
 
   logger.log(
-    `Optimized score breakdown: total=${optimizedScoreSum.toFixed(2)}, buildRate=${optimizedBuildRateScore.toFixed(2)}, exp=${optimizedExpScore.toFixed(2)}, flaggy=${optimizedFlaggyScore.toFixed(2)}`
-  )
-  logger.log(
-    `Score change from best: ${(optimizedScoreSum - bestSolution.score).toFixed(2)}`
-  )
-  logger.log(
-    `Score change from initial: ${(optimizedScoreSum - initialScore).toFixed(2)}`
-  )
-  logger.log(
-    `Component changes from best: buildRate=${(optimizedBuildRateScore - bestBuildRateScore).toFixed(2)}, exp=${(optimizedExpScore - bestExpScore).toFixed(2)}, flaggy=${(optimizedFlaggyScore - bestFlaggyScore).toFixed(2)}`
+    `Optimized score: ${optimizedScoreSum.toFixed(2)} (change from initial: ${(optimizedScoreSum - initialScore).toFixed(2)})`
   )
 
   return {

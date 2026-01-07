@@ -30,6 +30,7 @@ export type Score = {
   flaggy: number
   expBoost: number
   flagBoost: number
+  playerExpRate: number
 }
 
 export type OptimalStep = {

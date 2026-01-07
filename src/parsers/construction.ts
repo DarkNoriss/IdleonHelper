@@ -71,9 +71,13 @@ export const parseConstruction = (
 
   // Map cogs to a key -> obj map
   const cogs: Record<number, ParsedCog> = {}
+  console.log("Cogs:", cogsArray)
   if (cogsArray !== null) {
     for (const cog of cogsArray) {
       cogs[cog.key] = cog
+      if (cog.isPlayer) {
+        console.log("Player cog:", cog)
+      }
     }
   }
 
@@ -315,6 +319,7 @@ export const calculateScore = (
     flaggy: 0,
     expBoost: 0,
     flagBoost: 0,
+    playerExpRate: 0,
   }
 
   // Create bonus grid
@@ -460,6 +465,9 @@ export const calculateScore = (
   }
 
   // Second pass: Sum up base stats and apply bonuses
+  let totalPlayerExpRate = 0
+  let totalExpBonus = 0
+
   for (const key of data.availableSlotKeys) {
     const entry = getEntry(key, data.cogs, data.slots)
     if (!entry) continue
@@ -475,6 +483,9 @@ export const calculateScore = (
     const pos = getPosition(key)
     if (pos.location !== "board") continue
 
+    // Collect global exp bonus (stat d) from all cogs on board
+    totalExpBonus += expBonus
+
     const bonus = safeGet<Score>(bonusGrid, pos.y, pos.x)
     if (bonus) {
       const buildRateBonus = (bonus.buildRate || 0) / 100
@@ -482,12 +493,25 @@ export const calculateScore = (
 
       if (entry.isPlayer) {
         result.expBoost += bonus.expBoost || 0
+        // Calculate player exp rate: expGain * (1 + expRadiusBoost / 100)
+        const expGain = typeof entry.expGain === "number" ? entry.expGain : 0
+        const expRadiusBoost = bonus.expBoost || 0
+        const playerExp = expGain * (1 + expRadiusBoost / 100)
+        totalPlayerExpRate += playerExp
       }
 
       const flaggyBonus = (bonus.flaggy || 0) / 100
       result.flaggy += Math.ceil(flaggy * flaggyBonus)
+    } else if (entry.isPlayer) {
+      // Player cog on board but no bonus grid entry (shouldn't happen, but handle it)
+      const expGain = typeof entry.expGain === "number" ? entry.expGain : 0
+      totalPlayerExpRate += expGain
     }
   }
+
+  // Apply global exp bonus to total player exp rate
+  const finalExp = totalPlayerExpRate * (1 + totalExpBonus / 100)
+  result.playerExpRate = finalExp
 
   // Third pass: Sum flag bonuses
   for (const key of data.flagPose) {
