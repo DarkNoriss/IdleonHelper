@@ -4,13 +4,12 @@ import { ThemeProvider } from "@/providers/theme-provider"
 import { useNavigationStore, type NavigationPage } from "@/store/navigation"
 import { useScriptStatusStore } from "@/store/script-status"
 
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import { AppHeader } from "./app-header"
 import { Dashboard } from "./pages/dashboard"
+import { Logs } from "./pages/general/logs"
 import { Test } from "./pages/general/test"
-import { Logs } from "./pages/logs"
 import { RawData } from "./pages/raw-data"
 import { WeeklyBattle } from "./pages/world-2/weekly-battle"
 import { Construction } from "./pages/world-3/construction"
@@ -66,18 +65,20 @@ export const App = () => {
           <SidebarProvider className="min-h-0 flex-1">
             <AppSidebar />
             <SidebarInset>
-              <ScrollArea className="h-full p-2">
+              <div className="h-full max-h-full overflow-hidden p-2">
                 {Object.entries(pageMap).map(([pageKey, page]) => (
                   <div
                     key={pageKey}
                     className={
-                      currentPage === pageKey ? "block h-full" : "hidden"
+                      currentPage === pageKey
+                        ? "block h-full max-h-full min-h-0"
+                        : "hidden"
                     }
                   >
                     {page}
                   </div>
                 ))}
-              </ScrollArea>
+              </div>
             </SidebarInset>
           </SidebarProvider>
         </div>

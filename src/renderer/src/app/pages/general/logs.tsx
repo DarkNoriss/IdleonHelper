@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 type LogEntry = {
   timestamp: number
@@ -27,13 +27,18 @@ const formatTimestamp = (timestamp: number): string => {
 
 export const Logs = () => {
   const [logs, setLogs] = useState<LogEntry[]>([])
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop =
-        scrollContainerRef.current.scrollHeight
+    if (scrollAreaRef.current) {
+      // Find the viewport element inside ScrollArea
+      const viewport = scrollAreaRef.current.querySelector(
+        '[data-slot="scroll-area-viewport"]'
+      ) as HTMLElement
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight
+      }
     }
   }, [logs])
 
@@ -59,15 +64,16 @@ export const Logs = () => {
   }, [])
 
   return (
-    <Card className="relative m-4 h-[calc(100vh-8rem)]">
-      <CardHeader>
-        <CardTitle>Application Logs</CardTitle>
-      </CardHeader>
-      <CardContent className="flex h-[calc(100%-5rem)] flex-col">
-        <div
-          ref={scrollContainerRef}
-          className="bg-muted/50 flex-1 overflow-y-auto rounded-md p-4 font-mono text-sm"
-        >
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <h1 className="shrink-0 text-center text-2xl font-bold">
+        Application Logs
+      </h1>
+
+      <ScrollArea
+        ref={scrollAreaRef}
+        className="min-h-0 flex-1 rounded-md border"
+      >
+        <div className="bg-muted/50 p-4 font-mono text-sm">
           {logs.length === 0 ? (
             <div className="text-muted-foreground">No logs available</div>
           ) : (
@@ -82,13 +88,13 @@ export const Logs = () => {
                   >
                     [{log.level.toUpperCase()}]
                   </span>
-                  <span className="wrap-break-word">{log.message}</span>
+                  <span className="min-w-0 wrap-break-word">{log.message}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </ScrollArea>
+    </div>
   )
 }
