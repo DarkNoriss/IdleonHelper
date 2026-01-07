@@ -26,11 +26,23 @@ export const RawData = () => {
     clearRawJson()
   }
 
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      setLocalJson(text)
+    } catch (error) {
+      console.error("Failed to paste from clipboard:", error)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Raw Data</h1>
         <div className="flex gap-2">
+          <Button onClick={handlePaste} variant="outline">
+            Paste
+          </Button>
           <Button onClick={handleSave} variant="default">
             Save
           </Button>
