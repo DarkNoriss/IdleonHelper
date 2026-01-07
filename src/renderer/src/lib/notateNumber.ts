@@ -3,62 +3,45 @@ const lavaLog = (num: number): number => {
 }
 
 export const notateNumber = (num: number): string => {
-  if (num < 100) {
-    return String(Math.floor(num))
+  const isNegative = num < 0
+  const absNum = Math.abs(num)
+
+  let result: string
+
+  if (absNum < 100) {
+    result = String(Math.floor(absNum))
+  } else if (absNum < 1e3) {
+    result = String(Math.floor(absNum))
+  } else if (absNum < 1e4) {
+    result = String(Math.ceil(absNum / 10) / 100) + "K"
+  } else if (absNum < 1e5) {
+    result = String(Math.ceil(absNum / 100) / 10) + "K"
+  } else if (absNum < 1e6) {
+    result = String(Math.ceil(absNum / 1e3)) + "K"
+  } else if (absNum < 1e7) {
+    result = String(Math.ceil(absNum / 1e4) / 100) + "M"
+  } else if (absNum < 1e8) {
+    result = String(Math.ceil(absNum / 1e5) / 10) + "M"
+  } else if (absNum < 1e10) {
+    result = String(Math.ceil(absNum / 1e6)) + "M"
+  } else if (absNum < 1e13) {
+    result = String(Math.ceil(absNum / 1e9)) + "B"
+  } else if (absNum < 1e16) {
+    result = String(Math.ceil(absNum / 1e12)) + "T"
+  } else if (absNum < 1e19) {
+    result = String(Math.ceil(absNum / 1e15)) + "Q"
+  } else if (absNum < 1e22) {
+    result = String(Math.ceil(absNum / 1e18)) + "QQ"
+  } else if (absNum < 1e24) {
+    result = String(Math.ceil(absNum / 1e21)) + "QQQ"
+  } else {
+    result =
+      String(
+        Math.floor((absNum / Math.pow(10, Math.floor(lavaLog(absNum)))) * 100) /
+          100
+      ) +
+      ("E" + Math.floor(lavaLog(absNum)))
   }
 
-  if (num < 1e3) {
-    return String(Math.floor(num))
-  }
-
-  if (num < 1e4) {
-    return String(Math.ceil(num / 10) / 100) + "K"
-  }
-
-  if (num < 1e5) {
-    return String(Math.ceil(num / 100) / 10) + "K"
-  }
-
-  if (num < 1e6) {
-    return String(Math.ceil(num / 1e3)) + "K"
-  }
-
-  if (num < 1e7) {
-    return String(Math.ceil(num / 1e4) / 100) + "M"
-  }
-
-  if (num < 1e8) {
-    return String(Math.ceil(num / 1e5) / 10) + "M"
-  }
-
-  if (num < 1e10) {
-    return String(Math.ceil(num / 1e6)) + "M"
-  }
-
-  if (num < 1e13) {
-    return String(Math.ceil(num / 1e9)) + "B"
-  }
-
-  if (num < 1e16) {
-    return String(Math.ceil(num / 1e12)) + "T"
-  }
-
-  if (num < 1e19) {
-    return String(Math.ceil(num / 1e15)) + "Q"
-  }
-
-  if (num < 1e22) {
-    return String(Math.ceil(num / 1e18)) + "QQ"
-  }
-
-  if (num < 1e24) {
-    return String(Math.ceil(num / 1e21)) + "QQQ"
-  }
-
-  return (
-    String(
-      Math.floor((num / Math.pow(10, Math.floor(lavaLog(num)))) * 100) / 100
-    ) +
-    ("E" + Math.floor(lavaLog(num)))
-  )
+  return isNegative ? `-${result}` : result
 }
