@@ -226,7 +226,11 @@ const generateRandomMove = (
   return validMoves[randomIndex]
 }
 
-const shouldAcceptMove = (scoreDelta: number, temperature: number): boolean => {
+const shouldAcceptMove = (
+  scoreDelta: number,
+  temperature: number,
+  currentScore: number
+): boolean => {
   if (scoreDelta > 0) {
     return true
   }
@@ -235,7 +239,18 @@ const shouldAcceptMove = (scoreDelta: number, temperature: number): boolean => {
     return false
   }
 
-  const acceptanceProbability = Math.exp(scoreDelta / temperature)
+  // Use relative temperature: normalize by current score magnitude
+  // This prevents issues with huge absolute score values
+  const relativeDelta =
+    currentScore > 0 ? scoreDelta / currentScore : scoreDelta
+  const relativeTemp =
+    currentScore > 0 ? temperature / currentScore : temperature
+
+  // Clamp to reasonable range to avoid numerical issues
+  const normalizedDelta = Math.max(relativeDelta, -100)
+  const normalizedTemp = Math.max(relativeTemp, 1e-10)
+
+  const acceptanceProbability = Math.exp(normalizedDelta / normalizedTemp)
   return Math.random() < acceptanceProbability
 }
 
@@ -247,10 +262,13 @@ const calculateInitialTemperature = (
   shuffle(state)
 
   state.score = calculateStateScore(state)
-  if (!state.score) return 100
+  if (!state.score) return 0.1
 
   const baseScore = getScoreSum(state.score, weights)
-  const scoreDeltas: number[] = []
+  if (baseScore <= 0) return 0.1
+
+  // Collect relative score deltas (normalized by base score)
+  const relativeDeltas: number[] = []
 
   // Pre-compute valid moves for efficiency
   const validMovesCache = getValidMoves(state)
@@ -268,7 +286,9 @@ const calculateInitialTemperature = (
       const newScore = getScoreSum(state.score, weights)
       const delta = newScore - baseScore
       if (delta < 0) {
-        scoreDeltas.push(Math.abs(delta))
+        // Store relative delta (as percentage of base score)
+        const relativeDelta = Math.abs(delta / baseScore)
+        relativeDeltas.push(relativeDelta)
       }
     }
 
@@ -276,18 +296,29 @@ const calculateInitialTemperature = (
     state.score = calculateStateScore(state)
   }
 
-  if (scoreDeltas.length === 0) {
-    return Math.max(baseScore * 0.1, 100)
+  if (relativeDeltas.length === 0) {
+    // Default to 5% of base score as temperature
+    return baseScore * 0.05
   }
 
   // Use 75th percentile for better temperature estimation
-  scoreDeltas.sort((a, b) => a - b)
-  const percentileIndex = Math.floor(scoreDeltas.length * 0.75)
-  const percentileDelta =
-    scoreDeltas[percentileIndex] ?? scoreDeltas[scoreDeltas.length - 1] ?? 0
-  const initialTemp = -percentileDelta / Math.log(INITIAL_ACCEPTANCE_RATE)
+  relativeDeltas.sort((a, b) => a - b)
+  const percentileIndex = Math.floor(relativeDeltas.length * 0.75)
+  const percentileRelativeDelta =
+    relativeDeltas[percentileIndex] ??
+    relativeDeltas[relativeDeltas.length - 1] ??
+    0.01
 
-  return Math.max(initialTemp, 1)
+  // Temperature should be relative to base score
+  // Formula: temp = -relativeDelta / ln(acceptance_rate)
+  // This gives us a temperature that's a fraction of the base score
+  const initialTemp =
+    (baseScore * percentileRelativeDelta) / -Math.log(INITIAL_ACCEPTANCE_RATE)
+
+  // Ensure temperature is reasonable (between 0.01% and 10% of base score)
+  const minTemp = baseScore * 0.0001
+  const maxTemp = baseScore * 0.1
+  return Math.max(minTemp, Math.min(maxTemp, initialTemp))
 }
 
 const simulatedAnnealingRun = async (
@@ -354,7 +385,15 @@ const simulatedAnnealingRun = async (
 
     if (iterations % COOLING_INTERVAL === 0) {
       const progress = (Date.now() - startTime) / timeAllocationMs
-      temperature = initialTemperature * Math.pow(COOLING_RATE, progress * 100)
+      // Exponential cooling: temperature decreases as we progress
+      // Use a more gradual cooling curve
+      const coolingSteps = Math.floor(progress * 100)
+      temperature = initialTemperature * Math.pow(COOLING_RATE, coolingSteps)
+
+      // Ensure temperature doesn't go below a minimum threshold
+      // (relative to current score to maintain exploration)
+      const minTemp = currentScore > 0 ? currentScore * 1e-6 : 1e-10
+      temperature = Math.max(temperature, minTemp)
     }
 
     const move = generateRandomMove(state, validMovesCache)
@@ -374,7 +413,7 @@ const simulatedAnnealingRun = async (
     const newScore = getScoreSum(state.score, weights)
     const scoreDelta = newScore - currentScore
 
-    if (shouldAcceptMove(scoreDelta, temperature)) {
+    if (shouldAcceptMove(scoreDelta, temperature, currentScore)) {
       currentScore = newScore
 
       if (scoreDelta > 0) {
@@ -388,16 +427,20 @@ const simulatedAnnealingRun = async (
         lastImprovementTime = Date.now()
       }
     } else {
+      // Revert the move - we rejected it
       moveCog(state, slotKey, cogKey)
       state.score = calculateStateScore(state)
     }
   }
 
-  // Log exp value for this annealing run
+  // Log detailed stats for this annealing run
   if (bestState.score) {
     const expValue = bestState.score.playerExpRate || 0
+    const improvementRate =
+      iterations > 0 ? ((improvements / iterations) * 100).toFixed(2) : "0.00"
+    const finalTemp = temperature > 0 ? temperature.toFixed(2) : "0.00"
     logger.log(
-      `Annealing run complete: iterations=${iterations}, improvements=${improvements}, exp=${expValue.toFixed(2)}`
+      `Annealing run complete: iterations=${iterations}, improvements=${improvements} (${improvementRate}%), final_temp=${finalTemp}, exp=${expValue.toFixed(2)}`
     )
   }
 
@@ -456,6 +499,11 @@ const removeUselessMoves = (
 
   const moves: Move[] = []
   const initialCogs = new Set(Object.keys(initial.cogs).map(Number.parseInt))
+  const finalCogs = new Set(Object.keys(final.cogs).map(Number.parseInt))
+
+  logger.log(
+    `Comparing states: initial has ${initialCogs.size} cogs, final has ${finalCogs.size} cogs`
+  )
 
   for (const key of initialCogs) {
     const initialCog = initial.cogs[key]
@@ -587,9 +635,15 @@ const removeUselessMoves = (
     }
   }
 
-  logger.log(
-    `Removed ${moves.length - usefulMoves.length} zero-impact moves, kept ${usefulMoves.length} moves`
-  )
+  if (moves.length === 0) {
+    logger.log(
+      `No moves found between initial and final states (states appear identical)`
+    )
+  } else {
+    logger.log(
+      `Removed ${moves.length - usefulMoves.length} zero-impact moves, kept ${usefulMoves.length} moves`
+    )
+  }
 
   // Apply all useful moves
   const optimized = cloneInventory(initial)
@@ -644,7 +698,13 @@ export const solver = async (
   )
 
   const initialTemperature = calculateInitialTemperature(inventory, weights)
-  logger.log(`Initial temperature: ${initialTemperature.toFixed(2)}`)
+  const tempAsPercent =
+    initialScore > 0
+      ? ((initialTemperature / initialScore) * 100).toFixed(4)
+      : "N/A"
+  logger.log(
+    `Initial temperature: ${initialTemperature.toExponential(2)} (${tempAsPercent}% of initial score)`
+  )
 
   const solutions: {
     state: ParsedConstructionData
@@ -717,11 +777,15 @@ export const solver = async (
       break
     }
 
+    // Vary restart temperature between 80% and 120% of initial
+    // This provides diversity while staying in reasonable range
     const restartTemp = initialTemperature * (0.8 + Math.random() * 0.4)
     const startFromShuffle = restart > 0
+    const tempAsPercent =
+      initialScore > 0 ? ((restartTemp / initialScore) * 100).toFixed(4) : "N/A"
 
     logger.log(
-      `Restart ${restart + 1}/${numRestarts}: ${thisRestartTime}ms, temp=${restartTemp.toFixed(2)}, shuffle=${startFromShuffle}`
+      `Restart ${restart + 1}/${numRestarts}: ${thisRestartTime}ms, temp=${restartTemp.toExponential(2)} (${tempAsPercent}% of initial score), shuffle=${startFromShuffle}`
     )
 
     const result = await simulatedAnnealingRun(
@@ -765,21 +829,53 @@ export const solver = async (
 
   // Find best solution across all restarts
   let bestSolution = solutions[0]
-  for (const solution of solutions) {
+  let bestSolutionIndex = 0
+  for (let i = 0; i < solutions.length; i++) {
+    const solution = solutions[i]
     if (solution.score > bestSolution.score) {
       bestSolution = solution
+      bestSolutionIndex = i
     }
   }
+  logger.log(
+    `Selected solution from restart ${bestSolutionIndex}/${solutions.length - 1}${bestSolutionIndex === 0 ? " (initial state)" : ""}`
+  )
 
   if (!bestSolution || bestSolution.score === -Infinity) {
     logger.log("No valid solution found")
     return null
   }
 
+  // Check if initial state appears optimal
+  const isInitialState = bestSolutionIndex === 0
   const improvement = bestSolution.score - initialScore
+  const improvementPercent =
+    initialScore > 0 ? ((improvement / initialScore) * 100).toFixed(4) : "N/A"
+
+  // Count how many solutions were worse, same, or better
+  let worseCount = 0
+  let sameCount = 0
+  let betterCount = 0
+  for (const solution of solutions) {
+    if (solution.score < initialScore) worseCount++
+    else if (solution.score === initialScore) sameCount++
+    else betterCount++
+  }
+
   logger.log(
-    `Best score: ${bestSolution.score.toFixed(2)} (improvement: ${improvement >= 0 ? "+" : ""}${improvement.toFixed(2)})`
+    `Best score: ${bestSolution.score.toFixed(2)} (improvement: ${improvement >= 0 ? "+" : ""}${improvement.toFixed(2)}, ${improvementPercent}%)`
   )
+
+  if (isInitialState && improvement === 0) {
+    logger.log(
+      `Note: Initial state appears optimal. Explored ${solutions.length - 1} restarts with ${totalIterations} iterations: ${betterCount} better, ${sameCount - 1} same, ${worseCount} worse.`
+    )
+    if (betterCount === 0 && worseCount > 0) {
+      logger.log(
+        `All explored states were worse or equal to initial state - configuration may already be at maximum optimization.`
+      )
+    }
+  }
 
   // Ensure best solution state has a score calculated
   if (!bestSolution.state.score) {
