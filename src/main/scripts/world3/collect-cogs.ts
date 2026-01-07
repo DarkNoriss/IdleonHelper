@@ -1,5 +1,5 @@
 import { backendCommand } from "../../backend"
-import { cancellationManager, delay, logger } from "../../utils"
+import { cancellationManager, logger } from "../../utils"
 import { navigation } from "../navigation/navigation"
 import {
   COGS_STEP,
@@ -47,7 +47,7 @@ export const collectCogs = async (): Promise<void> => {
       bottom: lastSpareY + COGS_STEP + PADDING,
     }
 
-    const MAX_ITERATIONS = 50
+    const MAX_ITERATIONS = 250
     let iteration = 0
 
     while (iteration < MAX_ITERATIONS) {
@@ -64,8 +64,6 @@ export const collectCogs = async (): Promise<void> => {
         logger.log("Board is not empty (spare is full), collection complete")
         break
       }
-
-      await delay(250, token)
 
       iteration++
       logger.log(
