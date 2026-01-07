@@ -16,11 +16,12 @@ import { getOptimalSteps } from "./construction-steps"
 
 const COOLING_RATE = 0.96
 const INITIAL_ACCEPTANCE_RATE = 0.8
-const TEMPERATURE_SAMPLES = 100
-const MIN_RESTARTS = 1
-const RESTART_TIME_MS = 2500
+const TEMPERATURE_SAMPLES = 200
+const MIN_RESTARTS = 2
+const RESTART_TIME_MS = 3500
 const YIELD_INTERVAL_MS = 100
 const COOLING_INTERVAL = 50
+const EARLY_TERMINATION_THRESHOLD = 0.3 // Stop if no improvement for 30% of time
 
 export const getKeyFromPosition = (
   location: "board" | "build" | "spare",
@@ -180,30 +181,46 @@ export const calculateStateScore = (
   })
 }
 
-const generateRandomMove = (
-  state: ParsedConstructionData
-): { cogKey: number; slotKey: number } | null => {
+type ValidMove = {
+  cogKey: number
+  slotKey: number
+}
+
+const getValidMoves = (state: ParsedConstructionData): ValidMove[] => {
+  const validMoves: ValidMove[] = []
   const allSlots = state.availableSlotKeys
   const allKeys = getCogKeys(state)
 
-  if (allSlots.length === 0 || allKeys.length === 0) return null
+  if (allSlots.length === 0 || allKeys.length === 0) return validMoves
 
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const slotKey = allSlots[Math.floor(Math.random() * allSlots.length)]
-    const cogKey = allKeys[Math.floor(Math.random() * allKeys.length)]
+  for (const slotKey of allSlots) {
     const slot = getEntry(slotKey, state)
-    const cog = getEntry(cogKey, state)
+    if (!slot || slot.fixed) continue
 
-    if (!slot || !cog) continue
-    if (slot.fixed || cog.fixed) continue
+    for (const cogKey of allKeys) {
+      const cog = getEntry(cogKey, state)
+      if (!cog || cog.fixed) continue
 
-    const cogPosition = getPosition(cogKey)
-    if (cogPosition.location === "build") continue
+      const cogPosition = getPosition(cogKey)
+      if (cogPosition.location === "build") continue
 
-    return { cogKey, slotKey }
+      validMoves.push({ cogKey, slotKey })
+    }
   }
 
-  return null
+  return validMoves
+}
+
+const generateRandomMove = (
+  state: ParsedConstructionData,
+  validMovesCache?: ValidMove[]
+): { cogKey: number; slotKey: number } | null => {
+  const validMoves = validMovesCache ?? getValidMoves(state)
+
+  if (validMoves.length === 0) return null
+
+  const randomIndex = Math.floor(Math.random() * validMoves.length)
+  return validMoves[randomIndex]
 }
 
 const shouldAcceptMove = (scoreDelta: number, temperature: number): boolean => {
@@ -232,8 +249,11 @@ const calculateInitialTemperature = (
   const baseScore = getScoreSum(state.score, weights)
   const scoreDeltas: number[] = []
 
+  // Pre-compute valid moves for efficiency
+  const validMovesCache = getValidMoves(state)
+
   for (let i = 0; i < TEMPERATURE_SAMPLES; i++) {
-    const move = generateRandomMove(state)
+    const move = generateRandomMove(state, validMovesCache)
     if (!move) continue
 
     const { cogKey, slotKey } = move
@@ -257,8 +277,12 @@ const calculateInitialTemperature = (
     return Math.max(baseScore * 0.1, 100)
   }
 
-  const avgDelta = scoreDeltas.reduce((a, b) => a + b, 0) / scoreDeltas.length
-  const initialTemp = -avgDelta / Math.log(INITIAL_ACCEPTANCE_RATE)
+  // Use 75th percentile for better temperature estimation
+  scoreDeltas.sort((a, b) => a - b)
+  const percentileIndex = Math.floor(scoreDeltas.length * 0.75)
+  const percentileDelta =
+    scoreDeltas[percentileIndex] ?? scoreDeltas[scoreDeltas.length - 1] ?? 0
+  const initialTemp = -percentileDelta / Math.log(INITIAL_ACCEPTANCE_RATE)
 
   return Math.max(initialTemp, 1)
 }
@@ -294,14 +318,31 @@ const simulatedAnnealingRun = async (
   let bestState = cloneInventory(state)
   let bestScore = currentScore
 
+  // Pre-compute valid moves once for efficiency
+  const validMovesCache = getValidMoves(state)
+  if (validMovesCache.length === 0) {
+    logger.log("No valid moves available")
+    return { bestState, bestScore, iterations: 0, improvements: 0 }
+  }
+
   const startTime = Date.now()
   let lastYield = Date.now()
   let iterations = 0
   let improvements = 0
   let temperature = initialTemperature
+  let lastImprovementTime = startTime
+  const earlyTerminationTime = timeAllocationMs * EARLY_TERMINATION_THRESHOLD
 
   while (Date.now() - startTime < timeAllocationMs) {
     iterations++
+
+    // Early termination: stop if no improvements for threshold % of time
+    if (Date.now() - lastImprovementTime > earlyTerminationTime) {
+      logger.log(
+        `Early termination: no improvements for ${Math.round((Date.now() - lastImprovementTime) / 1000)}s (${Math.round(earlyTerminationTime / 1000)}s threshold)`
+      )
+      break
+    }
 
     if (Date.now() - lastYield > YIELD_INTERVAL_MS) {
       await new Promise((resolve) => setImmediate(resolve))
@@ -313,7 +354,7 @@ const simulatedAnnealingRun = async (
       temperature = initialTemperature * Math.pow(COOLING_RATE, progress * 100)
     }
 
-    const move = generateRandomMove(state)
+    const move = generateRandomMove(state, validMovesCache)
     if (!move) continue
 
     const { cogKey, slotKey } = move
@@ -335,11 +376,13 @@ const simulatedAnnealingRun = async (
 
       if (scoreDelta > 0) {
         improvements++
+        lastImprovementTime = Date.now()
       }
 
       if (currentScore > bestScore) {
         bestScore = currentScore
         bestState = cloneInventory(state)
+        lastImprovementTime = Date.now()
       }
     } else {
       moveCog(state, slotKey, cogKey)
@@ -591,10 +634,10 @@ export const solver = async (
     MIN_RESTARTS,
     Math.floor(solveTime / RESTART_TIME_MS)
   )
-  const timePerRestart = Math.floor(solveTime / numRestarts)
+  const baseTimePerRestart = Math.floor(solveTime / numRestarts)
 
   logger.log(
-    `Running ${numRestarts} restart(s), ${timePerRestart}ms per restart`
+    `Running ${numRestarts} restart(s), base time ${baseTimePerRestart}ms per restart`
   )
 
   const initialTemperature = calculateInitialTemperature(inventory, weights)
@@ -616,6 +659,22 @@ export const solver = async (
 
   let totalIterations = 0
   let totalImprovements = 0
+  let bestScoreSoFar = initialScore
+  let restartsWithoutImprovement = 0
+  // Adaptive early termination: scale with solve time and number of restarts
+  // For longer solve times, require more restarts without improvement
+  const minRestartsBeforeEarlyTerm = Math.max(
+    MIN_RESTARTS,
+    Math.min(5, Math.floor(numRestarts * 0.1))
+  )
+  const maxRestartsWithoutImprovement = Math.max(
+    3,
+    Math.min(10, Math.floor(numRestarts * 0.15))
+  )
+
+  logger.log(
+    `Early termination: will trigger after ${minRestartsBeforeEarlyTerm} restarts if no improvement for ${maxRestartsWithoutImprovement} consecutive restarts`
+  )
 
   for (let restart = 0; restart < numRestarts; restart++) {
     if (Date.now() - startTime >= solveTime) {
@@ -623,9 +682,40 @@ export const solver = async (
       break
     }
 
+    // Early termination: stop if best solution hasn't improved across multiple restarts
+    // Only trigger after minimum restarts and if we've had enough restarts without improvement
+    if (
+      restart >= minRestartsBeforeEarlyTerm &&
+      restartsWithoutImprovement >= maxRestartsWithoutImprovement
+    ) {
+      logger.log(
+        `Early termination: best solution hasn't improved for ${restartsWithoutImprovement} consecutive restarts (after ${restart} total restarts)`
+      )
+      break
+    }
+
     const elapsed = Date.now() - startTime
     const remainingTime = solveTime - elapsed
-    const thisRestartTime = Math.min(timePerRestart, remainingTime)
+
+    // Adaptive time allocation: give more time to promising restarts
+    let thisRestartTime = baseTimePerRestart
+    if (restart > 0 && solutions.length > 1) {
+      const lastResult = solutions[solutions.length - 1]
+      const improvementRate =
+        lastResult.iterations > 0
+          ? lastResult.improvements / lastResult.iterations
+          : 0
+
+      // If last restart had good improvement rate, allocate more time
+      if (improvementRate > 0.1) {
+        thisRestartTime = Math.floor(baseTimePerRestart * 1.5)
+        logger.log(
+          `Adaptive allocation: increasing time to ${thisRestartTime}ms (improvement rate: ${(improvementRate * 100).toFixed(1)}%)`
+        )
+      }
+    }
+
+    thisRestartTime = Math.min(thisRestartTime, remainingTime)
 
     if (thisRestartTime < 50) {
       break
@@ -655,6 +745,14 @@ export const solver = async (
       iterations: result.iterations,
       improvements: result.improvements,
     })
+
+    // Track if best solution improved
+    if (result.bestScore > bestScoreSoFar) {
+      bestScoreSoFar = result.bestScore
+      restartsWithoutImprovement = 0
+    } else {
+      restartsWithoutImprovement++
+    }
 
     logger.log(
       `Restart ${restart + 1} complete: score=${result.bestScore.toFixed(2)}, iterations=${result.iterations}, improvements=${result.improvements}`
