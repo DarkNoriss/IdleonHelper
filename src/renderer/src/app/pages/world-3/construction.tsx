@@ -96,6 +96,11 @@ export const Construction = () => {
     return () => clearInterval(interval)
   }, [isSolving, remainingTime])
 
+  // Clear solver results when JSON data changes
+  useEffect(() => {
+    setSolverResult(null)
+  }, [parsedJson])
+
   // Calculate differences between current and optimized scores
   const getDifference = (current: number, optimized: number) => {
     return optimized - current
