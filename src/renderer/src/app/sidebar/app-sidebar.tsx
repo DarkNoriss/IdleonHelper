@@ -81,6 +81,10 @@ const getNavItems = (): NavItem[] => {
           title: "Summoning",
           page: "summoning",
         },
+        {
+          title: "Farming",
+          page: "farming",
+        },
       ],
     },
   ]

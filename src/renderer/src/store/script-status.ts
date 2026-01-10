@@ -3,6 +3,7 @@ import { create } from "zustand"
 export type ScriptName =
   | "summoning.endless"
   | "summoning.autobattler"
+  | "farming"
   | "weeklyBattle"
   | "weeklyBattle.skulls"
   | "weeklyBattle.trophy"

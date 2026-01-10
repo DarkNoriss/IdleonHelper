@@ -61,6 +61,11 @@ const api = {
       },
     },
     world6: {
+      farming: {
+        start: () => {
+          return ipcRenderer.invoke("script:world-6.farming.start")
+        },
+      },
       summoning: {
         startEndlessAutobattler: () => {
           return ipcRenderer.invoke(

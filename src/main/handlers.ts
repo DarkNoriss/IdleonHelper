@@ -61,6 +61,11 @@ export const setupHandlers = (): void => {
     return await scripts.world6.summoning.startAutobattler()
   })
 
+  ipcMain.handle("script:world-6.farming.start", async () => {
+    logger.log("IPC: script:world-6.farming.start")
+    return await scripts.world6.farming.start()
+  })
+
   ipcMain.handle("script:get-status", async () => {
     logger.log("IPC: script:get-status")
     return cancellationManager.getStatus()

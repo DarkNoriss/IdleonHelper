@@ -5,6 +5,7 @@ export type NavigationPage =
   | "rawData"
   | "weeklyBattle"
   | "summoning"
+  | "farming"
   | "world3/construction"
   | "logs"
   | "general/test"
