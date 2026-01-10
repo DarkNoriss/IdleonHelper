@@ -12,10 +12,10 @@ export const Farming = () => {
   )
 
   const isFarmingRunning = currentScript === "farming"
+  const isLockUnlockRunning = currentScript === "farming.lock-unlock"
   const isWorking = currentScript !== null
 
   const handleStart = async () => {
-    // If already working and this is the running mode, cancel it
     if (isFarmingRunning) {
       try {
         await window.api.script.cancel()
@@ -28,7 +28,6 @@ export const Farming = () => {
       return
     }
 
-    // If already working with a different mode, show error
     if (isWorking) {
       setError("Another operation is already running")
       return
@@ -41,10 +40,44 @@ export const Farming = () => {
       await window.api.script.world6.farming.start()
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
-        // User cancelled, don't show error
         setCurrentScript(null)
       } else {
         setError(err instanceof Error ? err.message : "Failed to start farming")
+        setCurrentScript(null)
+      }
+    }
+  }
+
+  const handleLockUnlock = async () => {
+    if (isLockUnlockRunning) {
+      try {
+        await window.api.script.cancel()
+        setCurrentScript(null)
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to cancel operation"
+        )
+      }
+      return
+    }
+
+    if (isWorking) {
+      setError("Another operation is already running")
+      return
+    }
+
+    setError(null)
+    setCurrentScript("farming.lock-unlock")
+
+    try {
+      await window.api.script.world6.farming.lockUnlock()
+    } catch (err) {
+      if (err instanceof Error && err.message === "Operation was cancelled") {
+        setCurrentScript(null)
+      } else {
+        setError(
+          err instanceof Error ? err.message : "Failed to lock/unlock crops"
+        )
         setCurrentScript(null)
       }
     }
@@ -62,18 +95,38 @@ export const Farming = () => {
           </div>
         )}
 
-        <div className="space-y-3">
-          <div className="text-center text-sm font-semibold uppercase">
-            Farming Script
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <div className="text-center text-sm font-semibold uppercase">
+              Farming Script
+            </div>
+            <Button
+              onClick={handleStart}
+              size="sm"
+              className="w-full"
+              disabled={isWorking && !isFarmingRunning}
+            >
+              {isFarmingRunning
+                ? "Running... (Click to stop)"
+                : "Start Farming"}
+            </Button>
           </div>
-          <Button
-            onClick={handleStart}
-            size="sm"
-            className="w-full"
-            disabled={isWorking && !isFarmingRunning}
-          >
-            {isFarmingRunning ? "Running... (Click to stop)" : "Start Farming"}
-          </Button>
+
+          <div className="space-y-3">
+            <div className="text-center text-sm font-semibold uppercase">
+              Lock/Unlock Crops
+            </div>
+            <Button
+              onClick={handleLockUnlock}
+              size="sm"
+              className="w-full"
+              disabled={isWorking && !isLockUnlockRunning}
+            >
+              {isLockUnlockRunning
+                ? "Running... (Click to stop)"
+                : "Lock/Unlock Crops"}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

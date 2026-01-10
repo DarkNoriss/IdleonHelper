@@ -65,6 +65,9 @@ const api = {
         start: () => {
           return ipcRenderer.invoke("script:world-6.farming.start")
         },
+        lockUnlock: () => {
+          return ipcRenderer.invoke("script:world-6.farming.lock-unlock")
+        },
       },
       summoning: {
         startEndlessAutobattler: () => {

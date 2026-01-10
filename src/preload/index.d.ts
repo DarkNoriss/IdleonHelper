@@ -87,6 +87,7 @@ declare global {
         world6: {
           farming: {
             start: () => Promise<void>
+            lockUnlock: () => Promise<void>
           }
           summoning: {
             startEndlessAutobattler: () => Promise<void>

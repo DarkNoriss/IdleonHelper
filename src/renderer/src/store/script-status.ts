@@ -4,6 +4,7 @@ export type ScriptName =
   | "summoning.endless"
   | "summoning.autobattler"
   | "farming"
+  | "farming.lock-unlock"
   | "weeklyBattle"
   | "weeklyBattle.skulls"
   | "weeklyBattle.trophy"

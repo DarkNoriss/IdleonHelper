@@ -93,4 +93,72 @@ export const farming = {
       cancellationManager.clearToken()
     }
   },
+
+  lockUnlock: async (): Promise<void> => {
+    if (cancellationManager.getStatus().isWorking) {
+      throw new Error("Another operation is already running")
+    }
+
+    logger.log("Starting lock/unlock crops")
+    const token = cancellationManager.createToken()
+
+    try {
+      token.throwIfCancelled()
+      logger.log("Finding first crop position...")
+
+      const result = await backendCommand.find("farming/test", undefined, token)
+
+      if (result.matches.length === 0) {
+        logger.log("No farming/test images found")
+        return
+      }
+
+      const firstPosition = result.matches[0]
+      logger.log(
+        `Found first position at (${firstPosition.x}, ${firstPosition.y})`
+      )
+
+      const X_STEP = 86
+      const Y_STEP = 111
+      const COLUMNS = 9
+      const ROWS = 4
+
+      const startX = firstPosition.x
+      const startY = firstPosition.y
+
+      const allCoordinates: Array<{ x: number; y: number }> = []
+      for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLUMNS; col++) {
+          allCoordinates.push({
+            x: startX + col * X_STEP,
+            y: startY + row * Y_STEP,
+          })
+        }
+      }
+
+      logger.log(`Calculated ${allCoordinates.length} crop positions`)
+      logger.log(
+        `Positions: ${allCoordinates.map((m) => `(${m.x}, ${m.y})`).join(", ")}`
+      )
+
+      const presetOptions = getClickOptionsFromPreset(ClickPreset.UltraFast)
+      for (const coordinate of allCoordinates) {
+        token.throwIfCancelled()
+        await backendCommand.click(coordinate, presetOptions, token)
+      }
+
+      logger.log(`Clicked on ${allCoordinates.length} crop positions`)
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Operation was cancelled"
+      ) {
+        logger.log("Lock/unlock operation was cancelled")
+        return
+      }
+      throw error
+    } finally {
+      cancellationManager.clearToken()
+    }
+  },
 } as const

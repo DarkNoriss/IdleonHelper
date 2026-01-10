@@ -66,6 +66,11 @@ export const setupHandlers = (): void => {
     return await scripts.world6.farming.start()
   })
 
+  ipcMain.handle("script:world-6.farming.lock-unlock", async () => {
+    logger.log("IPC: script:world-6.farming.lock-unlock")
+    return await scripts.world6.farming.lockUnlock()
+  })
+
   ipcMain.handle("script:get-status", async () => {
     logger.log("IPC: script:get-status")
     return cancellationManager.getStatus()
