@@ -1,4 +1,8 @@
-import { backendCommand } from "../../backend"
+import {
+  backendCommand,
+  ClickPreset,
+  getClickOptionsFromPreset,
+} from "../../backend"
 import { cancellationManager, logger } from "../../utils"
 import { navigation } from "../navigation/navigation"
 import {
@@ -49,9 +53,11 @@ export const trashCogs = async (): Promise<void> => {
           const x = SPARE_FIRST_COORDS.x + col * COGS_STEP
           const y = SPARE_FIRST_COORDS.y + row * COGS_STEP
 
+          const presetOptions = getClickOptionsFromPreset(ClickPreset.UltraFast)
+
           await backendCommand.click(
             { x, y },
-            { times: 2, interval: 25, holdTime: 10 },
+            { times: 2, ...presetOptions },
             token
           )
         }

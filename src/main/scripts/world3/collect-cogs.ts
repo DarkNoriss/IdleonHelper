@@ -1,4 +1,8 @@
-import { backendCommand } from "../../backend"
+import {
+  backendCommand,
+  ClickPreset,
+  getClickOptionsFromPreset,
+} from "../../backend"
 import { cancellationManager, logger } from "../../utils"
 import { navigation } from "../navigation/navigation"
 import {
@@ -69,9 +73,12 @@ export const collectCogs = async (): Promise<void> => {
       logger.log(
         `Board is empty, clicking collect ultimate cogs button 10 times (iteration ${iteration}/${MAX_ITERATIONS})...`
       )
+
+      const presetOptions = getClickOptionsFromPreset(ClickPreset.UltraFast)
+
       await backendCommand.click(
         COLLECT_ULTIMATE_COGS,
-        { times: 10, interval: 25, holdTime: 10 },
+        { times: 10, ...presetOptions },
         token
       )
     }

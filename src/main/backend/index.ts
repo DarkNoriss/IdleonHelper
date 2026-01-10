@@ -48,4 +48,8 @@ export type {
 } from "./backend-types"
 
 // Backend config exports
-export { backendConfig } from "./backend-config"
+export {
+  backendConfig,
+  ClickPreset,
+  getClickOptionsFromPreset,
+} from "./backend-config"
