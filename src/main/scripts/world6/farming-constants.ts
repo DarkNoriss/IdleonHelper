@@ -3,4 +3,8 @@ export const FARMING_GRID = {
   Y_STEP: 111,
   COLUMNS: 9,
   ROWS: 4,
+  FIRST_POSITION: {
+    x: 208,
+    y: 121,
+  },
 } as const

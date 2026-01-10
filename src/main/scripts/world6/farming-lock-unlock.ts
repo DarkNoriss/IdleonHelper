@@ -16,22 +16,9 @@ export const lockUnlock = async (): Promise<void> => {
 
   try {
     token.throwIfCancelled()
-    logger.log("Finding first crop position...")
 
-    const result = await backendCommand.find("farming/test", undefined, token)
-
-    if (result.matches.length === 0) {
-      logger.log("No farming/test images found")
-      return
-    }
-
-    const firstPosition = result.matches[0]
-    logger.log(
-      `Found first position at (${firstPosition.x}, ${firstPosition.y})`
-    )
-
-    const startX = firstPosition.x
-    const startY = firstPosition.y
+    const startX = FARMING_GRID.FIRST_POSITION.x
+    const startY = FARMING_GRID.FIRST_POSITION.y
 
     const allCoordinates: Array<{ x: number; y: number }> = []
     for (let row = 0; row < FARMING_GRID.ROWS; row++) {
@@ -44,9 +31,6 @@ export const lockUnlock = async (): Promise<void> => {
     }
 
     logger.log(`Calculated ${allCoordinates.length} crop positions`)
-    logger.log(
-      `Positions: ${allCoordinates.map((m) => `(${m.x}, ${m.y})`).join(", ")}`
-    )
 
     const presetOptions = getClickOptionsFromPreset(ClickPreset.UltraFast)
     for (const coordinate of allCoordinates) {
