@@ -13,7 +13,12 @@ public static class ImageProcessing
     int Bottom = 0
   );
 
-  public static async Task<List<Point>> Find(
+  public record Match(
+    Point Point,
+    double Similarity
+  );
+
+  public static async Task<List<Match>> Find(
     string imagePath,
     CancellationToken ct,
     int timeoutMs,
@@ -43,7 +48,7 @@ public static class ImageProcessing
     }
 
     offset ??= new ScreenOffset();
-    List<Point> matches = [];
+    List<Match> matches = [];
     var stopwatch = Stopwatch.StartNew();
     var timeoutSeconds = timeoutMs / 1000.0;
 
@@ -81,7 +86,7 @@ public static class ImageProcessing
   }
 
 
-  private static List<Point> MatchTemplate(
+  private static List<Match> MatchTemplate(
     Mat screenshot,
     Mat templateImage,
     double threshold,
@@ -116,37 +121,43 @@ public static class ImageProcessing
     var halfWidth = templateSize.Width / 2;
     var halfHeight = templateSize.Height / 2;
 
-    List<Point> matches = [];
+    List<Match> matches = [];
 
     for (var i = 0; i < nonZeroCoordinates.Rows; i++)
     {
       ct.ThrowIfCancellationRequested();
 
       var cvPoint = nonZeroCoordinates.At<Point>(i);
-      matches.Add(new Point(cvPoint.X + halfWidth, cvPoint.Y + halfHeight));
+      var matchPoint = new Point(cvPoint.X + halfWidth, cvPoint.Y + halfHeight);
+      
+      // Get the similarity score from the result matrix at this location
+      // Note: result matrix uses (row, col) indexing which is (Y, X)
+      var similarity = result.At<float>(cvPoint.Y, cvPoint.X);
+      
+      matches.Add(new Match(matchPoint, similarity));
     }
 
     return matches;
   }
 
-  private static List<Point> FilterMatchesByOffset(List<Point> matches,
+  private static List<Match> FilterMatchesByOffset(List<Match> matches,
     ScreenOffset offset)
   {
     return matches.Where(match =>
     {
       var isWithinHorizontal =
-        (offset.Left == 0 || match.X >= offset.Left) &&
-        (offset.Right == 0 || match.X <= offset.Right);
+        (offset.Left == 0 || match.Point.X >= offset.Left) &&
+        (offset.Right == 0 || match.Point.X <= offset.Right);
 
       var isWithinVertical =
-        (offset.Top == 0 || match.Y >= offset.Top) &&
-        (offset.Bottom == 0 || match.Y <= offset.Bottom);
+        (offset.Top == 0 || match.Point.Y >= offset.Top) &&
+        (offset.Bottom == 0 || match.Point.Y <= offset.Bottom);
 
       return isWithinHorizontal && isWithinVertical;
     }).ToList();
   }
 
-  public static async Task<(List<Point> matches, string? debugImagePath)> FindWithDebug(
+  public static async Task<(List<Match> matches, string? debugImagePath)> FindWithDebug(
     string templateImagePath,
     CancellationToken ct,
     int timeoutMs,
@@ -172,12 +183,13 @@ public static class ImageProcessing
     var templateSize = template.Size();
     for (var i = 0; i < matches.Count; i++)
     {
-      var p = matches[i];
+      var match = matches[i];
+      var p = match.Point;
       var x = Math.Clamp(p.X - templateSize.Width / 2, 0, screenshotColor.Width - templateSize.Width);
       var y = Math.Clamp(p.Y - templateSize.Height / 2, 0, screenshotColor.Height - templateSize.Height);
       var rect = new Rect(x, y, templateSize.Width, templateSize.Height);
 
-      Console.WriteLine($"[ImageProcessing] Debug: index={i}, point={p}");
+      Console.WriteLine($"[ImageProcessing] Debug: index={i}, point={p}, similarity={match.Similarity:P2}");
 
       Cv2.Rectangle(screenshotColor, rect, new Scalar(0, 0, 255), 2);
 
@@ -191,8 +203,9 @@ public static class ImageProcessing
         new Scalar(0, 0, 255)
       );
 
-      // Draw coordinates below rectangle
+      // Draw coordinates and similarity below rectangle
       var coordText = $"({p.X}, {p.Y})";
+      var similarityText = $"{match.Similarity:P2}";
       var textY = y + templateSize.Height + 15;
       Cv2.PutText(
         screenshotColor,
@@ -201,6 +214,14 @@ public static class ImageProcessing
         HersheyFonts.HersheySimplex,
         0.5,
         new Scalar(0, 0, 255)
+      );
+      Cv2.PutText(
+        screenshotColor,
+        similarityText,
+        new OpenCvSharp.Point(x, textY + 15),
+        HersheyFonts.HersheySimplex,
+        0.5,
+        new Scalar(0, 255, 0)
       );
     }
 

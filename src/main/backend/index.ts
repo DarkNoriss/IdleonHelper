@@ -28,6 +28,7 @@ export {
 // Backend types exports
 export type {
   Point,
+  Match,
   ScreenOffset,
   WebSocketMessage,
   WebSocketResponse,

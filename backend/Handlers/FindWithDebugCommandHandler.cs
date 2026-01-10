@@ -56,7 +56,11 @@ internal static class FindWithDebugCommandHandler
 
       var response = new FindWithDebugResponse
       {
-        Matches = matches,
+        Matches = matches.Select(m => new MatchDto
+        {
+          Point = m.Point,
+          Similarity = m.Similarity
+        }).ToList(),
         DebugImagePath = debugImagePath
       };
 

@@ -33,6 +33,12 @@ internal class FindResponse
   public List<Point> Matches { get; set; } = new();
 }
 
+internal class MatchDto
+{
+  public Point Point { get; set; }
+  public double Similarity { get; set; }
+}
+
 internal class FindWithDebugRequest
 {
   public string ImagePath { get; set; } = "";
@@ -44,7 +50,7 @@ internal class FindWithDebugRequest
 
 internal class FindWithDebugResponse
 {
-  public List<Point> Matches { get; set; } = new();
+  public List<MatchDto> Matches { get; set; } = new();
   public string? DebugImagePath { get; set; }
 }
 

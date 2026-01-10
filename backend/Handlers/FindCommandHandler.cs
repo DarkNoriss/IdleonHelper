@@ -55,9 +55,10 @@ internal static class FindCommandHandler
         findRequest.Debug ?? false
       );
 
+      // Convert Match to Point for backward compatibility
       var response = new FindResponse
       {
-        Matches = matches
+        Matches = matches.Select(m => m.Point).ToList()
       };
 
       await MessageHandler.SendResponse(ws, message.Id, response, ct);

@@ -50,8 +50,13 @@ export type FindWithDebugRequest = {
   offset?: ScreenOffset
 }
 
+export type Match = {
+  point: Point
+  similarity: number
+}
+
 export type FindWithDebugResponse = {
-  matches: Point[]
+  matches: Match[]
   debugImagePath?: string | null
 }
 
