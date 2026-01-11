@@ -69,7 +69,7 @@ export const start = async (): Promise<void> => {
         )
       }
 
-      const presetOptions = getClickOptionsFromPreset(ClickPreset.UltraFast)
+      const presetOptions = getClickOptionsFromPreset(ClickPreset.Extreme)
       for (const coordinate of allCoordinates) {
         token.throwIfCancelled()
         await backendCommand.click(coordinate, presetOptions, token)

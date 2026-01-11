@@ -23,6 +23,7 @@ export enum ClickPreset {
   Fast = "Fast",
   Slow = "Slow",
   UltraFast = "UltraFast",
+  Extreme = "Extreme",
 }
 
 export const getClickOptionsFromPreset = (
@@ -43,6 +44,11 @@ export const getClickOptionsFromPreset = (
       return {
         interval: standardInterval / 4,
         holdTime: standardHoldTime / 4,
+      }
+    case ClickPreset.Extreme:
+      return {
+        interval: standardInterval / 8,
+        holdTime: standardHoldTime / 8,
       }
     case ClickPreset.Slow:
       return {

@@ -3,7 +3,7 @@ import {
   ClickPreset,
   getClickOptionsFromPreset,
 } from "../../backend"
-import { cancellationManager, logger } from "../../utils"
+import { cancellationManager, delay, logger } from "../../utils"
 import { FARMING_GRID } from "./farming-constants"
 
 export const lockUnlock = async (): Promise<void> => {
@@ -16,6 +16,8 @@ export const lockUnlock = async (): Promise<void> => {
 
   try {
     token.throwIfCancelled()
+
+    await delay(100, token)
 
     const startX = FARMING_GRID.FIRST_POSITION.x
     const startY = FARMING_GRID.FIRST_POSITION.y
@@ -32,7 +34,7 @@ export const lockUnlock = async (): Promise<void> => {
 
     logger.log(`Calculated ${allCoordinates.length} crop positions`)
 
-    const presetOptions = getClickOptionsFromPreset(ClickPreset.UltraFast)
+    const presetOptions = getClickOptionsFromPreset(ClickPreset.Extreme)
     for (const coordinate of allCoordinates) {
       token.throwIfCancelled()
       await backendCommand.click(coordinate, presetOptions, token)
