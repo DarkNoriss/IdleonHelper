@@ -1,5 +1,5 @@
 import { general } from "./general"
-import { navigation } from "./navigation/navigation"
+import { navigation } from "./navigation"
 import { world2 } from "./world2"
 import { world3 } from "./world3"
 import { world6 } from "./world6"

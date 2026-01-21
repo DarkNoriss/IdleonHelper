@@ -1,7 +1,7 @@
 import type { OptimalStep } from "../../../types/construction"
 import { backendCommand } from "../../backend"
 import { cancellationManager, logger } from "../../utils"
-import { navigation } from "../navigation/navigation"
+import { navigation } from "../navigation"
 import {
   BOARD_FIRST_COORDS,
   COGS_STEP,

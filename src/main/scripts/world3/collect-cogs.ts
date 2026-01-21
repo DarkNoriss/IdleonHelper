@@ -4,7 +4,7 @@ import {
   getClickOptionsFromPreset,
 } from "../../backend"
 import { cancellationManager, logger } from "../../utils"
-import { navigation } from "../navigation/navigation"
+import { navigation } from "../navigation"
 import {
   COGS_STEP,
   COLLECT_ULTIMATE_COGS,

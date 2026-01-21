@@ -1,5 +1,5 @@
 import { cancellationManager, logger } from "../../utils"
-import { navigation } from "../navigation/navigation"
+import { navigation } from "../navigation"
 
 export const test = {
   run: async (): Promise<void> => {
