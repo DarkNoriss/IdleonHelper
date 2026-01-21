@@ -98,6 +98,9 @@ declare global {
           test: {
             run: () => Promise<void>
           }
+          storeItems: {
+            run: () => Promise<void>
+          }
         }
       }
       app: {

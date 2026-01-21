@@ -50,6 +50,10 @@ const getNavItems = (): NavItem[] => {
           page: "logs",
         },
         {
+          title: "Store Items",
+          page: "general/store-items",
+        },
+        {
           title: "Test",
           page: "general/test",
           devOnly: true,

@@ -1,5 +1,6 @@
 import { codex } from "./codex"
 import { construction } from "./construction"
+import { quickRef } from "./quick-ref"
 import { ui } from "./ui"
 
 /**
@@ -9,4 +10,5 @@ export const navigation = {
   ui,
   codex,
   construction,
+  quickRef,
 } as const

@@ -11,6 +11,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AppHeader } from "./app-header"
 import { Dashboard } from "./pages/dashboard"
 import { Logs } from "./pages/general/logs"
+import { StoreItems } from "./pages/general/store-items"
 import { Test } from "./pages/general/test"
 import { RawData } from "./pages/raw-data"
 import { WeeklyBattle } from "./pages/world-2/weekly-battle"
@@ -58,6 +59,7 @@ export const App = () => {
     summoning: <Summoning />,
     farming: <Farming />,
     "world3/construction": <Construction />,
+    "general/store-items": <StoreItems />,
     ...(isDev && { "general/test": <Test /> }),
   }
 

@@ -131,6 +131,11 @@ export const setupHandlers = (): void => {
     return await scripts.general.test.run()
   })
 
+  ipcMain.handle("script:general.store-items.run", async () => {
+    logger.log("IPC: script:general.store-items.run")
+    return await scripts.general.storeItems.run()
+  })
+
   ipcMain.handle(
     "script:world-3.construction.solver",
     async (

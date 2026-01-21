@@ -9,6 +9,7 @@ export type NavigationPage =
   | "world3/construction"
   | "logs"
   | "general/test"
+  | "general/store-items"
 
 type NavigationState = {
   currentPage: NavigationPage

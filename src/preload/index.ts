@@ -113,6 +113,11 @@ const api = {
           return ipcRenderer.invoke("script:general.test.run")
         },
       },
+      storeItems: {
+        run: () => {
+          return ipcRenderer.invoke("script:general.store-items.run")
+        },
+      },
     },
   },
   app: {
