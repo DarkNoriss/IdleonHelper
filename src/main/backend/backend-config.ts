@@ -9,8 +9,8 @@ export const backendConfig = {
   },
   click: {
     times: 1,
-    interval: 240,
-    holdTime: 120,
+    interval: 170,
+    holdTime: 80,
   },
   drag: {
     stepSize: 6,
