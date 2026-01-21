@@ -40,6 +40,13 @@ export const clearLogs = (): void => {
 }
 
 /**
+ * Format timestamp for display
+ */
+const formatTimestamp = (timestamp: number): string => {
+  return new Date(timestamp).toISOString()
+}
+
+/**
  * Add a log entry to the array and emit IPC event
  */
 const addLog = (level: LogLevel, ...args: unknown[]): void => {
@@ -75,7 +82,8 @@ export const logger = {
    * Log informational messages
    */
   log: (...args: unknown[]): void => {
-    console.log(...args)
+    const timestamp = formatTimestamp(Date.now())
+    console.log(`[${timestamp}]`, ...args)
     addLog("log", ...args)
   },
 
@@ -83,7 +91,8 @@ export const logger = {
    * Log error messages
    */
   error: (...args: unknown[]): void => {
-    console.error(...args)
+    const timestamp = formatTimestamp(Date.now())
+    console.error(`[${timestamp}]`, ...args)
     addLog("error", ...args)
   },
 
@@ -91,7 +100,8 @@ export const logger = {
    * Log warning messages
    */
   warn: (...args: unknown[]): void => {
-    console.warn(...args)
+    const timestamp = formatTimestamp(Date.now())
+    console.warn(`[${timestamp}]`, ...args)
     addLog("warn", ...args)
   },
 
@@ -99,7 +109,8 @@ export const logger = {
    * Log info messages (alias for log)
    */
   info: (...args: unknown[]): void => {
-    console.info(...args)
+    const timestamp = formatTimestamp(Date.now())
+    console.info(`[${timestamp}]`, ...args)
     addLog("info", ...args)
   },
 } as const
