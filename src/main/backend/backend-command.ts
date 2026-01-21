@@ -127,7 +127,7 @@ export const backendCommand = {
     const findResponse = await backendCommand.findWithDebug(imagePath, options, token)
     if (findResponse.matches.length > 0) {
       await backendCommand.click(
-        findResponse.matches[0],
+        findResponse.matches[0].point,
         {
           times: options?.clickTimes,
           interval: options?.clickInterval,
