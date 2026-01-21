@@ -52,13 +52,31 @@ const cleanup = (): void => {
   backendProcess = null
 }
 
-const setupProcessHandlers = (process: ChildProcess): void => {
-  process.on("exit", () => {
+const setupProcessHandlers = (proc: ChildProcess): void => {
+  proc.on("exit", (code) => {
+    logger.log(`Backend process exited with code: ${code}`)
     cleanup()
   })
 
-  process.on("error", () => {
+  proc.on("error", (err) => {
+    logger.error(`Backend process error: ${err.message}`)
     cleanup()
+  })
+
+  // Pipe stdout to logger
+  proc.stdout?.on("data", (data: Buffer) => {
+    const lines = data.toString().trim().split("\n")
+    for (const line of lines) {
+      if (line) logger.log(`[Backend] ${line}`)
+    }
+  })
+
+  // Pipe stderr to logger
+  proc.stderr?.on("data", (data: Buffer) => {
+    const lines = data.toString().trim().split("\n")
+    for (const line of lines) {
+      if (line) logger.error(`[Backend] ${line}`)
+    }
   })
 }
 
@@ -67,7 +85,7 @@ const spawnProcess = (execPath: string): Promise<BackendProcessInfo> => {
     try {
       logger.log(`Starting backend process: ${execPath}`)
       backendProcess = spawn(execPath, [], {
-        stdio: "ignore",
+        stdio: ["ignore", "pipe", "pipe"],
         detached: false,
         windowsHide: true,
       })

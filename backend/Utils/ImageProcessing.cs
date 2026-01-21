@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using OpenCvSharp;
 using Point = System.Drawing.Point;
 
 namespace IdleonHelperBackend.Utils;
 
+[SupportedOSPlatform("windows10.0.19041.0")]
 public static class ImageProcessing
 {
   public record ScreenOffset(
@@ -107,8 +109,7 @@ public static class ImageProcessing
     if (debug)
     {
       Cv2.MinMaxLoc(result, out _, out var maxVal, out _, out _);
-      Console.WriteLine(
-        $"[ImageProcessing] MatchTemplate debug: max correlation={maxVal:P2}, threshold={threshold:P2}");
+      Console.WriteLine($"MatchTemplate debug: max correlation={maxVal:P2}, threshold={threshold:P2}");
     }
 
     using var binaryResult = new Mat();
@@ -129,9 +130,7 @@ public static class ImageProcessing
 
       var cvPoint = nonZeroCoordinates.At<Point>(i);
       var matchPoint = new Point(cvPoint.X + halfWidth, cvPoint.Y + halfHeight);
-      
-      // Get the similarity score from the result matrix at this location
-      // Note: result matrix uses (row, col) indexing which is (Y, X)
+
       var similarity = result.At<float>(cvPoint.Y, cvPoint.X);
       
       matches.Add(new Match(matchPoint, similarity));
@@ -189,11 +188,10 @@ public static class ImageProcessing
       var y = Math.Clamp(p.Y - templateSize.Height / 2, 0, screenshotColor.Height - templateSize.Height);
       var rect = new Rect(x, y, templateSize.Width, templateSize.Height);
 
-      Console.WriteLine($"[ImageProcessing] Debug: index={i}, point={p}, similarity={match.Similarity:P2}");
+      Console.WriteLine($"Debug: index={i}, point={p}, similarity={match.Similarity:P2}");
 
       Cv2.Rectangle(screenshotColor, rect, new Scalar(0, 0, 255), 2);
 
-      // Draw index above rectangle
       Cv2.PutText(
         screenshotColor,
         i.ToString(),
@@ -203,7 +201,6 @@ public static class ImageProcessing
         new Scalar(0, 0, 255)
       );
 
-      // Draw coordinates and similarity below rectangle
       var coordText = $"({p.X}, {p.Y})";
       var similarityText = $"{match.Similarity:P2}";
       var textY = y + templateSize.Height + 15;

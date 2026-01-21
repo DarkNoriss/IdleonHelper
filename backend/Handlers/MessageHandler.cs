@@ -1,11 +1,12 @@
 using System.Net.WebSockets;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using IdleonHelperBackend.Models;
 
 namespace IdleonHelperBackend.Handlers;
 
+[SupportedOSPlatform("windows10.0.19041.0")]
 internal static class MessageHandler
 {
   internal static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
@@ -13,7 +14,6 @@ internal static class MessageHandler
     PropertyNameCaseInsensitive = true
   };
 
-  // Semaphore to ensure thread-safe WebSocket sends (WebSocket.SendAsync is not thread-safe)
   private static readonly SemaphoreSlim _sendSemaphore = new SemaphoreSlim(1, 1);
 
   public static async Task HandleMessage(WebSocket ws, string messageJson, CancellationToken ct)
@@ -105,7 +105,6 @@ internal static class MessageHandler
   {
     if (ws.State != WebSocketState.Open) return;
 
-    // Serialize WebSocket sends to ensure thread-safety
     await _sendSemaphore.WaitAsync(ct);
     try
     {

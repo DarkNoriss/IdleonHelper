@@ -3,7 +3,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using IdleonHelperBackend.Handlers;
 
-[assembly: SupportedOSPlatform("windows")]
+[assembly: SupportedOSPlatform("windows10.0.19041.0")]
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -38,23 +38,20 @@ app.Map("/ws", async context =>
 
             var messageJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-            // Fire-and-forget: process messages concurrently without blocking the receive loop
             _ = Task.Run(async () =>
             {
                 try
                 {
                     await MessageHandler.HandleMessage(ws, messageJson, context.RequestAborted);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Console.WriteLine($"Error handling message: {ex.Message}");
                 }
             }, context.RequestAborted);
         }
     }
-    catch (Exception ex)
+    catch
     {
-        Console.WriteLine($"WebSocket error: {ex.Message}");
     }
 });
 

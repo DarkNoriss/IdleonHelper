@@ -1,18 +1,18 @@
-using System;
 using System.Net.WebSockets;
+using System.Runtime.Versioning;
 using System.Text.Json;
 using IdleonHelperBackend.Models;
 using IdleonHelperBackend.Utils;
 
 namespace IdleonHelperBackend.Handlers;
 
+[SupportedOSPlatform("windows10.0.19041.0")]
 internal static class FindCommandHandler
 {
   public static async Task Handle(WebSocket ws, WebSocketMessage message, CancellationToken ct)
   {
     try
     {
-      // GetToken() will auto-reset if needed - no explicit Reset() needed for concurrent operations
       var linkedCt = OperationCancellationManager.GetToken(ct);
 
       if (!message.Data.HasValue)
@@ -55,7 +55,6 @@ internal static class FindCommandHandler
         findRequest.Debug ?? false
       );
 
-      // Convert Match to Point for backward compatibility
       var response = new FindResponse
       {
         Matches = matches.Select(m => m.Point).ToList()

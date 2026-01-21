@@ -1,16 +1,17 @@
 using System.Net.WebSockets;
+using System.Runtime.Versioning;
 using IdleonHelperBackend.Models;
 using IdleonHelperBackend.Utils;
 
 namespace IdleonHelperBackend.Handlers;
 
+[SupportedOSPlatform("windows10.0.19041.0")]
 internal static class StopCommandHandler
 {
   public static async Task Handle(WebSocket ws, WebSocketMessage message, CancellationToken ct)
   {
     try
     {
-      // Cancel the current operation
       OperationCancellationManager.Cancel();
 
       var response = new StopResponse

@@ -1,8 +1,10 @@
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace IdleonHelperBackend.Utils;
 
+[SupportedOSPlatform("windows10.0.19041.0")]
 public static class MouseSimulator
 {
   public static async Task Click(
@@ -53,7 +55,6 @@ public static class MouseSimulator
 
     if (instant)
     {
-      // Instant drag: move directly to end point
       if (ct.IsCancellationRequested)
       {
         PostMessage(hwnd, (uint)MouseMessages.WmLbuttonup, 0, startLParam);
@@ -70,7 +71,6 @@ public static class MouseSimulator
       return;
     }
 
-    // Smooth drag: use Bezier curve with intermediate steps
     var distance = Math.Sqrt(
       Math.Pow(end.X - start.X, 2) +
       Math.Pow(end.Y - start.Y, 2)
