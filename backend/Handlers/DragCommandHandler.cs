@@ -11,7 +11,7 @@ internal static class DragCommandHandler
   {
     try
     {
-      OperationCancellationManager.Reset();
+      // GetToken() will auto-reset if needed - no explicit Reset() needed for concurrent operations
       var linkedCt = OperationCancellationManager.GetToken(ct);
 
       if (!message.Data.HasValue)

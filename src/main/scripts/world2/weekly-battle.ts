@@ -49,25 +49,21 @@ export const weeklyBattle = {
     try {
       logger.log(`Weekly battle steps: ${steps.join(", ")}`)
 
+      // Run all visibility checks concurrently since they don't depend on each other
+      logger.log("Checking weekly battle state (cooldown, restart, select)...")
+      const [isOnCooldown, needsRestart, isSelectVisible] = await Promise.all([
+        backendCommand.isVisible("weekly-battle/wait", undefined, token),
+        backendCommand.isVisible("weekly-battle/restart", undefined, token),
+        backendCommand.isVisible("weekly-battle/select", undefined, token),
+      ])
+
       // Step 1: Check if weekly battle is on cooldown
-      logger.log("Checking if weekly battle is on cooldown...")
-      const isOnCooldown = await backendCommand.isVisible(
-        "weekly-battle/wait",
-        undefined,
-        token
-      )
       if (isOnCooldown) {
         logger.log("Weekly battle is on cooldown - cannot proceed")
         return
       }
 
       // Step 2: Check if restart is needed
-      logger.log("Checking if restart is needed...")
-      const needsRestart = await backendCommand.isVisible(
-        "weekly-battle/restart",
-        undefined,
-        token
-      )
       if (needsRestart) {
         logger.log("Restarting weekly battle...")
 
@@ -78,23 +74,29 @@ export const weeklyBattle = {
         )
         if (clicked) {
           logger.log("Weekly battle restarted successfully")
+          // Re-check select screen after restart
+          const isSelectVisibleAfterRestart =
+            await backendCommand.isVisible(
+              "weekly-battle/select",
+              undefined,
+              token
+            )
+          if (!isSelectVisibleAfterRestart) {
+            logger.error("Weekly battle select screen not found after restart")
+            throw new Error("Weekly battle select screen not found")
+          }
+          logger.log("Select screen confirmed after restart")
         } else {
           logger.error("Restart image found but no matches returned")
         }
+      } else {
+        // Step 3: Verify we're on the select screen (only if no restart was needed)
+        if (!isSelectVisible) {
+          logger.error("Weekly battle select screen not found")
+          throw new Error("Weekly battle select screen not found")
+        }
+        logger.log("Select screen confirmed")
       }
-
-      // Step 3: Verify we're on the select screen
-      logger.log("Verifying select screen is visible...")
-      const isSelectVisible = await backendCommand.isVisible(
-        "weekly-battle/select",
-        undefined,
-        token
-      )
-      if (!isSelectVisible) {
-        logger.error("Weekly battle select screen not found")
-        throw new Error("Weekly battle select screen not found")
-      }
-      logger.log("Select screen confirmed")
 
       // Step 4: Execute steps by clicking coordinates
       logger.log(`Executing ${steps.length} steps...`)

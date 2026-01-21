@@ -38,7 +38,18 @@ app.Map("/ws", async context =>
 
             var messageJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-            await MessageHandler.HandleMessage(ws, messageJson, context.RequestAborted);
+            // Fire-and-forget: process messages concurrently without blocking the receive loop
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await MessageHandler.HandleMessage(ws, messageJson, context.RequestAborted);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error handling message: {ex.Message}");
+                }
+            }, context.RequestAborted);
         }
     }
     catch (Exception ex)
