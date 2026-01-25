@@ -37,18 +37,18 @@ export const getClickOptionsFromPreset = (
       return { interval: standardInterval, holdTime: standardHoldTime }
     case ClickPreset.Fast:
       return {
-        interval: standardInterval / 2,
-        holdTime: standardHoldTime / 2,
+        interval: Math.round(standardInterval / 2),
+        holdTime: Math.round(standardHoldTime / 2),
       }
     case ClickPreset.UltraFast:
       return {
-        interval: standardInterval / 4,
-        holdTime: standardHoldTime / 4,
+        interval: Math.round(standardInterval / 4),
+        holdTime: Math.round(standardHoldTime / 4),
       }
     case ClickPreset.Extreme:
       return {
-        interval: standardInterval / 8,
-        holdTime: standardHoldTime / 8,
+        interval: Math.round(standardInterval / 8),
+        holdTime: Math.round(standardHoldTime / 8),
       }
     case ClickPreset.Slow:
       return {
