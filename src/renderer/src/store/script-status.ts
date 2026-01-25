@@ -13,6 +13,7 @@ export type ScriptName =
   | "world3.construction.collect-cogs"
   | "world3.construction.trash-cogs"
   | "general.test"
+  | "general.storeItems"
   | null
 
 type ScriptStatusState = {
