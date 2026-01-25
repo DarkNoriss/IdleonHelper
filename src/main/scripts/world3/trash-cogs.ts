@@ -57,7 +57,7 @@ export const trashCogs = async (): Promise<void> => {
 
           await backendCommand.click(
             { x, y },
-            { times: 2, ...presetOptions },
+            { times: 1, ...presetOptions },
             token
           )
         }
