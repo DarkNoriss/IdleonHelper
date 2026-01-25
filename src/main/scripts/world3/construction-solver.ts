@@ -18,10 +18,10 @@ const COOLING_RATE = 0.96
 const INITIAL_ACCEPTANCE_RATE = 0.8
 const TEMPERATURE_SAMPLES = 200
 const MIN_RESTARTS = 2
-const RESTART_TIME_MS = 3500
+const RESTART_TIME_MS = 10000 // 10 seconds per restart - allows proper exploration
 const YIELD_INTERVAL_MS = 100
 const COOLING_INTERVAL = 50
-const EARLY_TERMINATION_THRESHOLD = 0.3 // Stop if no improvement for 30% of time
+const EARLY_TERMINATION_THRESHOLD = 0.35 // Stop if no improvement for 35% of time (~3.5s per restart)
 
 export const getKeyFromPosition = (
   location: "board" | "build" | "spare",

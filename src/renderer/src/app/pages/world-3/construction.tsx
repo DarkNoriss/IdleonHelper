@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 
 const SPARE_ROWS = 5
-const TIME_OPTIONS = [30, 60, 120, 240, 480]
+const DEFAULT_SOLVE_TIME_SECONDS = 600 // 10 minutes
 
 const getSparePage = (y: number): number => {
   return Math.floor(y / SPARE_ROWS) + 1
@@ -48,9 +48,7 @@ export const Construction = () => {
   const parsedJson = useRawJsonStore((state) => state.parsedJson)
   const constructionData = useGameDataStore((state) => state.construction)
   const [focus, setFocus] = useState<SolverFocus>("exp")
-  const [solveTime, setSolveTime] = useState<string>("30")
   const [isSolving, setIsSolving] = useState(false)
-  const [remainingTime, setRemainingTime] = useState<number>(0)
   const [solverResult, setSolverResult] = useState<SolverResult | null>(null)
   const currentScript = useScriptStatusStore((state) => state.currentScript)
   const setCurrentScript = useScriptStatusStore(
@@ -77,24 +75,6 @@ export const Construction = () => {
       setFocus("exp") // Switch to exp focus if flaggy was selected
     }
   }, [allSlotsUnlocked, focus])
-
-  // Timer countdown effect
-  useEffect(() => {
-    if (!isSolving || remainingTime <= 0) {
-      return
-    }
-
-    const interval = setInterval(() => {
-      setRemainingTime((prev) => {
-        if (prev <= 1) {
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [isSolving, remainingTime])
 
   // Clear solver results when JSON data changes
   useEffect(() => {
@@ -127,8 +107,6 @@ export const Construction = () => {
 
     setError(null)
     setSolverResult(null)
-    const solveTimeSeconds = Number.parseInt(solveTime, 10) || 30
-    setRemainingTime(solveTimeSeconds)
     setIsSolving(true)
 
     try {
@@ -137,7 +115,7 @@ export const Construction = () => {
         flaggy: 0, // Will be set to 0 by solver if needed
       }
 
-      const solveTimeMs = solveTimeSeconds * 1000
+      const solveTimeMs = DEFAULT_SOLVE_TIME_SECONDS * 1000
 
       const result = await window.api.script.world3.construction.solver(
         constructionData,
@@ -154,7 +132,6 @@ export const Construction = () => {
       )
     } finally {
       setIsSolving(false)
-      setRemainingTime(0)
     }
   }
 
@@ -359,73 +336,48 @@ export const Construction = () => {
         </Card>
       )}
 
-      <div className="grid w-full grid-cols-2 gap-3">
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium">Focus</label>
-          <Select
-            value={focus}
-            onValueChange={(value) => setFocus(value as SolverFocus)}
-            disabled={isWorking}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select focus" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="exp">Exp</SelectItem>
-              <SelectItem value="buildRate">Build Rate</SelectItem>
-              <SelectItem value="flaggy" disabled={allSlotsUnlocked}>
-                Flaggy
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium">Solve Time (sec)</label>
-          <Select
-            value={solveTime}
-            onValueChange={setSolveTime}
-            disabled={isWorking}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select time" />
-            </SelectTrigger>
-            <SelectContent className="max-h-[258px]">
-              {TIME_OPTIONS.map((seconds) => {
-                return (
-                  <SelectItem key={seconds} value={seconds.toString()}>
-                    {seconds}s
-                  </SelectItem>
-                )
-              })}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
       <div className="flex w-full flex-col gap-3">
-        <Button
-          onClick={handleSolve}
-          size="lg"
-          className="min-w-48"
-          disabled={!constructionData || isSolving || isWorking}
-        >
-          {isSolving ? (
-            <>
-              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              {remainingTime > 0
-                ? `Solving... (${remainingTime}s)`
-                : "Solving..."}
-            </>
-          ) : (
-            "Solve Construction"
-          )}
-        </Button>
+        <div className="flex w-full items-end gap-3">
+          <div className="flex flex-1 flex-col gap-2">
+            <label className="text-sm font-medium">Focus</label>
+            <Select
+              value={focus}
+              onValueChange={(value) => setFocus(value as SolverFocus)}
+              disabled={isWorking}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select focus" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="exp">Exp</SelectItem>
+                <SelectItem value="buildRate">Build Rate</SelectItem>
+                <SelectItem value="flaggy" disabled={allSlotsUnlocked}>
+                  Flaggy
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            onClick={handleSolve}
+            size="lg"
+            className="min-w-48"
+            disabled={!constructionData || isSolving || isWorking}
+          >
+            {isSolving ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Solving...
+              </>
+            ) : (
+              "Solve Construction"
+            )}
+          </Button>
+        </div>
 
         <Button
           onClick={handleApply}
           size="lg"
-          className="min-w-48"
+          className="w-full"
           disabled={
             (isWorking && !isApplying) ||
             !solverResult ||
