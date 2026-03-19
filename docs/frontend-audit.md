@@ -140,7 +140,7 @@ Escaping the alias root is brittle and inconsistent with `tsconfig.web.json` pat
 
 ## Suggested next steps
 
-1) Fix `preload` unsubscribe logic (P0).
+1) Fix `preload` unsubscribe logic (P0). **Done** — each subscription uses a stable handler and `ipcRenderer.off(channel, handler)` in `src/preload/index.ts`.
 2) Align `preload` types with runtime + add boundary validation (P0).
 3) Render only the active page in `App` (P1).
 4) Normalize naming conventions and imports (P2).
