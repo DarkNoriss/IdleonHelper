@@ -1,0 +1,16 @@
+---
+description: Adding or changing renderer pages and sidebar navigation
+globs: src/renderer/src/store/navigation.ts,src/renderer/src/app/app.tsx,src/renderer/src/app/sidebar/app-sidebar.tsx,src/renderer/src/app/pages/**/*.tsx
+alwaysApply: false
+---
+
+# Renderer navigation
+
+No router: **`useNavigationStore`** (`currentPage`, `setPage`) drives which page is visible.
+
+When adding a page:
+
+1. Extend **`NavigationPage`** in `store/navigation.ts`.
+2. Add an item in **`getNavItems()`** in `app-sidebar.tsx` (use `devOnly: true` if gated like Test).
+3. Import the page component and add it to **`pageMap`** in `app.tsx` (match the string key exactly to `NavigationPage`).
+4. For dev-only pages, mirror the **`general/test`** pattern (`isDev` from `window.api.app.isDev()` and conditional `pageMap` entry).
