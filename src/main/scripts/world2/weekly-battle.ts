@@ -49,13 +49,24 @@ export const weeklyBattle = {
     try {
       logger.log(`Weekly battle steps: ${steps.join(", ")}`)
 
-      // Run all visibility checks concurrently since they don't depend on each other
+      // Note: do not run these concurrently. The backend window capture is not safe
+      // under parallel requests and can time out without producing a frame.
       logger.log("Checking weekly battle state (cooldown, restart, select)...")
-      const [isOnCooldown, needsRestart, isSelectVisible] = await Promise.all([
-        backendCommand.isVisible("weekly-battle/wait", undefined, token),
-        backendCommand.isVisible("weekly-battle/restart", undefined, token),
-        backendCommand.isVisible("weekly-battle/select", undefined, token),
-      ])
+      const isOnCooldown = await backendCommand.isVisible(
+        "weekly-battle/wait",
+        undefined,
+        token
+      )
+      const needsRestart = await backendCommand.isVisible(
+        "weekly-battle/restart",
+        undefined,
+        token
+      )
+      const isSelectVisible = await backendCommand.isVisible(
+        "weekly-battle/select",
+        undefined,
+        token
+      )
 
       // Step 1: Check if weekly battle is on cooldown
       if (isOnCooldown) {
