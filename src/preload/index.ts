@@ -1,5 +1,5 @@
 import { electronAPI } from "@electron-toolkit/preload"
-import { contextBridge, ipcRenderer } from "electron"
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron"
 
 import type { OptimalStep } from "../types/construction"
 
@@ -16,11 +16,15 @@ const api = {
     onStatusChange: (
       callback: (status: { status: string; error: string | null }) => void
     ) => {
-      ipcRenderer.on("backend-status-changed", (_event, status) =>
+      const handler = (
+        _event: IpcRendererEvent,
+        status: { status: string; error: string | null }
+      ) => {
         callback(status)
-      )
+      }
+      ipcRenderer.on("backend-status-changed", handler)
       return () => {
-        ipcRenderer.removeAllListeners("backend-status-changed")
+        ipcRenderer.off("backend-status-changed", handler)
       }
     },
   },
@@ -32,11 +36,15 @@ const api = {
       return ipcRenderer.invoke("script:cancel")
     },
     onStatusChange: (callback: (status: { isWorking: boolean }) => void) => {
-      ipcRenderer.on("script-status-changed", (_event, status) =>
+      const handler = (
+        _event: IpcRendererEvent,
+        status: { isWorking: boolean }
+      ) => {
         callback(status)
-      )
+      }
+      ipcRenderer.on("script-status-changed", handler)
       return () => {
-        ipcRenderer.removeAllListeners("script-status-changed")
+        ipcRenderer.off("script-status-changed", handler)
       }
     },
     world2: {
@@ -51,11 +59,12 @@ const api = {
           return ipcRenderer.invoke("script:world-2.weekly-battle.run", steps)
         },
         onChange: (callback: (data: unknown) => void) => {
-          ipcRenderer.on("weekly-battle-data-changed", (_event, data) =>
+          const handler = (_event: IpcRendererEvent, data: unknown) => {
             callback(data)
-          )
+          }
+          ipcRenderer.on("weekly-battle-data-changed", handler)
           return () => {
-            ipcRenderer.removeAllListeners("weekly-battle-data-changed")
+            ipcRenderer.off("weekly-battle-data-changed", handler)
           }
         },
       },
@@ -148,11 +157,15 @@ const api = {
         error?: string
       }) => void
     ) => {
-      ipcRenderer.on("update-status-changed", (_event, status) =>
+      const handler = (
+        _event: IpcRendererEvent,
+        status: { version: string; status: string; error?: string }
+      ) => {
         callback(status)
-      )
+      }
+      ipcRenderer.on("update-status-changed", handler)
       return () => {
-        ipcRenderer.removeAllListeners("update-status-changed")
+        ipcRenderer.off("update-status-changed", handler)
       }
     },
     onDownloadProgress: (
@@ -162,11 +175,15 @@ const api = {
         total: number
       }) => void
     ) => {
-      ipcRenderer.on("update-download-progress", (_event, progress) =>
+      const handler = (
+        _event: IpcRendererEvent,
+        progress: { percent: number; transferred: number; total: number }
+      ) => {
         callback(progress)
-      )
+      }
+      ipcRenderer.on("update-download-progress", handler)
       return () => {
-        ipcRenderer.removeAllListeners("update-download-progress")
+        ipcRenderer.off("update-download-progress", handler)
       }
     },
   },
@@ -175,9 +192,12 @@ const api = {
       return ipcRenderer.invoke("logs:get")
     },
     onChange: (callback: (logs: unknown[]) => void) => {
-      ipcRenderer.on("logs-changed", (_event, logs) => callback(logs))
+      const handler = (_event: IpcRendererEvent, logs: unknown[]) => {
+        callback(logs)
+      }
+      ipcRenderer.on("logs-changed", handler)
       return () => {
-        ipcRenderer.removeAllListeners("logs-changed")
+        ipcRenderer.off("logs-changed", handler)
       }
     },
   },
