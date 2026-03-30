@@ -4,53 +4,50 @@
 // Backend client exports
 export {
   type ConnectionStatus,
-  onStatusChange,
-  initializeBackend,
-  sendCommand,
   closeConnection,
-  isConnected,
   getConnectionStatus,
   getLastError,
-} from "./backend-client"
+  initializeBackend,
+  isConnected,
+  onStatusChange,
+  sendCommand,
+} from "./backend-client";
 
 // Backend command exports
-export { backendCommand } from "./backend-command"
-
-// Backend process exports
-export {
-  type BackendProcessInfo,
-  startBackend,
-  stopBackend,
-  getBackendProcess,
-  isBackendRunning,
-} from "./backend-process"
-
-// Backend types exports
-export type {
-  Point,
-  Match,
-  ScreenOffset,
-  WebSocketMessage,
-  WebSocketResponse,
-  FindRequest,
-  FindResponse,
-  FindWithDebugRequest,
-  FindWithDebugResponse,
-  ClickRequest,
-  ClickResponse,
-  DragRequest,
-  DragResponse,
-  DragRepeatRequest,
-  DragRepeatResponse,
-  CommandRequestMap,
-  CommandResponseMap,
-  WebSocketCommandMessage,
-  WebSocketCommandResponse,
-} from "./backend-types"
-
+export { backendCommand } from "./backend-command";
 // Backend config exports
 export {
   backendConfig,
   ClickPreset,
   getClickOptionsFromPreset,
-} from "./backend-config"
+} from "./backend-config";
+// Backend process exports
+export {
+  type BackendProcessInfo,
+  getBackendProcess,
+  isBackendRunning,
+  startBackend,
+  stopBackend,
+} from "./backend-process";
+// Backend types exports
+export type {
+  ClickRequest,
+  ClickResponse,
+  CommandRequestMap,
+  CommandResponseMap,
+  DragRepeatRequest,
+  DragRepeatResponse,
+  DragRequest,
+  DragResponse,
+  FindRequest,
+  FindResponse,
+  FindWithDebugRequest,
+  FindWithDebugResponse,
+  Match,
+  Point,
+  ScreenOffset,
+  WebSocketCommandMessage,
+  WebSocketCommandResponse,
+  WebSocketMessage,
+  WebSocketResponse,
+} from "./backend-types";

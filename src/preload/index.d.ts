@@ -1,74 +1,74 @@
-import { ElectronAPI } from "@electron-toolkit/preload"
+import type { ElectronAPI } from "@electron-toolkit/preload";
 
 import type {
   OptimalStep,
   ParsedConstructionData,
   Score,
   SolverWeights,
-} from "../types/construction"
+} from "../types/construction";
 
-type ConnectionStatus = "connecting" | "connected" | "error"
+type ConnectionStatus = "connecting" | "connected" | "error";
 
 type BackendStatus = {
-  status: ConnectionStatus
-  error: string | null
-}
+  status: ConnectionStatus;
+  error: string | null;
+};
 
 type WeeklyBattleStep = {
-  stepName: string
-  steps: number[]
-  rawSteps: string[]
-}
+  stepName: string;
+  steps: number[];
+  rawSteps: string[];
+};
 
 type WeeklyBattleInfo = {
-  dateFrom: string
-  dateTo: string
-  bossName: string
-  steps: WeeklyBattleStep[]
-}
+  dateFrom: string;
+  dateTo: string;
+  bossName: string;
+  steps: WeeklyBattleStep[];
+};
 
 type WeeklyBattleData = {
-  fetchedAt: string
-  info: WeeklyBattleInfo
-}
+  fetchedAt: string;
+  info: WeeklyBattleInfo;
+};
 
-type LogLevel = "log" | "error" | "warn" | "info"
+type LogLevel = "log" | "error" | "warn" | "info";
 
 type LogEntry = {
-  timestamp: number
-  level: LogLevel
-  message: string
-}
+  timestamp: number;
+  level: LogLevel;
+  message: string;
+};
 
 declare global {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: biome is not aware of the ElectronAPI type
   interface Window {
-    electron: ElectronAPI
     api: {
       window: {
-        close: () => void
-      }
+        close: () => void;
+      };
       backend: {
-        getStatus: () => Promise<BackendStatus>
+        getStatus: () => Promise<BackendStatus>;
         onStatusChange: (
           callback: (status: BackendStatus) => void
-        ) => () => void
-      }
+        ) => () => void;
+      };
       script: {
-        getStatus: () => Promise<{ isWorking: boolean }>
-        cancel: () => Promise<void>
+        getStatus: () => Promise<{ isWorking: boolean }>;
+        cancel: () => Promise<void>;
         onStatusChange: (
           callback: (status: { isWorking: boolean }) => void
-        ) => () => void
+        ) => () => void;
         world2: {
           weeklyBattle: {
-            fetch: () => Promise<WeeklyBattleData>
-            get: () => Promise<WeeklyBattleData | null>
-            run: (steps: number[]) => Promise<void>
+            fetch: () => Promise<WeeklyBattleData>;
+            get: () => Promise<WeeklyBattleData | null>;
+            run: (steps: number[]) => Promise<void>;
             onChange: (
               callback: (data: WeeklyBattleData | null) => void
-            ) => () => void
-          }
-        }
+            ) => () => void;
+          };
+        };
         world3: {
           construction: {
             solver: (
@@ -76,43 +76,43 @@ declare global {
               weights: SolverWeights,
               solveTime?: number
             ) => Promise<{
-              score: Score
-              steps: OptimalStep[]
-            } | null>
-            apply: (steps: OptimalStep[]) => Promise<void>
-            collectCogs: () => Promise<void>
-            trashCogs: () => Promise<void>
-          }
-        }
+              score: Score;
+              steps: OptimalStep[];
+            } | null>;
+            apply: (steps: OptimalStep[]) => Promise<void>;
+            collectCogs: () => Promise<void>;
+            trashCogs: () => Promise<void>;
+          };
+        };
         world6: {
           farming: {
-            start: () => Promise<void>
-            lockUnlock: () => Promise<void>
-          }
+            start: () => Promise<void>;
+            lockUnlock: () => Promise<void>;
+          };
           summoning: {
-            startEndlessAutobattler: () => Promise<void>
-            startAutobattler: () => Promise<void>
-          }
-        }
+            startEndlessAutobattler: () => Promise<void>;
+            startAutobattler: () => Promise<void>;
+          };
+        };
         general: {
           test: {
-            run: () => Promise<void>
-          }
+            run: () => Promise<void>;
+          };
           storeItems: {
-            run: () => Promise<void>
-          }
-        }
-      }
+            run: () => Promise<void>;
+          };
+        };
+      };
       app: {
-        isDev: () => Promise<boolean>
-      }
+        isDev: () => Promise<boolean>;
+      };
       update: {
-        getVersion: () => Promise<string>
-        checkForUpdates: () => Promise<void>
-        downloadUpdate: () => Promise<void>
-        installUpdate: () => Promise<void>
+        getVersion: () => Promise<string>;
+        checkForUpdates: () => Promise<void>;
+        downloadUpdate: () => Promise<void>;
+        installUpdate: () => Promise<void>;
         getStatus: () => Promise<{
-          version: string
+          version: string;
           status:
             | "idle"
             | "checking"
@@ -121,12 +121,12 @@ declare global {
             | "downloading"
             | "update-downloaded"
             | "installing"
-            | "error"
-          error?: string
-        }>
+            | "error";
+          error?: string;
+        }>;
         onStatusChange: (
           callback: (status: {
-            version: string
+            version: string;
             status:
               | "idle"
               | "checking"
@@ -135,26 +135,27 @@ declare global {
               | "downloading"
               | "update-downloaded"
               | "installing"
-              | "error"
-            error?: string
+              | "error";
+            error?: string;
           }) => void
-        ) => () => void
+        ) => () => void;
         onDownloadProgress: (
           callback: (progress: {
-            percent: number
-            transferred: number
-            total: number
+            percent: number;
+            transferred: number;
+            total: number;
           }) => void
-        ) => () => void
-      }
+        ) => () => void;
+      };
       logs: {
-        get: () => Promise<LogEntry[]>
-        onChange: (callback: (logs: LogEntry[]) => void) => () => void
-      }
-    }
+        get: () => Promise<LogEntry[]>;
+        onChange: (callback: (logs: LogEntry[]) => void) => () => void;
+      };
+    };
+    electron: ElectronAPI;
     logs: {
-      get: () => Promise<LogEntry[]>
-      onChange: (callback: (logs: LogEntry[]) => void) => () => void
-    }
+      get: () => Promise<LogEntry[]>;
+      onChange: (callback: (logs: LogEntry[]) => void) => () => void;
+    };
   }
 }

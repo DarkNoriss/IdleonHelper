@@ -1,40 +1,40 @@
-import { useEffect, useState } from "react"
-import { Wifi, WifiOff } from "lucide-react"
+import { Wifi, WifiOff } from "lucide-react";
+import { useEffect, useState } from "react";
 
-type ConnectionStatus = "connecting" | "connected" | "error"
+type ConnectionStatus = "connecting" | "connected" | "error";
 
 type BackendStatus = {
-  status: ConnectionStatus
-  error: string | null
-}
+  status: ConnectionStatus;
+  error: string | null;
+};
 
 export const SidebarBackendStatus = () => {
   const [status, setStatus] = useState<BackendStatus>({
     status: "connecting",
     error: null,
-  })
+  });
 
   useEffect(() => {
     // Request current status immediately (handles case where connection completed before component mounted)
     window.api.backend
       .getStatus()
       .then((currentStatus) => {
-        setStatus(currentStatus)
+        setStatus(currentStatus);
       })
       .catch(() => {
         // Silently handle errors - component will show "connecting" state
-      })
+      });
 
     // Listen for status changes from backend
     const cleanup = window.api.backend.onStatusChange((newStatus) => {
-      setStatus(newStatus)
-    })
+      setStatus(newStatus);
+    });
 
-    return cleanup
-  }, [])
+    return cleanup;
+  }, []);
 
-  const isConnected = status.status === "connected"
-  const isConnecting = status.status === "connecting"
+  const isConnected = status.status === "connected";
+  const isConnecting = status.status === "connecting";
 
   return (
     <div className="flex items-center gap-2">
@@ -53,7 +53,7 @@ export const SidebarBackendStatus = () => {
         )}
       </div>
 
-      <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+      <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
         {isConnected ? (
           <>
             <Wifi className="h-3 w-3" />
@@ -72,5 +72,5 @@ export const SidebarBackendStatus = () => {
         )}
       </span>
     </div>
-  )
-}
+  );
+};

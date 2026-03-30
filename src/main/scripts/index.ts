@@ -1,8 +1,8 @@
-import { general } from "./general"
-import { navigation } from "./navigation"
-import { world2 } from "./world2"
-import { world3 } from "./world3"
-import { world6 } from "./world6"
+import { general } from "./general";
+import { navigation } from "./navigation";
+import { world2 } from "./world2";
+import { world3 } from "./world3";
+import { world6 } from "./world6";
 
 export const scripts = {
   general,
@@ -10,6 +10,6 @@ export const scripts = {
   world2,
   world3,
   world6,
-} as const
+} as const;
 
-export type Scripts = typeof scripts
+export type Scripts = typeof scripts;

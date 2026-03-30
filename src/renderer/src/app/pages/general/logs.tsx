@@ -1,33 +1,33 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react";
 
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type LogEntry = {
-  timestamp: number
-  level: "log" | "error" | "warn" | "info"
-  message: string
-}
+  timestamp: number;
+  level: "log" | "error" | "warn" | "info";
+  message: string;
+};
 
 const getLevelColor = (level: LogEntry["level"]): string => {
   switch (level) {
     case "error":
-      return "text-destructive"
+      return "text-destructive";
     case "warn":
-      return "text-yellow-500"
+      return "text-yellow-500";
     case "info":
-      return "text-blue-500"
+      return "text-blue-500";
     default:
-      return "text-foreground"
+      return "text-foreground";
   }
-}
+};
 
 const formatTimestamp = (timestamp: number): string => {
-  return new Date(timestamp).toLocaleTimeString()
-}
+  return new Date(timestamp).toLocaleTimeString();
+};
 
 export const Logs = () => {
-  const [logs, setLogs] = useState<LogEntry[]>([])
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
@@ -35,43 +35,43 @@ export const Logs = () => {
       // Find the viewport element inside ScrollArea
       const viewport = scrollAreaRef.current.querySelector(
         '[data-slot="scroll-area-viewport"]'
-      ) as HTMLElement
+      ) as HTMLElement;
       if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight
+        viewport.scrollTop = viewport.scrollHeight;
       }
     }
-  }, [logs])
+  }, []);
 
   useEffect(() => {
     // Fetch all logs on mount
     const loadLogs = async () => {
       try {
-        const allLogs = await window.api.logs.get()
-        setLogs(allLogs)
+        const allLogs = await window.api.logs.get();
+        setLogs(allLogs);
       } catch (error) {
-        console.error("Failed to load logs:", error)
+        console.error("Failed to load logs:", error);
       }
-    }
+    };
 
-    loadLogs()
+    loadLogs();
 
     // Set up real-time listener
     const cleanup = window.api.logs.onChange((newLogs) => {
-      setLogs(newLogs)
-    })
+      setLogs(newLogs);
+    });
 
-    return cleanup
-  }, [])
+    return cleanup;
+  }, []);
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <h1 className="shrink-0 text-center text-2xl font-bold">
+      <h1 className="shrink-0 text-center font-bold text-2xl">
         Application Logs
       </h1>
 
       <ScrollArea
-        ref={scrollAreaRef}
         className="h-[calc(100vh-8px*13)] rounded-md border"
+        ref={scrollAreaRef}
       >
         <div className="bg-muted/50 p-4 font-mono text-sm">
           {logs.length === 0 ? (
@@ -79,8 +79,8 @@ export const Logs = () => {
           ) : (
             <div className="space-y-1">
               {logs.map((log, index) => (
-                <div key={index} className="flex gap-2">
-                  <span className="text-muted-foreground shrink-0">
+                <div className="flex gap-2" key={index}>
+                  <span className="shrink-0 text-muted-foreground">
                     [{formatTimestamp(log.timestamp)}]
                   </span>
                   <span
@@ -88,7 +88,7 @@ export const Logs = () => {
                   >
                     [{log.level.toUpperCase()}]
                   </span>
-                  <span className="min-w-0 wrap-break-word">{log.message}</span>
+                  <span className="wrap-break-word min-w-0">{log.message}</span>
                 </div>
               ))}
             </div>
@@ -96,5 +96,5 @@ export const Logs = () => {
         </div>
       </ScrollArea>
     </div>
-  )
-}
+  );
+};

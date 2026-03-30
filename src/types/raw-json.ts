@@ -1,7 +1,7 @@
 export type RawJson = {
   data: {
-    GemItemsPurchased?: string
-    CogM?: string
-    [key: string]: unknown
-  }
-}
+    GemItemsPurchased?: string;
+    CogM?: string;
+    [key: string]: unknown;
+  };
+};

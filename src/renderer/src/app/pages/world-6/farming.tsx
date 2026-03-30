@@ -1,87 +1,88 @@
-import { useState } from "react"
-import { useScriptStatusStore } from "@/store/script-status"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useScriptStatusStore } from "@/store/script-status";
 
 export const Farming = () => {
-  const [error, setError] = useState<string | null>(null)
-  const currentScript = useScriptStatusStore((state) => state.currentScript)
+  const [error, setError] = useState<string | null>(null);
+  const currentScript = useScriptStatusStore((state) => state.currentScript);
   const setCurrentScript = useScriptStatusStore(
     (state) => state.setCurrentScript
-  )
+  );
 
-  const isFarmingRunning = currentScript === "farming"
-  const isLockUnlockRunning = currentScript === "farming.lock-unlock"
-  const isWorking = currentScript !== null
+  const isFarmingRunning = currentScript === "farming";
+  const isLockUnlockRunning = currentScript === "farming.lock-unlock";
+  const isWorking = currentScript !== null;
 
   const handleStart = async () => {
     if (isFarmingRunning) {
       try {
-        await window.api.script.cancel()
-        setCurrentScript(null)
+        await window.api.script.cancel();
+        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
-        )
+        );
       }
-      return
+      return;
     }
 
     if (isWorking) {
-      setError("Another operation is already running")
-      return
+      setError("Another operation is already running");
+      return;
     }
 
-    setError(null)
-    setCurrentScript("farming")
+    setError(null);
+    setCurrentScript("farming");
 
     try {
-      await window.api.script.world6.farming.start()
+      await window.api.script.world6.farming.start();
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
-        setCurrentScript(null)
+        setCurrentScript(null);
       } else {
-        setError(err instanceof Error ? err.message : "Failed to start farming")
-        setCurrentScript(null)
+        setError(
+          err instanceof Error ? err.message : "Failed to start farming"
+        );
+        setCurrentScript(null);
       }
     }
-  }
+  };
 
   const handleLockUnlock = async () => {
     if (isLockUnlockRunning) {
       try {
-        await window.api.script.cancel()
-        setCurrentScript(null)
+        await window.api.script.cancel();
+        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
-        )
+        );
       }
-      return
+      return;
     }
 
     if (isWorking) {
-      setError("Another operation is already running")
-      return
+      setError("Another operation is already running");
+      return;
     }
 
-    setError(null)
-    setCurrentScript("farming.lock-unlock")
+    setError(null);
+    setCurrentScript("farming.lock-unlock");
 
     try {
-      await window.api.script.world6.farming.lockUnlock()
+      await window.api.script.world6.farming.lockUnlock();
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
-        setCurrentScript(null)
+        setCurrentScript(null);
       } else {
         setError(
           err instanceof Error ? err.message : "Failed to lock/unlock crops"
-        )
-        setCurrentScript(null)
+        );
+        setCurrentScript(null);
       }
     }
-  }
+  };
 
   return (
     <Card className="relative">
@@ -90,21 +91,21 @@ export const Farming = () => {
       </CardHeader>
       <CardContent>
         {error && (
-          <div className="bg-destructive/10 text-destructive mb-4 rounded-md p-3 text-sm">
+          <div className="mb-4 rounded-md bg-destructive/10 p-3 text-destructive text-sm">
             {error}
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-3">
-            <div className="text-center text-sm font-semibold uppercase">
+            <div className="text-center font-semibold text-sm uppercase">
               Farming Script
             </div>
             <Button
-              onClick={handleStart}
-              size="sm"
               className="w-full"
               disabled={isWorking && !isFarmingRunning}
+              onClick={handleStart}
+              size="sm"
             >
               {isFarmingRunning
                 ? "Running... (Click to stop)"
@@ -113,14 +114,14 @@ export const Farming = () => {
           </div>
 
           <div className="space-y-3">
-            <div className="text-center text-sm font-semibold uppercase">
+            <div className="text-center font-semibold text-sm uppercase">
               Lock/Unlock Crops
             </div>
             <Button
-              onClick={handleLockUnlock}
-              size="sm"
               className="w-full"
               disabled={isWorking && !isLockUnlockRunning}
+              onClick={handleLockUnlock}
+              size="sm"
             >
               {isLockUnlockRunning
                 ? "Running... (Click to stop)"
@@ -130,5 +131,5 @@ export const Farming = () => {
         </div>
       </CardContent>
     </Card>
-  )
-}
+  );
+};

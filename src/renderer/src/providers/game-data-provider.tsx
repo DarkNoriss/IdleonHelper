@@ -1,17 +1,17 @@
-import { useEffect, type ReactNode } from "react"
-import { parseConstruction } from "@/parsers/construction"
-import { useGameDataStore } from "@/store/game-data"
-import { useRawJsonStore } from "@/store/raw-json"
+import { type ReactNode, useEffect } from "react";
+import { parseConstruction } from "@/parsers/construction";
+import { useGameDataStore } from "@/store/game-data";
+import { useRawJsonStore } from "@/store/raw-json";
 
 type GameDataProviderProps = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
 export const GameDataProvider = ({ children }: GameDataProviderProps) => {
-  const parsedJson = useRawJsonStore((state) => state.parsedJson)
+  const parsedJson = useRawJsonStore((state) => state.parsedJson);
   const setConstructionData = useGameDataStore(
     (state) => state.setConstructionData
-  )
+  );
   // Future parsers can add their setters here:
   // const setSummoningData = useGameDataStore((state) => state.setSummoningData)
   // const setWeeklyBattleData = useGameDataStore((state) => state.setWeeklyBattleData)
@@ -19,18 +19,18 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
   useEffect(() => {
     if (!parsedJson) {
       // Clear all parsed data when JSON is cleared
-      setConstructionData(null)
+      setConstructionData(null);
       // Future parsers: setSummoningData(null), setWeeklyBattleData(null)
-      return
+      return;
     }
 
     // Parse construction data
     try {
-      const constructionData = parseConstruction(parsedJson)
-      setConstructionData(constructionData)
+      const constructionData = parseConstruction(parsedJson);
+      setConstructionData(constructionData);
     } catch (error) {
-      console.error("Failed to parse construction data:", error)
-      setConstructionData(null)
+      console.error("Failed to parse construction data:", error);
+      setConstructionData(null);
     }
 
     // Future parsers can be added here:
@@ -41,7 +41,7 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
     //   console.error("Failed to parse summoning data:", error)
     //   setSummoningData(null)
     // }
-  }, [parsedJson, setConstructionData])
+  }, [parsedJson, setConstructionData]);
 
-  return <>{children}</>
-}
+  return <>{children}</>;
+};

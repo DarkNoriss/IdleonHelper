@@ -1,97 +1,96 @@
-import { useState } from "react"
-import { useScriptStatusStore } from "@/store/script-status"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useScriptStatusStore } from "@/store/script-status";
 
 export const Summoning = () => {
-  const [error, setError] = useState<string | null>(null)
-  const currentScript = useScriptStatusStore((state) => state.currentScript)
+  const [error, setError] = useState<string | null>(null);
+  const currentScript = useScriptStatusStore((state) => state.currentScript);
   const setCurrentScript = useScriptStatusStore(
     (state) => state.setCurrentScript
-  )
+  );
 
-  const isEndlessRunning = currentScript === "summoning.endless"
-  const isAutobattlerRunning = currentScript === "summoning.autobattler"
-  const isWorking = currentScript !== null
+  const isEndlessRunning = currentScript === "summoning.endless";
+  const isAutobattlerRunning = currentScript === "summoning.autobattler";
+  const isWorking = currentScript !== null;
 
   const handleEndlessAutobattler = async () => {
     // If already working and this is the running mode, cancel it
     if (isEndlessRunning) {
       try {
-        await window.api.script.cancel()
-        setCurrentScript(null)
+        await window.api.script.cancel();
+        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
-        )
+        );
       }
-      return
+      return;
     }
 
     // If already working with a different mode, show error
     if (isWorking) {
-      setError("Another operation is already running")
-      return
+      setError("Another operation is already running");
+      return;
     }
 
-    setError(null)
-    setCurrentScript("summoning.endless")
+    setError(null);
+    setCurrentScript("summoning.endless");
 
     try {
-      await window.api.script.world6.summoning.startEndlessAutobattler()
+      await window.api.script.world6.summoning.startEndlessAutobattler();
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         // User cancelled, don't show error
-        setCurrentScript(null)
+        setCurrentScript(null);
       } else {
         setError(
           err instanceof Error
             ? err.message
             : "Failed to start endless autobattler"
-        )
-        setCurrentScript(null)
+        );
+        setCurrentScript(null);
       }
     }
-  }
+  };
 
   const handleAutobattler = async () => {
     // If already working and this is the running mode, cancel it
     if (isAutobattlerRunning) {
       try {
-        await window.api.script.cancel()
-        setCurrentScript(null)
+        await window.api.script.cancel();
+        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
-        )
+        );
       }
-      return
+      return;
     }
 
     // If already working with a different mode, show error
     if (isWorking) {
-      setError("Another operation is already running")
-      return
+      setError("Another operation is already running");
+      return;
     }
 
-    setError(null)
-    setCurrentScript("summoning.autobattler")
+    setError(null);
+    setCurrentScript("summoning.autobattler");
 
     try {
-      await window.api.script.world6.summoning.startAutobattler()
+      await window.api.script.world6.summoning.startAutobattler();
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         // User cancelled, don't show error
-        setCurrentScript(null)
+        setCurrentScript(null);
       } else {
         setError(
           err instanceof Error ? err.message : "Failed to start autobattler"
-        )
-        setCurrentScript(null)
+        );
+        setCurrentScript(null);
       }
     }
-  }
+  };
 
   return (
     <Card className="relative">
@@ -100,21 +99,21 @@ export const Summoning = () => {
       </CardHeader>
       <CardContent>
         {error && (
-          <div className="bg-destructive/10 text-destructive mb-4 rounded-md p-3 text-sm">
+          <div className="mb-4 rounded-md bg-destructive/10 p-3 text-destructive text-sm">
             {error}
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-3">
-            <div className="text-center text-sm font-semibold uppercase">
+            <div className="text-center font-semibold text-sm uppercase">
               Endless Autobattler
             </div>
             <Button
-              onClick={handleEndlessAutobattler}
-              size="sm"
               className="w-full"
               disabled={isWorking && !isEndlessRunning}
+              onClick={handleEndlessAutobattler}
+              size="sm"
             >
               {isEndlessRunning
                 ? "Running... (Click to stop)"
@@ -123,14 +122,14 @@ export const Summoning = () => {
           </div>
 
           <div className="space-y-3">
-            <div className="text-center text-sm font-semibold uppercase">
+            <div className="text-center font-semibold text-sm uppercase">
               Autobattler
             </div>
             <Button
-              onClick={handleAutobattler}
-              size="sm"
               className="w-full"
               disabled={isWorking && !isAutobattlerRunning}
+              onClick={handleAutobattler}
+              size="sm"
             >
               {isAutobattlerRunning
                 ? "Running... (Click to stop)"
@@ -140,5 +139,5 @@ export const Summoning = () => {
         </div>
       </CardContent>
     </Card>
-  )
-}
+  );
+};

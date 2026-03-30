@@ -1,38 +1,38 @@
-import { getMainWindow } from "../index"
-import { logger } from "./logger"
+import { getMainWindow } from "../index";
+import { logger } from "./logger";
 
 export type CancellationToken = {
-  isCancelled: () => boolean
-  cancel: () => void
-  throwIfCancelled: () => void
-}
+  isCancelled: () => boolean;
+  cancel: () => void;
+  throwIfCancelled: () => void;
+};
 
 // Global state
-let currentToken: CancellationToken | null = null
-let isWorking = false
+let currentToken: CancellationToken | null = null;
+let isWorking = false;
 
 const notifyStatusChange = (): void => {
-  const mainWindow = getMainWindow()
+  const mainWindow = getMainWindow();
   if (mainWindow) {
-    mainWindow.webContents.send("script-status-changed", { isWorking })
+    mainWindow.webContents.send("script-status-changed", { isWorking });
   }
-}
+};
 
 const createCancellationToken = (): CancellationToken => {
-  let cancelled = false
+  let cancelled = false;
 
   return {
     isCancelled: () => cancelled,
     cancel: () => {
-      cancelled = true
+      cancelled = true;
     },
     throwIfCancelled: () => {
       if (cancelled) {
-        throw new Error("Operation was cancelled")
+        throw new Error("Operation was cancelled");
       }
     },
-  }
-}
+  };
+};
 
 /**
  * Delays execution for the specified number of milliseconds, checking for cancellation periodically.
@@ -47,64 +47,66 @@ export const delay = async (
 ): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
-      if (checkIntervalId) clearInterval(checkIntervalId)
-      if (token.isCancelled()) {
-        reject(new Error("Operation was cancelled"))
-      } else {
-        resolve()
+      if (checkIntervalId) {
+        clearInterval(checkIntervalId);
       }
-    }, milliseconds)
+      if (token.isCancelled()) {
+        reject(new Error("Operation was cancelled"));
+      } else {
+        resolve();
+      }
+    }, milliseconds);
 
     // Check for cancellation periodically
     const checkIntervalId = setInterval(() => {
       if (token.isCancelled()) {
-        clearTimeout(timeoutId)
-        clearInterval(checkIntervalId)
-        reject(new Error("Operation was cancelled"))
+        clearTimeout(timeoutId);
+        clearInterval(checkIntervalId);
+        reject(new Error("Operation was cancelled"));
       }
-    }, 100) // Check every 100ms
-  })
-}
+    }, 100); // Check every 100ms
+  });
+};
 
 export const cancellationManager = {
   createToken: (): CancellationToken => {
     // Cancel any existing token
     if (currentToken) {
-      currentToken.cancel()
+      currentToken.cancel();
     }
 
     // Create new token
-    const token = createCancellationToken()
-    currentToken = token
-    isWorking = true
-    logger.log("Operation started (cancellation token created)")
-    notifyStatusChange()
+    const token = createCancellationToken();
+    currentToken = token;
+    isWorking = true;
+    logger.log("Operation started (cancellation token created)");
+    notifyStatusChange();
 
-    return token
+    return token;
   },
 
   cancelCurrent: (): void => {
     if (currentToken) {
-      currentToken.cancel()
-      currentToken = null
-      isWorking = false
-      logger.log("Operation cancelled")
-      notifyStatusChange()
+      currentToken.cancel();
+      currentToken = null;
+      isWorking = false;
+      logger.log("Operation cancelled");
+      notifyStatusChange();
     }
   },
 
   clearToken: (): void => {
-    currentToken = null
-    isWorking = false
-    logger.log("Operation completed (cancellation token cleared)")
-    notifyStatusChange()
+    currentToken = null;
+    isWorking = false;
+    logger.log("Operation completed (cancellation token cleared)");
+    notifyStatusChange();
   },
 
   getStatus: (): { isWorking: boolean } => {
-    return { isWorking }
+    return { isWorking };
   },
 
   getCurrentToken: (): CancellationToken | null => {
-    return currentToken
+    return currentToken;
   },
-} as const
+} as const;

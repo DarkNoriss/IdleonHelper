@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react"
-import { useNavigationStore, type NavigationPage } from "@/store/navigation"
-import { ChevronRight } from "lucide-react"
-
+import { ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { ScrollArea } from "@/components/ui/scroll-area"
+} from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -19,18 +17,19 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { type NavigationPage, useNavigationStore } from "@/store/navigation";
 
-import { SidebarBackendStatus } from "./backend-status"
-import { UpdateStatus } from "./update-status"
+import { SidebarBackendStatus } from "./backend-status";
+import { UpdateStatus } from "./update-status";
 
 // Navigation data with routes
 type NavItem = {
-  title: string
-  page?: NavigationPage
-  items?: { title: string; page: NavigationPage; devOnly?: boolean }[]
-  devOnly?: boolean
-}
+  title: string;
+  page?: NavigationPage;
+  items?: { title: string; page: NavigationPage; devOnly?: boolean }[];
+  devOnly?: boolean;
+};
 
 const getNavItems = (): NavItem[] => {
   const baseNav: NavItem[] = [
@@ -91,27 +90,27 @@ const getNavItems = (): NavItem[] => {
         },
       ],
     },
-  ]
+  ];
 
-  return baseNav
-}
+  return baseNav;
+};
 
 export const AppSidebar = ({
   ...props
 }: React.ComponentProps<typeof Sidebar>) => {
-  const currentPage = useNavigationStore((state) => state.currentPage)
-  const setPage = useNavigationStore((state) => state.setPage)
-  const [isDev, setIsDev] = useState(false)
+  const currentPage = useNavigationStore((state) => state.currentPage);
+  const setPage = useNavigationStore((state) => state.setPage);
+  const [isDev, setIsDev] = useState(false);
 
   useEffect(() => {
     // Check if we're in dev mode
     window.api.app
       .isDev()
       .then(setIsDev)
-      .catch(() => setIsDev(false))
-  }, [])
+      .catch(() => setIsDev(false));
+  }, []);
 
-  const navMain = getNavItems()
+  const navMain = getNavItems();
 
   return (
     <Sidebar {...props} variant="inset">
@@ -122,7 +121,9 @@ export const AppSidebar = ({
             .map((item) => {
               // If item has no children, render as a simple button
               if (!item.items || item.items.length === 0) {
-                if (!item.page) return null
+                if (!item.page) {
+                  return null;
+                }
 
                 return (
                   <SidebarGroup key={item.title}>
@@ -137,28 +138,30 @@ export const AppSidebar = ({
                       </SidebarMenuItem>
                     </SidebarMenu>
                   </SidebarGroup>
-                )
+                );
               }
 
               // Filter sub-items based on devOnly
               const visibleItems = item.items.filter(
                 (subItem) => !subItem.devOnly || isDev
-              )
+              );
 
               // Don't render collapsible if no visible items
-              if (visibleItems.length === 0) return null
+              if (visibleItems.length === 0) {
+                return null;
+              }
 
               // If item has children, render as collapsible
               return (
                 <Collapsible
+                  className="group/collapsible"
                   key={item.title}
                   title={item.title}
-                  className="group/collapsible"
                 >
                   <SidebarGroup>
                     <SidebarGroupLabel
                       asChild
-                      className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
+                      className="group/label text-sidebar-foreground text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     >
                       <CollapsibleTrigger>
                         {item.title}
@@ -183,7 +186,7 @@ export const AppSidebar = ({
                     </CollapsibleContent>
                   </SidebarGroup>
                 </Collapsible>
-              )
+              );
             })}
         </ScrollArea>
       </SidebarContent>
@@ -194,5 +197,5 @@ export const AppSidebar = ({
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
-}
+  );
+};

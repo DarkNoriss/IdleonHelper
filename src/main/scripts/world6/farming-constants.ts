@@ -7,4 +7,4 @@ export const FARMING_GRID = {
     x: 208,
     y: 121,
   },
-} as const
+} as const;

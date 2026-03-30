@@ -1,41 +1,41 @@
-import { cancellationManager, logger } from "../../utils"
-import { navigation } from "../navigation"
+import { cancellationManager, logger } from "../../utils";
+import { navigation } from "../navigation";
 
 export const test = {
   run: async (): Promise<void> => {
     // Check if already working
     if (cancellationManager.getStatus().isWorking) {
-      throw new Error("Another operation is already running")
+      throw new Error("Another operation is already running");
     }
 
-    logger.log("Starting test script")
+    logger.log("Starting test script");
     // Create cancellation token
-    const token = cancellationManager.createToken()
+    const token = cancellationManager.createToken();
 
     try {
-      token.throwIfCancelled()
-      logger.log("Test script: navigating to Codex...")
-      await navigation.ui.toCodex(token)
+      token.throwIfCancelled();
+      logger.log("Test script: navigating to Codex...");
+      await navigation.ui.toCodex(token);
 
-      token.throwIfCancelled()
-      logger.log("Test script: navigating to Items...")
-      await navigation.ui.toItems(token)
+      token.throwIfCancelled();
+      logger.log("Test script: navigating to Items...");
+      await navigation.ui.toItems(token);
 
-      logger.log("Test script completed successfully")
+      logger.log("Test script completed successfully");
     } catch (error) {
       // Handle cancellation silently - it's a user action, not an error
       if (
         error instanceof Error &&
         error.message === "Operation was cancelled"
       ) {
-        logger.log("Test script operation was cancelled")
-        return // Return gracefully without throwing
+        logger.log("Test script operation was cancelled");
+        return; // Return gracefully without throwing
       }
       // Re-throw actual errors
-      throw error
+      throw error;
     } finally {
       // Clean up
-      cancellationManager.clearToken()
+      cancellationManager.clearToken();
     }
   },
-} as const
+} as const;

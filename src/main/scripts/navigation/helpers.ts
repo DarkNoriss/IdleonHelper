@@ -1,6 +1,6 @@
-import { backendCommand } from "../../backend"
-import { logger } from "../../utils"
-import type { CancellationToken } from "../../utils/cancellation-token"
+import { backendCommand } from "../../backend";
+import { logger } from "../../utils";
+import type { CancellationToken } from "../../utils/cancellation-token";
 
 /**
  * Generic navigation helper function that follows the standard navigation pattern:
@@ -22,19 +22,19 @@ export const navigateTo = async (
   buttonImage: string,
   fallback: (token: CancellationToken) => Promise<boolean>,
   token: CancellationToken,
-  screenName: string = "target screen"
+  screenName = "target screen"
 ): Promise<boolean> => {
-  logger.log(`Navigating to ${screenName}...`)
+  logger.log(`Navigating to ${screenName}...`);
 
   // Check if already open using isVisible
   const initialCheck = await backendCommand.isVisible(
     confirmationImage,
     undefined,
     token
-  )
+  );
   if (initialCheck) {
-    logger.log(`${screenName} already opened`)
-    return true
+    logger.log(`${screenName} already opened`);
+    return true;
   }
 
   // Check if button is visible using isVisible
@@ -42,14 +42,14 @@ export const navigateTo = async (
     buttonImage,
     undefined,
     token
-  )
+  );
 
   // If button not visible, call fallback
   if (!isButtonVisible) {
-    logger.log(`${screenName} button not found, falling back...`)
-    const fallbackResult = await fallback(token)
+    logger.log(`${screenName} button not found, falling back...`);
+    const fallbackResult = await fallback(token);
     if (!fallbackResult) {
-      return false
+      return false;
     }
   }
 
@@ -58,12 +58,12 @@ export const navigateTo = async (
     buttonImage,
     undefined,
     token
-  )
+  );
   if (!clicked) {
     logger.error(
       `${screenName} button not found after fallback, navigation failed`
-    )
-    return false
+    );
+    return false;
   }
 
   // Check for confirmation using isVisible
@@ -71,14 +71,14 @@ export const navigateTo = async (
     confirmationImage,
     undefined,
     token
-  )
+  );
   if (confirmationCheck) {
-    logger.log(`${screenName} opened successfully`)
-    return true
+    logger.log(`${screenName} opened successfully`);
+    return true;
   }
 
   logger.error(
     `Failed to navigate to ${screenName} - ${confirmationImage} not visible after clicking`
-  )
-  return false
-}
+  );
+  return false;
+};

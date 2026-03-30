@@ -1,21 +1,21 @@
 // Barrel file for utils module
 // Re-exports all utilities for cleaner imports
 
+export { cancellationManager, delay } from "./cancellation-token";
 export {
-  logger,
-  getLogs,
   clearLogs,
-  setLogsChangeNotifier,
+  getLogs,
   type LogEntry,
   type LogLevel,
-} from "./logger"
-export { cancellationManager, delay } from "./cancellation-token"
+  logger,
+  setLogsChangeNotifier,
+} from "./logger";
 export {
-  initializeUpdateService,
   checkForUpdates,
   downloadUpdate,
-  installUpdate,
-  getUpdateStatus,
   getCurrentVersion,
+  getUpdateStatus,
+  initializeUpdateService,
+  installUpdate,
   type UpdateStatus,
-} from "./update-service"
+} from "./update-service";

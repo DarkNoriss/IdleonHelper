@@ -2,81 +2,81 @@ import type {
   ParsedCog,
   ParsedConstructionData,
   Score,
-} from "../types/construction"
-import type { RawJson } from "../types/raw-json"
+} from "../types/construction";
+import type { RawJson } from "../types/raw-json";
 
-export const INV_ROWS = 8
-export const INV_COLUMNS = 12
-export const SPARE_START = 108
+export const INV_ROWS = 8;
+export const INV_COLUMNS = 12;
+export const SPARE_START = 108;
 
 export type Position = {
-  location: "board" | "build" | "spare"
-  x: number
-  y: number
-}
+  location: "board" | "build" | "spare";
+  x: number;
+  y: number;
+};
 
 export const getPosition = (keyNum: number): Position => {
   // board = 0-95
   // build = 96-107
   // spare = 108-*
   const location: "board" | "build" | "spare" =
-    keyNum >= 96 ? (keyNum <= 107 ? "build" : "spare") : "board"
+    keyNum >= 96 ? (keyNum <= 107 ? "build" : "spare") : "board";
 
-  let perRow = 3
-  let offset = SPARE_START
+  let perRow = 3;
+  let offset = SPARE_START;
 
   if (location === "board") {
-    perRow = INV_COLUMNS
-    offset = 0
+    perRow = INV_COLUMNS;
+    offset = 0;
   } else if (location === "build") {
-    offset = 96
+    offset = 96;
   }
 
-  const y = Math.floor((keyNum - offset) / perRow)
-  const x = (keyNum - offset) % perRow
+  const y = Math.floor((keyNum - offset) / perRow);
+  const x = (keyNum - offset) % perRow;
 
-  return { location, x, y }
-}
+  return { location, x, y };
+};
 
 type CogRaw = {
-  a?: unknown
-  b?: unknown
-  c?: unknown
-  d?: unknown
-  e?: unknown
-  f?: unknown
-  g?: unknown
-  h?: unknown
-  j?: unknown
-  k?: unknown
-}
+  a?: unknown;
+  b?: unknown;
+  c?: unknown;
+  d?: unknown;
+  e?: unknown;
+  f?: unknown;
+  g?: unknown;
+  h?: unknown;
+  j?: unknown;
+  k?: unknown;
+};
 
 export const parseConstruction = (
   jsonData: RawJson
 ): ParsedConstructionData => {
-  const cogsArray = extractCogs(jsonData)
-  const flaggyShopUpgrades = extractFlaggyShopUpgrades(jsonData)
-  const flagPose = extractFlagPose(jsonData)
-  const flagSlots = extractFlagSlots(jsonData, flagPose)
+  const cogsArray = extractCogs(jsonData);
+  const flaggyShopUpgrades = extractFlaggyShopUpgrades(jsonData);
+  const flagPose = extractFlagPose(jsonData);
+  const flagSlots = extractFlagSlots(jsonData, flagPose);
 
   // Map slots to a key -> obj map
-  const slots: Record<number, ParsedCog> = {}
-  const availableSlotKeys: number[] = []
+  const slots: Record<number, ParsedCog> = {};
+  const availableSlotKeys: number[] = [];
   for (const slot of flagSlots) {
-    slots[slot.key] = slot
+    slots[slot.key] = slot;
     if (!slot.fixed) {
-      availableSlotKeys.push(slot.key)
+      availableSlotKeys.push(slot.key);
     }
   }
 
   // Map cogs to a key -> obj map
-  const cogs: Record<number, ParsedCog> = {}
-  console.log("Cogs:", cogsArray)
+  const cogs: Record<number, ParsedCog> = {};
+  console.log("Cogs:", cogsArray);
   if (cogsArray !== null) {
     for (const cog of cogsArray) {
-      cogs[cog.key] = cog
+      cogs[cog.key] = cog;
       if (cog.isPlayer) {
-        console.log("Player cog:", cog)
+        console.log("Player cog:", cog);
       }
     }
   }
@@ -88,7 +88,7 @@ export const parseConstruction = (
     flagPose,
     slots,
     availableSlotKeys,
-  })
+  });
 
   return {
     cogs,
@@ -97,37 +97,37 @@ export const parseConstruction = (
     flaggyShopUpgrades,
     availableSlotKeys,
     score,
-  }
-}
+  };
+};
 
 const extractCogs = (jsonData: RawJson): ParsedCog[] | null => {
-  const cogM = jsonData.data.CogM
+  const cogM = jsonData.data.CogM;
   if (!cogM) {
-    return null
+    return null;
   }
 
-  let parsed: unknown
+  let parsed: unknown;
   try {
     // Handle both string (needs parsing) and already-parsed object
     if (typeof cogM === "string") {
-      parsed = JSON.parse(cogM)
+      parsed = JSON.parse(cogM);
     } else if (
       typeof cogM === "object" &&
       cogM !== null &&
       !Array.isArray(cogM)
     ) {
-      parsed = cogM
+      parsed = cogM;
     } else {
-      return null
+      return null;
     }
     if (
       typeof parsed === "object" &&
       parsed !== null &&
       !Array.isArray(parsed)
     ) {
-      const cogsMap = parsed as Record<string, CogRaw>
+      const cogsMap = parsed as Record<string, CogRaw>;
       const mappedCogs = Object.entries(cogsMap).map(([key, c]) => {
-        const keyNum = Number.parseInt(key)
+        const keyNum = Number.parseInt(key, 10);
         return {
           key: keyNum,
           buildRate: c.a,
@@ -143,88 +143,88 @@ const extractCogs = (jsonData: RawJson): ParsedCog[] | null => {
           nothing: c.k,
           fixed: c.h === "everything",
           blocked: false,
-        }
-      })
-      return mappedCogs
+        };
+      });
+      return mappedCogs;
     }
   } catch {
-    return null
+    return null;
   }
 
-  return null
-}
+  return null;
+};
 
 const extractFlaggyShopUpgrades = (jsonData: RawJson): number => {
-  const gemItemsPurchased = jsonData.data.GemItemsPurchased
+  const gemItemsPurchased = jsonData.data.GemItemsPurchased;
   if (!gemItemsPurchased) {
-    return 0
+    return 0;
   }
 
-  let parsed: unknown
+  let parsed: unknown;
   try {
     // Handle both string (needs parsing) and already-parsed array
     if (typeof gemItemsPurchased === "string") {
-      parsed = JSON.parse(gemItemsPurchased)
+      parsed = JSON.parse(gemItemsPurchased);
     } else if (Array.isArray(gemItemsPurchased)) {
-      parsed = gemItemsPurchased as unknown[]
+      parsed = gemItemsPurchased as unknown[];
     } else {
-      return 0
+      return 0;
     }
     if (Array.isArray(parsed) && parsed.length > 118) {
-      const value = parsed[118]
-      return typeof value === "number" ? value : 0
+      const value = parsed[118];
+      return typeof value === "number" ? value : 0;
     }
   } catch {
-    return 0
+    return 0;
   }
 
-  return 0
-}
+  return 0;
+};
 
 const extractFlagPose = (jsonData: RawJson): number[] => {
-  const flagP = jsonData.data.FlagP
+  const flagP = jsonData.data.FlagP;
   if (!flagP) {
-    return []
+    return [];
   }
 
-  let parsed: unknown
+  let parsed: unknown;
   try {
     // Handle both string (needs parsing) and already-parsed array
     if (typeof flagP === "string") {
-      parsed = JSON.parse(flagP)
+      parsed = JSON.parse(flagP);
     } else if (Array.isArray(flagP)) {
-      parsed = flagP as unknown[]
+      parsed = flagP as unknown[];
     } else {
-      return []
+      return [];
     }
     if (Array.isArray(parsed)) {
-      return parsed.filter((v): v is number => typeof v === "number" && v >= 0)
+      return parsed.filter((v): v is number => typeof v === "number" && v >= 0);
     }
   } catch {
-    return []
+    return [];
   }
 
-  return []
-}
+  return [];
+};
 
 const extractFlagSlots = (
   jsonData: RawJson,
   flagPose: number[]
 ): ParsedCog[] => {
-  const flagU = jsonData.data.FlagU
+  const flagU = jsonData.data.FlagU;
   if (!flagU) {
-    return []
+    return [];
   }
 
-  let parsed: unknown
+  let parsed: unknown;
   try {
     // Handle both string (needs parsing) and already-parsed array
     if (typeof flagU === "string") {
-      parsed = JSON.parse(flagU)
+      parsed = JSON.parse(flagU);
     } else if (Array.isArray(flagU)) {
-      parsed = flagU as unknown[]
+      parsed = flagU as unknown[];
     } else {
-      return []
+      return [];
     }
     if (Array.isArray(parsed)) {
       return parsed.map((n, i) => {
@@ -244,7 +244,7 @@ const extractFlagSlots = (
             nothing: null,
             fixed: true,
             blocked: true,
-          }
+          };
         }
         if (n !== -11) {
           return {
@@ -262,7 +262,7 @@ const extractFlagSlots = (
             nothing: null,
             fixed: true,
             blocked: true,
-          }
+          };
         }
         return {
           key: i,
@@ -279,36 +279,38 @@ const extractFlagSlots = (
           nothing: null,
           fixed: false,
           blocked: false,
-        }
-      })
+        };
+      });
     }
   } catch {
-    return []
+    return [];
   }
 
-  return []
-}
+  return [];
+};
 
 const safeGet = <T>(arr: unknown, ...indexes: number[]): T | undefined => {
-  let current: unknown = arr
+  let current: unknown = arr;
   for (const index of indexes) {
-    if (current === undefined || current === null) break
+    if (current === undefined || current === null) {
+      break;
+    }
     if (typeof current === "object" && Array.isArray(current)) {
-      current = current[index]
+      current = current[index];
     } else {
-      return undefined
+      return undefined;
     }
   }
-  return current as T | undefined
-}
+  return current as T | undefined;
+};
 
 const getEntry = (
   key: number,
   cogs: Record<number, ParsedCog>,
   slots: Record<number, ParsedCog>
 ): ParsedCog | undefined => {
-  return cogs[key] ?? slots[key]
-}
+  return cogs[key] ?? slots[key];
+};
 
 export const calculateScore = (
   data: Omit<ParsedConstructionData, "score">
@@ -320,30 +322,32 @@ export const calculateScore = (
     expBoost: 0,
     flagBoost: 0,
     playerExpRate: 0,
-  }
+  };
 
   // Create bonus grid
-  const bonusGrid = Array(INV_ROWS)
-    .fill(0)
-    .map(() => {
-      return Array(INV_COLUMNS)
-        .fill(0)
-        .map(() => {
-          return { ...result }
-        })
-    })
+  const bonusGrid = new Array(INV_ROWS).fill(0).map(() => {
+    return new Array(INV_COLUMNS).fill(0).map(() => {
+      return { ...result };
+    });
+  });
 
   // First pass: Calculate bonuses from boostRadius
   for (const key of data.availableSlotKeys) {
-    const entry = getEntry(key, data.cogs, data.slots)
-    if (!entry) continue
-    if (!entry.boostRadius || typeof entry.boostRadius !== "string") continue
+    const entry = getEntry(key, data.cogs, data.slots);
+    if (!entry) {
+      continue;
+    }
+    if (!entry.boostRadius || typeof entry.boostRadius !== "string") {
+      continue;
+    }
 
-    const position = getPosition(key)
-    if (position.location !== "board") continue
+    const position = getPosition(key);
+    if (position.location !== "board") {
+      continue;
+    }
 
-    const { x: j, y: i } = position
-    const boosted: number[][] = []
+    const { x: j, y: i } = position;
+    const boosted: number[][] = [];
 
     switch (entry.boostRadius) {
       case "diagonal":
@@ -352,11 +356,11 @@ export const calculateScore = (
           [i - 1, j + 1],
           [i + 1, j - 1],
           [i + 1, j + 1]
-        )
-        break
+        );
+        break;
       case "adjacent":
-        boosted.push([i - 1, j], [i, j + 1], [i + 1, j], [i, j - 1])
-        break
+        boosted.push([i - 1, j], [i, j + 1], [i + 1, j], [i, j - 1]);
+        break;
       case "up":
         boosted.push(
           [i - 2, j - 1],
@@ -365,8 +369,8 @@ export const calculateScore = (
           [i - 1, j - 1],
           [i - 1, j],
           [i - 1, j + 1]
-        )
-        break
+        );
+        break;
       case "right":
         boosted.push(
           [i - 1, j + 2],
@@ -375,8 +379,8 @@ export const calculateScore = (
           [i - 1, j + 1],
           [i, j + 1],
           [i + 1, j + 1]
-        )
-        break
+        );
+        break;
       case "down":
         boosted.push(
           [i + 2, j - 1],
@@ -385,8 +389,8 @@ export const calculateScore = (
           [i + 1, j - 1],
           [i + 1, j],
           [i + 1, j + 1]
-        )
-        break
+        );
+        break;
       case "left":
         boosted.push(
           [i - 1, j - 2],
@@ -395,28 +399,32 @@ export const calculateScore = (
           [i - 1, j - 1],
           [i, j - 1],
           [i + 1, j - 1]
-        )
-        break
+        );
+        break;
       case "row":
         for (let k = 0; k < INV_COLUMNS; k++) {
-          if (j === k) continue
-          boosted.push([i, k])
+          if (j === k) {
+            continue;
+          }
+          boosted.push([i, k]);
         }
-        break
+        break;
       case "column":
         for (let k = 0; k < INV_ROWS; k++) {
-          if (i === k) continue
-          boosted.push([k, j])
+          if (i === k) {
+            continue;
+          }
+          boosted.push([k, j]);
         }
-        break
+        break;
       case "corner":
         boosted.push(
           [i - 2, j - 2],
           [i - 2, j + 2],
           [i + 2, j - 2],
           [i + 2, j + 2]
-        )
-        break
+        );
+        break;
       case "around":
         boosted.push(
           [i - 2, j],
@@ -431,106 +439,118 @@ export const calculateScore = (
           [i + 1, j],
           [i + 1, j + 1],
           [i + 2, j]
-        )
-        break
+        );
+        break;
       case "everything":
         for (let k = 0; k < INV_ROWS; k++) {
           for (let l = 0; l < INV_COLUMNS; l++) {
-            if (i === k && j === l) continue
-            boosted.push([k, l])
+            if (i === k && j === l) {
+              continue;
+            }
+            boosted.push([k, l]);
           }
         }
-        break
+        break;
       default:
-        break
+        break;
     }
 
     for (const boostCoord of boosted) {
-      const bonus = safeGet<Score>(bonusGrid, ...boostCoord)
-      if (!bonus) continue
+      const bonus = safeGet<Score>(bonusGrid, ...boostCoord);
+      if (!bonus) {
+        continue;
+      }
       bonus.buildRate +=
         (typeof entry.buildRadiusBoost === "number"
           ? entry.buildRadiusBoost
-          : 0) || 0
+          : 0) || 0;
       bonus.flaggy +=
         (typeof entry.flaggyRadiusBoost === "number"
           ? entry.flaggyRadiusBoost
-          : 0) || 0
+          : 0) || 0;
       bonus.expBoost +=
         (typeof entry.expRadiusBoost === "number" ? entry.expRadiusBoost : 0) ||
-        0
+        0;
       bonus.flagBoost +=
-        (typeof entry.flagBoost === "number" ? entry.flagBoost : 0) || 0
+        (typeof entry.flagBoost === "number" ? entry.flagBoost : 0) || 0;
     }
   }
 
   // Second pass: Sum up base stats and apply bonuses
-  let totalPlayerExpRate = 0
-  let totalExpBonus = 0
+  let totalPlayerExpRate = 0;
+  let totalExpBonus = 0;
 
   for (const key of data.availableSlotKeys) {
-    const entry = getEntry(key, data.cogs, data.slots)
-    if (!entry) continue
+    const entry = getEntry(key, data.cogs, data.slots);
+    if (!entry) {
+      continue;
+    }
 
-    const buildRate = typeof entry.buildRate === "number" ? entry.buildRate : 0
-    const expBonus = typeof entry.expBonus === "number" ? entry.expBonus : 0
-    const flaggy = typeof entry.flaggy === "number" ? entry.flaggy : 0
+    const buildRate = typeof entry.buildRate === "number" ? entry.buildRate : 0;
+    const expBonus = typeof entry.expBonus === "number" ? entry.expBonus : 0;
+    const flaggy = typeof entry.flaggy === "number" ? entry.flaggy : 0;
 
-    result.buildRate += buildRate
-    result.expBonus += expBonus
-    result.flaggy += flaggy
+    result.buildRate += buildRate;
+    result.expBonus += expBonus;
+    result.flaggy += flaggy;
 
-    const pos = getPosition(key)
-    if (pos.location !== "board") continue
+    const pos = getPosition(key);
+    if (pos.location !== "board") {
+      continue;
+    }
 
     // Collect global exp bonus (stat d) from all cogs on board
-    totalExpBonus += expBonus
+    totalExpBonus += expBonus;
 
-    const bonus = safeGet<Score>(bonusGrid, pos.y, pos.x)
+    const bonus = safeGet<Score>(bonusGrid, pos.y, pos.x);
     if (bonus) {
-      const buildRateBonus = (bonus.buildRate || 0) / 100
-      result.buildRate += Math.ceil(buildRate * buildRateBonus)
+      const buildRateBonus = (bonus.buildRate || 0) / 100;
+      result.buildRate += Math.ceil(buildRate * buildRateBonus);
 
       if (entry.isPlayer) {
-        result.expBoost += bonus.expBoost || 0
+        result.expBoost += bonus.expBoost || 0;
         // Calculate player exp rate: expGain * (1 + expRadiusBoost / 100)
-        const expGain = typeof entry.expGain === "number" ? entry.expGain : 0
-        const expRadiusBoost = bonus.expBoost || 0
-        const playerExp = expGain * (1 + expRadiusBoost / 100)
-        totalPlayerExpRate += playerExp
+        const expGain = typeof entry.expGain === "number" ? entry.expGain : 0;
+        const expRadiusBoost = bonus.expBoost || 0;
+        const playerExp = expGain * (1 + expRadiusBoost / 100);
+        totalPlayerExpRate += playerExp;
       }
 
-      const flaggyBonus = (bonus.flaggy || 0) / 100
-      result.flaggy += Math.ceil(flaggy * flaggyBonus)
+      const flaggyBonus = (bonus.flaggy || 0) / 100;
+      result.flaggy += Math.ceil(flaggy * flaggyBonus);
     } else if (entry.isPlayer) {
       // Player cog on board but no bonus grid entry (shouldn't happen, but handle it)
-      const expGain = typeof entry.expGain === "number" ? entry.expGain : 0
-      totalPlayerExpRate += expGain
+      const expGain = typeof entry.expGain === "number" ? entry.expGain : 0;
+      totalPlayerExpRate += expGain;
     }
   }
 
   // Apply global exp bonus to total player exp rate
-  const finalExp = totalPlayerExpRate * (1 + totalExpBonus / 100)
-  result.playerExpRate = finalExp
+  const finalExp = totalPlayerExpRate * (1 + totalExpBonus / 100);
+  result.playerExpRate = finalExp;
 
   // Third pass: Sum flag bonuses
   for (const key of data.flagPose) {
-    const entry = getEntry(key, data.cogs, data.slots)
-    if (!entry) continue
+    const entry = getEntry(key, data.cogs, data.slots);
+    if (!entry) {
+      continue;
+    }
 
-    const pos = getPosition(key)
-    if (pos.location !== "board") continue
+    const pos = getPosition(key);
+    if (pos.location !== "board") {
+      continue;
+    }
 
-    const bonus = safeGet<Score>(bonusGrid, pos.y, pos.x)
+    const bonus = safeGet<Score>(bonusGrid, pos.y, pos.x);
     if (bonus) {
-      result.flagBoost += bonus.flagBoost || 0
+      result.flagBoost += bonus.flagBoost || 0;
     }
   }
 
   // Apply flaggy shop upgrades
   result.flaggy = Math.floor(
     result.flaggy * (1 + data.flaggyShopUpgrades * 0.5)
-  )
+  );
 
-  return result
-}
+  return result;
+};

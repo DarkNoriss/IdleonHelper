@@ -1,6 +1,6 @@
-import type { CancellationToken } from "../../utils/cancellation-token"
-import { navigateTo } from "./helpers"
-import { codex } from "./codex"
+import type { CancellationToken } from "../../utils/cancellation-token";
+import { codex } from "./codex";
+import { navigateTo } from "./helpers";
 
 export const quickRef = {
   toStorage: async (token: CancellationToken): Promise<boolean> => {
@@ -10,6 +10,6 @@ export const quickRef = {
       codex.toQuikRef,
       token,
       "Storage"
-    )
+    );
   },
-} as const
+} as const;

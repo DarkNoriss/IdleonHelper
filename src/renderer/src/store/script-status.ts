@@ -1,4 +1,4 @@
-import { create } from "zustand"
+import { create } from "zustand";
 
 export type ScriptName =
   | "summoning.endless"
@@ -14,14 +14,14 @@ export type ScriptName =
   | "world3.construction.trash-cogs"
   | "general.test"
   | "general.storeItems"
-  | null
+  | null;
 
 type ScriptStatusState = {
-  currentScript: ScriptName
-  setCurrentScript: (script: ScriptName) => void
-}
+  currentScript: ScriptName;
+  setCurrentScript: (script: ScriptName) => void;
+};
 
 export const useScriptStatusStore = create<ScriptStatusState>((set) => ({
   currentScript: null,
   setCurrentScript: (script) => set({ currentScript: script }),
-}))
+}));

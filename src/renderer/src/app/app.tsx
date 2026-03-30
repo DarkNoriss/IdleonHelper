@@ -1,55 +1,54 @@
-import { useEffect, useState, type ReactElement } from "react"
-import { GameDataProvider } from "@/providers/game-data-provider"
-import { ThemeProvider } from "@/providers/theme-provider"
-import { useNavigationStore, type NavigationPage } from "@/store/navigation"
-import { useScriptStatusStore } from "@/store/script-status"
+import { type ReactElement, useEffect, useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+import { GameDataProvider } from "@/providers/game-data-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
+import { type NavigationPage, useNavigationStore } from "@/store/navigation";
+import { useScriptStatusStore } from "@/store/script-status";
 
-import { cn } from "@/lib/utils"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-
-import { AppHeader } from "./app-header"
-import { Dashboard } from "./pages/dashboard"
-import { Logs } from "./pages/general/logs"
-import { StoreItems } from "./pages/general/store-items"
-import { Test } from "./pages/general/test"
-import { RawData } from "./pages/raw-data"
-import { WeeklyBattle } from "./pages/world-2/weekly-battle"
-import { Construction } from "./pages/world-3/construction"
-import { Farming } from "./pages/world-6/farming"
-import { Summoning } from "./pages/world-6/summoning"
-import { AppSidebar } from "./sidebar/app-sidebar"
+import { AppHeader } from "./app-header";
+import { Dashboard } from "./pages/dashboard";
+import { Logs } from "./pages/general/logs";
+import { StoreItems } from "./pages/general/store-items";
+import { Test } from "./pages/general/test";
+import { RawData } from "./pages/raw-data";
+import { WeeklyBattle } from "./pages/world-2/weekly-battle";
+import { Construction } from "./pages/world-3/construction";
+import { Farming } from "./pages/world-6/farming";
+import { Summoning } from "./pages/world-6/summoning";
+import { AppSidebar } from "./sidebar/app-sidebar";
 
 export const App = () => {
-  const currentPage = useNavigationStore((state) => state.currentPage)
+  const currentPage = useNavigationStore((state) => state.currentPage);
   const setCurrentScript = useScriptStatusStore(
     (state) => state.setCurrentScript
-  )
-  const [isDev, setIsDev] = useState(false)
+  );
+  const [isDev, setIsDev] = useState(false);
 
   useEffect(() => {
     // Check if we're in dev mode
     window.api.app
       .isDev()
       .then(setIsDev)
-      .catch(() => setIsDev(false))
+      .catch(() => setIsDev(false));
 
     // Get initial status
     window.api.script.getStatus().then((status) => {
       if (!status.isWorking) {
-        setCurrentScript(null)
+        setCurrentScript(null);
       }
-    })
+    });
 
     // Listen for status changes
     const cleanup = window.api.script.onStatusChange((status) => {
       if (!status.isWorking) {
-        setCurrentScript(null)
+        setCurrentScript(null);
       }
-    })
+    });
 
-    return cleanup
-  }, [setCurrentScript])
+    return cleanup;
+  }, [setCurrentScript]);
 
   const pageMap: Partial<Record<NavigationPage, ReactElement>> = {
     dashboard: <Dashboard />,
@@ -61,7 +60,7 @@ export const App = () => {
     "world3/construction": <Construction />,
     "general/store-items": <StoreItems />,
     ...(isDev && { "general/test": <Test /> }),
-  }
+  };
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
@@ -74,11 +73,11 @@ export const App = () => {
               <ScrollArea className="h-full max-h-full">
                 {Object.entries(pageMap).map(([pageKey, page]) => (
                   <div
-                    key={pageKey}
                     className={cn(
                       "block h-full max-h-full min-h-0 flex-1 p-2",
                       currentPage === pageKey ? "block" : "hidden"
                     )}
+                    key={pageKey}
                   >
                     {page}
                   </div>
@@ -89,5 +88,5 @@ export const App = () => {
         </div>
       </GameDataProvider>
     </ThemeProvider>
-  )
-}
+  );
+};

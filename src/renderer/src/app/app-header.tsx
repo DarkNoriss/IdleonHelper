@@ -1,18 +1,17 @@
-import * as React from "react"
-import { X } from "lucide-react"
-
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { X } from "lucide-react";
+import type * as React from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const AppHeader = () => {
   const handleClose = () => {
-    window.api.window.close()
-  }
+    window.api.window.close();
+  };
 
   return (
     <header
       className={cn(
-        "bg-sidebar text-sidebar-foreground relative flex h-8 w-full shrink-0 items-center justify-center"
+        "relative flex h-8 w-full shrink-0 items-center justify-center bg-sidebar text-sidebar-foreground"
       )}
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
@@ -22,14 +21,14 @@ export const AppHeader = () => {
 
       <div className="absolute right-0 flex items-center gap-2">
         <Button
-          variant="ghost"
+          className="p-2! hover:rounded-none! hover:bg-destructive! hover:text-destructive-foreground!"
           onClick={handleClose}
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          className="hover:bg-destructive! hover:text-destructive-foreground! p-2! hover:rounded-none!"
+          variant="ghost"
         >
           <X className="h-4 w-4" />
         </Button>
       </div>
     </header>
-  )
-}
+  );
+};
