@@ -14,6 +14,12 @@
     "paths": {
       "@/parsers/*": ["./src/parsers/*"],
       "@/types/*": ["src/types/*"]
-    }
+    },
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowUnreachableCode": false,
+    "useUnknownInCatchVariables": true,
+    "noUncheckedIndexedAccess": true
   }
 }

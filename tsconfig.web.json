@@ -19,14 +19,19 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
+    /* Type Safety */
     "strict": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
+    "allowUnreachableCode": false,
+    "useUnknownInCatchVariables": true,
+    "noUncheckedIndexedAccess": true,
     "noUncheckedSideEffectImports": true,
-    
+    "erasableSyntaxOnly": true,
+
     "baseUrl": ".",
     "paths": {
       "@/parsers/*": ["./src/parsers/*"],

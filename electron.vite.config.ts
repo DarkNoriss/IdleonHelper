@@ -1,7 +1,7 @@
-import path from "path"
-import tailwindcss from "@tailwindcss/vite"
-import react from "@vitejs/plugin-react"
-import { defineConfig } from "electron-vite"
+import path from "node:path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "electron-vite";
 
 export default defineConfig({
   main: {
@@ -17,11 +17,11 @@ export default defineConfig({
       alias: [
         {
           find: /^@\/parsers\/?(.*)$/,
-          replacement: path.resolve(__dirname, "./src/parsers/$1"),
+          replacement: path.resolve(import.meta.dirname, "./src/parsers/$1"),
         },
         {
           find: "@",
-          replacement: path.resolve(__dirname, "./src/renderer/src"),
+          replacement: path.resolve(import.meta.dirname, "./src/renderer/src"),
         },
       ],
     },
@@ -34,4 +34,4 @@ export default defineConfig({
       tailwindcss(),
     ],
   },
-})
+});
