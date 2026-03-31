@@ -52,7 +52,7 @@ export default defineScript({
 
       logger.log("Checking if board is empty (within spare area)...");
       const isBoardEmpty = await backendCommand.isVisible(
-        "construction/board_empty",
+        "ui/codex/quik-ref/construction/board_empty",
         { offset: spareAreaOffset },
         token
       );

@@ -60,7 +60,7 @@ export default defineScript({
 
       // Check if we can go to the next page
       const nextPageAvailable = await backendCommand.isVisible(
-        "construction/cogs-page-next",
+        "ui/codex/quik-ref/construction/cogs-page-next",
         undefined,
         token
       );
