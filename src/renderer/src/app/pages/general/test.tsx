@@ -6,3 +6,5 @@ export const Test = () => (
     title="Test"
   />
 );
+
+export default Test;

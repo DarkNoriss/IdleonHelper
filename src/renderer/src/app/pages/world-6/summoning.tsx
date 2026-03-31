@@ -15,3 +15,5 @@ export const Summoning = () => (
     title="Summoning"
   />
 );
+
+export default Summoning;

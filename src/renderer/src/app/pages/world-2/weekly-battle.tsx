@@ -168,3 +168,5 @@ export const WeeklyBattle = () => {
     </Card>
   );
 };
+
+export default WeeklyBattle;

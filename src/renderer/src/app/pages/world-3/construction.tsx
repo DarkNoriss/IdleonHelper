@@ -302,3 +302,5 @@ export const Construction = () => {
     </ScriptPage>
   );
 };
+
+export default Construction;

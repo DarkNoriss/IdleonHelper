@@ -60,3 +60,5 @@ export const RawData = () => {
     </div>
   );
 };
+
+export default RawData;

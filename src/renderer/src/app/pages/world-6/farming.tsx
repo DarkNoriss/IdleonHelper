@@ -9,3 +9,5 @@ export const Farming = () => (
     title="Farming"
   />
 );
+
+export default Farming;

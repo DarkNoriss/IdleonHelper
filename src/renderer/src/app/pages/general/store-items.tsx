@@ -8,3 +8,5 @@ export const StoreItems = () => (
     title="Store Items"
   />
 );
+
+export default StoreItems;
