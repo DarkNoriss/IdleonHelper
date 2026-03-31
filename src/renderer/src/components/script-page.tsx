@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMainState } from "@/hooks/use-main-state";
 import type { ScriptMap } from "@/types/scripts";
 
-export type ScriptAction = {
+export type ScriptAction<T extends keyof ScriptMap = keyof ScriptMap> = {
   label: string;
-  scriptId: keyof ScriptMap;
+  scriptId: T;
   runningLabel?: string;
-  args?: () => unknown[];
-  onResult?: (result: unknown) => void;
+  args?: () => ScriptMap[T]["args"];
+  onResult?: (result: ScriptMap[T]["result"]) => void;
 };
 
 type ScriptPageProps = {
@@ -53,8 +53,8 @@ export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
           id: keyof ScriptMap,
           ...args: unknown[]
         ) => Promise<unknown>
-      )(action.scriptId, ...args);
-      action.onResult?.(result);
+      )(action.scriptId, ...(args as unknown[]));
+      (action.onResult as ((result: unknown) => void) | undefined)?.(result);
     } catch (err) {
       if (
         !(err instanceof Error && err.message === "Operation was cancelled")
