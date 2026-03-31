@@ -29,7 +29,7 @@ export type ScriptMap = {
   "world2.weeklyBattle.run": { args: [number[]]; result: undefined };
   "general.test.run": { args: []; result: undefined };
   "general.storeItems.run": { args: []; result: undefined };
-  "general.candy.debug": { args: [string]; result: undefined };
+  "general.candy.run": { args: [string]; result: undefined };
 };
 
 export type ConnectionStatus = "connecting" | "connected" | "error";

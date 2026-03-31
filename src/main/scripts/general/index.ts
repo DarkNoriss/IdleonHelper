@@ -1,5 +1,5 @@
-import candyDebug from "./candy-debug";
+import candy from "./candy";
 import storeItems from "./store-items";
 import test from "./test";
 
-export const generalScripts = [test, storeItems, candyDebug];
+export const generalScripts = [test, storeItems, candy];

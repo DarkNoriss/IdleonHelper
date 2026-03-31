@@ -23,8 +23,9 @@ const Candy = () => {
     <ScriptPage
       actions={[
         {
-          label: "Debug Scan",
-          scriptId: "general.candy.debug",
+          label: "Start",
+          scriptId: "general.candy.run",
+          runningLabel: "Stop",
           args: () => [selectedCandy],
         },
       ]}
