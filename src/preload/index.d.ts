@@ -6,6 +6,7 @@ import type {
   Score,
   SolverWeights,
 } from "../types/construction";
+import type { ScriptMap } from "../types/scripts";
 
 type ConnectionStatus = "connecting" | "connected" | "error";
 
@@ -54,21 +55,22 @@ declare global {
         ) => () => void;
       };
       script: {
-        getStatus: () => Promise<{ isWorking: boolean }>;
+        run: <T extends keyof ScriptMap>(
+          id: T,
+          ...args: ScriptMap[T]["args"]
+        ) => Promise<ScriptMap[T]["result"]>;
         cancel: () => Promise<void>;
-        onStatusChange: (
-          callback: (status: { isWorking: boolean }) => void
-        ) => () => void;
+        // Legacy: weekly battle data ops
         world2: {
           weeklyBattle: {
             fetch: () => Promise<WeeklyBattleData>;
             get: () => Promise<WeeklyBattleData | null>;
-            run: (steps: number[]) => Promise<void>;
             onChange: (
               callback: (data: WeeklyBattleData | null) => void
             ) => () => void;
           };
         };
+        // Legacy: construction solver
         world3: {
           construction: {
             solver: (
@@ -79,29 +81,12 @@ declare global {
               score: Score;
               steps: OptimalStep[];
             } | null>;
-            apply: (steps: OptimalStep[]) => Promise<void>;
-            collectCogs: () => Promise<void>;
-            trashCogs: () => Promise<void>;
           };
         };
-        world6: {
-          farming: {
-            start: () => Promise<void>;
-            lockUnlock: () => Promise<void>;
-          };
-          summoning: {
-            startEndlessAutobattler: () => Promise<void>;
-            startAutobattler: () => Promise<void>;
-          };
-        };
-        general: {
-          test: {
-            run: () => Promise<void>;
-          };
-          storeItems: {
-            run: () => Promise<void>;
-          };
-        };
+        // Legacy: status change listener
+        onStatusChange: (
+          callback: (status: { isWorking: boolean }) => void
+        ) => () => void;
       };
       app: {
         isDev: () => Promise<boolean>;

@@ -92,7 +92,7 @@ export const WeeklyBattle = () => {
     );
 
     try {
-      await window.api.script.world2.weeklyBattle.run(steps);
+      await window.api.script.run("world2.weeklyBattle.run", steps);
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         // User cancelled, don't show error

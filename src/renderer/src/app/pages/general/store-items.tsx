@@ -37,7 +37,7 @@ export const StoreItems = () => {
     setCurrentScript("general.storeItems");
 
     try {
-      await window.api.script.general.storeItems.run();
+      await window.api.script.run("general.storeItems.run");
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         // User cancelled, don't show error

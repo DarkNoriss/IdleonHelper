@@ -38,7 +38,7 @@ export const Summoning = () => {
     setCurrentScript("summoning.endless");
 
     try {
-      await window.api.script.world6.summoning.startEndlessAutobattler();
+      await window.api.script.run("world6.summoning.startEndlessAutobattler");
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         // User cancelled, don't show error
@@ -78,7 +78,7 @@ export const Summoning = () => {
     setCurrentScript("summoning.autobattler");
 
     try {
-      await window.api.script.world6.summoning.startAutobattler();
+      await window.api.script.run("world6.summoning.startAutobattler");
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         // User cancelled, don't show error

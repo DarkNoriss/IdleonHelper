@@ -33,13 +33,6 @@ export const App = () => {
       .then(setIsDev)
       .catch(() => setIsDev(false));
 
-    // Get initial status
-    window.api.script.getStatus().then((status) => {
-      if (!status.isWorking) {
-        setCurrentScript(null);
-      }
-    });
-
     // Listen for status changes
     const cleanup = window.api.script.onStatusChange((status) => {
       if (!status.isWorking) {

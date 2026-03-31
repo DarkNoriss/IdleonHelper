@@ -37,7 +37,7 @@ export const Test = () => {
     setCurrentScript("general.test");
 
     try {
-      await window.api.script.general.test.run();
+      await window.api.script.run("general.test.run");
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         // User cancelled, don't show error

@@ -1,8 +1,6 @@
 import { electronAPI } from "@electron-toolkit/preload";
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from "electron";
 
-import type { OptimalStep } from "../types/construction";
-
 const api = {
   window: {
     close: () => {
@@ -29,24 +27,13 @@ const api = {
     },
   },
   script: {
-    getStatus: () => {
-      return ipcRenderer.invoke("script:get-status");
+    run: (id: string, ...args: unknown[]) => {
+      return ipcRenderer.invoke(`script:${id}`, ...args);
     },
     cancel: () => {
       return ipcRenderer.invoke("script:cancel");
     },
-    onStatusChange: (callback: (status: { isWorking: boolean }) => void) => {
-      const handler = (
-        _event: IpcRendererEvent,
-        status: { isWorking: boolean }
-      ) => {
-        callback(status);
-      };
-      ipcRenderer.on("script-status-changed", handler);
-      return () => {
-        ipcRenderer.off("script-status-changed", handler);
-      };
-    },
+    // Legacy: weekly battle data ops (will move to state.* in Phase 2)
     world2: {
       weeklyBattle: {
         fetch: () => {
@@ -54,9 +41,6 @@ const api = {
         },
         get: () => {
           return ipcRenderer.invoke("script:world-2.weekly-battle.get");
-        },
-        run: (steps: number[]) => {
-          return ipcRenderer.invoke("script:world-2.weekly-battle.run", steps);
         },
         onChange: (callback: (data: unknown) => void) => {
           const handler = (_event: IpcRendererEvent, data: unknown) => {
@@ -69,28 +53,7 @@ const api = {
         },
       },
     },
-    world6: {
-      farming: {
-        start: () => {
-          return ipcRenderer.invoke("script:world-6.farming.start");
-        },
-        lockUnlock: () => {
-          return ipcRenderer.invoke("script:world-6.farming.lock-unlock");
-        },
-      },
-      summoning: {
-        startEndlessAutobattler: () => {
-          return ipcRenderer.invoke(
-            "script:world-6.summoning.start-endless-autobattler"
-          );
-        },
-        startAutobattler: () => {
-          return ipcRenderer.invoke(
-            "script:world-6.summoning.start-autobattler"
-          );
-        },
-      },
-    },
+    // Legacy: construction solver (not a defineScript, stays as specific handler)
     world3: {
       construction: {
         solver: (
@@ -105,28 +68,20 @@ const api = {
             solveTime
           );
         },
-        apply: (steps: OptimalStep[]) => {
-          return ipcRenderer.invoke("script:world-3.construction.apply", steps);
-        },
-        collectCogs: () => {
-          return ipcRenderer.invoke("script:world-3.construction.collect-cogs");
-        },
-        trashCogs: () => {
-          return ipcRenderer.invoke("script:world-3.construction.trash-cogs");
-        },
       },
     },
-    general: {
-      test: {
-        run: () => {
-          return ipcRenderer.invoke("script:general.test.run");
-        },
-      },
-      storeItems: {
-        run: () => {
-          return ipcRenderer.invoke("script:general.store-items.run");
-        },
-      },
+    // Legacy: status change listener (will move to state.* in Phase 2)
+    onStatusChange: (callback: (status: { isWorking: boolean }) => void) => {
+      const handler = (
+        _event: IpcRendererEvent,
+        status: { isWorking: boolean }
+      ) => {
+        callback(status);
+      };
+      ipcRenderer.on("script-status-changed", handler);
+      return () => {
+        ipcRenderer.off("script-status-changed", handler);
+      };
     },
   },
   app: {

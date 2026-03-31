@@ -157,7 +157,7 @@ export const Construction = () => {
 
     try {
       const steps = solverResult?.steps || [];
-      await window.api.script.world3.construction.apply(steps);
+      await window.api.script.run("world3.construction.apply", steps);
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         setCurrentScript(null);
@@ -192,7 +192,7 @@ export const Construction = () => {
     setCurrentScript("world3.construction.collect-cogs");
 
     try {
-      await window.api.script.world3.construction.collectCogs();
+      await window.api.script.run("world3.construction.collectCogs");
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         setCurrentScript(null);
@@ -225,7 +225,7 @@ export const Construction = () => {
     setCurrentScript("world3.construction.trash-cogs");
 
     try {
-      await window.api.script.world3.construction.trashCogs();
+      await window.api.script.run("world3.construction.trashCogs");
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         setCurrentScript(null);

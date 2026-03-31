@@ -36,7 +36,7 @@ export const Farming = () => {
     setCurrentScript("farming");
 
     try {
-      await window.api.script.world6.farming.start();
+      await window.api.script.run("world6.farming.start");
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         setCurrentScript(null);
@@ -71,7 +71,7 @@ export const Farming = () => {
     setCurrentScript("farming.lock-unlock");
 
     try {
-      await window.api.script.world6.farming.lockUnlock();
+      await window.api.script.run("world6.farming.lockUnlock");
     } catch (err) {
       if (err instanceof Error && err.message === "Operation was cancelled") {
         setCurrentScript(null);
