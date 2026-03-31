@@ -603,19 +603,103 @@ src/
 
 ---
 
+## Section 6: Scaling to 50-80 Pages
+
+The app will grow to ~7 worlds with 5-10 pages each, plus ~10 general pages. The design must handle this without manual type unions or giant config arrays.
+
+### NavigationPage Type - Derived, Not Manual
+
+Currently `NavigationPage` is a manual union of 9 strings. At 80 pages this is unmaintainable. Instead, derive it from the page config:
+
+```typescript
+// src/renderer/src/app/page-registry.ts
+// Single source of truth for all pages
+
+export const pageRegistry = {
+  dashboard: () => import("./pages/dashboard"),
+  rawData: () => import("./pages/raw-data"),
+  logs: () => import("./pages/general/logs"),
+  // World 1
+  "world1/feature-a": () => import("./pages/world-1/feature-a"),
+  // World 2
+  "world2/weekly-battle": () => import("./pages/world-2/weekly-battle"),
+  // ... 70 more entries
+} as const satisfies Record<string, () => Promise<{ default: React.ComponentType }>>;
+
+// Type derived automatically - never manually maintained
+export type NavigationPage = keyof typeof pageRegistry;
+```
+
+Adding a page: add one entry to `pageRegistry`. The type updates automatically. `app.tsx` reads from this registry. No separate type file to maintain.
+
+### Sidebar Config - Shared Navigation Tree
+
+At 80 pages, the sidebar `getNavItems()` array becomes the bottleneck. Move it to a shared config:
+
+```typescript
+// src/renderer/src/app/nav-config.ts
+import type { NavigationPage } from "./page-registry";
+
+type NavGroup = {
+  title: string;
+  items: { title: string; page: NavigationPage; devOnly?: boolean }[];
+};
+
+type NavEntry = { title: string; page: NavigationPage } | NavGroup;
+
+export const navConfig: NavEntry[] = [
+  { title: "Dashboard", page: "dashboard" },
+  { title: "Raw Data", page: "rawData" },
+  {
+    title: "General",
+    items: [
+      { title: "Logs", page: "logs" },
+      { title: "Store Items", page: "general/store-items" },
+      { title: "Test", page: "general/test", devOnly: true },
+    ],
+  },
+  {
+    title: "World 2",
+    items: [
+      { title: "Weekly Battle", page: "world2/weekly-battle" },
+    ],
+  },
+  // World 3, 4, 5, 6, 7...
+];
+```
+
+The sidebar component reads from `navConfig` instead of defining navigation inline. Adding a page to the sidebar: add one object to the appropriate world array.
+
+### Page Naming Convention
+
+With many pages, use consistent `worldN/feature-name` keys:
+
+```
+dashboard, rawData, logs                    # top-level
+general/store-items, general/test           # general
+world1/feature-a, world1/feature-b          # world 1
+world2/weekly-battle                        # world 2
+world3/construction                         # world 3
+world6/farming, world6/summoning            # world 6
+```
+
+This keeps page keys predictable and sortable.
+
+---
+
 ## Adding a New Feature Checklist
 
 When adding a new World N feature after refactoring:
 
 1. **Create script file** `src/main/scripts/worldN/my-feature.ts` using `defineScript()`
 2. **Export from barrel** `src/main/scripts/worldN/index.ts` - add to array
-3. **Register in registry** `src/main/scripts/registry.ts` - add `...worldNScripts`
+3. **Register in registry** `src/main/scripts/registry.ts` - add `...worldNScripts` (skip if world already registered)
 4. **Add to ScriptMap** `src/types/scripts.ts` - add type entry (only if script has args/return)
 5. **Create page** `src/renderer/src/app/pages/world-N/my-feature.tsx` using `<ScriptPage>`
-6. **Add lazy import** `src/renderer/src/app/app.tsx` - one line in pages record
-7. **Add sidebar entry** `src/renderer/src/app/sidebar/app-sidebar.tsx` - one line
+6. **Add to page registry** `src/renderer/src/app/page-registry.ts` - one line (NavigationPage type updates automatically)
+7. **Add sidebar entry** `src/renderer/src/app/nav-config.ts` - one line in the world's items array
 
-Steps 1-2 are the real work. Steps 3-7 are one-liners.
+Steps 1-2 are the real work. Steps 3-7 are one-liners. For a new world (e.g., first World 4 feature), step 3 adds the world to the registry and step 7 adds a new nav group.
 
 ---
 
