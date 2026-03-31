@@ -25,7 +25,7 @@ const formatTimestamp = (timestamp: number): string => {
   return new Date(timestamp).toLocaleTimeString();
 };
 
-export const Logs = () => {
+const Logs = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 

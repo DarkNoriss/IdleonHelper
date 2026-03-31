@@ -1,6 +1,6 @@
 import { ScriptPage } from "@/components/script-page";
 
-export const StoreItems = () => (
+const StoreItems = () => (
   <ScriptPage
     actions={[
       { label: "Start Store Items", scriptId: "general.storeItems.run" },

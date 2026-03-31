@@ -1,15 +1,7 @@
 import { create } from "zustand";
+import type { NavigationPage } from "@/app/page-registry";
 
-export type NavigationPage =
-  | "dashboard"
-  | "rawData"
-  | "weeklyBattle"
-  | "summoning"
-  | "farming"
-  | "world3/construction"
-  | "logs"
-  | "general/test"
-  | "general/store-items";
+export type { NavigationPage } from "@/app/page-registry";
 
 type NavigationState = {
   currentPage: NavigationPage;

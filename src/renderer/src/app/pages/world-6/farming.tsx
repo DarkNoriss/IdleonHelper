@@ -1,6 +1,6 @@
 import { ScriptPage } from "@/components/script-page";
 
-export const Farming = () => (
+const Farming = () => (
   <ScriptPage
     actions={[
       { label: "Start Farming", scriptId: "world6.farming.start" },

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMainState } from "@/hooks/use-main-state";
 
-export const WeeklyBattle = () => {
+const WeeklyBattle = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeScript, setActiveScript] = useState<string | null>(null);

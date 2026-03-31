@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { navConfig } from "@/app/nav-config";
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,82 +19,10 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { type NavigationPage, useNavigationStore } from "@/store/navigation";
+import { useNavigationStore } from "@/store/navigation";
 
 import { SidebarBackendStatus } from "./backend-status";
 import { UpdateStatus } from "./update-status";
-
-// Navigation data with routes
-type NavItem = {
-  title: string;
-  page?: NavigationPage;
-  items?: { title: string; page: NavigationPage; devOnly?: boolean }[];
-  devOnly?: boolean;
-};
-
-const getNavItems = (): NavItem[] => {
-  const baseNav: NavItem[] = [
-    {
-      title: "Dashboard",
-      page: "dashboard",
-    },
-    {
-      title: "Raw Data",
-      page: "rawData",
-    },
-    {
-      title: "General",
-      items: [
-        {
-          title: "Logs",
-          page: "logs",
-        },
-        {
-          title: "Store Items",
-          page: "general/store-items",
-        },
-        {
-          title: "Test",
-          page: "general/test",
-          devOnly: true,
-        },
-      ],
-    },
-    {
-      title: "World 2",
-      items: [
-        {
-          title: "Weekly Battle",
-          page: "weeklyBattle",
-        },
-      ],
-    },
-    {
-      title: "World 3",
-      items: [
-        {
-          title: "Construction",
-          page: "world3/construction",
-        },
-      ],
-    },
-    {
-      title: "World 6",
-      items: [
-        {
-          title: "Summoning",
-          page: "summoning",
-        },
-        {
-          title: "Farming",
-          page: "farming",
-        },
-      ],
-    },
-  ];
-
-  return baseNav;
-};
 
 export const AppSidebar = ({
   ...props
@@ -103,91 +32,78 @@ export const AppSidebar = ({
   const [isDev, setIsDev] = useState(false);
 
   useEffect(() => {
-    // Check if we're in dev mode
     window.api.app
       .isDev()
       .then(setIsDev)
       .catch(() => setIsDev(false));
   }, []);
 
-  const navMain = getNavItems();
-
   return (
     <Sidebar {...props} variant="inset">
       <SidebarContent className="gap-0">
         <ScrollArea className="h-full">
-          {navMain
-            .filter((item) => !item.devOnly || isDev)
-            .map((item) => {
-              // If item has no children, render as a simple button
-              if (!item.items || item.items.length === 0) {
-                if (!item.page) {
-                  return null;
-                }
-
-                return (
-                  <SidebarGroup key={item.title}>
-                    <SidebarMenu>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton
-                          isActive={currentPage === item.page}
-                          onClick={() => item.page && setPage(item.page)}
-                        >
-                          {item.title}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </SidebarMenu>
-                  </SidebarGroup>
-                );
-              }
-
-              // Filter sub-items based on devOnly
-              const visibleItems = item.items.filter(
-                (subItem) => !subItem.devOnly || isDev
-              );
-
-              // Don't render collapsible if no visible items
-              if (visibleItems.length === 0) {
-                return null;
-              }
-
-              // If item has children, render as collapsible
+          {navConfig.map((entry) => {
+            if (!("items" in entry)) {
               return (
-                <Collapsible
-                  className="group/collapsible"
-                  key={item.title}
-                  title={item.title}
-                >
-                  <SidebarGroup>
-                    <SidebarGroupLabel
-                      asChild
-                      className="group/label text-sidebar-foreground text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    >
-                      <CollapsibleTrigger>
-                        {item.title}
-                        <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                      </CollapsibleTrigger>
-                    </SidebarGroupLabel>
-                    <CollapsibleContent>
-                      <SidebarGroupContent>
-                        <SidebarMenu>
-                          {visibleItems.map((subItem) => (
-                            <SidebarMenuItem key={subItem.title}>
-                              <SidebarMenuButton
-                                isActive={currentPage === subItem.page}
-                                onClick={() => setPage(subItem.page)}
-                              >
-                                {subItem.title}
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          ))}
-                        </SidebarMenu>
-                      </SidebarGroupContent>
-                    </CollapsibleContent>
-                  </SidebarGroup>
-                </Collapsible>
+                <SidebarGroup key={entry.title}>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        isActive={currentPage === entry.page}
+                        onClick={() => setPage(entry.page)}
+                      >
+                        {entry.title}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroup>
               );
-            })}
+            }
+
+            const visibleItems = entry.items.filter(
+              (subItem) => !subItem.devOnly || isDev
+            );
+
+            if (visibleItems.length === 0) {
+              return null;
+            }
+
+            return (
+              <Collapsible
+                className="group/collapsible"
+                key={entry.title}
+                title={entry.title}
+              >
+                <SidebarGroup>
+                  <SidebarGroupLabel
+                    asChild
+                    className="group/label text-sidebar-foreground text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  >
+                    <CollapsibleTrigger>
+                      {entry.title}
+                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </CollapsibleTrigger>
+                  </SidebarGroupLabel>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {visibleItems.map((subItem) => (
+                          <SidebarMenuItem key={subItem.title}>
+                            <SidebarMenuButton
+                              isActive={currentPage === subItem.page}
+                              onClick={() => setPage(subItem.page)}
+                            >
+                              {subItem.title}
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </SidebarGroup>
+              </Collapsible>
+            );
+          })}
         </ScrollArea>
       </SidebarContent>
 

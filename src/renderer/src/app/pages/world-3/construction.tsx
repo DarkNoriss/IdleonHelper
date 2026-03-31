@@ -42,7 +42,7 @@ const formatLocation = (
   return `${locationType} [${x}|${y}]`;
 };
 
-export const Construction = () => {
+const Construction = () => {
   const parsedJson = useRawJsonStore((state) => state.parsedJson);
   const { construction: constructionData } = useGameData();
   const [focus, setFocus] = useState<SolverFocus>("exp");

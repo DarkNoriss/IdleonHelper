@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useRawJsonStore } from "@/store/raw-json";
 
-export const RawData = () => {
+const RawData = () => {
   const rawJson = useRawJsonStore((state) => state.rawJson);
   const setRawJson = useRawJsonStore((state) => state.setRawJson);
   const clearRawJson = useRawJsonStore((state) => state.clearRawJson);

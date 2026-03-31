@@ -1,6 +1,6 @@
 import { ScriptPage } from "@/components/script-page";
 
-export const Summoning = () => (
+const Summoning = () => (
   <ScriptPage
     actions={[
       {

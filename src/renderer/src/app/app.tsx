@@ -1,46 +1,37 @@
-import { type ReactElement, useEffect, useState } from "react";
+import { type ComponentType, lazy, Suspense, useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
 import { GameDataProvider } from "@/providers/game-data-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { type NavigationPage, useNavigationStore } from "@/store/navigation";
 
 import { AppHeader } from "./app-header";
-import { Dashboard } from "./pages/dashboard";
-import { Logs } from "./pages/general/logs";
-import { StoreItems } from "./pages/general/store-items";
-import { Test } from "./pages/general/test";
-import { RawData } from "./pages/raw-data";
-import { WeeklyBattle } from "./pages/world-2/weekly-battle";
-import { Construction } from "./pages/world-3/construction";
-import { Farming } from "./pages/world-6/farming";
-import { Summoning } from "./pages/world-6/summoning";
+import { pageRegistry } from "./page-registry";
 import { AppSidebar } from "./sidebar/app-sidebar";
+
+const lazyPages = Object.fromEntries(
+  Object.entries(pageRegistry).map(([key, loader]) => [key, lazy(loader)])
+) as unknown as Record<
+  NavigationPage,
+  React.LazyExoticComponent<ComponentType>
+>;
 
 export const App = () => {
   const currentPage = useNavigationStore((state) => state.currentPage);
   const [isDev, setIsDev] = useState(false);
 
   useEffect(() => {
-    // Check if we're in dev mode
     window.api.app
       .isDev()
       .then(setIsDev)
       .catch(() => setIsDev(false));
   }, []);
 
-  const pageMap: Partial<Record<NavigationPage, ReactElement>> = {
-    dashboard: <Dashboard />,
-    rawData: <RawData />,
-    logs: <Logs />,
-    weeklyBattle: <WeeklyBattle />,
-    summoning: <Summoning />,
-    farming: <Farming />,
-    "world3/construction": <Construction />,
-    "general/store-items": <StoreItems />,
-    ...(isDev && { "general/test": <Test /> }),
-  };
+  const ActivePage = lazyPages[currentPage];
+
+  if (currentPage === "general/test" && !isDev) {
+    return null;
+  }
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
@@ -51,17 +42,11 @@ export const App = () => {
             <AppSidebar />
             <SidebarInset>
               <ScrollArea className="h-full max-h-full">
-                {Object.entries(pageMap).map(([pageKey, page]) => (
-                  <div
-                    className={cn(
-                      "block h-full max-h-full min-h-0 flex-1 p-2",
-                      currentPage === pageKey ? "block" : "hidden"
-                    )}
-                    key={pageKey}
-                  >
-                    {page}
-                  </div>
-                ))}
+                <div className="block h-full max-h-full min-h-0 flex-1 p-2">
+                  <Suspense fallback={null}>
+                    <ActivePage />
+                  </Suspense>
+                </div>
               </ScrollArea>
             </SidebarInset>
           </SidebarProvider>
