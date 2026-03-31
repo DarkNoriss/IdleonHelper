@@ -2,7 +2,7 @@ import { defineScript } from "../define-script";
 import { navigation } from "../game-nav";
 
 export default defineScript({
-  id: "general.test",
+  id: "general.test.run",
   name: "Test",
   run: async ({ token, logger }) => {
     token.throwIfCancelled();
