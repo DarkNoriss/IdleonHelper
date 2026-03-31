@@ -6,6 +6,7 @@ import type {
   SolverResult,
   SolverWeights,
 } from "@/../../types/construction";
+import { ScriptPage } from "@/components/script-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,13 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useMainState } from "@/hooks/use-main-state";
 import { notateNumber } from "@/lib/notateNumber";
 import { useGameData } from "@/providers/game-data-provider";
 import { useRawJsonStore } from "@/store/raw-json";
 
 const SPARE_ROWS = 5;
-const DEFAULT_SOLVE_TIME_SECONDS = 600; // 10 minutes
+const DEFAULT_SOLVE_TIME_SECONDS = 600;
 
 const getSparePage = (y: number): number => {
   return Math.floor(y / SPARE_ROWS) + 1;
@@ -36,29 +36,21 @@ const formatLocation = (
   const locationType = location.location;
 
   if (location.location === "spare") {
-    const page = getSparePage(location.y); // location.y is 0-indexed
+    const page = getSparePage(location.y);
     return `spare [${x}|${y}] page ${page}`;
   }
   return `${locationType} [${x}|${y}]`;
 };
 
 export const Construction = () => {
-  const [error, setError] = useState<string | null>(null);
-  const [activeScript, setActiveScript] = useState<string | null>(null);
   const parsedJson = useRawJsonStore((state) => state.parsedJson);
   const { construction: constructionData } = useGameData();
   const [focus, setFocus] = useState<SolverFocus>("exp");
   const [isSolving, setIsSolving] = useState(false);
   const [solverResult, setSolverResult] = useState<SolverResult | null>(null);
-  const scriptStatus = useMainState("scriptStatus");
-  const isWorking = scriptStatus?.isWorking ?? false;
-
-  const isApplying = activeScript === "world3.construction.apply";
-  const isCollectingCogs = activeScript === "world3.construction.collect-cogs";
-  const isTrashingCogs = activeScript === "world3.construction.trash-cogs";
+  const [solverError, setSolverError] = useState<string | null>(null);
   const score = constructionData?.score;
 
-  // Detect if all slots are unlocked
   const allSlotsUnlocked =
     constructionData === null
       ? false
@@ -66,19 +58,16 @@ export const Construction = () => {
         Object.keys(constructionData.slots).length -
           constructionData.flagPose.length;
 
-  // Switch focus away from flaggy if flaggy is no longer needed
   useEffect(() => {
     if (allSlotsUnlocked && focus === "flaggy") {
-      setFocus("exp"); // Switch to exp focus if flaggy was selected
+      setFocus("exp");
     }
   }, [allSlotsUnlocked, focus]);
 
-  // Clear solver results when JSON data changes
   useEffect(() => {
     setSolverResult(null);
   }, []);
 
-  // Calculate differences between current and optimized scores
   const getDifference = (current: number, optimized: number) => {
     return optimized - current;
   };
@@ -98,18 +87,18 @@ export const Construction = () => {
 
   const handleSolve = async () => {
     if (!constructionData) {
-      setError("No construction data available");
+      setSolverError("No construction data available");
       return;
     }
 
-    setError(null);
+    setSolverError(null);
     setSolverResult(null);
     setIsSolving(true);
 
     try {
       const weights: SolverWeights = {
         focus,
-        flaggy: 0, // Will be set to 0 by solver if needed
+        flaggy: 0,
       };
 
       const solveTimeMs = DEFAULT_SOLVE_TIME_SECONDS * 1000;
@@ -124,7 +113,7 @@ export const Construction = () => {
         setSolverResult(result);
       }
     } catch (err) {
-      setError(
+      setSolverError(
         err instanceof Error ? err.message : "Failed to solve construction"
       );
     } finally {
@@ -132,215 +121,134 @@ export const Construction = () => {
     }
   };
 
-  const handleApply = async () => {
-    if (isApplying) {
-      try {
-        await window.api.script.cancel();
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to cancel operation"
-        );
-      }
-      return;
-    }
-
-    if (isWorking) {
-      setError("Another operation is already running");
-      return;
-    }
-
-    setError(null);
-    setActiveScript("world3.construction.apply");
-
-    try {
-      const steps = solverResult?.steps || [];
-      await window.api.script.run("world3.construction.apply", steps);
-    } catch (err) {
-      if (
-        !(err instanceof Error && err.message === "Operation was cancelled")
-      ) {
-        setError(
-          err instanceof Error ? err.message : "Failed to apply optimized board"
-        );
-      }
-    } finally {
-      setActiveScript(null);
-    }
-  };
-
-  const handleCollectCogs = async () => {
-    if (isCollectingCogs) {
-      try {
-        await window.api.script.cancel();
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to cancel operation"
-        );
-      }
-      return;
-    }
-
-    if (isWorking) {
-      setError("Another operation is already running");
-      return;
-    }
-
-    setError(null);
-    setActiveScript("world3.construction.collect-cogs");
-
-    try {
-      await window.api.script.run("world3.construction.collectCogs");
-    } catch (err) {
-      if (
-        !(err instanceof Error && err.message === "Operation was cancelled")
-      ) {
-        setError(err instanceof Error ? err.message : "Failed to collect cogs");
-      }
-    } finally {
-      setActiveScript(null);
-    }
-  };
-
-  const handleTrashCogs = async () => {
-    if (isTrashingCogs) {
-      try {
-        await window.api.script.cancel();
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to cancel operation"
-        );
-      }
-      return;
-    }
-
-    if (isWorking) {
-      setError("Another operation is already running");
-      return;
-    }
-
-    setError(null);
-    setActiveScript("world3.construction.trash-cogs");
-
-    try {
-      await window.api.script.run("world3.construction.trashCogs");
-    } catch (err) {
-      if (
-        !(err instanceof Error && err.message === "Operation was cancelled")
-      ) {
-        setError(err instanceof Error ? err.message : "Failed to trash cogs");
-      }
-    } finally {
-      setActiveScript(null);
-    }
-  };
-
   return (
-    <div className="flex flex-col items-center gap-4">
-      <h1 className="text-center font-bold text-2xl">Construction</h1>
-
-      {error && (
-        <div className="mb-4 w-full rounded-md bg-destructive/10 p-3 text-destructive text-sm">
-          {error}
+    <ScriptPage
+      actions={[
+        {
+          label: "Apply Optimized Board",
+          scriptId: "world3.construction.apply",
+          runningLabel: "Applying... (Click to stop)",
+          args: () => [solverResult?.steps ?? []],
+        },
+        {
+          label: "Collect Cogs",
+          scriptId: "world3.construction.collectCogs",
+          runningLabel: "Collecting... (Click to stop)",
+        },
+        {
+          label: "Trash Cogs",
+          scriptId: "world3.construction.trashCogs",
+          runningLabel: "Trashing... (Click to stop)",
+        },
+      ]}
+      title="Construction"
+    >
+      <div className="mb-4 flex flex-col gap-4">
+        <div className="text-center text-muted-foreground text-sm">
+          Navigate to the construction screen. Make sure to save your data on
+          the Raw Data page first.
         </div>
-      )}
 
-      <div className="text-center text-muted-foreground text-sm">
-        Navigate to the construction screen. Make sure to save your data on the
-        Raw Data page first.
-      </div>
+        {!parsedJson && (
+          <div className="rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-400">
+            No data available. Please go to the Raw Data page and save your JSON
+            data first.
+          </div>
+        )}
 
-      {!parsedJson && (
-        <div className="w-full rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-400">
-          No data available. Please go to the Raw Data page and save your JSON
-          data first.
-        </div>
-      )}
+        {solverError && (
+          <div className="rounded-md bg-destructive/10 p-3 text-destructive text-sm">
+            {solverError}
+          </div>
+        )}
 
-      {score && (
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle className="text-center">
-              {solverResult ? "Optimized Score" : "Current Score"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="font-bold text-2xl">
-                  {notateNumber(
-                    solverResult
-                      ? solverResult.score.buildRate
-                      : score.buildRate
-                  )}
-                </div>
-                {buildRateDiff && (
-                  <div
-                    className={`mt-1 font-medium text-sm ${
-                      buildRateDiff >= 0
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
-                    {notateNumber(buildRateDiff)}
+        {score && (
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle className="text-center">
+                {solverResult ? "Optimized Score" : "Current Score"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="font-bold text-2xl">
+                    {notateNumber(
+                      solverResult
+                        ? solverResult.score.buildRate
+                        : score.buildRate
+                    )}
                   </div>
-                )}
-                <div className="mt-1 text-muted-foreground text-sm">
-                  Build Rate
+                  {buildRateDiff && (
+                    <div
+                      className={`mt-1 font-medium text-sm ${
+                        buildRateDiff >= 0
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      {notateNumber(buildRateDiff)}
+                    </div>
+                  )}
+                  <div className="mt-1 text-muted-foreground text-sm">
+                    Build Rate
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-2xl">
+                    {notateNumber(
+                      solverResult
+                        ? solverResult.score.expBonus
+                        : score.expBonus
+                    )}
+                  </div>
+                  {expBonusDiff && (
+                    <div
+                      className={`mt-1 font-medium text-sm ${
+                        expBonusDiff >= 0
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      {notateNumber(expBonusDiff)}
+                    </div>
+                  )}
+                  <div className="mt-1 text-muted-foreground text-sm">
+                    Exp Bonus
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-2xl">
+                    {notateNumber(
+                      solverResult ? solverResult.score.flaggy : score.flaggy
+                    )}
+                  </div>
+                  {flaggyDiff && (
+                    <div
+                      className={`mt-1 font-medium text-sm ${
+                        flaggyDiff >= 0
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      {notateNumber(flaggyDiff)}
+                    </div>
+                  )}
+                  <div className="mt-1 text-muted-foreground text-sm">
+                    Flaggy
+                  </div>
                 </div>
               </div>
-              <div className="text-center">
-                <div className="font-bold text-2xl">
-                  {notateNumber(
-                    solverResult ? solverResult.score.expBonus : score.expBonus
-                  )}
-                </div>
-                {expBonusDiff && (
-                  <div
-                    className={`mt-1 font-medium text-sm ${
-                      expBonusDiff >= 0
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
-                    {notateNumber(expBonusDiff)}
-                  </div>
-                )}
-                <div className="mt-1 text-muted-foreground text-sm">
-                  Exp Bonus
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-2xl">
-                  {notateNumber(
-                    solverResult ? solverResult.score.flaggy : score.flaggy
-                  )}
-                </div>
-                {flaggyDiff && (
-                  <div
-                    className={`mt-1 font-medium text-sm ${
-                      flaggyDiff >= 0
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
-                    {notateNumber(flaggyDiff)}
-                  </div>
-                )}
-                <div className="mt-1 text-muted-foreground text-sm">Flaggy</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
 
-      <div className="flex w-full flex-col gap-3">
         <div className="flex w-full items-end gap-3">
           <div className="flex flex-1 flex-col gap-2">
             <label className="font-medium text-sm" htmlFor="focus-select">
               Focus
             </label>
             <Select
-              disabled={isWorking}
               onValueChange={(value) => setFocus(value as SolverFocus)}
               value={focus}
             >
@@ -358,7 +266,7 @@ export const Construction = () => {
           </div>
           <Button
             className="min-w-48"
-            disabled={!constructionData || isSolving || isWorking}
+            disabled={!constructionData || isSolving}
             onClick={handleSolve}
             size="lg"
           >
@@ -373,61 +281,24 @@ export const Construction = () => {
           </Button>
         </div>
 
-        <Button
-          className="w-full"
-          disabled={
-            (isWorking && !isApplying) ||
-            !solverResult ||
-            !solverResult.steps ||
-            solverResult.steps.length === 0
-          }
-          onClick={handleApply}
-          size="lg"
-          variant="default"
-        >
-          {isApplying ? "Applying... (Click to stop)" : "Apply Optimized Board"}
-        </Button>
-      </div>
-
-      <div className="flex w-full gap-3">
-        <Button
-          className="flex-1"
-          disabled={isWorking && !isCollectingCogs}
-          onClick={handleCollectCogs}
-          size="lg"
-          variant="default"
-        >
-          {isCollectingCogs ? "Collecting... (Click to stop)" : "Collect cogs"}
-        </Button>
-
-        <Button
-          className="flex-1"
-          disabled={isWorking && !isTrashingCogs}
-          onClick={handleTrashCogs}
-          size="lg"
-          variant="default"
-        >
-          {isTrashingCogs ? "Trashing... (Click to stop)" : "Trash cogs"}
-        </Button>
-      </div>
-
-      {solverResult && solverResult.steps.length > 0 && (
-        <div className="mt-4 w-full">
-          <div className="mb-2 text-center font-medium text-sm">
-            Steps ({solverResult.steps.length})
-          </div>
-          <ScrollArea className="h-64 rounded-md border">
-            <div className="space-y-2 p-3">
-              {solverResult.steps.map((step, index) => (
-                <div className="text-sm" key={index}>
-                  Step {index + 1}: Switch {formatLocation(step.from)} with{" "}
-                  {formatLocation(step.to)}
-                </div>
-              ))}
+        {solverResult && solverResult.steps.length > 0 && (
+          <div className="w-full">
+            <div className="mb-2 text-center font-medium text-sm">
+              Steps ({solverResult.steps.length})
             </div>
-          </ScrollArea>
-        </div>
-      )}
-    </div>
+            <ScrollArea className="h-64 rounded-md border">
+              <div className="space-y-2 p-3">
+                {solverResult.steps.map((step, index) => (
+                  <div className="text-sm" key={index}>
+                    Step {index + 1}: Switch {formatLocation(step.from)} with{" "}
+                    {formatLocation(step.to)}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+      </div>
+    </ScriptPage>
   );
 };
