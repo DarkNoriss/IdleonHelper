@@ -5,7 +5,7 @@ export const backendConfig = {
     threshold: 0.925,
   },
   isVisible: {
-    timeoutMs: 5000,
+    timeoutMs: 50,
     intervalMs: 50,
   },
   click: {
