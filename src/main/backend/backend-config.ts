@@ -1,16 +1,17 @@
 export const backendConfig = {
   find: {
     timeoutMs: 5000,
-    intervalMs: 100,
+    intervalMs: 50,
     threshold: 0.925,
   },
   isVisible: {
-    timeoutMs: 100,
+    timeoutMs: 5000,
+    intervalMs: 50,
   },
   click: {
     times: 1,
-    interval: 170,
-    holdTime: 80,
+    interval: 120,
+    holdTime: 60,
   },
   drag: {
     stepSize: 6,

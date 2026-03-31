@@ -98,7 +98,7 @@ export const backendCommand = {
     const request: FindRequest = {
       imagePath: resolvedPath,
       timeoutMs: backendConfig.isVisible.timeoutMs,
-      intervalMs: backendConfig.find.intervalMs,
+      intervalMs: backendConfig.isVisible.intervalMs,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
       debug: false,
