@@ -1,25 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useScriptStatusStore } from "@/store/script-status";
+import { useMainState } from "@/hooks/use-main-state";
 
 export const Summoning = () => {
   const [error, setError] = useState<string | null>(null);
-  const currentScript = useScriptStatusStore((state) => state.currentScript);
-  const setCurrentScript = useScriptStatusStore(
-    (state) => state.setCurrentScript
-  );
+  const [activeScript, setActiveScript] = useState<string | null>(null);
+  const scriptStatus = useMainState("scriptStatus");
+  const isWorking = scriptStatus?.isWorking ?? false;
 
-  const isEndlessRunning = currentScript === "summoning.endless";
-  const isAutobattlerRunning = currentScript === "summoning.autobattler";
-  const isWorking = currentScript !== null;
+  const isEndlessRunning = activeScript === "summoning.endless";
+  const isAutobattlerRunning = activeScript === "summoning.autobattler";
 
   const handleEndlessAutobattler = async () => {
-    // If already working and this is the running mode, cancel it
     if (isEndlessRunning) {
       try {
         await window.api.script.cancel();
-        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -28,38 +24,35 @@ export const Summoning = () => {
       return;
     }
 
-    // If already working with a different mode, show error
     if (isWorking) {
       setError("Another operation is already running");
       return;
     }
 
     setError(null);
-    setCurrentScript("summoning.endless");
+    setActiveScript("summoning.endless");
 
     try {
       await window.api.script.run("world6.summoning.startEndlessAutobattler");
     } catch (err) {
-      if (err instanceof Error && err.message === "Operation was cancelled") {
-        // User cancelled, don't show error
-        setCurrentScript(null);
-      } else {
+      if (
+        !(err instanceof Error && err.message === "Operation was cancelled")
+      ) {
         setError(
           err instanceof Error
             ? err.message
             : "Failed to start endless autobattler"
         );
-        setCurrentScript(null);
       }
+    } finally {
+      setActiveScript(null);
     }
   };
 
   const handleAutobattler = async () => {
-    // If already working and this is the running mode, cancel it
     if (isAutobattlerRunning) {
       try {
         await window.api.script.cancel();
-        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -68,27 +61,26 @@ export const Summoning = () => {
       return;
     }
 
-    // If already working with a different mode, show error
     if (isWorking) {
       setError("Another operation is already running");
       return;
     }
 
     setError(null);
-    setCurrentScript("summoning.autobattler");
+    setActiveScript("summoning.autobattler");
 
     try {
       await window.api.script.run("world6.summoning.startAutobattler");
     } catch (err) {
-      if (err instanceof Error && err.message === "Operation was cancelled") {
-        // User cancelled, don't show error
-        setCurrentScript(null);
-      } else {
+      if (
+        !(err instanceof Error && err.message === "Operation was cancelled")
+      ) {
         setError(
           err instanceof Error ? err.message : "Failed to start autobattler"
         );
-        setCurrentScript(null);
       }
+    } finally {
+      setActiveScript(null);
     }
   };
 

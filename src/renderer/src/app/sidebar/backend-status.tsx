@@ -1,40 +1,12 @@
 import { Wifi, WifiOff } from "lucide-react";
-import { useEffect, useState } from "react";
-
-type ConnectionStatus = "connecting" | "connected" | "error";
-
-type BackendStatus = {
-  status: ConnectionStatus;
-  error: string | null;
-};
+import { useMainState } from "@/hooks/use-main-state";
 
 export const SidebarBackendStatus = () => {
-  const [status, setStatus] = useState<BackendStatus>({
-    status: "connecting",
-    error: null,
-  });
+  const backendStatus = useMainState("backendStatus");
 
-  useEffect(() => {
-    // Request current status immediately (handles case where connection completed before component mounted)
-    window.api.backend
-      .getStatus()
-      .then((currentStatus) => {
-        setStatus(currentStatus);
-      })
-      .catch(() => {
-        // Silently handle errors - component will show "connecting" state
-      });
-
-    // Listen for status changes from backend
-    const cleanup = window.api.backend.onStatusChange((newStatus) => {
-      setStatus(newStatus);
-    });
-
-    return cleanup;
-  }, []);
-
-  const isConnected = status.status === "connected";
-  const isConnecting = status.status === "connecting";
+  const status = backendStatus?.status ?? "connecting";
+  const isConnected = status === "connected";
+  const isConnecting = status === "connecting";
 
   return (
     <div className="flex items-center gap-2">

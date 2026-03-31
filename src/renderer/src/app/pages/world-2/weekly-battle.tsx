@@ -1,55 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useScriptStatusStore } from "@/store/script-status";
-
-type WeeklyBattleStep = {
-  stepName: string;
-  steps: number[];
-  rawSteps: string[];
-};
-
-type WeeklyBattleInfo = {
-  dateFrom: string;
-  dateTo: string;
-  bossName: string;
-  steps: WeeklyBattleStep[];
-};
-
-type WeeklyBattleData = {
-  fetchedAt: string;
-  info: WeeklyBattleInfo;
-};
+import { useMainState } from "@/hooks/use-main-state";
 
 export const WeeklyBattle = () => {
-  const [data, setData] = useState<WeeklyBattleData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const currentScript = useScriptStatusStore((state) => state.currentScript);
-  const setCurrentScript = useScriptStatusStore(
-    (state) => state.setCurrentScript
-  );
-
-  const isWorking = currentScript !== null;
-
-  const loadData = useCallback(async () => {
-    try {
-      const result = await window.api.script.world2.weeklyBattle.get();
-      setData(result);
-      setError(null);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load weekly battle data"
-      );
-    }
-  }, []);
+  const [activeScript, setActiveScript] = useState<string | null>(null);
+  const scriptStatus = useMainState("scriptStatus");
+  const weeklyBattle = useMainState("weeklyBattle");
+  const isWorking = scriptStatus?.isWorking ?? false;
+  const data = weeklyBattle?.data ?? null;
 
   const handleFetch = async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await window.api.script.world2.weeklyBattle.fetch();
-      setData(result);
+      await window.api.script.world2.weeklyBattle.fetch();
     } catch (err) {
       setError(
         err instanceof Error
@@ -62,16 +29,14 @@ export const WeeklyBattle = () => {
   };
 
   const handleRun = async (steps: number[], stepName: string) => {
-    // Determine which script name to use based on step name
     const scriptName = stepName.toLowerCase().includes("skull")
       ? "weeklyBattle.skulls"
       : "weeklyBattle.trophy";
-    const isThisButtonRunning = currentScript === scriptName;
-    // If this specific button is already running, cancel it
+    const isThisButtonRunning = activeScript === scriptName;
+
     if (isThisButtonRunning) {
       try {
         await window.api.script.cancel();
-        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -80,45 +45,30 @@ export const WeeklyBattle = () => {
       return;
     }
 
-    // If already working with a different script, show error
     if (isWorking) {
       setError("Another operation is already running");
       return;
     }
 
     setError(null);
-    setCurrentScript(
-      scriptName as "weeklyBattle.skulls" | "weeklyBattle.trophy"
-    );
+    setActiveScript(scriptName);
 
     try {
       await window.api.script.run("world2.weeklyBattle.run", steps);
     } catch (err) {
-      if (err instanceof Error && err.message === "Operation was cancelled") {
-        // User cancelled, don't show error
-        setCurrentScript(null);
-      } else {
+      if (
+        !(err instanceof Error && err.message === "Operation was cancelled")
+      ) {
         setError(
           err instanceof Error
             ? err.message
             : "Failed to run weekly battle steps"
         );
-        setCurrentScript(null);
       }
+    } finally {
+      setActiveScript(null);
     }
   };
-
-  useEffect(() => {
-    loadData();
-
-    const cleanup = window.api.script.world2.weeklyBattle.onChange(
-      (newData) => {
-        setData(newData);
-      }
-    );
-
-    return cleanup;
-  }, [loadData]);
 
   return (
     <Card className="relative">
@@ -171,8 +121,7 @@ export const WeeklyBattle = () => {
                   const scriptName = isSkulls
                     ? "weeklyBattle.skulls"
                     : "weeklyBattle.trophy";
-                  const isThisButtonRunning = currentScript === scriptName;
-                  // Disable if another script is working, or if the other weekly battle button is running
+                  const isThisButtonRunning = activeScript === scriptName;
                   const isDisabled = isWorking && !isThisButtonRunning;
                   const buttonText = isThisButtonRunning
                     ? "Running... (Click to stop)"

@@ -7,25 +7,7 @@ const api = {
       ipcRenderer.send("window-close");
     },
   },
-  backend: {
-    getStatus: () => {
-      return ipcRenderer.invoke("backend:getStatus");
-    },
-    onStatusChange: (
-      callback: (status: { status: string; error: string | null }) => void
-    ) => {
-      const handler = (
-        _event: IpcRendererEvent,
-        status: { status: string; error: string | null }
-      ) => {
-        callback(status);
-      };
-      ipcRenderer.on("backend-status-changed", handler);
-      return () => {
-        ipcRenderer.off("backend-status-changed", handler);
-      };
-    },
-  },
+  backend: {},
   script: {
     run: (id: string, ...args: unknown[]) => {
       return ipcRenderer.invoke(`script:${id}`, ...args);
@@ -33,7 +15,6 @@ const api = {
     cancel: () => {
       return ipcRenderer.invoke("script:cancel");
     },
-    // Legacy: weekly battle data ops (will move to state.* in Phase 2)
     world2: {
       weeklyBattle: {
         fetch: () => {
@@ -41,15 +22,6 @@ const api = {
         },
         get: () => {
           return ipcRenderer.invoke("script:world-2.weekly-battle.get");
-        },
-        onChange: (callback: (data: unknown) => void) => {
-          const handler = (_event: IpcRendererEvent, data: unknown) => {
-            callback(data);
-          };
-          ipcRenderer.on("weekly-battle-data-changed", handler);
-          return () => {
-            ipcRenderer.off("weekly-battle-data-changed", handler);
-          };
         },
       },
     },
@@ -69,19 +41,6 @@ const api = {
           );
         },
       },
-    },
-    // Legacy: status change listener (will move to state.* in Phase 2)
-    onStatusChange: (callback: (status: { isWorking: boolean }) => void) => {
-      const handler = (
-        _event: IpcRendererEvent,
-        status: { isWorking: boolean }
-      ) => {
-        callback(status);
-      };
-      ipcRenderer.on("script-status-changed", handler);
-      return () => {
-        ipcRenderer.off("script-status-changed", handler);
-      };
     },
   },
   app: {

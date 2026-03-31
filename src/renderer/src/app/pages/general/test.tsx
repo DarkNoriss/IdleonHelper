@@ -1,24 +1,20 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useScriptStatusStore } from "@/store/script-status";
+import { useMainState } from "@/hooks/use-main-state";
 
 export const Test = () => {
   const [error, setError] = useState<string | null>(null);
-  const currentScript = useScriptStatusStore((state) => state.currentScript);
-  const setCurrentScript = useScriptStatusStore(
-    (state) => state.setCurrentScript
-  );
+  const [activeScript, setActiveScript] = useState<string | null>(null);
+  const scriptStatus = useMainState("scriptStatus");
+  const isWorking = scriptStatus?.isWorking ?? false;
 
-  const isTestRunning = currentScript === "general.test";
-  const isWorking = currentScript !== null;
+  const isTestRunning = activeScript === "general.test";
 
   const handleTest = async () => {
-    // If already working and this is the running mode, cancel it
     if (isTestRunning) {
       try {
         await window.api.script.cancel();
-        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -27,27 +23,26 @@ export const Test = () => {
       return;
     }
 
-    // If already working with a different mode, show error
     if (isWorking) {
       setError("Another operation is already running");
       return;
     }
 
     setError(null);
-    setCurrentScript("general.test");
+    setActiveScript("general.test");
 
     try {
       await window.api.script.run("general.test.run");
     } catch (err) {
-      if (err instanceof Error && err.message === "Operation was cancelled") {
-        // User cancelled, don't show error
-        setCurrentScript(null);
-      } else {
+      if (
+        !(err instanceof Error && err.message === "Operation was cancelled")
+      ) {
         setError(
           err instanceof Error ? err.message : "Failed to run test script"
         );
-        setCurrentScript(null);
       }
+    } finally {
+      setActiveScript(null);
     }
   };
 

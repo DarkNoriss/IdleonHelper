@@ -1,24 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useScriptStatusStore } from "@/store/script-status";
+import { useMainState } from "@/hooks/use-main-state";
 
 export const Farming = () => {
   const [error, setError] = useState<string | null>(null);
-  const currentScript = useScriptStatusStore((state) => state.currentScript);
-  const setCurrentScript = useScriptStatusStore(
-    (state) => state.setCurrentScript
-  );
+  const [activeScript, setActiveScript] = useState<string | null>(null);
+  const scriptStatus = useMainState("scriptStatus");
+  const isWorking = scriptStatus?.isWorking ?? false;
 
-  const isFarmingRunning = currentScript === "farming";
-  const isLockUnlockRunning = currentScript === "farming.lock-unlock";
-  const isWorking = currentScript !== null;
+  const isFarmingRunning = activeScript === "farming";
+  const isLockUnlockRunning = activeScript === "farming.lock-unlock";
 
   const handleStart = async () => {
     if (isFarmingRunning) {
       try {
         await window.api.script.cancel();
-        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -33,19 +30,20 @@ export const Farming = () => {
     }
 
     setError(null);
-    setCurrentScript("farming");
+    setActiveScript("farming");
 
     try {
       await window.api.script.run("world6.farming.start");
     } catch (err) {
-      if (err instanceof Error && err.message === "Operation was cancelled") {
-        setCurrentScript(null);
-      } else {
+      if (
+        !(err instanceof Error && err.message === "Operation was cancelled")
+      ) {
         setError(
           err instanceof Error ? err.message : "Failed to start farming"
         );
-        setCurrentScript(null);
       }
+    } finally {
+      setActiveScript(null);
     }
   };
 
@@ -53,7 +51,6 @@ export const Farming = () => {
     if (isLockUnlockRunning) {
       try {
         await window.api.script.cancel();
-        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -68,19 +65,20 @@ export const Farming = () => {
     }
 
     setError(null);
-    setCurrentScript("farming.lock-unlock");
+    setActiveScript("farming.lock-unlock");
 
     try {
       await window.api.script.run("world6.farming.lockUnlock");
     } catch (err) {
-      if (err instanceof Error && err.message === "Operation was cancelled") {
-        setCurrentScript(null);
-      } else {
+      if (
+        !(err instanceof Error && err.message === "Operation was cancelled")
+      ) {
         setError(
           err instanceof Error ? err.message : "Failed to lock/unlock crops"
         );
-        setCurrentScript(null);
       }
+    } finally {
+      setActiveScript(null);
     }
   };
 

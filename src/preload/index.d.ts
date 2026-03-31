@@ -48,26 +48,17 @@ declare global {
       window: {
         close: () => void;
       };
-      backend: {
-        getStatus: () => Promise<BackendStatus>;
-        onStatusChange: (
-          callback: (status: BackendStatus) => void
-        ) => () => void;
-      };
+      backend: Record<string, never>;
       script: {
         run: <T extends keyof ScriptMap>(
           id: T,
           ...args: ScriptMap[T]["args"]
         ) => Promise<ScriptMap[T]["result"]>;
         cancel: () => Promise<void>;
-        // Legacy: weekly battle data ops
         world2: {
           weeklyBattle: {
             fetch: () => Promise<WeeklyBattleData>;
             get: () => Promise<WeeklyBattleData | null>;
-            onChange: (
-              callback: (data: WeeklyBattleData | null) => void
-            ) => () => void;
           };
         };
         // Legacy: construction solver
@@ -83,10 +74,6 @@ declare global {
             } | null>;
           };
         };
-        // Legacy: status change listener
-        onStatusChange: (
-          callback: (status: { isWorking: boolean }) => void
-        ) => () => void;
       };
       app: {
         isDev: () => Promise<boolean>;

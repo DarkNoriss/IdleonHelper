@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { GameDataProvider } from "@/providers/game-data-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { type NavigationPage, useNavigationStore } from "@/store/navigation";
-import { useScriptStatusStore } from "@/store/script-status";
 
 import { AppHeader } from "./app-header";
 import { Dashboard } from "./pages/dashboard";
@@ -21,9 +20,6 @@ import { AppSidebar } from "./sidebar/app-sidebar";
 
 export const App = () => {
   const currentPage = useNavigationStore((state) => state.currentPage);
-  const setCurrentScript = useScriptStatusStore(
-    (state) => state.setCurrentScript
-  );
   const [isDev, setIsDev] = useState(false);
 
   useEffect(() => {
@@ -32,16 +28,7 @@ export const App = () => {
       .isDev()
       .then(setIsDev)
       .catch(() => setIsDev(false));
-
-    // Listen for status changes
-    const cleanup = window.api.script.onStatusChange((status) => {
-      if (!status.isWorking) {
-        setCurrentScript(null);
-      }
-    });
-
-    return cleanup;
-  }, [setCurrentScript]);
+  }, []);
 
   const pageMap: Partial<Record<NavigationPage, ReactElement>> = {
     dashboard: <Dashboard />,

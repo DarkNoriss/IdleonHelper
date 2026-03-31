@@ -16,10 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useMainState } from "@/hooks/use-main-state";
 import { notateNumber } from "@/lib/notateNumber";
-import { useGameDataStore } from "@/store/game-data";
+import { useGameData } from "@/providers/game-data-provider";
 import { useRawJsonStore } from "@/store/raw-json";
-import { useScriptStatusStore } from "@/store/script-status";
 
 const SPARE_ROWS = 5;
 const DEFAULT_SOLVE_TIME_SECONDS = 600; // 10 minutes
@@ -44,20 +44,18 @@ const formatLocation = (
 
 export const Construction = () => {
   const [error, setError] = useState<string | null>(null);
+  const [activeScript, setActiveScript] = useState<string | null>(null);
   const parsedJson = useRawJsonStore((state) => state.parsedJson);
-  const constructionData = useGameDataStore((state) => state.construction);
+  const { construction: constructionData } = useGameData();
   const [focus, setFocus] = useState<SolverFocus>("exp");
   const [isSolving, setIsSolving] = useState(false);
   const [solverResult, setSolverResult] = useState<SolverResult | null>(null);
-  const currentScript = useScriptStatusStore((state) => state.currentScript);
-  const setCurrentScript = useScriptStatusStore(
-    (state) => state.setCurrentScript
-  );
+  const scriptStatus = useMainState("scriptStatus");
+  const isWorking = scriptStatus?.isWorking ?? false;
 
-  const isApplying = currentScript === "world3.construction.apply";
-  const isCollectingCogs = currentScript === "world3.construction.collect-cogs";
-  const isTrashingCogs = currentScript === "world3.construction.trash-cogs";
-  const isWorking = currentScript !== null;
+  const isApplying = activeScript === "world3.construction.apply";
+  const isCollectingCogs = activeScript === "world3.construction.collect-cogs";
+  const isTrashingCogs = activeScript === "world3.construction.trash-cogs";
   const score = constructionData?.score;
 
   // Detect if all slots are unlocked
@@ -138,7 +136,6 @@ export const Construction = () => {
     if (isApplying) {
       try {
         await window.api.script.cancel();
-        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -153,20 +150,21 @@ export const Construction = () => {
     }
 
     setError(null);
-    setCurrentScript("world3.construction.apply");
+    setActiveScript("world3.construction.apply");
 
     try {
       const steps = solverResult?.steps || [];
       await window.api.script.run("world3.construction.apply", steps);
     } catch (err) {
-      if (err instanceof Error && err.message === "Operation was cancelled") {
-        setCurrentScript(null);
-      } else {
+      if (
+        !(err instanceof Error && err.message === "Operation was cancelled")
+      ) {
         setError(
           err instanceof Error ? err.message : "Failed to apply optimized board"
         );
-        setCurrentScript(null);
       }
+    } finally {
+      setActiveScript(null);
     }
   };
 
@@ -174,7 +172,6 @@ export const Construction = () => {
     if (isCollectingCogs) {
       try {
         await window.api.script.cancel();
-        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -189,17 +186,18 @@ export const Construction = () => {
     }
 
     setError(null);
-    setCurrentScript("world3.construction.collect-cogs");
+    setActiveScript("world3.construction.collect-cogs");
 
     try {
       await window.api.script.run("world3.construction.collectCogs");
     } catch (err) {
-      if (err instanceof Error && err.message === "Operation was cancelled") {
-        setCurrentScript(null);
-      } else {
+      if (
+        !(err instanceof Error && err.message === "Operation was cancelled")
+      ) {
         setError(err instanceof Error ? err.message : "Failed to collect cogs");
-        setCurrentScript(null);
       }
+    } finally {
+      setActiveScript(null);
     }
   };
 
@@ -207,7 +205,6 @@ export const Construction = () => {
     if (isTrashingCogs) {
       try {
         await window.api.script.cancel();
-        setCurrentScript(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to cancel operation"
@@ -222,17 +219,18 @@ export const Construction = () => {
     }
 
     setError(null);
-    setCurrentScript("world3.construction.trash-cogs");
+    setActiveScript("world3.construction.trash-cogs");
 
     try {
       await window.api.script.run("world3.construction.trashCogs");
     } catch (err) {
-      if (err instanceof Error && err.message === "Operation was cancelled") {
-        setCurrentScript(null);
-      } else {
+      if (
+        !(err instanceof Error && err.message === "Operation was cancelled")
+      ) {
         setError(err instanceof Error ? err.message : "Failed to trash cogs");
-        setCurrentScript(null);
       }
+    } finally {
+      setActiveScript(null);
     }
   };
 
