@@ -1,3 +1,4 @@
+import { AlertCircle, Loader2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,11 +75,12 @@ export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
   return (
     <Card className="relative">
       <CardHeader>
-        <CardTitle className="text-center">{title}</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
         {error && (
-          <div className="mb-4 rounded-md bg-destructive/10 p-3 text-destructive text-sm">
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-destructive text-sm">
+            <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
         )}
@@ -92,17 +94,21 @@ export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
               action.runningLabel ?? "Running... (Click to stop)";
 
             return (
-              <div className="space-y-3" key={action.scriptId}>
-                <div className="text-center font-semibold text-sm uppercase">
-                  {action.label}
-                </div>
+              <div key={action.scriptId}>
                 <Button
                   className="w-full"
                   disabled={isWorking && !isThisRunning}
                   onClick={makeHandler(action)}
                   size="sm"
                 >
-                  {isThisRunning ? runningLabel : action.label}
+                  {isThisRunning ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {runningLabel}
+                    </>
+                  ) : (
+                    action.label
+                  )}
                 </Button>
               </div>
             );
