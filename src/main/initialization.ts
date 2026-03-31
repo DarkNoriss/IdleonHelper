@@ -1,3 +1,4 @@
+import type { ConnectionStatus } from "../types/scripts";
 import {
   getConnectionStatus,
   getLastError,
@@ -6,13 +7,17 @@ import {
 } from "./backend";
 import { getMainWindow } from "./index";
 import { weeklyBattleFetch } from "./scripts";
+import { setState } from "./state-hub";
 import { checkForUpdates, initializeUpdateService, logger } from "./utils";
 
-export const initializeApp = (
-  notifyBackendStatus: (status: string, error: string | null) => void
-): void => {
+export const initializeApp = (): void => {
   logger.log("Initializing application...");
-  onStatusChange(notifyBackendStatus);
+  onStatusChange((status, error) =>
+    setState("backendStatus", {
+      status: status as ConnectionStatus,
+      error,
+    })
+  );
 
   initializeUpdateService();
 
@@ -45,7 +50,10 @@ export const initializeApp = (
   const mainWindow = getMainWindow();
   if (mainWindow) {
     mainWindow.webContents.once("dom-ready", () => {
-      notifyBackendStatus(getConnectionStatus(), getLastError());
+      setState("backendStatus", {
+        status: getConnectionStatus() as ConnectionStatus,
+        error: getLastError(),
+      });
     });
   }
 };

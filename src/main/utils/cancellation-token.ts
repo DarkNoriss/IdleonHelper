@@ -1,4 +1,4 @@
-import { getMainWindow } from "../index";
+import { setState } from "../state-hub";
 import { logger } from "./logger";
 
 export type CancellationToken = {
@@ -12,10 +12,7 @@ let currentToken: CancellationToken | null = null;
 let isWorking = false;
 
 const notifyStatusChange = (): void => {
-  const mainWindow = getMainWindow();
-  if (mainWindow) {
-    mainWindow.webContents.send("script-status-changed", { isWorking });
-  }
+  setState("scriptStatus", { current: null, isWorking });
 };
 
 const createCancellationToken = (): CancellationToken => {

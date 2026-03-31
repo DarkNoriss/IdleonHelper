@@ -17,18 +17,6 @@ export const setMainWindow = (window: BrowserWindow | null): void => {
   mainWindow = window;
 };
 
-function notifyBackendStatus(status: string, error: string | null): void {
-  const window = getMainWindow();
-  if (!window) {
-    return;
-  }
-
-  window.webContents.send("backend-status-changed", {
-    status,
-    error,
-  });
-}
-
 function createWindow(): void {
   logger.log("Creating main window");
   const window = new BrowserWindow({
@@ -86,7 +74,7 @@ app.whenReady().then(async () => {
   setupHandlers();
   // Initialize app in background (fire-and-forget) to avoid blocking window creation
   setImmediate(() => {
-    initializeApp(notifyBackendStatus);
+    initializeApp();
   });
 });
 

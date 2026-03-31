@@ -1,5 +1,5 @@
 import { backendCommand } from "../../backend/backend-command";
-import { getMainWindow } from "../../index";
+import { getState, setState } from "../../state-hub";
 import { logger } from "../../utils";
 import { defineScript } from "../define-script";
 import {
@@ -12,15 +12,13 @@ const STEP_1_COORDS = { x: 613, y: 337 };
 const STEP_2_COORDS = { x: 613, y: 398 };
 const STEP_3_COORDS = { x: 613, y: 459 };
 
-let data: WeeklyBattleData | null = null;
 const onChangeCallbacks: Array<(data: WeeklyBattleData | null) => void> = [];
 
 const notifyChange = (newData: WeeklyBattleData | null): void => {
-  data = newData;
-  const mainWindow = getMainWindow();
-  if (mainWindow) {
-    mainWindow.webContents.send("weekly-battle-data-changed", newData);
-  }
+  setState("weeklyBattle", {
+    data: newData,
+    fetchedAt: newData ? new Date().toISOString() : null,
+  });
   for (const callback of onChangeCallbacks) {
     callback(newData);
   }
@@ -35,14 +33,14 @@ export const weeklyBattleFetch = async (): Promise<WeeklyBattleData> => {
 };
 
 export const weeklyBattleGet = async (): Promise<WeeklyBattleData | null> => {
-  return data;
+  return getState("weeklyBattle").data;
 };
 
 export const weeklyBattleOnChange = (
   callback: (data: WeeklyBattleData | null) => void
 ): (() => void) => {
   onChangeCallbacks.push(callback);
-  callback(data);
+  callback(getState("weeklyBattle").data);
   return () => {
     const index = onChangeCallbacks.indexOf(callback);
     if (index > -1) {

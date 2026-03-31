@@ -13,6 +13,7 @@ import {
   weeklyBattleGet,
 } from "./scripts";
 import { registerAllScripts } from "./scripts/registry";
+import { registerStateHandlers } from "./state-hub";
 import {
   checkForUpdates,
   downloadUpdate,
@@ -28,6 +29,7 @@ export const setupHandlers = (): void => {
 
   // Register all script handlers automatically
   registerAllScripts(allScripts);
+  registerStateHandlers();
 
   // Window
   ipcMain.on("window-close", () => {
