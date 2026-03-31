@@ -12,7 +12,7 @@ export const allScripts: ScriptDescriptor[] = [
 ];
 
 // Re-export navigation for scripts that use it
-export { navigation } from "./navigation";
+export { navigation } from "./game-nav";
 // Re-export non-script functions that handlers still needs
 export {
   weeklyBattleFetch,

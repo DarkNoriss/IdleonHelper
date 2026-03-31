@@ -1,6 +1,6 @@
 import type { OptimalStep } from "../../../types/construction";
 import { defineScript } from "../define-script";
-import { navigation } from "../navigation";
+import { navigation } from "../game-nav";
 import {
   BOARD_FIRST_COORDS,
   COGS_STEP,

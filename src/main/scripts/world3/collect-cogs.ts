@@ -4,7 +4,7 @@ import {
   getClickOptionsFromPreset,
 } from "../../backend";
 import { defineScript } from "../define-script";
-import { navigation } from "../navigation";
+import { navigation } from "../game-nav";
 import {
   COGS_STEP,
   COLLECT_ULTIMATE_COGS,
