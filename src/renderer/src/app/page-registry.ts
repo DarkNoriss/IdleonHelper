@@ -5,6 +5,7 @@ export const pageRegistry = {
   rawData: () => import("./pages/raw-data"),
   logs: () => import("./pages/general/logs"),
   "general/store-items": () => import("./pages/general/store-items"),
+  "general/candy": () => import("./pages/general/candy"),
   "general/test": () => import("./pages/general/test"),
   "world2/weekly-battle": () => import("./pages/world-2/weekly-battle"),
   "world3/construction": () => import("./pages/world-3/construction"),
