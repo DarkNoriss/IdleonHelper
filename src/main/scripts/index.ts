@@ -1,15 +1,22 @@
-import { general } from "./general";
-import { navigation } from "./navigation";
-import { world2 } from "./world2";
-import { world3 } from "./world3";
-import { world6 } from "./world6";
+import type { ScriptDescriptor } from "./define-script";
+import { generalScripts } from "./general";
+import { world2Scripts } from "./world2";
+import { world3Scripts } from "./world3";
+import { world6Scripts } from "./world6";
 
-export const scripts = {
-  general,
-  navigation,
-  world2,
-  world3,
-  world6,
-} as const;
+export const allScripts: ScriptDescriptor[] = [
+  ...generalScripts,
+  ...world2Scripts,
+  ...world3Scripts,
+  ...world6Scripts,
+];
 
-export type Scripts = typeof scripts;
+// Re-export navigation for scripts that use it
+export { navigation } from "./navigation";
+// Re-export non-script functions that handlers still needs
+export {
+  weeklyBattleFetch,
+  weeklyBattleGet,
+  weeklyBattleOnChange,
+} from "./world2";
+export { solver } from "./world3";

@@ -5,7 +5,7 @@ import {
   onStatusChange,
 } from "./backend";
 import { getMainWindow } from "./index";
-import { scripts } from "./scripts";
+import { weeklyBattleFetch } from "./scripts";
 import { checkForUpdates, initializeUpdateService, logger } from "./utils";
 
 export const initializeApp = (
@@ -14,7 +14,6 @@ export const initializeApp = (
   logger.log("Initializing application...");
   onStatusChange(notifyBackendStatus);
 
-  // Initialize update service
   initializeUpdateService();
 
   initializeBackend()
@@ -27,7 +26,6 @@ export const initializeApp = (
       );
     });
 
-  // Check for updates on initialization (non-blocking)
   setImmediate(() => {
     checkForUpdates().catch((error) => {
       logger.error(
@@ -36,9 +34,8 @@ export const initializeApp = (
     });
   });
 
-  // Fetch weekly battle data on initialization (non-blocking)
   setImmediate(() => {
-    scripts.world2.weeklyBattle.fetch().catch((error) => {
+    weeklyBattleFetch().catch((error) => {
       logger.error(
         `Failed to fetch weekly battle data on launch: ${error instanceof Error ? error.message : String(error)}`
       );

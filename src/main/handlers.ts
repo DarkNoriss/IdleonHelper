@@ -2,15 +2,18 @@ import { is } from "@electron-toolkit/utils";
 import { BrowserWindow, ipcMain } from "electron";
 
 import type {
-  OptimalStep,
   ParsedConstructionData,
   SolverWeights,
 } from "../types/construction";
 import { getConnectionStatus, getLastError } from "./backend";
-import { backendCommand } from "./backend/backend-command";
-import { scripts } from "./scripts";
 import {
-  cancellationManager,
+  allScripts,
+  solver,
+  weeklyBattleFetch,
+  weeklyBattleGet,
+} from "./scripts";
+import { registerAllScripts } from "./scripts/registry";
+import {
   checkForUpdates,
   downloadUpdate,
   getCurrentVersion,
@@ -23,6 +26,10 @@ import {
 export const setupHandlers = (): void => {
   logger.log("Setting up IPC handlers");
 
+  // Register all script handlers automatically
+  registerAllScripts(allScripts);
+
+  // Window
   ipcMain.on("window-close", () => {
     const window = BrowserWindow.getFocusedWindow();
     if (window) {
@@ -30,66 +37,34 @@ export const setupHandlers = (): void => {
     }
   });
 
+  // Weekly battle data (not scripts — data operations)
   ipcMain.handle("script:world-2.weekly-battle.fetch", async () => {
     logger.log("IPC: script:world-2.weekly-battle.fetch");
-    return await scripts.world2.weeklyBattle.fetch();
+    return await weeklyBattleFetch();
   });
 
   ipcMain.handle("script:world-2.weekly-battle.get", async () => {
     logger.log("IPC: script:world-2.weekly-battle.get");
-    return await scripts.world2.weeklyBattle.get();
+    return await weeklyBattleGet();
   });
 
+  // Construction solver (concurrent, not a defineScript)
   ipcMain.handle(
-    "script:world-2.weekly-battle.run",
-    async (_event, steps: number[]) => {
+    "script:world-3.construction.solver",
+    async (
+      _event,
+      inventory: ParsedConstructionData,
+      weights: SolverWeights,
+      solveTime?: number
+    ) => {
       logger.log(
-        `IPC: script:world-2.weekly-battle.run (steps: ${steps.length})`
+        `IPC: script:world-3.construction.solver (solveTime: ${solveTime ?? 1000})`
       );
-      return await scripts.world2.weeklyBattle.run(steps);
+      return await solver(inventory, weights, solveTime);
     }
   );
 
-  ipcMain.handle(
-    "script:world-6.summoning.start-endless-autobattler",
-    async () => {
-      logger.log("IPC: script:world-6.summoning.start-endless-autobattler");
-      return await scripts.world6.summoning.startEndlessAutobattler();
-    }
-  );
-
-  ipcMain.handle("script:world-6.summoning.start-autobattler", async () => {
-    logger.log("IPC: script:world-6.summoning.start-autobattler");
-    return await scripts.world6.summoning.startAutobattler();
-  });
-
-  ipcMain.handle("script:world-6.farming.start", async () => {
-    logger.log("IPC: script:world-6.farming.start");
-    return await scripts.world6.farming.start();
-  });
-
-  ipcMain.handle("script:world-6.farming.lock-unlock", async () => {
-    logger.log("IPC: script:world-6.farming.lock-unlock");
-    return await scripts.world6.farming.lockUnlock();
-  });
-
-  ipcMain.handle("script:get-status", async () => {
-    logger.log("IPC: script:get-status");
-    return cancellationManager.getStatus();
-  });
-
-  ipcMain.handle("script:cancel", async () => {
-    logger.log("IPC: script:cancel");
-    cancellationManager.cancelCurrent();
-    try {
-      await backendCommand.stop();
-    } catch (error) {
-      logger.error(
-        `Failed to send stop command to backend: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  });
-
+  // Backend
   ipcMain.handle("backend:getStatus", async () => {
     logger.log("IPC: backend:getStatus");
     return {
@@ -98,6 +73,7 @@ export const setupHandlers = (): void => {
     };
   });
 
+  // Updates
   ipcMain.handle("update:check", async () => {
     logger.log("IPC: update:check");
     await checkForUpdates();
@@ -123,58 +99,13 @@ export const setupHandlers = (): void => {
     return getCurrentVersion();
   });
 
+  // Logs
   ipcMain.handle("logs:get", async () => {
     logger.log("IPC: logs:get");
     return getLogs();
   });
 
-  ipcMain.handle("script:general.test.run", async () => {
-    logger.log("IPC: script:general.test.run");
-    return await scripts.general.test.run();
-  });
-
-  ipcMain.handle("script:general.store-items.run", async () => {
-    logger.log("IPC: script:general.store-items.run");
-    return await scripts.general.storeItems.run();
-  });
-
-  ipcMain.handle(
-    "script:world-3.construction.solver",
-    async (
-      _event,
-      inventory: ParsedConstructionData,
-      weights: SolverWeights,
-      solveTime?: number
-    ) => {
-      logger.log(
-        `IPC: script:world-3.construction.solver (solveTime: ${solveTime ?? 1000})`
-      );
-      return await scripts.world3.construction.solver(
-        inventory,
-        weights,
-        solveTime
-      );
-    }
-  );
-
-  ipcMain.handle(
-    "script:world-3.construction.apply",
-    async (_event, steps: OptimalStep[]) => {
-      logger.log("IPC: script:world-3.construction.apply");
-      return await scripts.world3.construction.apply(steps);
-    }
-  );
-
-  ipcMain.handle("script:world-3.construction.collect-cogs", async () => {
-    logger.log("IPC: script:world-3.construction.collect-cogs");
-    return await scripts.world3.construction.collectCogs();
-  });
-
-  ipcMain.handle("script:world-3.construction.trash-cogs", async () => {
-    logger.log("IPC: script:world-3.construction.trash-cogs");
-    return await scripts.world3.construction.trashCogs();
-  });
-
+  // App
   ipcMain.handle("app:isDev", () => {
     return is.dev;
   });
