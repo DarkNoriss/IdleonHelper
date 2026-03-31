@@ -1,21 +1,37 @@
-import path from "path"
-import tailwindcss from "@tailwindcss/vite"
-import react from "@vitejs/plugin-react"
-import { defineConfig, externalizeDepsPlugin } from "electron-vite"
+import path from "node:path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "electron-vite";
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
-  },
-  preload: {
-    plugins: [externalizeDepsPlugin()],
-  },
-  renderer: {
-    plugins: [react(), tailwindcss()],
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src/renderer/src"),
+    build: {
+      rollupOptions: {
+        external: ["ws", "bufferutil", "utf-8-validate"],
       },
     },
   },
-})
+  preload: {},
+  renderer: {
+    resolve: {
+      alias: [
+        {
+          find: /^@\/parsers\/?(.*)$/,
+          replacement: path.resolve(import.meta.dirname, "./src/parsers/$1"),
+        },
+        {
+          find: "@",
+          replacement: path.resolve(import.meta.dirname, "./src/renderer/src"),
+        },
+      ],
+    },
+    plugins: [
+      react({
+        babel: {
+          plugins: [["babel-plugin-react-compiler"]],
+        },
+      }),
+      tailwindcss(),
+    ],
+  },
+});

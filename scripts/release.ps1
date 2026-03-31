@@ -81,19 +81,35 @@ if (-not $env:GH_TOKEN) {
     }
 }
 
-Write-Host "Building and publishing to GitHub..." -ForegroundColor Green
+Write-Host "Cleaning and building..." -ForegroundColor Green
 Write-Host ""
 
-# Build
+# Remove resources/backend completely
+$backendOut = "resources/backend"
+if (Test-Path $backendOut) {
+    Write-Host "Removing existing backend files..." -ForegroundColor Yellow
+    Remove-Item $backendOut -Recurse -Force
+}
+
+# Build backend
+Write-Host "Building backend..." -ForegroundColor Green
+pnpm build:backend
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Backend build failed!" -ForegroundColor Red
+    exit 1
+}
+
+# Build application
+Write-Host "Building application..." -ForegroundColor Green
 pnpm build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
     exit 1
 }
 
-# Publish to GitHub (may be created as draft - publish manually on GitHub)
+# Publish to GitHub
+Write-Host "Publishing to GitHub..." -ForegroundColor Green
 electron-builder --win --publish always
-
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Publish failed!" -ForegroundColor Red
     exit 1
@@ -104,5 +120,4 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Release Complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Version $packageVersion has been released to GitHub!" -ForegroundColor Green
-Write-Host "Note: Release may be created as draft. Publish it manually on GitHub." -ForegroundColor Yellow
 Write-Host "Check: https://github.com/DarkNoriss/IdleonHelper/releases" -ForegroundColor Cyan

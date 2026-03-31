@@ -1,0 +1,86 @@
+using System.Net.WebSockets;
+using System.Runtime.Versioning;
+using System.Text.Json;
+using IdleonHelperBackend.Models;
+using IdleonHelperBackend.Utils;
+
+namespace IdleonHelperBackend.Handlers;
+
+[SupportedOSPlatform("windows10.0.19041.0")]
+internal static class FindWithDebugCommandHandler
+{
+  public static async Task Handle(WebSocket ws, WebSocketMessage message, CancellationToken ct)
+  {
+    try
+    {
+      var linkedCt = OperationCancellationManager.GetToken(ct);
+
+      if (!message.Data.HasValue)
+      {
+        await MessageHandler.SendError(ws, message.Id, "Missing data field", ct);
+        return;
+      }
+
+      var findRequest =
+        JsonSerializer.Deserialize<FindWithDebugRequest>(message.Data.Value.GetRawText(), MessageHandler.JsonOptions);
+
+      if (findRequest == null || string.IsNullOrWhiteSpace(findRequest.ImagePath))
+      {
+        await MessageHandler.SendError(ws, message.Id, "Missing or invalid imagePath", ct);
+        return;
+      }
+
+      if (!findRequest.TimeoutMs.HasValue || !findRequest.IntervalMs.HasValue || !findRequest.Threshold.HasValue)
+      {
+        await MessageHandler.SendError(ws, message.Id, "Missing required fields: TimeoutMs, IntervalMs, or Threshold", ct);
+        return;
+      }
+
+      var offset = findRequest.Offset != null
+        ? new ImageProcessing.ScreenOffset(
+          findRequest.Offset.Left,
+          findRequest.Offset.Right,
+          findRequest.Offset.Top,
+          findRequest.Offset.Bottom
+        )
+        : null;
+
+      var (matches, debugImagePath) = await ImageProcessing.FindWithDebug(
+        findRequest.ImagePath,
+        linkedCt,
+        findRequest.TimeoutMs.Value,
+        findRequest.IntervalMs.Value,
+        findRequest.Threshold.Value,
+        offset
+      );
+
+      var response = new FindWithDebugResponse
+      {
+        Matches = matches.Select(m => new MatchDto
+        {
+          Point = m.Point,
+          Similarity = m.Similarity
+        }).ToList(),
+        DebugImagePath = debugImagePath
+      };
+
+      await MessageHandler.SendResponse(ws, message.Id, response, ct);
+    }
+    catch (OperationCanceledException)
+    {
+      await MessageHandler.SendError(ws, message.Id, "Operation was cancelled", ct);
+    }
+    catch (FileNotFoundException ex)
+    {
+      await MessageHandler.SendError(ws, message.Id, $"Image file not found: {ex.Message}", ct);
+    }
+    catch (ArgumentException ex)
+    {
+      await MessageHandler.SendError(ws, message.Id, $"Invalid argument: {ex.Message}", ct);
+    }
+    catch (Exception ex)
+    {
+      await MessageHandler.SendError(ws, message.Id, $"Error finding image: {ex.Message}", ct);
+    }
+  }
+}

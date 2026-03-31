@@ -1,238 +1,92 @@
-import { ChildProcessWithoutNullStreams, spawn } from "child_process"
-import { join } from "path"
-import { electronApp, is, optimizer } from "@electron-toolkit/utils"
-import { app, BrowserWindow, ipcMain, shell } from "electron"
-import { autoUpdater } from "electron-updater"
+import { join } from "node:path";
+import { electronApp, is, optimizer } from "@electron-toolkit/utils";
+import { app, BrowserWindow, shell } from "electron";
 
-let backendProcess: ChildProcessWithoutNullStreams | null = null
-let mainWindow: BrowserWindow | null = null
+import { closeConnection, stopBackend } from "./backend";
+import { setupHandlers } from "./handlers";
+import { initializeApp } from "./initialization";
+import { logger, setLogsChangeNotifier } from "./utils";
 
-// Configure auto-updater
-autoUpdater.autoDownload = false // User-initiated updates only
-autoUpdater.autoInstallOnAppQuit = true // Auto-install on quit after download
-// autoUpdater.channel = "beta" // Uncomment to check for pre-releases
-// autoUpdater.allowPrerelease = true // Uncomment to allow pre-releases
+let mainWindow: BrowserWindow | null = null;
 
-const getBackendPath = (): string => {
-  if (is.dev) {
-    return join(
-      process.cwd(),
-      "resources",
-      "backend",
-      "IdleonHelperBackend.exe"
-    )
-  } else {
-    return join(process.resourcesPath, "backend", "IdleonHelperBackend.exe")
-  }
-}
+export const getMainWindow = (): BrowserWindow | null => {
+  return mainWindow;
+};
 
-const startBackend = (): void => {
-  if (process.platform !== "win32") {
-    // Skip if not Windows
-    return
-  }
+export const setMainWindow = (window: BrowserWindow | null): void => {
+  mainWindow = window;
+};
 
-  const exePath = getBackendPath()
-  if (!exePath) {
-    throw new Error("Backend executable path not found")
-  }
-
-  console.log("Starting backend...")
-
-  backendProcess = spawn(exePath, [], {
-    stdio: "pipe",
-    detached: false,
-  })
-
-  // Forward stdout to console
-  backendProcess.stdout?.on("data", (data) => {
-    console.log(`[Backend] ${data.toString()}`)
-  })
-
-  // Forward stderr to console
-  backendProcess.stderr?.on("data", (data) => {
-    console.error(`[Backend Error] ${data.toString()}`)
-  })
-
-  backendProcess.on("exit", (code, signal) => {
-    console.log(`Backend process exited with code ${code} and signal ${signal}`)
-    backendProcess = null
-  })
-
-  backendProcess.on("error", (error) => {
-    console.error("Backend process error:", error)
-    backendProcess = null
-  })
-}
-
-const createWindow = (): void => {
-  // Create the browser window.
-  mainWindow = new BrowserWindow({
+function createWindow(): void {
+  logger.log("Creating main window");
+  const window = new BrowserWindow({
     width: 958,
     height: 570,
     show: false,
-    frame: false, // Remove default title bar
+    frame: false,
     autoHideMenuBar: true,
     webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
+      preload: join(import.meta.dirname, "../preload/index.js"),
       sandbox: false,
-      devTools: true, // Enable DevTools for debugging (F12 or Ctrl+Shift+I)
+      devTools: true,
     },
-  })
+  });
 
-  mainWindow.on("ready-to-show", () => {
-    mainWindow?.show()
-  })
+  setMainWindow(window);
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: "deny" }
-  })
+  // Set up log change notifier for real-time updates
+  setLogsChangeNotifier((logs) => {
+    if (window && !window.isDestroyed()) {
+      window.webContents.send("logs-changed", logs);
+    }
+  });
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"])
+  window.on("ready-to-show", () => {
+    window?.show();
+  });
+
+  window.on("closed", () => {
+    setMainWindow(null);
+  });
+
+  window.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url);
+    return { action: "deny" };
+  });
+
+  if (is.dev && process.env.ELECTRON_RENDERER_URL) {
+    window.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    mainWindow.loadFile(join(__dirname, "../renderer/index.html"))
+    window.loadFile(join(import.meta.dirname, "../renderer/index.html"));
   }
 }
 
-// Set the app name for Task Manager and system display
-app.setName("IdleonHelper")
+app.whenReady().then(async () => {
+  logger.log("Electron app ready");
+  electronApp.setAppUserModelId("com.idleon.helper");
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  // Set app user model id for windows
-  electronApp.setAppUserModelId("com.electron.idleonhelper")
-
-  // Start the backend
-  startBackend()
-
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on("browser-window-created", (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+    optimizer.watchWindowShortcuts(window);
+  });
 
-  // IPC test
-  ipcMain.on("ping", () => console.log("pong"))
+  createWindow();
 
-  // Window controls
-  ipcMain.on("window-close", () => {
-    const window = BrowserWindow.getFocusedWindow()
-    if (window) window.close()
-  })
+  setupHandlers();
+  // Initialize app in background (fire-and-forget) to avoid blocking window creation
+  setImmediate(() => {
+    initializeApp();
+  });
+});
 
-  // Update handlers
-  ipcMain.handle("app:get-version", () => app.getVersion())
-
-  ipcMain.handle("updater:check-for-updates", async () => {
-    if (is.dev) {
-      return { available: false, currentVersion: app.getVersion() }
-    }
-
-    try {
-      const result = await autoUpdater.checkForUpdates()
-      const currentVersion = app.getVersion()
-      const latestVersion = result?.updateInfo?.version
-      const available = Boolean(
-        latestVersion && latestVersion !== currentVersion
-      )
-
-      return {
-        available,
-        currentVersion,
-        latestVersion: available ? latestVersion : undefined,
-      }
-    } catch (error) {
-      console.error("[Updater] Check failed:", error)
-      return {
-        available: false,
-        currentVersion: app.getVersion(),
-        error: error instanceof Error ? error.message : "Unknown error",
-      }
-    }
-  })
-
-  ipcMain.handle("updater:download-update", async () => {
-    if (is.dev) {
-      return { success: false, error: "Updates not available in development" }
-    }
-
-    try {
-      await autoUpdater.downloadUpdate()
-      return { success: true }
-    } catch (error) {
-      console.error("[Updater] Download failed:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      }
-    }
-  })
-
-  ipcMain.handle("updater:quit-and-install", () => {
-    autoUpdater.quitAndInstall(false, true)
-  })
-
-  // Auto-updater events - forward to renderer
-  autoUpdater.on("update-available", (info) => {
-    mainWindow?.webContents.send("updater:update-available", {
-      version: info.version,
-    })
-  })
-
-  autoUpdater.on("update-not-available", () => {
-    mainWindow?.webContents.send("updater:update-not-available")
-  })
-
-  autoUpdater.on("update-downloaded", (info) => {
-    mainWindow?.webContents.send("updater:update-downloaded", {
-      version: info.version,
-    })
-  })
-
-  autoUpdater.on("error", (error) => {
-    console.error("[Updater] Error:", error.message)
-    mainWindow?.webContents.send("updater:error", { message: error.message })
-  })
-
-  autoUpdater.on("download-progress", (progress) => {
-    mainWindow?.webContents.send("updater:download-progress", {
-      percent: progress.percent,
-      transferred: progress.transferred,
-      total: progress.total,
-    })
-  })
-
-  // World handlers
-  import("./worlds/world-3/construction").then((module) => {
-    module.registerWorld3ConstructionHandlers()
-  })
-
-  createWindow()
-
-  app.on("activate", () => {
-    // Re-create a window when the app icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
-})
-
-// Quit when all windows are closed
 app.on("window-all-closed", () => {
-  app.quit()
-})
+  logger.log("All windows closed, shutting down...");
+  closeConnection();
+  stopBackend();
+  app.quit();
+});
 
-// Kill the backend process when the app is closed
 app.on("before-quit", () => {
-  if (backendProcess && !backendProcess.killed) {
-    backendProcess.kill()
-  }
-})
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+  logger.log("App quitting...");
+  closeConnection();
+  stopBackend();
+});

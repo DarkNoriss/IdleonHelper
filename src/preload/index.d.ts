@@ -1,48 +1,140 @@
-import { ElectronAPI } from "@electron-toolkit/preload"
+import type { ElectronAPI } from "@electron-toolkit/preload";
+
+import type {
+  OptimalStep,
+  ParsedConstructionData,
+  Score,
+  SolverWeights,
+} from "../types/construction";
+import type { AppState, ScriptMap } from "../types/scripts";
+
+type ConnectionStatus = "connecting" | "connected" | "error";
+
+type BackendStatus = {
+  status: ConnectionStatus;
+  error: string | null;
+};
+
+type WeeklyBattleStep = {
+  stepName: string;
+  steps: number[];
+  rawSteps: string[];
+};
+
+type WeeklyBattleInfo = {
+  dateFrom: string;
+  dateTo: string;
+  bossName: string;
+  steps: WeeklyBattleStep[];
+};
+
+type WeeklyBattleData = {
+  fetchedAt: string;
+  info: WeeklyBattleInfo;
+};
+
+type LogLevel = "log" | "error" | "warn" | "info";
+
+type LogEntry = {
+  timestamp: number;
+  level: LogLevel;
+  message: string;
+};
 
 declare global {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: biome is not aware of the ElectronAPI type
   interface Window {
-    electron: ElectronAPI
     api: {
       window: {
-        close: () => void
-      }
-      world3: {
-        processJson: (jsonString: string) => Promise<{
-          success: boolean
-          data?: unknown
-          error?: string
-        }>
-      }
+        close: () => void;
+      };
+      backend: Record<string, never>;
+      script: {
+        run: <T extends keyof ScriptMap>(
+          id: T,
+          ...args: ScriptMap[T]["args"]
+        ) => Promise<ScriptMap[T]["result"]>;
+        cancel: () => Promise<void>;
+        world2: {
+          weeklyBattle: {
+            fetch: () => Promise<WeeklyBattleData>;
+            get: () => Promise<WeeklyBattleData | null>;
+          };
+        };
+        // Legacy: construction solver
+        world3: {
+          construction: {
+            solver: (
+              inventory: ParsedConstructionData,
+              weights: SolverWeights,
+              solveTime?: number
+            ) => Promise<{
+              score: Score;
+              steps: OptimalStep[];
+            } | null>;
+          };
+        };
+      };
       app: {
-        getVersion: () => Promise<string>
-      }
-      updater: {
-        checkForUpdates: () => Promise<{
-          available: boolean
-          currentVersion: string
-          latestVersion?: string
-          error?: string
-        }>
-        downloadUpdate: () => Promise<{ success: boolean; error?: string }>
-        quitAndInstall: () => Promise<void>
-        onUpdateAvailable: (
-          callback: (info: { version: string }) => void
-        ) => void
-        onUpdateNotAvailable: (callback: () => void) => void
-        onUpdateDownloaded: (
-          callback: (info: { version: string }) => void
-        ) => void
-        onUpdateError: (callback: (error: { message: string }) => void) => void
+        isDev: () => Promise<boolean>;
+      };
+      update: {
+        getVersion: () => Promise<string>;
+        checkForUpdates: () => Promise<void>;
+        downloadUpdate: () => Promise<void>;
+        installUpdate: () => Promise<void>;
+        getStatus: () => Promise<{
+          version: string;
+          status:
+            | "idle"
+            | "checking"
+            | "update-available"
+            | "update-not-available"
+            | "downloading"
+            | "update-downloaded"
+            | "installing"
+            | "error";
+          error?: string;
+        }>;
+        onStatusChange: (
+          callback: (status: {
+            version: string;
+            status:
+              | "idle"
+              | "checking"
+              | "update-available"
+              | "update-not-available"
+              | "downloading"
+              | "update-downloaded"
+              | "installing"
+              | "error";
+            error?: string;
+          }) => void
+        ) => () => void;
         onDownloadProgress: (
           callback: (progress: {
-            percent: number
-            transferred: number
-            total: number
+            percent: number;
+            transferred: number;
+            total: number;
           }) => void
-        ) => void
-        removeAllListeners: (channel: string) => void
-      }
-    }
+        ) => () => void;
+      };
+      logs: {
+        get: () => Promise<LogEntry[]>;
+        onChange: (callback: (logs: LogEntry[]) => void) => () => void;
+      };
+      state: {
+        get: <K extends keyof AppState>(key: K) => Promise<AppState[K]>;
+        subscribe: <K extends keyof AppState>(
+          key: K,
+          callback: (value: AppState[K]) => void
+        ) => () => void;
+      };
+    };
+    electron: ElectronAPI;
+    logs: {
+      get: () => Promise<LogEntry[]>;
+      onChange: (callback: (logs: LogEntry[]) => void) => () => void;
+    };
   }
 }

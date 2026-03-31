@@ -1,14 +1,13 @@
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using OpenCvSharp;
 using Point = System.Drawing.Point;
 
 namespace IdleonHelperBackend.Utils;
 
-public static class ImageProcessing {
-  public const int DEFAULT_IMAGE_INTERVAL_MS = 50;
-  public const int DEFAULT_IMAGE_TIMEOUT_MS = 5000;
-  public const double DEFAULT_IMAGE_THRESHOLD = 0.90;
-
+[SupportedOSPlatform("windows10.0.19041.0")]
+public static class ImageProcessing
+{
   public record ScreenOffset(
     int Left = 0,
     int Right = 0,
@@ -16,40 +15,57 @@ public static class ImageProcessing {
     int Bottom = 0
   );
 
-  public static async Task<List<Point>> FindAsync(
-    Mat templateImage,
+  public record Match(
+    Point Point,
+    double Similarity
+  );
+
+  public static async Task<List<Match>> Find(
+    string imagePath,
     CancellationToken ct,
-    int timeoutMs = DEFAULT_IMAGE_TIMEOUT_MS,
-    int intervalMs = DEFAULT_IMAGE_INTERVAL_MS,
-    double threshold = DEFAULT_IMAGE_THRESHOLD,
-    ScreenOffset? offset = null,
-    bool debug = false
-  ) {
+    int timeoutMs,
+    int intervalMs,
+    double threshold,
+    ScreenOffset? offset,
+    bool debug
+  )
+  {
     ct.ThrowIfCancellationRequested();
 
-    if (templateImage.Empty()) {
-      throw new ArgumentException("Template image cannot be null or empty", nameof(templateImage));
+    if (string.IsNullOrWhiteSpace(imagePath))
+    {
+      throw new ArgumentException("Image path cannot be null or empty", nameof(imagePath));
     }
 
-    if (threshold is < 0.0 or > 1.0) {
+    using var templateImage = LoadImage(imagePath);
+
+    if (templateImage.Empty())
+    {
+      throw new ArgumentException("Template image cannot be null or empty", nameof(imagePath));
+    }
+
+    if (threshold is < 0.0 or > 1.0)
+    {
       throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0.0 and 1.0");
     }
 
     offset ??= new ScreenOffset();
-    List<Point> matches = [];
+    List<Match> matches = [];
     var stopwatch = Stopwatch.StartNew();
     var timeoutSeconds = timeoutMs / 1000.0;
 
-    while (stopwatch.Elapsed.TotalSeconds < timeoutSeconds) {
+    while (stopwatch.Elapsed.TotalSeconds < timeoutSeconds)
+    {
       ct.ThrowIfCancellationRequested();
 
       using var screenshot = WindowCapture.CaptureScreenShot(ct);
-      var foundMatches = MatchTemplate(screenshot, templateImage, ct, threshold, debug);
+      var foundMatches = MatchTemplate(screenshot, templateImage, threshold, debug, ct);
 
       var filteredMatches = FilterMatchesByOffset(foundMatches, offset);
       matches.AddRange(filteredMatches);
 
-      if (matches.Count > 0) {
+      if (matches.Count > 0)
+      {
         break;
       }
 
@@ -61,8 +77,10 @@ public static class ImageProcessing {
   }
 
 
-  public static Mat LoadImage(string imagePath) {
-    if (!File.Exists(imagePath)) {
+  public static Mat LoadImage(string imagePath)
+  {
+    if (!File.Exists(imagePath))
+    {
       throw new FileNotFoundException($"Image file not found: {imagePath}", imagePath);
     }
 
@@ -70,26 +88,28 @@ public static class ImageProcessing {
   }
 
 
-  private static List<Point> MatchTemplate(
+  private static List<Match> MatchTemplate(
     Mat screenshot,
     Mat templateImage,
-    CancellationToken ct,
     double threshold,
-    bool debug = false
-  ) {
+    bool debug = false,
+    CancellationToken ct = default
+  )
+  {
     ct.ThrowIfCancellationRequested();
 
-    if (screenshot.Width < templateImage.Width || screenshot.Height < templateImage.Height) {
+    if (screenshot.Width < templateImage.Width || screenshot.Height < templateImage.Height)
+    {
       return [];
     }
 
     using var result = new Mat();
     Cv2.MatchTemplate(screenshot, templateImage, result, TemplateMatchModes.CCoeffNormed);
 
-    if (debug) {
+    if (debug)
+    {
       Cv2.MinMaxLoc(result, out _, out var maxVal, out _, out _);
-      Console.WriteLine(
-        $"[ImageProcessing] MatchTemplate debug: max correlation={maxVal:P2}, threshold={threshold:P2}");
+      Console.WriteLine($"MatchTemplate debug: max correlation={maxVal:P2}, threshold={threshold:P2}");
     }
 
     using var binaryResult = new Mat();
@@ -102,66 +122,76 @@ public static class ImageProcessing {
     var halfWidth = templateSize.Width / 2;
     var halfHeight = templateSize.Height / 2;
 
-    List<Point> matches = [];
+    List<Match> matches = [];
 
-    for (var i = 0; i < nonZeroCoordinates.Rows; i++) {
+    for (var i = 0; i < nonZeroCoordinates.Rows; i++)
+    {
       ct.ThrowIfCancellationRequested();
 
       var cvPoint = nonZeroCoordinates.At<Point>(i);
-      matches.Add(new Point(cvPoint.X + halfWidth, cvPoint.Y + halfHeight));
+      var matchPoint = new Point(cvPoint.X + halfWidth, cvPoint.Y + halfHeight);
+
+      var similarity = result.At<float>(cvPoint.Y, cvPoint.X);
+      
+      matches.Add(new Match(matchPoint, similarity));
     }
 
     return matches;
   }
 
-  private static List<Point> FilterMatchesByOffset(List<Point> matches,
-    ScreenOffset offset) {
-    return matches.Where(match => {
+  private static List<Match> FilterMatchesByOffset(List<Match> matches,
+    ScreenOffset offset)
+  {
+    return matches.Where(match =>
+    {
       var isWithinHorizontal =
-        (offset.Left == 0 || match.X >= offset.Left) &&
-        (offset.Right == 0 || match.X <= offset.Right);
+        (offset.Left == 0 || match.Point.X >= offset.Left) &&
+        (offset.Right == 0 || match.Point.X <= offset.Right);
 
       var isWithinVertical =
-        (offset.Top == 0 || match.Y >= offset.Top) &&
-        (offset.Bottom == 0 || match.Y <= offset.Bottom);
+        (offset.Top == 0 || match.Point.Y >= offset.Top) &&
+        (offset.Bottom == 0 || match.Point.Y <= offset.Bottom);
 
       return isWithinHorizontal && isWithinVertical;
     }).ToList();
   }
 
-  public static async Task<(List<Point> matches, string? debugImagePath)> FindWithDebugImageAsync(
+  public static async Task<(List<Match> matches, string? debugImagePath)> FindWithDebug(
     string templateImagePath,
     CancellationToken ct,
-    int timeoutMs = DEFAULT_IMAGE_TIMEOUT_MS,
-    int intervalMs = DEFAULT_IMAGE_INTERVAL_MS,
-    double threshold = DEFAULT_IMAGE_THRESHOLD,
-    ScreenOffset? offset = null,
-    bool saveDebugImage = true,
-    string? debugFileName = null
-  ) {
+    int timeoutMs,
+    int intervalMs,
+    double threshold,
+    ScreenOffset? offset
+  )
+  {
     ct.ThrowIfCancellationRequested();
 
-    var template = LoadImage(templateImagePath);
-    var matches = await FindAsync(template, ct, timeoutMs, intervalMs, threshold, offset, debug: saveDebugImage);
+    var matches = await Find(templateImagePath, ct, timeoutMs, intervalMs, threshold, offset, false);
+
+    using var template = LoadImage(templateImagePath);
 
     string? debugPath = null;
 
-    if (!saveDebugImage || matches.Count <= 0) return (matches, debugPath);
+    if (matches.Count <= 0) return (matches, debugPath);
 
     using var screenshotGray = WindowCapture.CaptureScreenShot(ct);
     using var screenshotColor = new Mat();
     Cv2.CvtColor(screenshotGray, screenshotColor, ColorConversionCodes.GRAY2BGR);
 
     var templateSize = template.Size();
-    for (var i = 0; i < matches.Count; i++) {
-      var p = matches[i];
+    for (var i = 0; i < matches.Count; i++)
+    {
+      var match = matches[i];
+      var p = match.Point;
       var x = Math.Clamp(p.X - templateSize.Width / 2, 0, screenshotColor.Width - templateSize.Width);
       var y = Math.Clamp(p.Y - templateSize.Height / 2, 0, screenshotColor.Height - templateSize.Height);
       var rect = new Rect(x, y, templateSize.Width, templateSize.Height);
 
-      Console.WriteLine($"[ImageProcessing] Debug: index={i}, point={p}");
+      Console.WriteLine($"Debug: index={i}, point={p}, similarity={match.Similarity:P2}");
 
       Cv2.Rectangle(screenshotColor, rect, new Scalar(0, 0, 255), 2);
+
       Cv2.PutText(
         screenshotColor,
         i.ToString(),
@@ -170,11 +200,31 @@ public static class ImageProcessing {
         0.5,
         new Scalar(0, 0, 255)
       );
+
+      var coordText = $"({p.X}, {p.Y})";
+      var similarityText = $"{match.Similarity:P2}";
+      var textY = y + templateSize.Height + 15;
+      Cv2.PutText(
+        screenshotColor,
+        coordText,
+        new OpenCvSharp.Point(x, textY),
+        HersheyFonts.HersheySimplex,
+        0.5,
+        new Scalar(0, 0, 255)
+      );
+      Cv2.PutText(
+        screenshotColor,
+        similarityText,
+        new OpenCvSharp.Point(x, textY + 15),
+        HersheyFonts.HersheySimplex,
+        0.5,
+        new Scalar(0, 255, 0)
+      );
     }
 
     var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff");
     var baseName = Path.GetFileNameWithoutExtension(templateImagePath);
-    debugFileName ??= $"annotated-{baseName}-{timestamp}.png";
+    var debugFileName = $"annotated-{baseName}-{timestamp}.png";
     debugPath = Path.Combine(AppContext.BaseDirectory, debugFileName);
     Cv2.ImWrite(debugPath, screenshotColor);
 

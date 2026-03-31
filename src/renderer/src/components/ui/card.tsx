@@ -1,46 +1,46 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 // Define CardContext
 type CardContextType = {
-  variant: "default" | "accent"
-}
+  variant: "default" | "accent";
+};
 
 const CardContext = React.createContext<CardContextType>({
   variant: "default", // Default value
-})
+});
 
 // Hook to use CardContext
 const useCardContext = () => {
-  const context = React.useContext(CardContext)
+  const context = React.useContext(CardContext);
   if (!context) {
-    throw new Error("useCardContext must be used within a Card component")
+    throw new Error("useCardContext must be used within a Card component");
   }
-  return context
-}
+  return context;
+};
 
 // Variants
 const cardVariants = cva(
-  "flex flex-col items-stretch text-card-foreground rounded-xl",
+  "flex flex-col items-stretch rounded-xl text-card-foreground",
   {
     variants: {
       variant: {
-        default: "bg-card border border-border shadow-xs black/5",
-        accent: "bg-muted shadow-xs p-1",
+        default: "black/5 border border-border bg-card shadow-xs",
+        accent: "bg-muted p-1 shadow-xs",
       },
     },
     defaultVariants: {
       variant: "default",
     },
   }
-)
+);
 
 const cardHeaderVariants = cva(
-  "flex flex-col justify-between flex-wrap p-3 gap-2.5",
+  "flex flex-col flex-wrap justify-between gap-2.5 p-3",
   {
     variants: {
       variant: {
@@ -52,43 +52,43 @@ const cardHeaderVariants = cva(
       variant: "default",
     },
   }
-)
+);
 
-const cardContentVariants = cva("grow p-3 flex flex-col gap-3", {
+const cardContentVariants = cva("flex grow flex-col gap-3 p-3", {
   variants: {
     variant: {
       default: "",
-      accent: "bg-card rounded-t-xl [&:last-child]:rounded-b-xl",
+      accent: "rounded-t-xl bg-card [&:last-child]:rounded-b-xl",
     },
   },
   defaultVariants: {
     variant: "default",
   },
-})
+});
 
 const cardTableVariants = cva("grid grow", {
   variants: {
     variant: {
       default: "",
-      accent: "bg-card rounded-xl",
+      accent: "rounded-xl bg-card",
     },
   },
   defaultVariants: {
     variant: "default",
   },
-})
+});
 
-const cardFooterVariants = cva("flex items-center px-5 min-h-14", {
+const cardFooterVariants = cva("flex min-h-14 items-center px-5", {
   variants: {
     variant: {
-      default: "border-t border-border",
-      accent: "bg-card rounded-b-xl mt-[2px]",
+      default: "border-border border-t",
+      accent: "mt-[2px] rounded-b-xl bg-card",
     },
   },
   defaultVariants: {
     variant: "default",
   },
-})
+});
 
 // Card Component
 function Card({
@@ -99,12 +99,12 @@ function Card({
   return (
     <CardContext.Provider value={{ variant: variant || "default" }}>
       <div
-        data-slot="card"
         className={cn(cardVariants({ variant }), className)}
+        data-slot="card"
         {...props}
       />
     </CardContext.Provider>
-  )
+  );
 }
 
 // CardHeader Component
@@ -112,14 +112,14 @@ function CardHeader({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { variant } = useCardContext()
+  const { variant } = useCardContext();
   return (
     <div
-      data-slot="card-header"
       className={cn(cardHeaderVariants({ variant }), className)}
+      data-slot="card-header"
       {...props}
     />
-  )
+  );
 }
 
 // CardContent Component
@@ -127,14 +127,14 @@ function CardContent({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { variant } = useCardContext()
+  const { variant } = useCardContext();
   return (
     <div
-      data-slot="card-content"
       className={cn(cardContentVariants({ variant }), className)}
+      data-slot="card-content"
       {...props}
     />
-  )
+  );
 }
 
 // CardTable Component
@@ -142,14 +142,14 @@ function CardTable({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { variant } = useCardContext()
+  const { variant } = useCardContext();
   return (
     <div
-      data-slot="card-table"
       className={cn(cardTableVariants({ variant }), className)}
+      data-slot="card-table"
       {...props}
     />
-  )
+  );
 }
 
 // CardFooter Component
@@ -157,14 +157,14 @@ function CardFooter({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { variant } = useCardContext()
+  const { variant } = useCardContext();
   return (
     <div
-      data-slot="card-footer"
       className={cn(cardFooterVariants({ variant }), className)}
+      data-slot="card-footer"
       {...props}
     />
-  )
+  );
 }
 
 // Other Components
@@ -174,11 +174,11 @@ function CardHeading({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      data-slot="card-heading"
       className={cn("space-y-1", className)}
+      data-slot="card-heading"
       {...props}
     />
-  )
+  );
 }
 
 function CardToolbar({
@@ -187,11 +187,11 @@ function CardToolbar({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      data-slot="card-toolbar"
       className={cn("flex items-center gap-2.5", className)}
+      data-slot="card-toolbar"
       {...props}
     />
-  )
+  );
 }
 
 function CardTitle({
@@ -200,14 +200,14 @@ function CardTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      data-slot="card-title"
       className={cn(
-        "text-base leading-none font-semibold tracking-tight",
+        "font-semibold text-base leading-none tracking-tight",
         className
       )}
+      data-slot="card-title"
       {...props}
     />
-  )
+  );
 }
 
 function CardDescription({
@@ -216,11 +216,11 @@ function CardDescription({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      data-slot="card-description"
       className={cn("text-muted-foreground text-sm", className)}
+      data-slot="card-description"
       {...props}
     />
-  )
+  );
 }
 
 // Exports
@@ -234,4 +234,4 @@ export {
   CardTable,
   CardTitle,
   CardToolbar,
-}
+};

@@ -1,64 +1,143 @@
-import { electronAPI } from "@electron-toolkit/preload"
-import { contextBridge, ipcRenderer } from "electron"
+import { electronAPI } from "@electron-toolkit/preload";
+import { contextBridge, type IpcRendererEvent, ipcRenderer } from "electron";
 
-// Custom APIs for renderer
 const api = {
   window: {
-    close: () => ipcRenderer.send("window-close"),
+    close: () => {
+      ipcRenderer.send("window-close");
+    },
   },
-  world3: {
-    processJson: (jsonString: string) =>
-      ipcRenderer.invoke("world-3-construction:process-json", jsonString),
+  backend: {},
+  script: {
+    run: (id: string, ...args: unknown[]) => {
+      return ipcRenderer.invoke(`script:${id}`, ...args);
+    },
+    cancel: () => {
+      return ipcRenderer.invoke("script:cancel");
+    },
+    world2: {
+      weeklyBattle: {
+        fetch: () => {
+          return ipcRenderer.invoke("script:world-2.weekly-battle.fetch");
+        },
+        get: () => {
+          return ipcRenderer.invoke("script:world-2.weekly-battle.get");
+        },
+      },
+    },
+    // Legacy: construction solver (not a defineScript, stays as specific handler)
+    world3: {
+      construction: {
+        solver: (
+          inventory: unknown,
+          weights: { buildRate: number; exp: number; flaggy: number },
+          solveTime?: number
+        ) => {
+          return ipcRenderer.invoke(
+            "script:world-3.construction.solver",
+            inventory,
+            weights,
+            solveTime
+          );
+        },
+      },
+    },
   },
   app: {
-    getVersion: () => ipcRenderer.invoke("app:get-version"),
+    isDev: () => {
+      return ipcRenderer.invoke("app:isDev");
+    },
   },
-  updater: {
-    checkForUpdates: () => ipcRenderer.invoke("updater:check-for-updates"),
-    downloadUpdate: () => ipcRenderer.invoke("updater:download-update"),
-    quitAndInstall: () => ipcRenderer.invoke("updater:quit-and-install"),
-    onUpdateAvailable: (callback: (info: { version: string }) => void) => {
-      ipcRenderer.on("updater:update-available", (_, info) => callback(info))
+  update: {
+    getVersion: () => {
+      return ipcRenderer.invoke("update:get-version");
     },
-    onUpdateNotAvailable: (callback: () => void) => {
-      ipcRenderer.on("updater:update-not-available", () => callback())
+    checkForUpdates: () => {
+      return ipcRenderer.invoke("update:check");
     },
-    onUpdateDownloaded: (callback: (info: { version: string }) => void) => {
-      ipcRenderer.on("updater:update-downloaded", (_, info) => callback(info))
+    downloadUpdate: () => {
+      return ipcRenderer.invoke("update:download");
     },
-    onUpdateError: (callback: (error: { message: string }) => void) => {
-      ipcRenderer.on("updater:error", (_, error) => callback(error))
+    installUpdate: () => {
+      return ipcRenderer.invoke("update:install");
+    },
+    getStatus: () => {
+      return ipcRenderer.invoke("update:get-status");
+    },
+    onStatusChange: (
+      callback: (status: {
+        version: string;
+        status: string;
+        error?: string;
+      }) => void
+    ) => {
+      const handler = (
+        _event: IpcRendererEvent,
+        status: { version: string; status: string; error?: string }
+      ) => {
+        callback(status);
+      };
+      ipcRenderer.on("update-status-changed", handler);
+      return () => {
+        ipcRenderer.off("update-status-changed", handler);
+      };
     },
     onDownloadProgress: (
       callback: (progress: {
-        percent: number
-        transferred: number
-        total: number
+        percent: number;
+        transferred: number;
+        total: number;
       }) => void
     ) => {
-      ipcRenderer.on("updater:download-progress", (_, progress) =>
-        callback(progress)
-      )
-    },
-    removeAllListeners: (channel: string) => {
-      ipcRenderer.removeAllListeners(channel)
+      const handler = (
+        _event: IpcRendererEvent,
+        progress: { percent: number; transferred: number; total: number }
+      ) => {
+        callback(progress);
+      };
+      ipcRenderer.on("update-download-progress", handler);
+      return () => {
+        ipcRenderer.off("update-download-progress", handler);
+      };
     },
   },
-}
+  logs: {
+    get: () => {
+      return ipcRenderer.invoke("logs:get");
+    },
+    onChange: (callback: (logs: unknown[]) => void) => {
+      const handler = (_event: IpcRendererEvent, logs: unknown[]) => {
+        callback(logs);
+      };
+      ipcRenderer.on("logs-changed", handler);
+      return () => {
+        ipcRenderer.off("logs-changed", handler);
+      };
+    },
+  },
+  state: {
+    get: (key: string) => ipcRenderer.invoke("state:get", key),
+    subscribe: (key: string, callback: (value: unknown) => void) => {
+      const handler = (_event: IpcRendererEvent, value: unknown) =>
+        callback(value);
+      ipcRenderer.on(`state:${key}`, handler);
+      return () => {
+        ipcRenderer.off(`state:${key}`, handler);
+      };
+    },
+  },
+};
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld("electron", electronAPI)
-    contextBridge.exposeInMainWorld("api", api)
+    contextBridge.exposeInMainWorld("electron", electronAPI);
+    contextBridge.exposeInMainWorld("api", api);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
+  // @ts-expect-error (define in dts)
+  window.electron = electronAPI;
+  // @ts-expect-error (define in dts)
+  window.api = api;
 }

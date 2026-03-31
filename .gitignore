@@ -16,11 +16,11 @@ out/
 .vite/
 .cache/
 
+# TypeScript build info
+*.tsbuildinfo
+
 # Electron-builder artefakty
 *.exe
-!.eslintrc.js
-!.prettierrc
-!.editorconfig
 
 # Allow app installer output, but ignore unpacked
 dist/*.exe

@@ -1,4 +1,4 @@
-appId: com.electron.idleonhelper
+appId: com.idleon.helper
 productName: IdleonHelper
 directories:
   buildResources: build
@@ -12,6 +12,8 @@ files:
 extraResources:
   - from: resources/backend
     to: backend
+  - from: resources/assets
+    to: assets
 win:
   executableName: IdleonHelper
 nsis:
@@ -19,6 +21,7 @@ nsis:
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  oneClick: true
 npmRebuild: false
 publish:
   provider: github

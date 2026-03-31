@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import { cva, type VariantProps } from "class-variance-authority";
+import type * as React from "react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 // Define input size variants
 const textareaVariants = cva(
@@ -16,16 +16,16 @@ const textareaVariants = cva(
   {
     variants: {
       variant: {
-        sm: "px-2.5 py-2.5 text-xs rounded-md",
-        md: "px-3 py-3 text-sm rounded-md",
-        lg: "px-4 py-4 text-sm rounded-md",
+        sm: "rounded-md px-2.5 py-2.5 text-xs",
+        md: "rounded-md px-3 py-3 text-sm",
+        lg: "rounded-md px-4 py-4 text-sm",
       },
     },
     defaultVariants: {
       variant: "md",
     },
   }
-)
+);
 
 function Textarea({
   className,
@@ -35,12 +35,11 @@ function Textarea({
   VariantProps<typeof textareaVariants>): React.ReactElement {
   return (
     <textarea
-      data-slot="textarea"
       className={cn(textareaVariants({ variant }), className)}
+      data-slot="textarea"
       {...props}
     />
-  )
+  );
 }
 
-export { Textarea }
-export { textareaVariants }
+export { Textarea, textareaVariants };
