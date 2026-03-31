@@ -70,7 +70,7 @@ export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
   };
 
   const buttonGrid =
-    actions.length === 1 ? "flex justify-center" : "grid grid-cols-2 gap-6";
+    actions.length === 1 ? "grid grid-cols-1" : "grid grid-cols-2 gap-6";
 
   return (
     <Card className="relative">
