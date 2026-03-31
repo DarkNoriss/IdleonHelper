@@ -1,20 +1,14 @@
 import {
-  backendCommand,
   backendConfig,
   ClickPreset,
   getClickOptionsFromPreset,
 } from "../../backend";
-import { cancellationManager, logger } from "../../utils";
+import { defineScript } from "../define-script";
 
-export const start = async (): Promise<void> => {
-  if (cancellationManager.getStatus().isWorking) {
-    throw new Error("Another operation is already running");
-  }
-
-  logger.log("Starting farming");
-  const token = cancellationManager.createToken();
-
-  try {
+export default defineScript({
+  id: "world6.farming.start",
+  name: "Start Farming",
+  run: async ({ token, backend, logger }) => {
     while (!token.isCancelled()) {
       token.throwIfCancelled();
       logger.log("Searching for farming images with threshold 99.25%...");
@@ -27,9 +21,9 @@ export const start = async (): Promise<void> => {
       };
 
       const [og3Result, og4Result, og5Result] = await Promise.all([
-        backendCommand.find("farming/og-3", findOptions, token),
-        backendCommand.find("farming/og-4", findOptions, token),
-        backendCommand.find("farming/og-5", findOptions, token),
+        backend.find("farming/og-3", findOptions, token),
+        backend.find("farming/og-4", findOptions, token),
+        backend.find("farming/og-5", findOptions, token),
       ]);
 
       const allCoordinates = [
@@ -72,18 +66,10 @@ export const start = async (): Promise<void> => {
       const presetOptions = getClickOptionsFromPreset(ClickPreset.Extreme);
       for (const coordinate of allCoordinates) {
         token.throwIfCancelled();
-        await backendCommand.click(coordinate, presetOptions, token);
+        await backend.click(coordinate, presetOptions, token);
       }
 
       logger.log(`Clicked on ${allCoordinates.length} farming images`);
     }
-  } catch (error) {
-    if (error instanceof Error && error.message === "Operation was cancelled") {
-      logger.log("Farming operation was cancelled");
-      return;
-    }
-    throw error;
-  } finally {
-    cancellationManager.clearToken();
-  }
-};
+  },
+});

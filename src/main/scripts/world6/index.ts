@@ -1,11 +1,10 @@
-import { lockUnlock } from "./farming-lock-unlock";
-import { start } from "./farming-start";
-import { summoning } from "./summoning";
+import farmingLockUnlock from "./farming-lock-unlock";
+import farmingStart from "./farming-start";
+import { summoningStartAutobattler, summoningStartEndless } from "./summoning";
 
-export const world6 = {
-  farming: {
-    start,
-    lockUnlock,
-  },
-  summoning,
-} as const;
+export const world6Scripts = [
+  farmingStart,
+  farmingLockUnlock,
+  summoningStartEndless,
+  summoningStartAutobattler,
+];

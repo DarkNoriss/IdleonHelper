@@ -1,20 +1,12 @@
-import {
-  backendCommand,
-  ClickPreset,
-  getClickOptionsFromPreset,
-} from "../../backend";
-import { cancellationManager, delay, logger } from "../../utils";
+import { ClickPreset, getClickOptionsFromPreset } from "../../backend";
+import { delay } from "../../utils";
+import { defineScript } from "../define-script";
 import { FARMING_GRID } from "./farming-constants";
 
-export const lockUnlock = async (): Promise<void> => {
-  if (cancellationManager.getStatus().isWorking) {
-    throw new Error("Another operation is already running");
-  }
-
-  logger.log("Starting lock/unlock crops");
-  const token = cancellationManager.createToken();
-
-  try {
+export default defineScript({
+  id: "world6.farming.lockUnlock",
+  name: "Lock/Unlock Crops",
+  run: async ({ token, backend, logger }) => {
     token.throwIfCancelled();
 
     await delay(100, token);
@@ -37,17 +29,9 @@ export const lockUnlock = async (): Promise<void> => {
     const presetOptions = getClickOptionsFromPreset(ClickPreset.Extreme);
     for (const coordinate of allCoordinates) {
       token.throwIfCancelled();
-      await backendCommand.click(coordinate, presetOptions, token);
+      await backend.click(coordinate, presetOptions, token);
     }
 
     logger.log(`Clicked on ${allCoordinates.length} crop positions`);
-  } catch (error) {
-    if (error instanceof Error && error.message === "Operation was cancelled") {
-      logger.log("Lock/unlock operation was cancelled");
-      return;
-    }
-    throw error;
-  } finally {
-    cancellationManager.clearToken();
-  }
-};
+  },
+});

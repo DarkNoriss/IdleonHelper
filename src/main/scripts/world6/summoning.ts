@@ -1,69 +1,26 @@
-import { cancellationManager, delay, logger } from "../../utils";
+import { delay } from "../../utils";
+import { defineScript } from "../define-script";
 
-export const summoning = {
-  startEndlessAutobattler: async (): Promise<void> => {
-    // Check if already working
-    if (cancellationManager.getStatus().isWorking) {
-      throw new Error("Another operation is already running");
-    }
-
-    logger.log("Starting endless autobattler");
-    // Create cancellation token
-    const token = cancellationManager.createToken();
-
-    try {
-      while (!token.isCancelled()) {
-        token.throwIfCancelled();
-        logger.log("Endless autobattler iteration...");
-        await delay(60_000, token); // 1 minute
-      }
-    } catch (error) {
-      // Handle cancellation silently - it's a user action, not an error
-      if (
-        error instanceof Error &&
-        error.message === "Operation was cancelled"
-      ) {
-        logger.log("Endless autobattler operation was cancelled");
-        return; // Return gracefully without throwing
-      }
-      // Re-throw actual errors
-      throw error;
-    } finally {
-      // Clean up
-      cancellationManager.clearToken();
+export const summoningStartEndless = defineScript({
+  id: "world6.summoning.startEndlessAutobattler",
+  name: "Endless Autobattler",
+  run: async ({ token, logger }) => {
+    while (!token.isCancelled()) {
+      token.throwIfCancelled();
+      logger.log("Endless autobattler iteration...");
+      await delay(60_000, token);
     }
   },
+});
 
-  startAutobattler: async (): Promise<void> => {
-    // Check if already working
-    if (cancellationManager.getStatus().isWorking) {
-      throw new Error("Another operation is already running");
-    }
-
-    logger.log("Starting autobattler");
-    // Create cancellation token
-    const token = cancellationManager.createToken();
-
-    try {
-      while (!token.isCancelled()) {
-        token.throwIfCancelled();
-        logger.log("Autobattler iteration...");
-        await delay(60_000, token); // 1 minute
-      }
-    } catch (error) {
-      // Handle cancellation silently - it's a user action, not an error
-      if (
-        error instanceof Error &&
-        error.message === "Operation was cancelled"
-      ) {
-        logger.log("Autobattler operation was cancelled");
-        return; // Return gracefully without throwing
-      }
-      // Re-throw actual errors
-      throw error;
-    } finally {
-      // Clean up
-      cancellationManager.clearToken();
+export const summoningStartAutobattler = defineScript({
+  id: "world6.summoning.startAutobattler",
+  name: "Autobattler",
+  run: async ({ token, logger }) => {
+    while (!token.isCancelled()) {
+      token.throwIfCancelled();
+      logger.log("Autobattler iteration...");
+      await delay(60_000, token);
     }
   },
-} as const;
+});
