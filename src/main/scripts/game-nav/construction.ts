@@ -7,8 +7,8 @@ import { navigateTo } from "./helpers";
 export const construction = {
   toConstruction: async (token: CancellationToken): Promise<boolean> => {
     return await navigateTo(
-      "construction/cogs_tab",
-      "quik-ref/construction",
+      "ui/codex/quik-ref/construction/cogs_tab",
+      "ui/codex/quik-ref/construction/construction",
       codex.toQuikRef,
       token,
       "Construction"
@@ -16,8 +16,8 @@ export const construction = {
   },
   toCogsTab: async (token: CancellationToken): Promise<boolean> => {
     return await navigateTo(
-      "construction/flaggy-rate",
-      "construction/cogs_tab",
+      "ui/codex/quik-ref/construction/flaggy-rate",
+      "ui/codex/quik-ref/construction/cogs_tab",
       construction.toConstruction,
       token,
       "Cogs Tab"
@@ -25,8 +25,8 @@ export const construction = {
   },
   ensureFirstPage: async (token: CancellationToken): Promise<boolean> => {
     return await ensurePage(
-      "construction/cogs-page-prev",
-      "construction/cogs-page-prev-off",
+      "ui/codex/quik-ref/construction/cogs-page-prev",
+      "ui/codex/quik-ref/construction/cogs-page-prev-off",
       "first page",
       "previous button",
       token
@@ -34,8 +34,8 @@ export const construction = {
   },
   ensureLastPage: async (token: CancellationToken): Promise<boolean> => {
     return await ensurePage(
-      "construction/cogs-page-next",
-      "construction/cogs-page-next-off",
+      "ui/codex/quik-ref/construction/cogs-page-next",
+      "ui/codex/quik-ref/construction/cogs-page-next-off",
       "last page",
       "next button",
       token
@@ -43,8 +43,8 @@ export const construction = {
   },
   ensureCogShelfOff: async (token: CancellationToken): Promise<boolean> => {
     return await ensureToggle(
-      "construction/cogs-shelf-off",
-      "construction/cogs-shelf",
+      "ui/codex/quik-ref/construction/cogs-shelf-off",
+      "ui/codex/quik-ref/construction/cogs-shelf",
       "cog shelf",
       "off",
       token
@@ -52,8 +52,8 @@ export const construction = {
   },
   ensureCogShelfOn: async (token: CancellationToken): Promise<boolean> => {
     return await ensureToggle(
-      "construction/cogs-shelf",
-      "construction/cogs-shelf-off",
+      "ui/codex/quik-ref/construction/cogs-shelf",
+      "ui/codex/quik-ref/construction/cogs-shelf-off",
       "cog shelf",
       "on",
       token
@@ -61,8 +61,8 @@ export const construction = {
   },
   ensureTrashOff: async (token: CancellationToken): Promise<boolean> => {
     return await ensureToggle(
-      "construction/cogs-trash-off",
-      "construction/cogs-trash",
+      "ui/codex/quik-ref/construction/cogs-trash-off",
+      "ui/codex/quik-ref/construction/cogs-trash",
       "trash",
       "off",
       token
@@ -70,8 +70,8 @@ export const construction = {
   },
   ensureTrashOn: async (token: CancellationToken): Promise<boolean> => {
     return await ensureToggle(
-      "construction/cogs-trash",
-      "construction/cogs-trash-off",
+      "ui/codex/quik-ref/construction/cogs-trash",
+      "ui/codex/quik-ref/construction/cogs-trash-off",
       "trash",
       "on",
       token
@@ -82,7 +82,7 @@ export const construction = {
     token: CancellationToken
   ): Promise<number> => {
     const isOnTargetPage = await backendCommand.isVisible(
-      `construction/page-${targetPage}`,
+      `ui/codex/quik-ref/construction/page-${targetPage}`,
       { threshold: 0.975 },
       token
     );
@@ -112,8 +112,8 @@ export const construction = {
       const pageDiff = targetPage - detectedPage;
       const buttonImage =
         pageDiff > 0
-          ? "construction/cogs-page-next"
-          : "construction/cogs-page-prev";
+          ? "ui/codex/quik-ref/construction/cogs-page-next"
+          : "ui/codex/quik-ref/construction/cogs-page-prev";
 
       const result = await backendCommand.find(buttonImage, undefined, token);
       if (result.matches.length === 0) {
@@ -138,7 +138,7 @@ export const construction = {
       await delay(100, token);
 
       const verifyPage = await backendCommand.isVisible(
-        `construction/page-${targetPage}`,
+        `ui/codex/quik-ref/construction/page-${targetPage}`,
         { threshold: 0.975 },
         token
       );
@@ -166,7 +166,7 @@ const detectCurrentPage = async (
 ): Promise<number | null> => {
   for (let page = 1; page <= 7; page++) {
     const isVisible = await backendCommand.isVisible(
-      `construction/page-${page}`,
+      `ui/codex/quik-ref/construction/page-${page}`,
       { threshold: 0.975 },
       token
     );
