@@ -150,7 +150,7 @@ const Construction = () => {
         </div>
 
         {!parsedJson && (
-          <div className="rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-600 dark:text-yellow-400">
+          <div className="rounded-md bg-accent/10 p-3 text-accent-foreground text-sm">
             No data available. Please go to the Raw Data page and save your JSON
             data first.
           </div>
@@ -182,9 +182,7 @@ const Construction = () => {
                   {buildRateDiff && (
                     <div
                       className={`mt-1 font-medium text-sm ${
-                        buildRateDiff >= 0
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
+                        buildRateDiff >= 0 ? "text-chart-1" : "text-destructive"
                       }`}
                     >
                       {notateNumber(buildRateDiff)}
@@ -205,9 +203,7 @@ const Construction = () => {
                   {expBonusDiff && (
                     <div
                       className={`mt-1 font-medium text-sm ${
-                        expBonusDiff >= 0
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
+                        expBonusDiff >= 0 ? "text-chart-1" : "text-destructive"
                       }`}
                     >
                       {notateNumber(expBonusDiff)}
@@ -226,9 +222,7 @@ const Construction = () => {
                   {flaggyDiff && (
                     <div
                       className={`mt-1 font-medium text-sm ${
-                        flaggyDiff >= 0
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
+                        flaggyDiff >= 0 ? "text-chart-1" : "text-destructive"
                       }`}
                     >
                       {notateNumber(flaggyDiff)}
