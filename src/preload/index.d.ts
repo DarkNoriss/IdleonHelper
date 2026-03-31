@@ -6,7 +6,7 @@ import type {
   Score,
   SolverWeights,
 } from "../types/construction";
-import type { ScriptMap } from "../types/scripts";
+import type { AppState, ScriptMap } from "../types/scripts";
 
 type ConnectionStatus = "connecting" | "connected" | "error";
 
@@ -135,6 +135,13 @@ declare global {
       logs: {
         get: () => Promise<LogEntry[]>;
         onChange: (callback: (logs: LogEntry[]) => void) => () => void;
+      };
+      state: {
+        get: <K extends keyof AppState>(key: K) => Promise<AppState[K]>;
+        subscribe: <K extends keyof AppState>(
+          key: K,
+          callback: (value: AppState[K]) => void
+        ) => () => void;
       };
     };
     electron: ElectronAPI;

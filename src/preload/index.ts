@@ -156,6 +156,17 @@ const api = {
       };
     },
   },
+  state: {
+    get: (key: string) => ipcRenderer.invoke("state:get", key),
+    subscribe: (key: string, callback: (value: unknown) => void) => {
+      const handler = (_event: IpcRendererEvent, value: unknown) =>
+        callback(value);
+      ipcRenderer.on(`state:${key}`, handler);
+      return () => {
+        ipcRenderer.off(`state:${key}`, handler);
+      };
+    },
+  },
 };
 
 if (process.contextIsolated) {
