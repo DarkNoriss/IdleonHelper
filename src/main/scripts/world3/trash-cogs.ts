@@ -3,7 +3,7 @@ import {
   ClickPreset,
   getClickOptionsFromPreset,
 } from "../../backend";
-import { cancellationManager, logger } from "../../utils";
+import { defineScript } from "../define-script";
 import { navigation } from "../navigation";
 import {
   COGS_STEP,
@@ -12,17 +12,10 @@ import {
   SPARE_ROWS,
 } from "./construction-constants";
 
-export const trashCogs = async (): Promise<void> => {
-  // Check if already working
-  if (cancellationManager.getStatus().isWorking) {
-    throw new Error("Another operation is already running");
-  }
-
-  logger.log("Starting trash cogs");
-  // Create cancellation token
-  const token = cancellationManager.createToken();
-
-  try {
+export default defineScript({
+  id: "world3.construction.trashCogs",
+  name: "Trash Cogs",
+  run: async ({ token, logger }) => {
     logger.log("Navigating to cogs tab...");
     const navigationSuccess = await navigation.construction.toCogsTab(token);
     if (!navigationSuccess) {
@@ -86,16 +79,5 @@ export const trashCogs = async (): Promise<void> => {
     await navigation.construction.ensureTrashOff(token);
 
     logger.log("Trash cogs completed successfully");
-  } catch (error) {
-    // Handle cancellation silently - it's a user action, not an error
-    if (error instanceof Error && error.message === "Operation was cancelled") {
-      logger.log("Trash cogs operation was cancelled");
-      return; // Return gracefully without throwing
-    }
-    // Re-throw actual errors
-    throw error;
-  } finally {
-    // Clean up
-    cancellationManager.clearToken();
-  }
-};
+  },
+});

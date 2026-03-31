@@ -1,5 +1,9 @@
-import { weeklyBattle } from "./weekly-battle";
+import weeklyBattleRun from "./weekly-battle";
 
-export const world2 = {
-  weeklyBattle,
-} as const;
+export {
+  weeklyBattleFetch,
+  weeklyBattleGet,
+  weeklyBattleOnChange,
+} from "./weekly-battle";
+
+export const world2Scripts = [weeklyBattleRun];

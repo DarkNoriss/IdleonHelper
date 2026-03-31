@@ -1,6 +1,5 @@
 import type { OptimalStep } from "../../../types/construction";
-import { backendCommand } from "../../backend";
-import { cancellationManager, logger } from "../../utils";
+import { defineScript } from "../define-script";
 import { navigation } from "../navigation";
 import {
   BOARD_FIRST_COORDS,
@@ -52,15 +51,10 @@ const calculateSpareCoords = (
   };
 };
 
-export const apply = async (steps: OptimalStep[]): Promise<void> => {
-  if (cancellationManager.getStatus().isWorking) {
-    throw new Error("Another operation is already running");
-  }
-
-  logger.log("Applying optimized board");
-  const token = cancellationManager.createToken();
-
-  try {
+export default defineScript<[OptimalStep[]]>({
+  id: "world3.construction.apply",
+  name: "Apply Construction",
+  run: async ({ args: [steps], token, backend, logger }) => {
     logger.log("Navigating to construction screen...");
     const navigationSuccess = await navigation.construction.toCogsTab(token);
     if (!navigationSuccess) {
@@ -103,17 +97,9 @@ export const apply = async (steps: OptimalStep[]): Promise<void> => {
       logger.log(
         `Dragging from (${fromCoords.x}, ${fromCoords.y}) to (${toCoords.x}, ${toCoords.y})`
       );
-      await backendCommand.drag(fromCoords, toCoords, { instant: true }, token);
+      await backend.drag(fromCoords, toCoords, { instant: true }, token);
     }
 
     logger.log("Optimized board applied successfully");
-  } catch (error) {
-    if (error instanceof Error && error.message === "Operation was cancelled") {
-      logger.log("Apply operation was cancelled");
-      return;
-    }
-    throw error;
-  } finally {
-    cancellationManager.clearToken();
-  }
-};
+  },
+});

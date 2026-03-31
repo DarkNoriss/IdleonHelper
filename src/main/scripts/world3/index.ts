@@ -1,13 +1,8 @@
-import { collectCogs } from "./collect-cogs";
-import { apply } from "./construction-apply";
-import { solver } from "./construction-solver";
-import { trashCogs } from "./trash-cogs";
+import collectCogs from "./collect-cogs";
+import constructionApply from "./construction-apply";
+import trashCogs from "./trash-cogs";
 
-export const world3 = {
-  construction: {
-    solver,
-    apply,
-    collectCogs,
-    trashCogs,
-  },
-} as const;
+// Solver is NOT a defineScript - stays as regular handler
+export { solver } from "./construction-solver";
+
+export const world3Scripts = [constructionApply, collectCogs, trashCogs];
