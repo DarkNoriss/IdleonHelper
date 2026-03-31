@@ -13,7 +13,7 @@ export default defineScript({
     token.throwIfCancelled();
     logger.log("Checking if deposit_all button is visible...");
     const isDepositAllVisible = await backend.isVisible(
-      "storage/deposit_all",
+      "ui/codex/quik-ref/storage/deposit_all",
       undefined,
       token
     );
@@ -21,7 +21,7 @@ export default defineScript({
     if (isDepositAllVisible) {
       logger.log("deposit_all button is visible, clicking it...");
       const clicked = await backend.findAndClick(
-        "storage/deposit_all",
+        "ui/codex/quik-ref/storage/deposit_all",
         undefined,
         token
       );
@@ -33,14 +33,14 @@ export default defineScript({
         "deposit_all button not visible, clicking info.png to open info screen..."
       );
       const infoClicked = await backend.findAndClick(
-        "storage/info",
+        "ui/codex/quik-ref/storage/info",
         undefined,
         token
       );
       if (infoClicked) {
         logger.log("Info screen opened, now clicking deposit_all...");
         const depositAllClicked = await backend.findAndClick(
-          "storage/deposit_all",
+          "ui/codex/quik-ref/storage/deposit_all",
           undefined,
           token
         );
@@ -56,7 +56,7 @@ export default defineScript({
     token.throwIfCancelled();
     logger.log("Clicking deposit_cash button...");
     const depositCashClicked = await backend.findAndClick(
-      "storage/deposit_cash",
+      "ui/codex/quik-ref/storage/deposit_cash",
       undefined,
       token
     );
@@ -68,7 +68,7 @@ export default defineScript({
     token.throwIfCancelled();
     logger.log("Clicking deposit_cash_max button...");
     const depositCashMaxClicked = await backend.findAndClick(
-      "storage/deposit_cash_max",
+      "ui/codex/quik-ref/storage/deposit_cash_max",
       undefined,
       token
     );

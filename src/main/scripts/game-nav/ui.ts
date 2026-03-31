@@ -6,7 +6,7 @@ export const ui = {
   toCodex: async (token: CancellationToken): Promise<boolean> => {
     logger.log("Navigating to Codex...");
     const initialCheck = await backendCommand.isVisible(
-      "codex/quik-ref",
+      "ui/codex/quik-ref",
       undefined,
       token
     );
@@ -24,7 +24,7 @@ export const ui = {
     }
 
     const secondCheck = await backendCommand.find(
-      "codex/quik-ref",
+      "ui/codex/quik-ref",
       undefined,
       token
     );
@@ -46,7 +46,7 @@ export const ui = {
     }
 
     const finalCheck = await backendCommand.isVisible(
-      "codex/quik-ref",
+      "ui/codex/quik-ref",
       undefined,
       token
     );
@@ -64,7 +64,7 @@ export const ui = {
   toItems: async (token: CancellationToken): Promise<boolean> => {
     logger.log("Navigating to Items...");
     const initialCheck = await backendCommand.isVisible(
-      "items/lock",
+      "ui/items/lock",
       undefined,
       token
     );
@@ -82,7 +82,7 @@ export const ui = {
     }
 
     const secondCheck = await backendCommand.find(
-      "items/lock",
+      "ui/items/lock",
       undefined,
       token
     );
@@ -104,7 +104,7 @@ export const ui = {
     }
 
     const finalCheck = await backendCommand.isVisible(
-      "items/lock",
+      "ui/items/lock",
       undefined,
       token
     );
