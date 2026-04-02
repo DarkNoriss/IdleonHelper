@@ -63,9 +63,7 @@ export const navigateTo = async (
     token
   );
   if (!clicked) {
-    logger.error(
-      `${screenName} button not found after fallback, navigation failed`
-    );
+    logger.error(`${screenName} button not found, navigation failed`);
     return false;
   }
 
