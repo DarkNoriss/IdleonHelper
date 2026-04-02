@@ -6,7 +6,7 @@ export const ui = {
   toCodex: async (token: CancellationToken): Promise<boolean> => {
     logger.log("Navigating to Codex...");
     const initialCheck = await backendCommand.isVisible(
-      "ui/codex/quik-ref",
+      "ui/codex/guild",
       undefined,
       token
     );
@@ -24,7 +24,7 @@ export const ui = {
     }
 
     const secondCheck = await backendCommand.find(
-      "ui/codex/quik-ref",
+      "ui/codex/guild",
       undefined,
       token
     );
@@ -46,7 +46,7 @@ export const ui = {
     }
 
     const finalCheck = await backendCommand.isVisible(
-      "ui/codex/quik-ref",
+      "ui/codex/guild",
       undefined,
       token
     );
@@ -56,7 +56,7 @@ export const ui = {
     }
 
     logger.error(
-      "Failed to navigate to codex - codex/quik-ref not visible after multiple attempts"
+      "Failed to navigate to codex - codex/guild not visible after multiple attempts"
     );
     return false;
   },
