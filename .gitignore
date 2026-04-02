@@ -73,3 +73,10 @@ Desktop.ini
 # ---------------------------
 .claude/
 CLAUDE.md
+
+# ---------------------------
+# AI working docs
+# ---------------------------
+docs/superpowers/
+docs/mockups/
+docs/tickets/

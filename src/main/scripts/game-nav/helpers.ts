@@ -2,31 +2,16 @@ import { backendCommand } from "../../backend";
 import { logger } from "../../utils";
 import type { CancellationToken } from "../../utils/cancellation-token";
 
-/**
- * Generic navigation helper function that follows the standard navigation pattern:
- * 1. Check if target screen is already open (using isVisible on confirmation image)
- * 2. If not open, check if button is visible (using isVisible on button image)
- * 3. If button not visible, call fallback function
- * 4. After fallback (or if button was visible), find and click the button
- * 5. Confirm navigation succeeded by checking confirmation image with isVisible
- *
- * @param confirmationImage - Image path to check if the target screen is already open
- * @param buttonImage - Image path of the button to click for navigation
- * @param fallback - Function to call if button is not visible
- * @param token - Cancellation token
- * @param screenName - Optional name for logging (defaults to "target screen")
- * @returns Promise<boolean> - true if navigation succeeded, false otherwise
- */
 export const navigateTo = async (
   confirmationImage: string,
   buttonImage: string,
-  fallback: (token: CancellationToken) => Promise<boolean>,
+  fallback: ((token: CancellationToken) => Promise<boolean>) | undefined,
   token: CancellationToken,
   screenName = "target screen"
 ): Promise<boolean> => {
   logger.log(`Navigating to ${screenName}...`);
 
-  // Check if already open using isVisible
+  // Step 1: Quick check if already open
   const initialCheck = await backendCommand.isVisible(
     confirmationImage,
     undefined,
@@ -37,42 +22,59 @@ export const navigateTo = async (
     return true;
   }
 
-  // Check if button is visible using isVisible
+  // Step 2: Check if button is visible
   const isButtonVisible = await backendCommand.isVisible(
     buttonImage,
     undefined,
     token
   );
 
-  // If button not visible, call fallback
+  // Step 3: If button not visible and fallback provided, call fallback
   if (!isButtonVisible) {
+    if (!fallback) {
+      logger.error(`${screenName} button not found and no fallback available`);
+      return false;
+    }
+
     logger.log(`${screenName} button not found, falling back...`);
     const fallbackResult = await fallback(token);
     if (!fallbackResult) {
       return false;
     }
+
+    // Step 4: Re-check confirmation after fallback
+    // Handles case where target is already open after parent navigation
+    // (e.g. Quick Ref saves last-opened tab, so opening Codex may reveal it)
+    const postFallbackCheck = await backendCommand.isVisible(
+      confirmationImage,
+      undefined,
+      token
+    );
+    if (postFallbackCheck) {
+      logger.log(`${screenName} already opened after fallback`);
+      return true;
+    }
   }
 
-  // After fallback (or if button was visible), find and click the button
+  // Step 5: Find and click the button
   const clicked = await backendCommand.findAndClick(
     buttonImage,
     undefined,
     token
   );
   if (!clicked) {
-    logger.error(
-      `${screenName} button not found after fallback, navigation failed`
-    );
+    logger.error(`${screenName} button not found, navigation failed`);
     return false;
   }
 
-  // Check for confirmation using isVisible
-  const confirmationCheck = await backendCommand.isVisible(
+  // Step 6: Wait for confirmation using find (5s retry) instead of isVisible (50ms)
+  // This gives the UI time to transition after clicking
+  const confirmationResult = await backendCommand.find(
     confirmationImage,
     undefined,
     token
   );
-  if (confirmationCheck) {
+  if (confirmationResult.matches.length > 0) {
     logger.log(`${screenName} opened successfully`);
     return true;
   }

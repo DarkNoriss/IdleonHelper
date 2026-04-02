@@ -5,7 +5,7 @@ import { navigateTo } from "./helpers";
 export const quickRef = {
   toStorage: async (token: CancellationToken): Promise<boolean> => {
     return await navigateTo(
-      "ui/items/lock",
+      "ui/codex/quik-ref/storage/deposit_cash",
       "ui/codex/quik-ref/storage/storage",
       codex.toQuikRef,
       token,
