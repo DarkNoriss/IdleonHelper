@@ -3,6 +3,7 @@
   "version": "0.9.1",
   "description": "IdleonHelper is a automated helper for the game Idleon",
   "main": "./out/main/index.js",
+  "packageManager": "pnpm@10.11.0",
   "author": "MyAngelCamellia",
   "homepage": "https://electron-vite.org",
   "scripts": {
