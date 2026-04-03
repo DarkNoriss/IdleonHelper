@@ -3,6 +3,17 @@ import { ScriptPage } from "@/components/script-page";
 import { Input } from "@/components/ui/input";
 import { useMainState } from "@/hooks/use-main-state";
 
+const formatDuration = (ms: number): string => {
+  const totalSeconds = Math.round(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+};
+
 const BossFarmer = () => {
   const [iterations, setIterations] = useState("100");
   const bossFarmer = useMainState("bossFarmer");
@@ -46,13 +57,24 @@ const BossFarmer = () => {
         </div>
 
         {isRunning && bossFarmer && (
-          <div className="rounded-md bg-muted/50 p-3 text-sm">
+          <div className="space-y-1 rounded-md bg-muted/50 p-3 text-sm">
             <p className="font-medium">
               Iteration {bossFarmer.iteration} / {bossFarmer.total}
             </p>
             <p className="text-muted-foreground">
               {bossFarmer.total - bossFarmer.iteration} remaining
             </p>
+            {bossFarmer.avgIterationMs > 0 && (
+              <>
+                <p className="text-muted-foreground">
+                  Avg per iteration: {formatDuration(bossFarmer.avgIterationMs)}
+                </p>
+                <p className="text-muted-foreground">
+                  Estimated remaining:{" "}
+                  {formatDuration(bossFarmer.estimatedRemainingMs)}
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>
