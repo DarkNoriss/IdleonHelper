@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ScriptPage } from "@/components/script-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -116,65 +117,78 @@ const TrapCollectingSection = () => {
     setTimer("");
   };
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Trap Collecting</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 flex flex-wrap gap-4">
-          <div>
-            <label
-              className="mb-1.5 block font-medium text-sm"
-              htmlFor="collect-trap"
-            >
-              Trap Type
-            </label>
-            <Select onValueChange={handleTrapChange} value={trap}>
-              <SelectTrigger className="w-[240px]" id="collect-trap">
-                <SelectValue placeholder="Select trap" />
-              </SelectTrigger>
-              <SelectContent>
-                {trapConfigs.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+  const isReady = trap !== "" && timer !== "";
 
-          <div>
-            <label
-              className="mb-1.5 block font-medium text-sm"
-              htmlFor="collect-timer"
-            >
-              Timer
-            </label>
-            <Select
-              disabled={!selectedTrap}
-              onValueChange={setTimer}
-              value={timer}
-            >
-              <SelectTrigger className="w-[140px]" id="collect-timer">
-                <SelectValue placeholder="Select timer" />
-              </SelectTrigger>
-              <SelectContent>
-                {selectedTrap?.timers.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+  return (
+    <ScriptPage
+      actions={
+        isReady
+          ? [
+              {
+                label: "Collect Traps",
+                scriptId: "world3.trapping.collectTraps",
+                runningLabel: "Collecting... (Click to stop)",
+                args: () => [trap, timer],
+              },
+            ]
+          : []
+      }
+      title="Trap Collecting"
+    >
+      <div className="mb-4 flex flex-wrap gap-4">
+        <div>
+          <label
+            className="mb-1.5 block font-medium text-sm"
+            htmlFor="collect-trap"
+          >
+            Trap Type
+          </label>
+          <Select onValueChange={handleTrapChange} value={trap}>
+            <SelectTrigger className="w-[240px]" id="collect-trap">
+              <SelectValue placeholder="Select trap" />
+            </SelectTrigger>
+            <SelectContent>
+              {trapConfigs.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <Button className="w-full" disabled size="sm">
-          Collect Traps (Coming soon)
-        </Button>
-      </CardContent>
-    </Card>
+        <div>
+          <label
+            className="mb-1.5 block font-medium text-sm"
+            htmlFor="collect-timer"
+          >
+            Timer
+          </label>
+          <Select
+            disabled={!selectedTrap}
+            onValueChange={setTimer}
+            value={timer}
+          >
+            <SelectTrigger className="w-[140px]" id="collect-timer">
+              <SelectValue placeholder="Select timer" />
+            </SelectTrigger>
+            <SelectContent>
+              {selectedTrap?.timers.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {!isReady && (
+        <p className="mb-4 text-muted-foreground text-sm">
+          Select trap type and timer to start collecting.
+        </p>
+      )}
+    </ScriptPage>
   );
 };
 
