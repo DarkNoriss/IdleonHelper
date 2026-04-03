@@ -16,6 +16,7 @@ export const navConfig: NavEntry[] = [
       { title: "Logs", page: "logs" },
       { title: "Store Items", page: "general/store-items" },
       { title: "Candy", page: "general/candy" },
+      { title: "Boss Farmer", page: "general/boss-farmer" },
       { title: "Test", page: "general/test", devOnly: true },
     ],
   },
