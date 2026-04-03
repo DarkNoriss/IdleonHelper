@@ -20,6 +20,8 @@ const state: AppState = {
     iteration: 0,
     total: 0,
     running: false,
+    avgIterationMs: 0,
+    estimatedRemainingMs: 0,
   },
 };
 

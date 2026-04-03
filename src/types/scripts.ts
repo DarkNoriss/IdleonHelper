@@ -37,6 +37,8 @@ export type BossFarmerState = {
   iteration: number;
   total: number;
   running: boolean;
+  avgIterationMs: number;
+  estimatedRemainingMs: number;
 };
 
 export type ConnectionStatus = "connecting" | "connected" | "error";
