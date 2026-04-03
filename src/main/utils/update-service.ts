@@ -47,6 +47,22 @@ const notifyRenderer = (
   window.webContents.send("update-status-changed", payload);
 };
 
+const ASSET_NOT_FOUND_PATTERNS = [
+  "404",
+  "net::ERR_CONNECTION_REFUSED",
+  "Cannot download",
+  "No published versions",
+  "ENOENT",
+  "latest.yml",
+];
+
+const isAssetNotFoundError = (message: string): boolean => {
+  const lowerMessage = message.toLowerCase();
+  return ASSET_NOT_FOUND_PATTERNS.some((pattern) =>
+    lowerMessage.includes(pattern.toLowerCase())
+  );
+};
+
 export const initializeUpdateService = (): void => {
   logger.log("Initializing update service");
 
@@ -79,6 +95,12 @@ export const initializeUpdateService = (): void => {
   });
 
   autoUpdater.on("error", (error) => {
+    if (isAssetNotFoundError(error.message)) {
+      logger.warn(`Update assets not yet available: ${error.message}`);
+      notifyRenderer("update-not-available");
+      return;
+    }
+
     logger.error(`Update error: ${error.message}`);
     notifyRenderer("error", undefined, error.message);
   });
