@@ -47,6 +47,20 @@ const notifyRenderer = (
   window.webContents.send("update-status-changed", payload);
 };
 
+const ASSET_NOT_FOUND_PATTERNS = [
+  "404",
+  "net::err_connection_refused",
+  "cannot download",
+  "no published versions",
+  "enoent",
+  "latest.yml",
+];
+
+const isAssetNotFoundError = (message: string): boolean => {
+  const lower = message.toLowerCase();
+  return ASSET_NOT_FOUND_PATTERNS.some((p) => lower.includes(p));
+};
+
 export const initializeUpdateService = (): void => {
   logger.log("Initializing update service");
 
@@ -79,6 +93,12 @@ export const initializeUpdateService = (): void => {
   });
 
   autoUpdater.on("error", (error) => {
+    if (isAssetNotFoundError(error.message)) {
+      logger.warn(`Update assets not yet available: ${error.message}`);
+      notifyRenderer("update-not-available");
+      return;
+    }
+
     logger.error(`Update error: ${error.message}`);
     notifyRenderer("error", undefined, error.message);
   });
@@ -110,14 +130,14 @@ export const checkForUpdates = async (): Promise<void> => {
     logger.log("Checking for updates...");
     await autoUpdater.checkForUpdates();
   } catch (error) {
-    logger.error(
-      `Failed to check for updates: ${error instanceof Error ? error.message : String(error)}`
-    );
-    notifyRenderer(
-      "error",
-      undefined,
-      error instanceof Error ? error.message : String(error)
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    if (isAssetNotFoundError(message)) {
+      logger.warn(`Update assets not yet available: ${message}`);
+      notifyRenderer("update-not-available");
+      return;
+    }
+    logger.error(`Failed to check for updates: ${message}`);
+    notifyRenderer("error", undefined, message);
   }
 };
 
