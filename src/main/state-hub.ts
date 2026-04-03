@@ -16,6 +16,11 @@ const state: AppState = {
     data: null,
     fetchedAt: null,
   },
+  bossFarmer: {
+    iteration: 0,
+    total: 0,
+    running: false,
+  },
 };
 
 export function setState<K extends keyof AppState>(
