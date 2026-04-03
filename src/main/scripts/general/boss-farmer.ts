@@ -21,7 +21,7 @@ export default defineScript<[number]>({
       ...INITIAL_STATE,
     });
 
-    let lastFindTime = 0;
+    let lastClickTime = 0;
     let totalTimedMs = 0;
     let timedIterations = 0;
 
@@ -41,13 +41,6 @@ export default defineScript<[number]>({
           return;
         }
 
-        const now = Date.now();
-        if (lastFindTime > 0) {
-          totalTimedMs += now - lastFindTime;
-          timedIterations++;
-        }
-        lastFindTime = now;
-
         const matchPoint = result.matches[0]!;
         logger.log("Found repeat image. Waiting 5s for loot...");
 
@@ -59,6 +52,13 @@ export default defineScript<[number]>({
           token.throwIfCancelled();
           await backend.click(matchPoint, {}, token);
           await delay(500, token);
+
+          const now = Date.now();
+          if (lastClickTime > 0) {
+            totalTimedMs += now - lastClickTime;
+            timedIterations++;
+          }
+          lastClickTime = now;
         } else {
           logger.log("Last iteration complete. Skipping click.");
         }
