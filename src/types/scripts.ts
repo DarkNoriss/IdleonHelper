@@ -26,6 +26,7 @@ export type ScriptMap = {
   "world3.construction.apply": { args: [OptimalStep[]]; result: undefined };
   "world3.construction.collectCogs": { args: []; result: undefined };
   "world3.construction.trashCogs": { args: []; result: undefined };
+  "world3.trapping.collectTraps": { args: [string, string]; result: undefined };
   "world2.weeklyBattle.run": { args: [number[]]; result: undefined };
   "general.test.run": { args: []; result: undefined };
   "general.storeItems.run": { args: []; result: undefined };
