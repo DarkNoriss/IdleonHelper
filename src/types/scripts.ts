@@ -30,6 +30,15 @@ export type ScriptMap = {
   "general.test.run": { args: []; result: undefined };
   "general.storeItems.run": { args: []; result: undefined };
   "general.candy.run": { args: [string]; result: undefined };
+  "general.bossFarmer.run": { args: [number]; result: undefined };
+};
+
+export type BossFarmerState = {
+  iteration: number;
+  total: number;
+  running: boolean;
+  avgIterationMs: number;
+  estimatedRemainingMs: number;
 };
 
 export type ConnectionStatus = "connecting" | "connected" | "error";
@@ -47,4 +56,5 @@ export type AppState = {
     data: WeeklyBattleData | null;
     fetchedAt: string | null;
   };
+  bossFarmer: BossFarmerState;
 };
