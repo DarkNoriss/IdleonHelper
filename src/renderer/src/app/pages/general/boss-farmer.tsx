@@ -3,15 +3,16 @@ import { ScriptPage } from "@/components/script-page";
 import { Input } from "@/components/ui/input";
 import { useMainState } from "@/hooks/use-main-state";
 
-const formatDuration = (ms: number): string => {
+const formatDuration = (ms: number, precise = false): string => {
   const totalSeconds = ms / 1000;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds - minutes * 60;
+  const sec = precise ? seconds.toFixed(1) : Math.round(seconds);
 
   if (minutes > 0) {
-    return `${minutes}m ${seconds.toFixed(1)}s`;
+    return `${minutes}m ${sec}s`;
   }
-  return `${seconds.toFixed(1)}s`;
+  return `${sec}s`;
 };
 
 const BossFarmer = () => {
@@ -67,7 +68,8 @@ const BossFarmer = () => {
             {bossFarmer.avgIterationMs > 0 && (
               <>
                 <p className="text-muted-foreground">
-                  Avg per iteration: {formatDuration(bossFarmer.avgIterationMs)}
+                  Avg per iteration:{" "}
+                  {formatDuration(bossFarmer.avgIterationMs, true)}
                 </p>
                 <p className="text-muted-foreground">
                   Estimated remaining:{" "}
