@@ -21,7 +21,9 @@ export default defineScript<[number]>({
       ...INITIAL_STATE,
     });
 
-    let timingStart = 0;
+    let lastClickTime = 0;
+    let totalTimedMs = 0;
+    let timedIterations = 0;
 
     try {
       for (let i = 0; i < total; i++) {
@@ -45,12 +47,26 @@ export default defineScript<[number]>({
         token.throwIfCancelled();
         await delay(5000, token);
 
+        if (i < total - 1) {
+          logger.log(`Clicking to start fight ${i + 2}...`);
+          token.throwIfCancelled();
+          await backend.click(matchPoint, {}, token);
+
+          const now = Date.now();
+          if (lastClickTime > 0) {
+            totalTimedMs += now - lastClickTime;
+            timedIterations++;
+          }
+          lastClickTime = now;
+        } else {
+          logger.log("Last iteration complete. Skipping click.");
+        }
+
         const remaining = total - (i + 1);
         let timing = INITIAL_STATE;
 
-        if (timingStart > 0 && i > 0) {
-          const elapsed = Date.now() - timingStart;
-          const avgIterationMs = Math.round(elapsed / i);
+        if (timedIterations > 0) {
+          const avgIterationMs = totalTimedMs / timedIterations;
           timing = {
             avgIterationMs,
             estimatedRemainingMs: avgIterationMs * remaining,
@@ -63,18 +79,6 @@ export default defineScript<[number]>({
           running: true,
           ...timing,
         });
-
-        if (i < total - 1) {
-          logger.log(`Clicking to start fight ${i + 2}...`);
-          token.throwIfCancelled();
-          await backend.click(matchPoint, {}, token);
-
-          if (i === 0) {
-            timingStart = Date.now();
-          }
-        } else {
-          logger.log("Last iteration complete. Skipping click.");
-        }
       }
 
       logger.log(`Boss Farmer: all ${total} iterations complete.`);

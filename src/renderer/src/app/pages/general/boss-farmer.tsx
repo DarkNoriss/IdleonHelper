@@ -4,14 +4,14 @@ import { Input } from "@/components/ui/input";
 import { useMainState } from "@/hooks/use-main-state";
 
 const formatDuration = (ms: number): string => {
-  const totalSeconds = Math.round(ms / 1000);
+  const totalSeconds = ms / 1000;
   const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
+  const seconds = totalSeconds - minutes * 60;
 
   if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
+    return `${minutes}m ${seconds.toFixed(1)}s`;
   }
-  return `${seconds}s`;
+  return `${seconds.toFixed(1)}s`;
 };
 
 const BossFarmer = () => {
