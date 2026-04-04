@@ -36,15 +36,66 @@ export default defineScript<[string, string]>({
       token.throwIfCancelled();
 
       // Step 1: Find and open Eagle Eye
+      // Try fast path first: quick visibility checks before slow findAndClick
       logger.log("Looking for Eagle Eye skill...");
-      let eagleEyeFound = await backend.findAndClick(
-        "ui/attacks/attack_eagle_eye",
-        { timeoutMs: 1000 },
-        token
-      );
+      let eagleEyeFound = false;
 
+      const quickFindEagleEye = async (): Promise<boolean> => {
+        if (
+          await backend.isVisible(
+            "ui/attacks/attack_eagle_eye",
+            undefined,
+            token
+          )
+        ) {
+          return backend.findAndClick(
+            "ui/attacks/attack_eagle_eye",
+            { timeoutMs: 1000 },
+            token
+          );
+        }
+        return false;
+      };
+
+      const scrollAndFindEagleEye = async (): Promise<boolean> => {
+        for (let i = 0; i < ARROW_DOWN_MAX_ATTEMPTS; i++) {
+          token.throwIfCancelled();
+          logger.log(
+            `Scrolling down attack bar (${i + 1}/${ARROW_DOWN_MAX_ATTEMPTS})...`
+          );
+          if (
+            await backend.isVisible(
+              "ui/attacks/attack_arrow_down",
+              undefined,
+              token
+            )
+          ) {
+            await backend.findAndClick(
+              "ui/attacks/attack_arrow_down",
+              { timeoutMs: 1000 },
+              token
+            );
+            await delay(200, token);
+            const found = await quickFindEagleEye();
+            if (found) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+
+      // Fast: check if eagle eye is already visible
+      eagleEyeFound = await quickFindEagleEye();
+
+      // Fast: scroll through attack bar rows
       if (!eagleEyeFound) {
-        logger.log("Eagle Eye not visible. Opening attacks bar...");
+        eagleEyeFound = await scrollAndFindEagleEye();
+      }
+
+      // Slow fallback: open attacks bar, then retry
+      if (!eagleEyeFound) {
+        logger.log("Eagle Eye not found. Opening attacks bar...");
         const attacksClicked = await backend.findAndClick(
           "ui/attacks/attacks",
           { timeoutMs: 3000 },
@@ -53,48 +104,16 @@ export default defineScript<[string, string]>({
 
         if (attacksClicked) {
           await delay(500, token);
-          eagleEyeFound = await backend.findAndClick(
-            "ui/attacks/attack_eagle_eye",
-            { timeoutMs: 1000 },
-            token
-          );
-        }
+          eagleEyeFound = await quickFindEagleEye();
 
-        if (!eagleEyeFound) {
-          for (let i = 0; i < ARROW_DOWN_MAX_ATTEMPTS; i++) {
-            token.throwIfCancelled();
-            logger.log(
-              `Scrolling down attack bar (${i + 1}/${ARROW_DOWN_MAX_ATTEMPTS})...`
-            );
-            await backend.findAndClick(
-              "ui/attacks/attack_arrow_down",
-              { timeoutMs: 1000 },
-              token
-            );
-            await delay(200, token);
-
-            if (
-              await backend.isVisible(
-                "ui/attacks/attack_eagle_eye",
-                undefined,
-                token
-              )
-            ) {
-              eagleEyeFound = await backend.findAndClick(
-                "ui/attacks/attack_eagle_eye",
-                { timeoutMs: 1000 },
-                token
-              );
-              if (eagleEyeFound) {
-                break;
-              }
-            }
+          if (!eagleEyeFound) {
+            eagleEyeFound = await scrollAndFindEagleEye();
           }
         }
+      }
 
-        if (!eagleEyeFound) {
-          throw new Error("Eagle Eye skill not found on attack bar");
-        }
+      if (!eagleEyeFound) {
+        throw new Error("Eagle Eye skill not found on attack bar");
       }
 
       await delay(500, token);
