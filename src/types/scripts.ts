@@ -27,6 +27,10 @@ export type ScriptMap = {
   "world3.construction.collectCogs": { args: []; result: undefined };
   "world3.construction.trashCogs": { args: []; result: undefined };
   "world3.trapping.collectTraps": { args: [string, string]; result: undefined };
+  "world3.trapping.placeTraps": {
+    args: [string, string, string];
+    result: undefined;
+  };
   "world2.weeklyBattle.run": { args: [number[]]; result: undefined };
   "general.test.run": { args: []; result: undefined };
   "general.storeItems.run": { args: []; result: undefined };
@@ -59,4 +63,5 @@ export type AppState = {
   };
   bossFarmer: BossFarmerState;
   collectTraps: { endsAt: number | null };
+  placeTraps: { current: number | null };
 };
