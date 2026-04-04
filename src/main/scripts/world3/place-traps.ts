@@ -94,7 +94,7 @@ export default defineScript<[string, string, string]>({
       );
       await delay(300, token);
       await backend.keyPress(VK_ESCAPE, undefined, token);
-      await delay(300, token);
+      await delay(500, token);
 
       // Reopen trapping UI
       logger.log("Reopening trapping UI...");
