@@ -39,7 +39,7 @@ export default defineScript<[string, string]>({
       logger.log("Looking for Eagle Eye skill...");
       let eagleEyeFound = await backend.findAndClick(
         "ui/attacks/attack_eagle_eye",
-        { timeoutMs: 3000 },
+        { timeoutMs: 1000 },
         token
       );
 
@@ -47,7 +47,7 @@ export default defineScript<[string, string]>({
         logger.log("Eagle Eye not visible. Opening attacks bar...");
         const attacksClicked = await backend.findAndClick(
           "ui/attacks/attacks",
-          { timeoutMs: 5000 },
+          { timeoutMs: 3000 },
           token
         );
 
@@ -55,7 +55,7 @@ export default defineScript<[string, string]>({
           await delay(500, token);
           eagleEyeFound = await backend.findAndClick(
             "ui/attacks/attack_eagle_eye",
-            { timeoutMs: 3000 },
+            { timeoutMs: 1000 },
             token
           );
         }
@@ -68,18 +68,26 @@ export default defineScript<[string, string]>({
             );
             await backend.findAndClick(
               "ui/attacks/attack_arrow_down",
-              { timeoutMs: 2000 },
+              { timeoutMs: 1000 },
               token
             );
-            await delay(300, token);
+            await delay(200, token);
 
-            eagleEyeFound = await backend.findAndClick(
-              "ui/attacks/attack_eagle_eye",
-              { timeoutMs: 2000 },
-              token
-            );
-            if (eagleEyeFound) {
-              break;
+            if (
+              await backend.isVisible(
+                "ui/attacks/attack_eagle_eye",
+                undefined,
+                token
+              )
+            ) {
+              eagleEyeFound = await backend.findAndClick(
+                "ui/attacks/attack_eagle_eye",
+                { timeoutMs: 1000 },
+                token
+              );
+              if (eagleEyeFound) {
+                break;
+              }
             }
           }
         }
