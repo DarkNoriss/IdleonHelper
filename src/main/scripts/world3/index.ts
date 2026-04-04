@@ -1,6 +1,7 @@
 import collectCogs from "./collect-cogs";
 import collectTraps from "./collect-traps";
 import constructionApply from "./construction-apply";
+import placeTraps from "./place-traps";
 import trashCogs from "./trash-cogs";
 
 // Solver is NOT a defineScript - stays as regular handler
@@ -11,4 +12,5 @@ export const world3Scripts = [
   collectCogs,
   trashCogs,
   collectTraps,
+  placeTraps,
 ];
