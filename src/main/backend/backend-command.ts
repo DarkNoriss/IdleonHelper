@@ -15,6 +15,8 @@ import type {
   FindResponse,
   FindWithDebugRequest,
   FindWithDebugResponse,
+  KeyPressRequest,
+  KeyPressResponse,
   Point,
   ScreenOffset,
   StopRequest,
@@ -124,14 +126,10 @@ export const backendCommand = {
     token: CancellationToken
   ): Promise<boolean> => {
     token.throwIfCancelled();
-    const findResponse = await backendCommand.findWithDebug(
-      imagePath,
-      options,
-      token
-    );
+    const findResponse = await backendCommand.find(imagePath, options, token);
     if (findResponse.matches.length > 0) {
       await backendCommand.click(
-        findResponse.matches[0]!.point,
+        findResponse.matches[0]!,
         {
           times: options?.clickTimes,
           interval: options?.clickInterval,
@@ -218,6 +216,23 @@ export const backendCommand = {
       holdTime: options?.holdTime ?? backendConfig.click.holdTime,
     };
     return sendCommand("dragRepeat", request);
+  },
+
+  keyPress: async (
+    key: number,
+    options:
+      | {
+          holdTime?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<KeyPressResponse> => {
+    token.throwIfCancelled();
+    const request: KeyPressRequest = {
+      key,
+      holdTime: options?.holdTime ?? 50,
+    };
+    return sendCommand("keyPress", request);
   },
 
   stop: async (): Promise<StopResponse> => {

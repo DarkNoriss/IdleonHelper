@@ -26,7 +26,10 @@ export const navConfig: NavEntry[] = [
   },
   {
     title: "World 3",
-    items: [{ title: "Construction", page: "world3/construction" }],
+    items: [
+      { title: "Construction", page: "world3/construction" },
+      { title: "Trapping", page: "world3/trapping" },
+    ],
   },
   {
     title: "World 6",

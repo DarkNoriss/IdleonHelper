@@ -107,3 +107,14 @@ internal class StopResponse
 {
   public bool Success { get; set; }
 }
+
+internal class KeyPressRequest
+{
+  public int Key { get; set; }
+  public int? HoldTime { get; set; }
+}
+
+internal class KeyPressResponse
+{
+  public bool Success { get; set; }
+}
