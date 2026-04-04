@@ -35,24 +35,4 @@ export const trapConfigs: TrapConfig[] = [
     label: "Royal",
     timers: ["20m", "1h", "10h", "40h", "7d", "28d"],
   },
-  {
-    value: "egalitarian",
-    label: "Egalitarian",
-    timers: ["20m", "1h", "10h", "40h", "7d", "28d"],
-  },
-  {
-    value: "forbidden",
-    label: "Forbidden",
-    timers: ["20m", "1h", "10h", "40h", "7d", "28d"],
-  },
-  {
-    value: "containment_of_the_zrgyios",
-    label: "Containment Of The Zrgyios",
-    timers: ["20m", "1h", "10h", "40h", "7d", "28d"],
-  },
-  {
-    value: "prehistoric",
-    label: "Prehistoric",
-    timers: ["20m", "1h", "10h", "40h", "7d", "28d"],
-  },
 ];
