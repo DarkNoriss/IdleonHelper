@@ -58,4 +58,5 @@ export type AppState = {
     fetchedAt: string | null;
   };
   bossFarmer: BossFarmerState;
+  collectTraps: { endsAt: number | null };
 };

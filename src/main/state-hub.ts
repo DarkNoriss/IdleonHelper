@@ -23,6 +23,9 @@ const state: AppState = {
     avgIterationMs: 0,
     estimatedRemainingMs: 0,
   },
+  collectTraps: {
+    endsAt: null,
+  },
 };
 
 export function setState<K extends keyof AppState>(
