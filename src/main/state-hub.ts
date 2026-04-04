@@ -26,6 +26,9 @@ const state: AppState = {
   collectTraps: {
     endsAt: null,
   },
+  placeTraps: {
+    current: null,
+  },
 };
 
 export function setState<K extends keyof AppState>(
