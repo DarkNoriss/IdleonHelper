@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScriptPage } from "@/components/script-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useMainState } from "@/hooks/use-main-state";
 import { critters, trapConfigs } from "./trapping-data";
+
+const formatCountdown = (ms: number): string => {
+  if (ms <= 0) {
+    return "0s";
+  }
+  const totalSeconds = Math.ceil(ms / 1000);
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+};
 
 const TrapPlacingSection = () => {
   const [critter, setCritter] = useState<string>("");
@@ -109,6 +132,8 @@ const TrapPlacingSection = () => {
 const TrapCollectingSection = () => {
   const [trap, setTrap] = useState<string>("");
   const [timer, setTimer] = useState<string>("");
+  const [remaining, setRemaining] = useState<string | null>(null);
+  const collectTraps = useMainState("collectTraps");
 
   const selectedTrap = trapConfigs.find((t) => t.value === trap);
 
@@ -117,22 +142,37 @@ const TrapCollectingSection = () => {
     setTimer("");
   };
 
-  const isReady = trap !== "" && timer !== "";
+  useEffect(() => {
+    const endsAt = collectTraps?.endsAt;
+    if (!endsAt) {
+      setRemaining(null);
+      return;
+    }
+
+    const update = () => {
+      const diff = endsAt - Date.now();
+      if (diff <= 0) {
+        setRemaining(null);
+      } else {
+        setRemaining(formatCountdown(diff));
+      }
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [collectTraps?.endsAt]);
 
   return (
     <ScriptPage
-      actions={
-        isReady
-          ? [
-              {
-                label: "Collect Traps",
-                scriptId: "world3.trapping.collectTraps",
-                runningLabel: "Collecting... (Click to stop)",
-                args: () => [trap, timer],
-              },
-            ]
-          : []
-      }
+      actions={[
+        {
+          label: "Collect Traps",
+          scriptId: "world3.trapping.collectTraps",
+          runningLabel: "Collecting... (Click to stop)",
+          args: () => [trap, timer],
+        },
+      ]}
       title="Trap Collecting"
     >
       <div className="mb-4 flex flex-wrap gap-4">
@@ -183,9 +223,15 @@ const TrapCollectingSection = () => {
         </div>
       </div>
 
-      {!isReady && (
+      {trap === "" || timer === "" ? (
         <p className="mb-4 text-muted-foreground text-sm">
           Select trap type and timer to start collecting.
+        </p>
+      ) : null}
+
+      {remaining && (
+        <p className="mb-4 font-medium text-sm">
+          Next collection in: {remaining}
         </p>
       )}
     </ScriptPage>
