@@ -184,15 +184,20 @@ export default defineScript<[string, string, string]>({
           // Navigate forward to the correct trap page
           if (trapIndex > 0) {
             logger.log(`Navigating to trap page ${trapIndex + 1}...`);
-            for (let i = 0; i < trapIndex; i++) {
-              token.throwIfCancelled();
-              await backend.findAndClick(
-                "trapping/trapping_trap_next",
-                { timeoutMs: 3000 },
-                token
-              );
-              await delay(NAV_DELAY, token);
+            const nextBtn = await backend.find(
+              "trapping/trapping_trap_next",
+              { timeoutMs: 3000 },
+              token
+            );
+            if (nextBtn.matches.length === 0) {
+              throw new Error("Trap next button not found");
             }
+            await backend.click(
+              nextBtn.matches[0]!,
+              { times: trapIndex, interval: 300 },
+              token
+            );
+            await delay(NAV_DELAY, token);
           }
         }
 
