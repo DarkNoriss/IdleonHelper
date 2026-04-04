@@ -186,7 +186,11 @@ export default defineScript<[string, string, string]>({
             logger.log(`Navigating to trap page ${trapIndex + 1}...`);
             for (let i = 0; i < trapIndex; i++) {
               token.throwIfCancelled();
-              await clickFast(backend, "trapping/trapping_trap_next", token);
+              await backend.findAndClick(
+                "trapping/trapping_trap_next",
+                { timeoutMs: 3000 },
+                token
+              );
               await delay(NAV_DELAY, token);
             }
           }
