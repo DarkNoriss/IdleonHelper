@@ -157,7 +157,6 @@ export default defineScript<[CompassUpgrade[]]>({
           { times: resolved.change, ...fastClick },
           token
         );
-        logger.log(`  Clicked upgrade x${resolved.change}`);
       } else {
         const hasUpgradeOff = await backend.isVisible(
           "compass/compass_upgrade_off",
