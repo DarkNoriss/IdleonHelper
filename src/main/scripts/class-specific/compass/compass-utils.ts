@@ -203,6 +203,8 @@ export const findPath = (
   return null;
 };
 
+const CENTER_TOLERANCE = 2;
+
 export const centerNode = async (
   nodeId: string,
   center: Point,
@@ -218,6 +220,18 @@ export const centerNode = async (
     return false;
   }
   await backend.drag(result.matches[0]!, center, { instant: true }, token);
+
+  // Verify centering — re-drag if the node landed off-center
+  const verify = await backend.find(def.image, undefined, token);
+  if (verify.matches.length > 0) {
+    const pos = verify.matches[0]!;
+    const dx = Math.abs(pos.x - center.x);
+    const dy = Math.abs(pos.y - center.y);
+    if (dx > CENTER_TOLERANCE || dy > CENTER_TOLERANCE) {
+      await backend.drag(pos, center, { instant: true }, token);
+    }
+  }
+
   return true;
 };
 
