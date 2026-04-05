@@ -4,8 +4,8 @@ import {
   COMPASS_NODE_DEFS,
   COMPASS_NODE_GROUPS,
 } from "@/shared/compass-config";
-import type { Point } from "../../../backend/backend-types";
-import type { ScriptContext } from "../../define-script";
+import type { Point } from "../../../backend/backend-types.ts";
+import type { ScriptContext } from "../../define-script.ts";
 
 const ARROW_DOWN_MAX_ATTEMPTS = 3;
 const SCROLL_IN_TIMES = 8;

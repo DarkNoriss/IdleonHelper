@@ -6,7 +6,7 @@ import { Select as SelectPrimitive } from "radix-ui";
 import * as React from "react";
 import { isValidElement, type ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.ts";
 
 // Create a Context for `indicatorPosition` and `indicator` control
 const SelectContext = React.createContext<{

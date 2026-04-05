@@ -2,14 +2,14 @@ import { randomUUID } from "node:crypto";
 import { is } from "@electron-toolkit/utils";
 import WebSocket from "ws";
 
-import { logger } from "../utils";
-import { startBackend } from "./backend-process";
+import { logger } from "../utils/index.ts";
+import { startBackend } from "./backend-process.ts";
 import type {
   CommandRequestMap,
   CommandResponseMap,
   WebSocketCommandMessage,
   WebSocketResponse,
-} from "./backend-types";
+} from "./backend-types.ts";
 
 const BACKEND_PORT = is.dev ? 5001 : 5000;
 const WS_URL = `ws://localhost:${BACKEND_PORT}/ws`;

@@ -1,11 +1,11 @@
-import { backendCommand } from "../../backend/backend-command";
-import { getState, setState } from "../../state-hub";
-import { logger } from "../../utils";
-import { defineScript } from "../define-script";
+import { backendCommand } from "../../backend/backend-command.ts";
+import { getState, setState } from "../../state-hub.ts";
+import { logger } from "../../utils/index.ts";
+import { defineScript } from "../define-script.ts";
 import {
   fetchWeeklyBattleData,
   type WeeklyBattleData,
-} from "./weekly-battle-data";
+} from "./weekly-battle-data.ts";
 
 // Coordinate constants for weekly battle steps
 const STEP_1_COORDS = { x: 613, y: 337 };

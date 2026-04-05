@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { is } from "@electron-toolkit/utils";
 
-import type { CancellationToken } from "../utils/cancellation-token";
-import { sendCommand } from "./backend-client";
-import { backendConfig } from "./backend-config";
+import type { CancellationToken } from "../utils/cancellation-token.ts";
+import { sendCommand } from "./backend-client.ts";
+import { backendConfig } from "./backend-config.ts";
 import type {
   ClickRequest,
   ClickResponse,
@@ -23,7 +23,7 @@ import type {
   ScrollResponse,
   StopRequest,
   StopResponse,
-} from "./backend-types";
+} from "./backend-types.ts";
 
 const resolveImagePath = (imagePath: string): string => {
   const normalizedPath = imagePath.replace(/^[/\\]+|[/\\]+$/g, "");

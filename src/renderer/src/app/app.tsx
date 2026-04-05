@@ -1,13 +1,13 @@
 import { type ComponentType, lazy, Suspense, useEffect, useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { GameDataProvider } from "@/providers/game-data-provider";
-import { ThemeProvider } from "@/providers/theme-provider";
-import { type NavigationPage, useNavigationStore } from "@/store/navigation";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar.tsx";
+import { GameDataProvider } from "@/providers/game-data-provider.tsx";
+import { ThemeProvider } from "@/providers/theme-provider.tsx";
+import { type NavigationPage, useNavigationStore } from "@/store/navigation.ts";
 
-import { AppHeader } from "./app-header";
-import { pageRegistry } from "./page-registry";
-import { AppSidebar } from "./sidebar/app-sidebar";
+import { AppHeader } from "./app-header.tsx";
+import { pageRegistry } from "./page-registry.ts";
+import { AppSidebar } from "./sidebar/app-sidebar.tsx";
 
 const lazyPages = Object.fromEntries(
   Object.entries(pageRegistry).map(([key, loader]) => [key, lazy(loader)])

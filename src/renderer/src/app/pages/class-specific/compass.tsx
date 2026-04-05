@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { ScriptPage } from "@/components/script-page";
-import { Textarea } from "@/components/ui/textarea";
+import { ScriptPage } from "@/components/script-page.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
 import {
   COMPASS_MINOR_NODE_DEFS,
   COMPASS_NODE_DEFS,
 } from "@/shared/compass-config";
-import { parseCompassData } from "./compass-parser";
+import { parseCompassData } from "./compass-parser.ts";
 
 const Compass = () => {
   const [rawData, setRawData] = useState("");

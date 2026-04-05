@@ -1,5 +1,5 @@
-import { delay } from "../../utils";
-import { defineScript } from "../define-script";
+import { delay } from "../../utils/index.ts";
+import { defineScript } from "../define-script.ts";
 
 export const summoningStartEndless = defineScript({
   id: "world6.summoning.startEndlessAutobattler",

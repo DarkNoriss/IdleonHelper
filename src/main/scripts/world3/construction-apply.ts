@@ -1,12 +1,12 @@
-import type { OptimalStep } from "../../../types/construction";
-import { defineScript } from "../define-script";
-import { navigation } from "../game-nav";
+import type { OptimalStep } from "../../../types/construction.ts";
+import { defineScript } from "../define-script.ts";
+import { navigation } from "../game-nav/index.ts";
 import {
   BOARD_FIRST_COORDS,
   COGS_STEP,
   SPARE_FIRST_COORDS,
   SPARE_ROWS,
-} from "./construction-constants";
+} from "./construction-constants.ts";
 
 export const getSparePage = (y: number): number => {
   return Math.floor(y / SPARE_ROWS) + 1;

@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { ScriptPage } from "@/components/script-page";
+import { ScriptPage } from "@/components/script-page.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useMainState } from "@/hooks/use-main-state";
-import { critters, trapConfigs } from "./trapping-data";
+} from "@/components/ui/select.tsx";
+import { useMainState } from "@/hooks/use-main-state.ts";
+import { critters, trapConfigs } from "./trapping-data.ts";
 
 const formatCountdown = (ms: number): string => {
   if (ms <= 0) {

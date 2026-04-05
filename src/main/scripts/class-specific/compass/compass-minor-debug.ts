@@ -1,5 +1,5 @@
 import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
-import { defineScript } from "../../define-script";
+import { defineScript } from "../../define-script.ts";
 import {
   COMPASS_CENTER,
   centerNodeOrThrow,
@@ -8,7 +8,7 @@ import {
   loadGraph,
   openCompass,
   scrollInAtCenter,
-} from "./compass-utils";
+} from "./compass-utils.ts";
 
 export default defineScript<[string]>({
   id: "classSpecific.compass.minorDebug",

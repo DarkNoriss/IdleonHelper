@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { RawJson } from "../../../types/raw-json";
+import type { RawJson } from "../../../types/raw-json.ts";
 
 type RawJsonState = {
   rawJson: string;

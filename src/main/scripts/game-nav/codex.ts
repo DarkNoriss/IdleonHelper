@@ -1,6 +1,6 @@
-import type { CancellationToken } from "../../utils/cancellation-token";
-import { navigateTo } from "./helpers";
-import { ui } from "./ui";
+import type { CancellationToken } from "../../utils/cancellation-token.ts";
+import { navigateTo } from "./helpers.ts";
+import { ui } from "./ui.ts";
 
 export const codex = {
   toQuikRef: async (token: CancellationToken): Promise<boolean> => {

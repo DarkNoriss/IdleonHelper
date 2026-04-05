@@ -1,5 +1,5 @@
-import { setState } from "../state-hub";
-import { logger } from "./logger";
+import { setState } from "../state-hub.ts";
+import { logger } from "./logger.ts";
 
 export type CancellationToken = {
   isCancelled: () => boolean;

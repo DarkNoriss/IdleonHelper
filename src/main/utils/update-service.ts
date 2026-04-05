@@ -1,8 +1,8 @@
 import { app } from "electron";
 import { autoUpdater } from "electron-updater";
 
-import { getMainWindow } from "../index";
-import { logger } from "./logger";
+import { getMainWindow } from "../main-window.ts";
+import { logger } from "./logger.ts";
 
 export type UpdateStatus =
   | "idle"

@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { parseConstruction } from "@/parsers/construction";
-import { useRawJsonStore } from "@/store/raw-json";
+import { useRawJsonStore } from "@/store/raw-json.ts";
 import type { ParsedConstructionData } from "@/types/construction";
 
 type GameDataContextType = {

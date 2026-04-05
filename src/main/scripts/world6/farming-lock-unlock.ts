@@ -1,7 +1,7 @@
-import { ClickPreset, getClickOptionsFromPreset } from "../../backend";
-import { delay } from "../../utils";
-import { defineScript } from "../define-script";
-import { FARMING_GRID } from "./farming-constants";
+import { ClickPreset, getClickOptionsFromPreset } from "../../backend/index.ts";
+import { delay } from "../../utils/index.ts";
+import { defineScript } from "../define-script.ts";
+import { FARMING_GRID } from "./farming-constants.ts";
 
 export default defineScript({
   id: "world6.farming.lockUnlock",

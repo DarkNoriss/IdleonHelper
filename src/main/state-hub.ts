@@ -1,7 +1,7 @@
 import { ipcMain } from "electron";
 
-import type { AppState } from "../types/scripts";
-import { getMainWindow } from "./index";
+import type { AppState } from "../types/scripts.ts";
+import { getMainWindow } from "./main-window.ts";
 
 const state: AppState = {
   scriptStatus: {

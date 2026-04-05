@@ -11,16 +11,16 @@ export {
   isConnected,
   onStatusChange,
   sendCommand,
-} from "./backend-client";
+} from "./backend-client.ts";
 
 // Backend command exports
-export { backendCommand } from "./backend-command";
+export { backendCommand } from "./backend-command.ts";
 // Backend config exports
 export {
   backendConfig,
   ClickPreset,
   getClickOptionsFromPreset,
-} from "./backend-config";
+} from "./backend-config.ts";
 // Backend process exports
 export {
   type BackendProcessInfo,
@@ -28,7 +28,7 @@ export {
   isBackendRunning,
   startBackend,
   stopBackend,
-} from "./backend-process";
+} from "./backend-process.ts";
 // Backend types exports
 export type {
   ClickRequest,
@@ -50,4 +50,4 @@ export type {
   WebSocketCommandResponse,
   WebSocketMessage,
   WebSocketResponse,
-} from "./backend-types";
+} from "./backend-types.ts";

@@ -1,6 +1,6 @@
-import { backendCommand } from "../backend";
-import { cancellationManager, logger } from "../utils";
-import type { CancellationToken } from "../utils/cancellation-token";
+import { backendCommand } from "../backend/index.ts";
+import type { CancellationToken } from "../utils/cancellation-token.ts";
+import { cancellationManager, logger } from "../utils/index.ts";
 
 export type ScriptContext<TArgs extends unknown[] = []> = {
   token: CancellationToken;

@@ -2,8 +2,8 @@ import {
   backendConfig,
   ClickPreset,
   getClickOptionsFromPreset,
-} from "../../backend";
-import { defineScript } from "../define-script";
+} from "../../backend/index.ts";
+import { defineScript } from "../define-script.ts";
 
 export default defineScript({
   id: "world6.farming.start",

@@ -1,8 +1,8 @@
-import { critters, trapConfigs } from "../../../parsers/trapping";
-import type { Point } from "../../backend/backend-types";
-import { setState } from "../../state-hub";
-import { delay } from "../../utils";
-import { defineScript } from "../define-script";
+import { critters, trapConfigs } from "../../../parsers/trapping.ts";
+import type { Point } from "../../backend/backend-types.ts";
+import { setState } from "../../state-hub.ts";
+import { delay } from "../../utils/index.ts";
+import { defineScript } from "../define-script.ts";
 
 const VK_ESCAPE = 0x1b;
 const FAST_CLICK = { times: 10, interval: 30, holdTime: 15 };

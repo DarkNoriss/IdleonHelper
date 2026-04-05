@@ -1,8 +1,8 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
-import type { ScriptContext } from "../../define-script";
-import { defineScript } from "../../define-script";
+import type { ScriptContext } from "../../define-script.ts";
+import { defineScript } from "../../define-script.ts";
 import {
   COMPASS_CENTER,
   centerNodeOrThrow,
@@ -10,7 +10,7 @@ import {
   findPath,
   openCompass,
   scrollInAtCenter,
-} from "./compass-utils";
+} from "./compass-utils.ts";
 
 const visitNode = async (
   nodeId: string,

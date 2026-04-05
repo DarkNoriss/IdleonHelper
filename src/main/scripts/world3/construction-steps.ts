@@ -1,18 +1,18 @@
-import { getPosition, SPARE_START } from "../../../parsers/construction";
+import { getPosition, SPARE_START } from "../../../parsers/construction.ts";
 import type {
   OptimalStep,
   ParsedCog,
   ParsedConstructionData,
   SolverWeights,
-} from "../../../types/construction";
-import { logger } from "../../utils";
+} from "../../../types/construction.ts";
+import { logger } from "../../utils/index.ts";
 import {
   calculateStateScore,
   cloneInventory,
   getKeyFromPosition,
   getScoreSum,
   moveCog,
-} from "./construction-solver";
+} from "./construction-utils.ts";
 
 const BOARD_SIZE = 96;
 

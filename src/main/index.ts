@@ -2,20 +2,11 @@ import { join } from "node:path";
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import { app, BrowserWindow, shell } from "electron";
 
-import { closeConnection, stopBackend } from "./backend";
-import { setupHandlers } from "./handlers";
-import { initializeApp } from "./initialization";
-import { logger, setLogsChangeNotifier } from "./utils";
-
-let mainWindow: BrowserWindow | null = null;
-
-export const getMainWindow = (): BrowserWindow | null => {
-  return mainWindow;
-};
-
-export const setMainWindow = (window: BrowserWindow | null): void => {
-  mainWindow = window;
-};
+import { closeConnection, stopBackend } from "./backend/index.ts";
+import { setupHandlers } from "./handlers.ts";
+import { initializeApp } from "./initialization.ts";
+import { setMainWindow } from "./main-window.ts";
+import { logger, setLogsChangeNotifier } from "./utils/index.ts";
 
 function createWindow(): void {
   logger.log("Creating main window");

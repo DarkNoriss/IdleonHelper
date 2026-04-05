@@ -1,6 +1,9 @@
-import farmingLockUnlock from "./farming-lock-unlock";
-import farmingStart from "./farming-start";
-import { summoningStartAutobattler, summoningStartEndless } from "./summoning";
+import farmingLockUnlock from "./farming-lock-unlock.ts";
+import farmingStart from "./farming-start.ts";
+import {
+  summoningStartAutobattler,
+  summoningStartEndless,
+} from "./summoning.ts";
 
 export const world6Scripts = [
   farmingStart,

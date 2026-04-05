@@ -1,5 +1,5 @@
-import type { CancellationToken } from "../../utils/cancellation-token";
-import { navigateTo } from "./helpers";
+import type { CancellationToken } from "../../utils/cancellation-token.ts";
+import { navigateTo } from "./helpers.ts";
 
 export const ui = {
   toCodex: async (token: CancellationToken): Promise<boolean> => {

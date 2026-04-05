@@ -5,8 +5,8 @@ import type {
   ParsedConstructionData,
   Score,
   SolverWeights,
-} from "../types/construction";
-import type { AppState, ScriptMap } from "../types/scripts";
+} from "../types/construction.ts";
+import type { AppState, ScriptMap } from "../types/scripts.ts";
 
 type ConnectionStatus = "connecting" | "connected" | "error";
 
