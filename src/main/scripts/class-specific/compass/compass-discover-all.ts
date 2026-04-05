@@ -4,7 +4,7 @@ import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
 import type { ScriptContext } from "../../define-script";
 import { defineScript } from "../../define-script";
 import {
-  centerNode,
+  centerNodeOrThrow,
   findAnyNode,
   findCompassCenter,
   findPath,
@@ -62,7 +62,7 @@ export default defineScript({
       const next = neighbors.find((n) => !visited.has(n));
 
       if (next) {
-        await centerNode(next, center, backend, token);
+        await centerNodeOrThrow(next, center, backend, token);
         const nextNeighbors = await visitNode(next, backend, token);
         graph[next] = nextNeighbors;
         visited.add(next);
@@ -92,7 +92,7 @@ export default defineScript({
       }
 
       for (let i = 1; i < shortestPath.length; i++) {
-        await centerNode(shortestPath[i]!, center, backend, token);
+        await centerNodeOrThrow(shortestPath[i]!, center, backend, token);
       }
       currentId = backtrackTarget;
     }

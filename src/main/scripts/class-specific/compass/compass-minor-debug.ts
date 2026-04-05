@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
 import { defineScript } from "../../define-script";
 import {
-  centerNode,
+  centerNodeOrThrow,
   findAnyNode,
   findCompassCenter,
   findPath,
@@ -59,7 +59,7 @@ export default defineScript<[string]>({
       }
       logger.log(`Navigating: ${path.join(" → ")}`);
       for (let i = 1; i < path.length; i++) {
-        await centerNode(path[i]!, center, backend, token);
+        await centerNodeOrThrow(path[i]!, center, backend, token);
       }
     }
 
