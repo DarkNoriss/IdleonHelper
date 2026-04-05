@@ -184,14 +184,27 @@ export const centerNode = async (
   center: Point,
   backend: ScriptContext["backend"],
   token: ScriptContext["token"]
-) => {
+): Promise<boolean> => {
   const def = COMPASS_NODE_DEFS.find((d) => d.id === nodeId);
   if (!def) {
     throw new Error(`Unknown node: ${nodeId}`);
   }
   const result = await backend.find(def.image, undefined, token);
   if (result.matches.length === 0) {
-    throw new Error(`Node "${nodeId}" not found on screen`);
+    return false;
   }
   await backend.drag(result.matches[0]!, center, { instant: true }, token);
+  return true;
+};
+
+export const centerNodeOrThrow = async (
+  nodeId: string,
+  center: Point,
+  backend: ScriptContext["backend"],
+  token: ScriptContext["token"]
+): Promise<void> => {
+  const ok = await centerNode(nodeId, center, backend, token);
+  if (!ok) {
+    throw new Error(`Node "${nodeId}" not found on screen`);
+  }
 };
