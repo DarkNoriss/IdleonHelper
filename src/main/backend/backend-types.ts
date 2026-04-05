@@ -121,6 +121,7 @@ export type KeyPressResponse = {
 // Scroll command
 export type ScrollRequest = {
   delta: number;
+  point: Point;
   times?: number;
   interval?: number;
 };

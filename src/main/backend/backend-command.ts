@@ -238,6 +238,7 @@ export const backendCommand = {
   },
 
   scroll: async (
+    point: Point,
     delta: number,
     options:
       | {
@@ -250,6 +251,7 @@ export const backendCommand = {
     token.throwIfCancelled();
     const request: ScrollRequest = {
       delta,
+      point,
       times: options?.times ?? 1,
       interval: options?.interval ?? 100,
     };

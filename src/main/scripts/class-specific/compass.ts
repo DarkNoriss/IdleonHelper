@@ -1,10 +1,43 @@
 import type { CompassUpgrade } from "../../../types/compass";
-import { delay } from "../../utils";
+import type { Point } from "../../backend/backend-types";
+import type { ScriptContext } from "../define-script";
 import { defineScript } from "../define-script";
 
 const ARROW_DOWN_MAX_ATTEMPTS = 3;
 const SCROLL_IN_TIMES = 8;
 const WHEEL_DELTA = 120;
+
+const findCompassCenter = async (
+  backend: ScriptContext["backend"],
+  token: ScriptContext["token"],
+  logger: ScriptContext["logger"]
+): Promise<Point> => {
+  logger.log("Calculating compass center...");
+  const topLeft = await backend.find(
+    "compass/compass_top_left",
+    undefined,
+    token
+  );
+  if (topLeft.matches.length === 0) {
+    throw new Error("Compass top-left corner not found");
+  }
+  const bottomRight = await backend.find(
+    "compass/compass_bottom_right",
+    undefined,
+    token
+  );
+  if (bottomRight.matches.length === 0) {
+    throw new Error("Compass bottom-right corner not found");
+  }
+  const tl = topLeft.matches[0]!;
+  const br = bottomRight.matches[0]!;
+  const center = {
+    x: Math.round((tl.x + br.x) / 2),
+    y: Math.round((tl.y + br.y) / 2),
+  };
+  logger.log(`Compass center: (${center.x}, ${center.y})`);
+  return center;
+};
 
 export default defineScript<[CompassUpgrade[]]>({
   id: "classSpecific.compass.run",
@@ -25,7 +58,7 @@ export default defineScript<[CompassUpgrade[]]>({
       ) {
         return backend.findAndClick(
           "ui/attacks/attack_compass",
-          { timeoutMs: 1000 },
+          undefined,
           token
         );
       }
@@ -47,10 +80,9 @@ export default defineScript<[CompassUpgrade[]]>({
         ) {
           await backend.findAndClick(
             "ui/attacks/attack_arrow_down",
-            { timeoutMs: 1000 },
+            undefined,
             token
           );
-          await delay(200, token);
           const found = await quickFindCompass();
           if (found) {
             return true;
@@ -73,12 +105,11 @@ export default defineScript<[CompassUpgrade[]]>({
       logger.log("Compass not found. Opening attacks bar...");
       const attacksClicked = await backend.findAndClick(
         "ui/attacks/attacks",
-        { timeoutMs: 3000 },
+        undefined,
         token
       );
 
       if (attacksClicked) {
-        await delay(500, token);
         compassFound = await quickFindCompass();
 
         if (!compassFound) {
@@ -91,12 +122,53 @@ export default defineScript<[CompassUpgrade[]]>({
       throw new Error("Compass skill not found on attack bar");
     }
 
-    await delay(500, token);
+    // Step 2: Calculate compass center from corner markers
+    const center = await findCompassCenter(backend, token, logger);
 
-    // Step 2: Scroll in to zoom
+    // Step 3: Scroll in to zoom at compass center
     logger.log(`Scrolling in ${SCROLL_IN_TIMES} times...`);
-    await backend.scroll(WHEEL_DELTA, { times: SCROLL_IN_TIMES }, token);
-    await delay(300, token);
+    await backend.scroll(
+      center,
+      WHEEL_DELTA,
+      { times: SCROLL_IN_TIMES },
+      token
+    );
+
+    // Step 4: Drag pathfinder to center
+    logger.log("Looking for pathfinder...");
+    const pathfinder = await backend.find(
+      "compass/compass_pathfinder",
+      undefined,
+      token
+    );
+    if (pathfinder.matches.length === 0) {
+      throw new Error("Pathfinder not found");
+    }
+    logger.log("Dragging pathfinder to center...");
+    await backend.drag(
+      pathfinder.matches[0]!,
+      center,
+      { instant: true },
+      token
+    );
+
+    // Step 5: Drag fighter path to center
+    logger.log("Looking for fighter path...");
+    const fighterPath = await backend.find(
+      "compass/compass_fighter_path",
+      undefined,
+      token
+    );
+    if (fighterPath.matches.length === 0) {
+      throw new Error("Fighter path not found");
+    }
+    logger.log("Dragging fighter path to center...");
+    await backend.drag(
+      fighterPath.matches[0]!,
+      center,
+      { instant: true },
+      token
+    );
 
     logger.log("Compass script finished");
   },

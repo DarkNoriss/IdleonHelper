@@ -227,24 +227,21 @@ public static class MouseSimulator
     return new Point(x, y);
   }
 
-  public static async Task Scroll(int delta, int times, CancellationToken ct, int interval = 100)
+  public static async Task Scroll(Point point, int delta, int times, CancellationToken ct, int interval = 100)
   {
     var hWnd = WindowCapture.GetWindowHandle();
 
-    const int clientX = 480;
-    const int clientY = 286;
-    var clientLParam = (IntPtr)MakeLong(clientX, clientY);
+    var clientLParam = (IntPtr)MakeLong(point.X, point.Y);
 
     // Convert to screen coordinates for WM_MOUSEWHEEL (requires screen coords in lParam)
-    var pt = new PointStruct { X = clientX, Y = clientY };
+    var pt = new PointStruct { X = point.X, Y = point.Y };
     ClientToScreen(hWnd, ref pt);
     var screenLParam = (IntPtr)MakeLong(pt.X, pt.Y);
 
-    // Move mouse to center so game detects cursor position (client coords)
+    // Move mouse so game detects cursor position (client coords)
     PostMessage(hWnd, (uint)MouseMessages.WmMousemove, IntPtr.Zero, clientLParam);
-    await Task.Delay(50, ct);
 
-    // Scroll (screen coords in lParam, no button flags)
+    // Scroll (screen coords in lParam)
     for (var i = 0; i < times; i++)
     {
       ct.ThrowIfCancellationRequested();

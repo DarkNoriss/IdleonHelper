@@ -33,7 +33,7 @@ internal static class ScrollCommandHandler
       var times = request.Times ?? 1;
       var interval = request.Interval ?? 100;
 
-      await MouseSimulator.Scroll(request.Delta, times, linkedCt, interval);
+      await MouseSimulator.Scroll(request.Point, request.Delta, times, linkedCt, interval);
 
       var response = new ScrollResponse
       {

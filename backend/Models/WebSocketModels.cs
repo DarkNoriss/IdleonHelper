@@ -122,6 +122,7 @@ internal class KeyPressResponse
 internal class ScrollRequest
 {
   public int Delta { get; set; }
+  public Point Point { get; set; }
   public int? Times { get; set; }
   public int? Interval { get; set; }
 }
