@@ -20,6 +20,10 @@ export default defineConfig({
           replacement: path.resolve(import.meta.dirname, "./src/parsers/$1"),
         },
         {
+          find: /^@\/types\/?(.*)$/,
+          replacement: path.resolve(import.meta.dirname, "./src/types/$1"),
+        },
+        {
           find: "@",
           replacement: path.resolve(import.meta.dirname, "./src/renderer/src"),
         },

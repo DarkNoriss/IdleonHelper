@@ -41,6 +41,14 @@ export type ScriptMap = {
     args: [CompassUpgrade[]];
     result: undefined;
   };
+  "classSpecific.compass.discover": {
+    args: [string];
+    result: undefined;
+  };
+  "classSpecific.compass.discoverAll": {
+    args: [];
+    result: undefined;
+  };
 };
 
 export type BossFarmerState = {

@@ -1,0 +1,93 @@
+{
+  "pathfinder": ["fighter-path", "tempest-damage"],
+  "fighter-path": [
+    "pathfinder",
+    "tempest-damage",
+    "tempest-accuracy",
+    "tempest-crits",
+    "multishot"
+  ],
+  "tempest-damage": [
+    "pathfinder",
+    "fighter-path",
+    "tempest-accuracy",
+    "tempest-crits",
+    "tempest-maxhit",
+    "tempest-mega-damage",
+    "tempest-rapidshot",
+    "multishot"
+  ],
+  "tempest-accuracy": [
+    "fighter-path",
+    "tempest-damage",
+    "tempest-bullseye",
+    "tempest-crits",
+    "tempest-maxhit",
+    "tempest-mega-damage",
+    "tempest-rapidshot",
+    "multishot"
+  ],
+  "tempest-bullseye": [
+    "tempest-accuracy",
+    "tempest-crits",
+    "tempest-maxhit",
+    "tempest-rapidshot",
+    "multishot"
+  ],
+  "tempest-crits": [
+    "fighter-path",
+    "tempest-damage",
+    "tempest-accuracy",
+    "tempest-bullseye",
+    "tempest-maxhit",
+    "tempest-mega-damage",
+    "tempest-rapidshot",
+    "multishot",
+    "stardust-hoarding"
+  ],
+  "tempest-maxhit": [
+    "tempest-damage",
+    "tempest-accuracy",
+    "tempest-bullseye",
+    "tempest-crits",
+    "tempest-rapidshot",
+    "multishot",
+    "stardust-hoarding"
+  ],
+  "tempest-rapidshot": [
+    "tempest-damage",
+    "tempest-accuracy",
+    "tempest-bullseye",
+    "tempest-crits",
+    "tempest-maxhit",
+    "tempest-mega-damage",
+    "multishot",
+    "stardust-hoarding"
+  ],
+  "tempest-mega-damage": [
+    "fighter-path",
+    "tempest-damage",
+    "tempest-accuracy",
+    "tempest-crits",
+    "tempest-rapidshot",
+    "multishot",
+    "stardust-hoarding"
+  ],
+  "multishot": [
+    "fighter-path",
+    "tempest-damage",
+    "tempest-accuracy",
+    "tempest-bullseye",
+    "tempest-crits",
+    "tempest-maxhit",
+    "tempest-mega-damage",
+    "tempest-rapidshot"
+  ],
+  "stardust-hoarding": [
+    "tempest-accuracy",
+    "tempest-crits",
+    "tempest-maxhit",
+    "tempest-mega-damage",
+    "tempest-rapidshot"
+  ]
+}
