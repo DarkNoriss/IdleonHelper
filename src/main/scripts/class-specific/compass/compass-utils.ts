@@ -1,3 +1,4 @@
+import { COMPASS_NODE_GROUPS } from "@/shared/compass-config";
 import type { Point } from "../../../backend/backend-types";
 import type { ScriptContext } from "../../define-script";
 
@@ -121,4 +122,30 @@ export const scrollInAtCenter = async (
 ): Promise<void> => {
   logger.log(`Scrolling in ${SCROLL_IN_TIMES} times...`);
   await backend.scroll(center, WHEEL_DELTA, { times: SCROLL_IN_TIMES }, token);
+};
+
+export const findAnyNode = async (
+  backend: ScriptContext["backend"],
+  token: ScriptContext["token"],
+  logger: ScriptContext["logger"]
+): Promise<{ id: string; point: Point }> => {
+  logger.log("Scanning for any visible node...");
+  const maxLen = Math.max(...COMPASS_NODE_GROUPS.map((g) => g.nodes.length));
+  for (let i = 0; i < maxLen; i++) {
+    for (const group of COMPASS_NODE_GROUPS) {
+      if (i >= group.nodes.length) {
+        continue;
+      }
+      const node = group.nodes[i]!;
+      token.throwIfCancelled();
+      if (await backend.isVisible(node.image, undefined, token)) {
+        const result = await backend.find(node.image, undefined, token);
+        if (result.matches.length > 0) {
+          logger.log(`Found node: ${node.id}`);
+          return { id: node.id, point: result.matches[0]! };
+        }
+      }
+    }
+  }
+  throw new Error("No compass node found on screen");
 };
