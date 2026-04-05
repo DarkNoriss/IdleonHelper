@@ -300,7 +300,11 @@ export const navigateToNode = async (
 
     for (let i = 1; i < path.length; i++) {
       token.throwIfCancelled();
-      const ok = await centerNode(path[i]!, center, backend, token);
+      let ok = await centerNode(path[i]!, center, backend, token);
+      if (!ok) {
+        await dismissPanel(backend, token);
+        ok = await centerNode(path[i]!, center, backend, token);
+      }
       if (!ok) {
         logger.log(`  Node "${path[i]}" is locked, rerouting...`);
         lockedNodes.add(path[i]!);
