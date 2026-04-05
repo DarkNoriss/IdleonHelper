@@ -54,8 +54,12 @@ export default defineScript<[string]>({
         continue;
       }
       token.throwIfCancelled();
-      const visible = await backend.isVisible(n.image, undefined, token);
-      if (visible.length > 0) {
+      const visible = await backend.isVisibleWithDebug(
+        n.image,
+        undefined,
+        token
+      );
+      if (visible.matches.length > 0) {
         visibleNodes.push(id);
         logger.log(`  Visible: ${id}`);
       }
