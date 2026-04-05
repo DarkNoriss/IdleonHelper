@@ -5,7 +5,7 @@ import { is } from "@electron-toolkit/utils";
 
 import { logger } from "../utils";
 
-const BACKEND_PORT = 5000;
+const BACKEND_PORT = is.dev ? 5001 : 5000;
 const BACKEND_EXECUTABLE = "IdleonHelperBackend.exe";
 const STARTUP_CHECK_DELAY = 100;
 const GRACEFUL_SHUTDOWN_TIMEOUT = 2000;
@@ -88,11 +88,15 @@ const spawnProcess = (execPath: string): Promise<BackendProcessInfo> => {
   return new Promise((resolve, reject) => {
     try {
       logger.log(`Starting backend process: ${execPath}`);
-      backendProcess = spawn(execPath, [], {
-        stdio: ["ignore", "pipe", "pipe"],
-        detached: false,
-        windowsHide: true,
-      });
+      backendProcess = spawn(
+        execPath,
+        [`--urls=http://127.0.0.1:${BACKEND_PORT}`],
+        {
+          stdio: ["ignore", "pipe", "pipe"],
+          detached: false,
+          windowsHide: true,
+        }
+      );
 
       setupProcessHandlers(backendProcess);
 

@@ -118,3 +118,15 @@ internal class KeyPressResponse
 {
   public bool Success { get; set; }
 }
+
+internal class ScrollRequest
+{
+  public int Delta { get; set; }
+  public int? Times { get; set; }
+  public int? Interval { get; set; }
+}
+
+internal class ScrollResponse
+{
+  public bool Success { get; set; }
+}

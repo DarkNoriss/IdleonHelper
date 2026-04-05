@@ -1,3 +1,4 @@
+import type { CompassUpgrade } from "./compass";
 import type { OptimalStep } from "./construction";
 
 export type WeeklyBattleStep = {
@@ -36,6 +37,10 @@ export type ScriptMap = {
   "general.storeItems.run": { args: []; result: undefined };
   "general.candy.run": { args: [string]; result: undefined };
   "general.bossFarmer.run": { args: [number]; result: undefined };
+  "classSpecific.compass.run": {
+    args: [CompassUpgrade[]];
+    result: undefined;
+  };
 };
 
 export type BossFarmerState = {

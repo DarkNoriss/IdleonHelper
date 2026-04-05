@@ -19,6 +19,8 @@ import type {
   KeyPressResponse,
   Point,
   ScreenOffset,
+  ScrollRequest,
+  ScrollResponse,
   StopRequest,
   StopResponse,
 } from "./backend-types";
@@ -233,6 +235,25 @@ export const backendCommand = {
       holdTime: options?.holdTime ?? 50,
     };
     return sendCommand("keyPress", request);
+  },
+
+  scroll: async (
+    delta: number,
+    options:
+      | {
+          times?: number;
+          interval?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<ScrollResponse> => {
+    token.throwIfCancelled();
+    const request: ScrollRequest = {
+      delta,
+      times: options?.times ?? 1,
+      interval: options?.interval ?? 100,
+    };
+    return sendCommand("scroll", request);
   },
 
   stop: async (): Promise<StopResponse> => {

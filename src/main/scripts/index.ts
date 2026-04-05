@@ -1,3 +1,4 @@
+import { classSpecificScripts } from "./class-specific";
 import type { ScriptDescriptor } from "./define-script";
 import { generalScripts } from "./general";
 import { world2Scripts } from "./world2";
@@ -6,6 +7,7 @@ import { world6Scripts } from "./world6";
 
 export const allScripts: ScriptDescriptor[] = [
   ...generalScripts,
+  ...classSpecificScripts,
   ...world2Scripts,
   ...world3Scripts,
   ...world6Scripts,

@@ -11,6 +11,7 @@ export const pageRegistry = {
   "world2/weekly-battle": () => import("./pages/world-2/weekly-battle"),
   "world3/construction": () => import("./pages/world-3/construction"),
   "world3/trapping": () => import("./pages/world-3/trapping"),
+  "classSpecific/compass": () => import("./pages/class-specific/compass"),
   "world6/farming": () => import("./pages/world-6/farming"),
   "world6/summoning": () => import("./pages/world-6/summoning"),
 } as const satisfies Record<

@@ -21,6 +21,10 @@ export const navConfig: NavEntry[] = [
     ],
   },
   {
+    title: "Class Specific",
+    items: [{ title: "Compass", page: "classSpecific/compass" }],
+  },
+  {
     title: "World 2",
     items: [{ title: "Weekly Battle", page: "world2/weekly-battle" }],
   },

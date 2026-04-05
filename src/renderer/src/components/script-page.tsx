@@ -9,6 +9,7 @@ export type ScriptAction<T extends keyof ScriptMap = keyof ScriptMap> = {
   label: string;
   scriptId: T;
   runningLabel?: string;
+  disabled?: boolean;
   args?: () => ScriptMap[T]["args"];
   onResult?: (result: ScriptMap[T]["result"]) => void;
 };
@@ -97,7 +98,7 @@ export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
               <div key={action.scriptId}>
                 <Button
                   className="w-full"
-                  disabled={isWorking && !isThisRunning}
+                  disabled={action.disabled || (isWorking && !isThisRunning)}
                   onClick={makeHandler(action)}
                   size="sm"
                 >
