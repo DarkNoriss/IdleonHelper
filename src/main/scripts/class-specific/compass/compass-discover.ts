@@ -1,10 +1,29 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { defineScript } from "../../define-script";
 import { COMPASS_NODES } from "./compass-graph";
 import {
+  centerNode,
+  findAnyNode,
   findCompassCenter,
+  findPath,
   openCompass,
   scrollInAtCenter,
 } from "./compass-utils";
+
+const loadGraph = (): Record<string, string[]> => {
+  const graphPath = join(
+    process.cwd(),
+    "resources",
+    "assets",
+    "compass",
+    "graph.json"
+  );
+  return JSON.parse(readFileSync(graphPath, "utf-8")) as Record<
+    string,
+    string[]
+  >;
+};
 
 export default defineScript<[string]>({
   id: "classSpecific.compass.discover",
@@ -17,25 +36,28 @@ export default defineScript<[string]>({
 
     logger.log(`Discovering neighbors of: ${nodeId}`);
 
-    // Step 1: Open compass
     await openCompass(backend, token, logger);
-
-    // Step 2: Find compass center
     const center = await findCompassCenter(backend, token, logger);
-
-    // Step 3: Scroll in
     await scrollInAtCenter(backend, token, logger, center);
 
-    // Step 4: Find and drag selected node to center
-    logger.log(`Finding ${nodeId}...`);
-    const target = await backend.find(node.image, undefined, token);
-    if (target.matches.length === 0) {
-      throw new Error(`Node "${nodeId}" not found on screen`);
-    }
-    logger.log(`Dragging ${nodeId} to center...`);
-    await backend.drag(target.matches[0]!, center, { instant: true }, token);
+    const startNode = await findAnyNode(backend, token, logger);
+    logger.log(`Found start node: ${startNode.id}`);
+    await backend.drag(startNode.point, center, { instant: true }, token);
 
-    // Step 5: Scan for all known nodes
+    if (startNode.id !== nodeId) {
+      const graph = loadGraph();
+      const path = findPath(startNode.id, nodeId, graph);
+      if (!path) {
+        throw new Error(
+          `No path from "${startNode.id}" to "${nodeId}" in graph`
+        );
+      }
+      logger.log(`Navigating: ${path.join(" → ")}`);
+      for (let i = 1; i < path.length; i++) {
+        await centerNode(path[i]!, center, backend, token);
+      }
+    }
+
     logger.log("Scanning for visible nodes...");
     const visibleNodes: string[] = [];
     for (const [id, n] of Object.entries(COMPASS_NODES)) {

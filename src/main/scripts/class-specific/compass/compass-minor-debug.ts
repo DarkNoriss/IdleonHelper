@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
-import type { Point } from "../../../backend/backend-types";
-import type { ScriptContext } from "../../define-script";
 import { defineScript } from "../../define-script";
 import {
+  centerNode,
   findAnyNode,
   findCompassCenter,
+  findPath,
   openCompass,
   scrollInAtCenter,
 } from "./compass-utils";
@@ -23,49 +23,6 @@ const loadGraph = (): Record<string, string[]> => {
     string,
     string[]
   >;
-};
-
-const findPath = (
-  from: string,
-  to: string,
-  graph: Record<string, string[]>
-): string[] | null => {
-  if (from === to) {
-    return [from];
-  }
-  const queue: string[][] = [[from]];
-  const seen = new Set([from]);
-  while (queue.length > 0) {
-    const path = queue.shift()!;
-    const current = path.at(-1)!;
-    for (const neighbor of graph[current] ?? []) {
-      if (neighbor === to) {
-        return [...path, neighbor];
-      }
-      if (!seen.has(neighbor)) {
-        seen.add(neighbor);
-        queue.push([...path, neighbor]);
-      }
-    }
-  }
-  return null;
-};
-
-const centerNode = async (
-  nodeId: string,
-  center: Point,
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"]
-) => {
-  const def = COMPASS_NODE_DEFS.find((d) => d.id === nodeId);
-  if (!def) {
-    throw new Error(`Unknown node: ${nodeId}`);
-  }
-  const result = await backend.find(def.image, undefined, token);
-  if (result.matches.length === 0) {
-    throw new Error(`Node "${nodeId}" not found on screen`);
-  }
-  await backend.drag(result.matches[0]!, center, { instant: true }, token);
 };
 
 export default defineScript<[string]>({
