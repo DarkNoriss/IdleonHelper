@@ -187,43 +187,19 @@
     "stone-failsafe"
   ],
   "tempest-rapidshot": [
-    "worldfinder",
-    "stop-drop-and-roll",
-    "fighter-path",
-    "tempest-damage",
-    "tempest-accuracy",
-    "multishot",
-    "tempest-crits",
-    "tempest-mega-damage",
-    "stardust-hoarding",
-    "elemental-vision"
-  ],
-  "stardust-hoarding": [
     "grumblos-guarantee",
-    "tempest-accuracy",
-    "tempest-crits",
-    "tempest-mega-damage",
-    "tempest-rapidshot",
-    "tempest-maxhit"
-  ],
-  "tempest-maxhit": [
     "tempest-damage",
     "tempest-accuracy",
     "multishot",
     "tempest-crits",
-    "tempest-rapidshot",
+    "tempest-mega-damage",
     "tempest-bullseye",
-    "stardust-hoarding",
-    "abomination-slayer-iii",
-    "abomination-slayer-v",
-    "abomination-slayer-viii",
-    "abomination-slayer-ix",
-    "abomination-slayer-x"
+    "tempest-maxhit",
+    "stardust-hoarding"
   ],
   "tempest-bullseye": [
     "tempest-accuracy",
     "multishot",
-    "tempest-crits",
     "tempest-rapidshot",
     "tempest-maxhit",
     "abomination-slayer-ii",
@@ -237,41 +213,28 @@
     "abomination-slayer-x",
     "abomination-slayer-xi"
   ],
-  "abomination-slayer-ii": [
-    "pathfinder",
-    "worldfinder",
-    "stop-drop-and-roll",
-    "fighter-path",
+  "tempest-maxhit": [
     "tempest-damage",
+    "tempest-accuracy",
     "multishot",
+    "tempest-crits",
+    "tempest-rapidshot",
     "tempest-bullseye",
-    "nomadic-path",
-    "jade-coinage",
-    "moon-of-print",
-    "talented-masters",
-    "survival-path",
-    "abomination-slayer-i",
+    "stardust-hoarding",
     "abomination-slayer-iii",
-    "abomination-slayer-iv",
     "abomination-slayer-v",
-    "abomination-slayer-vi"
+    "abomination-slayer-vi",
+    "abomination-slayer-viii",
+    "abomination-slayer-ix",
+    "abomination-slayer-x"
   ],
-  "nomadic-path": [
-    "pathfinder",
-    "elemental-path",
-    "critter-culture",
-    "jade-coinage",
-    "moon-of-print",
-    "exalted-stamps",
-    "magnesium-atom",
-    "survival-path",
-    "tempest-heartbeat",
-    "tempest-defence",
-    "5-minute-mile",
-    "abomination-slayer-i",
-    "abomination-slayer-ii",
-    "abomination-slayer-iii",
-    "abomination-slayer-iv"
+  "stardust-hoarding": [
+    "grumblos-guarantee",
+    "tempest-accuracy",
+    "tempest-crits",
+    "tempest-mega-damage",
+    "tempest-rapidshot",
+    "tempest-maxhit"
   ],
   "elemental-path": [
     "pathfinder",
@@ -284,7 +247,6 @@
     "stone-drop",
     "medallion-collection",
     "nomadic-path",
-    "jade-coinage",
     "survival-path",
     "tempest-heartbeat",
     "moondust-hoarding",
@@ -352,7 +314,6 @@
     "elemental-destruction",
     "medallion-magnate",
     "the-luck-factor",
-    "weapon-improvement",
     "top-of-the-mornin",
     "stone-failsafe"
   ],
@@ -429,11 +390,24 @@
   "top-of-the-mornin": [
     "stone-drop",
     "medallion-collection",
-    "elemental-destruction",
-    "ring-drop",
-    "the-luck-factor",
-    "weapon-improvement",
-    "stone-failsafe"
+    "the-luck-factor"
+  ],
+  "nomadic-path": [
+    "pathfinder",
+    "elemental-path",
+    "critter-culture",
+    "jade-coinage",
+    "moon-of-print",
+    "exalted-stamps",
+    "magnesium-atom",
+    "survival-path",
+    "tempest-heartbeat",
+    "tempest-defence",
+    "5-minute-mile",
+    "abomination-slayer-i",
+    "abomination-slayer-ii",
+    "abomination-slayer-iii",
+    "abomination-slayer-iv"
   ],
   "critter-culture": [
     "nomadic-path",
@@ -679,14 +653,12 @@
     "moondust-hoarding",
     "solardust-hoarding",
     "mountains-of-dust",
-    "spire-of-dust",
     "novadust-discovery"
   ],
   "5-minute-mile": [
     "nomadic-path",
     "critter-culture",
     "moon-of-sneak",
-    "all-knowing-eye",
     "tempest-defence",
     "moondust-hoarding",
     "solardust-hoarding",
@@ -708,6 +680,7 @@
   "solardust-hoarding": [
     "tempest-defence",
     "5-minute-mile",
+    "moondust-hoarding",
     "mountains-of-dust",
     "cant-touch-this",
     "spire-of-dust",
@@ -760,6 +733,25 @@
     "cant-touch-this",
     "spire-of-dust",
     "novadust-discovery"
+  ],
+  "abomination-slayer-ii": [
+    "pathfinder",
+    "worldfinder",
+    "stop-drop-and-roll",
+    "fighter-path",
+    "tempest-damage",
+    "multishot",
+    "tempest-bullseye",
+    "nomadic-path",
+    "jade-coinage",
+    "moon-of-print",
+    "talented-masters",
+    "survival-path",
+    "abomination-slayer-i",
+    "abomination-slayer-iii",
+    "abomination-slayer-iv",
+    "abomination-slayer-v",
+    "abomination-slayer-vi"
   ],
   "abomination-slayer-iv": [
     "fighter-path",
@@ -947,14 +939,14 @@
     "abomination-slayer-xviii"
   ],
   "abomination-slayer-xv": [
-    "atomic-cost-crash",
     "abomination-slayer-vii",
     "abomination-slayer-viii",
     "abomination-slayer-xii",
     "abomination-slayer-xiii",
     "abomination-slayer-xiv",
     "abomination-slayer-xvi",
-    "abomination-slayer-xvii"
+    "abomination-slayer-xvii",
+    "abomination-slayer-xxviii"
   ],
   "abomination-slayer-xvi": [
     "abomination-slayer-xii",
@@ -963,7 +955,8 @@
     "abomination-slayer-xv",
     "abomination-slayer-xvii",
     "abomination-slayer-xviii",
-    "abomination-slayer-xxvii"
+    "abomination-slayer-xxvii",
+    "abomination-slayer-xxviii"
   ],
   "abomination-slayer-xvii": [
     "abomination-slayer-x",
@@ -976,7 +969,8 @@
     "abomination-slayer-xviii",
     "abomination-slayer-xix",
     "abomination-slayer-xxvi",
-    "abomination-slayer-xxvii"
+    "abomination-slayer-xxvii",
+    "abomination-slayer-xxviii"
   ],
   "abomination-slayer-xviii": [
     "abomination-slayer-x",
@@ -991,7 +985,8 @@
     "abomination-slayer-xx",
     "abomination-slayer-xxv",
     "abomination-slayer-xxvi",
-    "abomination-slayer-xxvii"
+    "abomination-slayer-xxvii",
+    "abomination-slayer-xxviii"
   ],
   "abomination-slayer-xix": [
     "abomination-slayer-ix",
@@ -1006,7 +1001,8 @@
     "abomination-slayer-xxiv",
     "abomination-slayer-xxv",
     "abomination-slayer-xxvi",
-    "abomination-slayer-xxvii"
+    "abomination-slayer-xxvii",
+    "abomination-slayer-xxviii"
   ],
   "abomination-slayer-xx": [
     "abomination-slayer-ix",
@@ -1021,9 +1017,11 @@
     "abomination-slayer-xxiv",
     "abomination-slayer-xxv",
     "abomination-slayer-xxvi",
-    "abomination-slayer-xxvii"
+    "abomination-slayer-xxvii",
+    "abomination-slayer-xxviii"
   ],
   "abomination-slayer-xxi": [
+    "abomination-slayer-ix",
     "abomination-slayer-x",
     "abomination-slayer-xi",
     "abomination-slayer-xix",
@@ -1074,7 +1072,6 @@
     "abomination-slayer-xxvii"
   ],
   "abomination-slayer-xxvi": [
-    "abomination-slayer-xiii",
     "abomination-slayer-xvii",
     "abomination-slayer-xviii",
     "abomination-slayer-xix",
@@ -1082,7 +1079,8 @@
     "abomination-slayer-xxi",
     "abomination-slayer-xxiv",
     "abomination-slayer-xxv",
-    "abomination-slayer-xxvii"
+    "abomination-slayer-xxvii",
+    "abomination-slayer-xxviii"
   ],
   "abomination-slayer-xxvii": [
     "abomination-slayer-xv",
@@ -1092,6 +1090,16 @@
     "abomination-slayer-xix",
     "abomination-slayer-xx",
     "abomination-slayer-xxv",
-    "abomination-slayer-xxvi"
+    "abomination-slayer-xxvi",
+    "abomination-slayer-xxviii"
+  ],
+  "abomination-slayer-xxviii": [
+    "abomination-slayer-xv",
+    "abomination-slayer-xvi",
+    "abomination-slayer-xvii",
+    "abomination-slayer-xviii",
+    "abomination-slayer-xix",
+    "abomination-slayer-xxvi",
+    "abomination-slayer-xxvii"
   ]
 }
