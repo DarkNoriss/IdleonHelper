@@ -1,5 +1,5 @@
-import { defineScript } from "../../define-script.ts";
-import { COMPASS_NODES } from "./compass-graph.ts";
+import { defineScript } from "../../define-script";
+import { COMPASS_NODES } from "./compass-graph";
 import {
   COMPASS_CENTER,
   centerNodeOrThrow,
@@ -8,7 +8,7 @@ import {
   loadGraph,
   openCompass,
   scrollInAtCenter,
-} from "./compass-utils.ts";
+} from "./compass-utils";
 
 export default defineScript<[string]>({
   id: "classSpecific.compass.discover",

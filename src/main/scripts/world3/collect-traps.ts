@@ -1,6 +1,6 @@
-import { setState } from "../../state-hub.ts";
-import { delay } from "../../utils/index.ts";
-import { defineScript } from "../define-script.ts";
+import { setState } from "../../state-hub";
+import { delay } from "../../utils/index";
+import { defineScript } from "../define-script";
 
 const ARROW_DOWN_MAX_ATTEMPTS = 3;
 const VK_ESCAPE = 0x1b;

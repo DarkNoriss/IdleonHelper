@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select.tsx";
 import { useMainState } from "@/hooks/use-main-state.ts";
-import { critters, trapConfigs } from "./trapping-data.ts";
+import { critters, trapConfigs } from "./trapping-data";
 
 const formatCountdown = (ms: number): string => {
   if (ms <= 0) {

@@ -5,9 +5,9 @@ import { GameDataProvider } from "@/providers/game-data-provider.tsx";
 import { ThemeProvider } from "@/providers/theme-provider.tsx";
 import { type NavigationPage, useNavigationStore } from "@/store/navigation.ts";
 
-import { AppHeader } from "./app-header.tsx";
-import { pageRegistry } from "./page-registry.ts";
-import { AppSidebar } from "./sidebar/app-sidebar.tsx";
+import { AppHeader } from "./app-header";
+import { pageRegistry } from "./page-registry";
+import { AppSidebar } from "./sidebar/app-sidebar";
 
 const lazyPages = Object.fromEntries(
   Object.entries(pageRegistry).map(([key, loader]) => [key, lazy(loader)])

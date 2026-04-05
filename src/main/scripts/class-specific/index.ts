@@ -1,3 +1,3 @@
-import { compassScripts } from "./compass/index.ts";
+import { compassScripts } from "./compass/index";
 
 export const classSpecificScripts = [...compassScripts];

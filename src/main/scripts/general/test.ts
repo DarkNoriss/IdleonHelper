@@ -1,5 +1,5 @@
-import { defineScript } from "../define-script.ts";
-import { navigation } from "../game-nav/index.ts";
+import { defineScript } from "../define-script";
+import { navigation } from "../game-nav/index";
 
 export default defineScript({
   id: "general.test.run",

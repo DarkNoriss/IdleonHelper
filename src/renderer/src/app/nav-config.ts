@@ -1,4 +1,4 @@
-import type { NavigationPage } from "./page-registry.ts";
+import type { NavigationPage } from "./page-registry";
 
 type NavGroup = {
   title: string;

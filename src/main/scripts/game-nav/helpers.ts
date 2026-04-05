@@ -1,6 +1,6 @@
-import { backendCommand } from "../../backend/index.ts";
-import type { CancellationToken } from "../../utils/cancellation-token.ts";
-import { logger } from "../../utils/index.ts";
+import { backendCommand } from "../../backend/index";
+import type { CancellationToken } from "../../utils/cancellation-token";
+import { logger } from "../../utils/index";
 
 export const navigateTo = async (
   confirmationImage: string,

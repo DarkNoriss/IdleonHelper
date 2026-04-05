@@ -2,15 +2,15 @@ import {
   backendCommand,
   ClickPreset,
   getClickOptionsFromPreset,
-} from "../../backend/index.ts";
-import { defineScript } from "../define-script.ts";
-import { navigation } from "../game-nav/index.ts";
+} from "../../backend/index";
+import { defineScript } from "../define-script";
+import { navigation } from "../game-nav/index";
 import {
   COGS_STEP,
   SPARE_COLUMNS,
   SPARE_FIRST_COORDS,
   SPARE_ROWS,
-} from "./construction-constants.ts";
+} from "./construction-constants";
 
 export default defineScript({
   id: "world3.construction.trashCogs",

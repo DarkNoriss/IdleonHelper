@@ -1,18 +1,18 @@
-import type { ConnectionStatus } from "../types/scripts.ts";
+import type { ConnectionStatus } from "../types/scripts";
 import {
   getConnectionStatus,
   getLastError,
   initializeBackend,
   onStatusChange,
-} from "./backend/index.ts";
-import { getMainWindow } from "./main-window.ts";
-import { weeklyBattleFetch } from "./scripts/index.ts";
-import { setState } from "./state-hub.ts";
+} from "./backend/index";
+import { getMainWindow } from "./main-window";
+import { weeklyBattleFetch } from "./scripts/index";
+import { setState } from "./state-hub";
 import {
   checkForUpdates,
   initializeUpdateService,
   logger,
-} from "./utils/index.ts";
+} from "./utils/index";
 
 export const initializeApp = (): void => {
   logger.log("Initializing application...");

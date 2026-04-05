@@ -1,9 +1,9 @@
-import { classSpecificScripts } from "./class-specific/index.ts";
-import type { ScriptDescriptor } from "./define-script.ts";
-import { generalScripts } from "./general/index.ts";
-import { world2Scripts } from "./world2/index.ts";
-import { world3Scripts } from "./world3/index.ts";
-import { world6Scripts } from "./world6/index.ts";
+import { classSpecificScripts } from "./class-specific/index";
+import type { ScriptDescriptor } from "./define-script";
+import { generalScripts } from "./general/index";
+import { world2Scripts } from "./world2/index";
+import { world3Scripts } from "./world3/index";
+import { world6Scripts } from "./world6/index";
 
 export const allScripts: ScriptDescriptor[] = [
   ...generalScripts,
@@ -14,11 +14,11 @@ export const allScripts: ScriptDescriptor[] = [
 ];
 
 // Re-export navigation for scripts that use it
-export { navigation } from "./game-nav/index.ts";
+export { navigation } from "./game-nav/index";
 // Re-export non-script functions that handlers still needs
 export {
   weeklyBattleFetch,
   weeklyBattleGet,
   weeklyBattleOnChange,
-} from "./world2/index.ts";
-export { solver } from "./world3/index.ts";
+} from "./world2/index";
+export { solver } from "./world3/index";

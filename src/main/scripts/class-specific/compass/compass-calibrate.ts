@@ -1,9 +1,9 @@
-import { defineScript } from "../../define-script.ts";
+import { defineScript } from "../../define-script";
 import {
   calibrateCompassCenter,
   openCompass,
   scrollInAtCenter,
-} from "./compass-utils.ts";
+} from "./compass-utils";
 
 export default defineScript({
   id: "classSpecific.compass.calibrate",

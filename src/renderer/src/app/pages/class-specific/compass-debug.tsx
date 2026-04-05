@@ -12,7 +12,7 @@ import {
   COMPASS_MINOR_NODE_DEFS,
   COMPASS_NODE_DEFS,
 } from "@/shared/compass-config";
-import { parseCompassData } from "./compass-parser.ts";
+import { parseCompassData } from "./compass-parser";
 
 const CompassDebug = () => {
   const [selectedNode, setSelectedNode] = useState("");

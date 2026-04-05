@@ -1,5 +1,5 @@
-import type { CompassUpgrade } from "./compass.ts";
-import type { OptimalStep } from "./construction.ts";
+import type { CompassUpgrade } from "./compass";
+import type { OptimalStep } from "./construction";
 
 export type WeeklyBattleStep = {
   stepName: string;

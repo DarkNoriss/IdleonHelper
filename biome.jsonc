@@ -23,7 +23,9 @@
         // type-aware preset can't resolve @/ path aliases or React CJS exports
         "noUnresolvedImports": "off",
         // radix-ui packages are transitive deps via shadcn/ui
-        "noUndeclaredDependencies": "off"
+        "noUndeclaredDependencies": "off",
+        // TS resolves .ts files without extensions; adding them causes TS5097
+        "useImportExtensions": "off"
       },
       "suspicious": {
         // wrapper functions returning promises don't need await

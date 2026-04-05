@@ -3,8 +3,8 @@ import {
   COMPASS_NODE_DEFS,
 } from "@/shared/compass-config";
 import type { CompassUpgrade, MinorNodeWithParent } from "@/types/compass";
-import { delay } from "../../../utils/index.ts";
-import { defineScript } from "../../define-script.ts";
+import { delay } from "../../../utils";
+import { defineScript } from "../../define-script";
 import {
   COMPASS_CENTER,
   findAnyNode,
@@ -13,7 +13,7 @@ import {
   openCompass,
   scrollInAtCenter,
   WHEEL_DELTA,
-} from "./compass-utils.ts";
+} from "./compass-utils";
 
 type ResolvedUpgrade =
   | { type: "standard"; id: string; change: number }

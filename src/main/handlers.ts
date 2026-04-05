@@ -4,16 +4,16 @@ import { BrowserWindow, ipcMain } from "electron";
 import type {
   ParsedConstructionData,
   SolverWeights,
-} from "../types/construction.ts";
-import { getConnectionStatus, getLastError } from "./backend/index.ts";
+} from "../types/construction";
+import { getConnectionStatus, getLastError } from "./backend/index";
 import {
   allScripts,
   solver,
   weeklyBattleFetch,
   weeklyBattleGet,
-} from "./scripts/index.ts";
-import { registerAllScripts } from "./scripts/registry.ts";
-import { registerStateHandlers } from "./state-hub.ts";
+} from "./scripts/index";
+import { registerAllScripts } from "./scripts/registry";
+import { registerStateHandlers } from "./state-hub";
 import {
   checkForUpdates,
   downloadUpdate,
@@ -22,7 +22,7 @@ import {
   getUpdateStatus,
   installUpdate,
   logger,
-} from "./utils/index.ts";
+} from "./utils/index";
 
 export const setupHandlers = (): void => {
   logger.log("Setting up IPC handlers");

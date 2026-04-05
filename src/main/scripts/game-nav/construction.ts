@@ -1,8 +1,8 @@
-import { backendCommand } from "../../backend/index.ts";
-import type { CancellationToken } from "../../utils/cancellation-token.ts";
-import { delay, logger } from "../../utils/index.ts";
-import { codex } from "./codex.ts";
-import { navigateTo } from "./helpers.ts";
+import { backendCommand } from "../../backend/index";
+import type { CancellationToken } from "../../utils/cancellation-token";
+import { delay, logger } from "../../utils/index";
+import { codex } from "./codex";
+import { navigateTo } from "./helpers";
 
 export const construction = {
   toConstruction: async (token: CancellationToken): Promise<boolean> => {

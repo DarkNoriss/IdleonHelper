@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { is } from "@electron-toolkit/utils";
 
-import { logger } from "../utils/index.ts";
+import { logger } from "../utils/index";
 
 const BACKEND_PORT = is.dev ? 5001 : 5000;
 const BACKEND_EXECUTABLE = "IdleonHelperBackend.exe";

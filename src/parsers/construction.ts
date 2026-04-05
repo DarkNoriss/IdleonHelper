@@ -2,8 +2,8 @@ import type {
   ParsedCog,
   ParsedConstructionData,
   Score,
-} from "../types/construction.ts";
-import type { RawJson } from "../types/raw-json.ts";
+} from "../types/construction";
+import type { RawJson } from "../types/raw-json";
 
 export const INV_ROWS = 8;
 export const INV_COLUMNS = 12;

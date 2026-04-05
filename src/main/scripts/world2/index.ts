@@ -1,9 +1,9 @@
-import weeklyBattleRun from "./weekly-battle.ts";
+import weeklyBattleRun from "./weekly-battle";
 
 export {
   weeklyBattleFetch,
   weeklyBattleGet,
   weeklyBattleOnChange,
-} from "./weekly-battle.ts";
+} from "./weekly-battle";
 
 export const world2Scripts = [weeklyBattleRun];

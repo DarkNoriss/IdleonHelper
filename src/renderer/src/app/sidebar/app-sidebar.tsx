@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/sidebar.tsx";
 import { useNavigationStore } from "@/store/navigation.ts";
 
-import { SidebarBackendStatus } from "./backend-status.tsx";
-import { UpdateStatus } from "./update-status.tsx";
+import { SidebarBackendStatus } from "./backend-status";
+import { UpdateStatus } from "./update-status";
 
 export const AppSidebar = ({
   ...props

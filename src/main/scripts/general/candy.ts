@@ -1,6 +1,6 @@
-import { delay } from "../../utils/index.ts";
-import { defineScript } from "../define-script.ts";
-import { navigation } from "../game-nav/index.ts";
+import { delay } from "../../utils/index";
+import { defineScript } from "../define-script";
+import { navigation } from "../game-nav/index";
 
 export default defineScript<[string]>({
   id: "general.candy.run",

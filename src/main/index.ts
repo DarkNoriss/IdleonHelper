@@ -2,11 +2,11 @@ import { join } from "node:path";
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import { app, BrowserWindow, shell } from "electron";
 
-import { closeConnection, stopBackend } from "./backend/index.ts";
-import { setupHandlers } from "./handlers.ts";
-import { initializeApp } from "./initialization.ts";
-import { setMainWindow } from "./main-window.ts";
-import { logger, setLogsChangeNotifier } from "./utils/index.ts";
+import { closeConnection, stopBackend } from "./backend/index";
+import { setupHandlers } from "./handlers";
+import { initializeApp } from "./initialization";
+import { setMainWindow } from "./main-window";
+import { logger, setLogsChangeNotifier } from "./utils/index";
 
 function createWindow(): void {
   logger.log("Creating main window");

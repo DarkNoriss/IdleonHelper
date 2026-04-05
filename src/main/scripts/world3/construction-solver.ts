@@ -1,12 +1,12 @@
-import { getPosition } from "../../../parsers/construction.ts";
+import { getPosition } from "../../../parsers/construction";
 import type {
   ParsedCog,
   ParsedConstructionData,
   SolverResult,
   SolverWeights,
-} from "../../../types/construction.ts";
-import { logger } from "../../utils/index.ts";
-import { getOptimalSteps } from "./construction-steps.ts";
+} from "../../../types/construction";
+import { logger } from "../../utils/index";
+import { getOptimalSteps } from "./construction-steps";
 import {
   calculateStateScore,
   cloneInventory,
@@ -16,7 +16,7 @@ import {
   getScoreSum,
   moveCog,
   shuffle,
-} from "./construction-utils.ts";
+} from "./construction-utils";
 
 const COOLING_RATE = 0.96;
 const INITIAL_ACCEPTANCE_RATE = 0.8;
