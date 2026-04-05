@@ -222,6 +222,13 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "medallion-magnate",
         label: "Medallion Magnate",
         image: "compass/elemental-path/compass_medallion_magnate",
+        minorNodes: [
+          {
+            id: "medallion-drops",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 445, y: 271 },
+          },
+        ],
       },
       {
         id: "the-luck-factor",
