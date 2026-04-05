@@ -9,7 +9,7 @@ import type { ScriptContext } from "../../define-script";
 
 const ARROW_DOWN_MAX_ATTEMPTS = 3;
 const SCROLL_IN_TIMES = 8;
-const WHEEL_DELTA = 120;
+export const WHEEL_DELTA = 120;
 
 export const COMPASS_CENTER: Point = { x: 539, y: 269 };
 

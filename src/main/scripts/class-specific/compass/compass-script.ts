@@ -14,29 +14,31 @@ import {
   navigateToNode,
   openCompass,
   scrollInAtCenter,
+  WHEEL_DELTA,
 } from "./compass-utils";
 
 type ResolvedUpgrade =
   | { type: "standard"; id: string; change: number }
   | { type: "minor"; minor: MinorNodeWithParent; change: number };
 
-const resolveUpgrade = (upgrade: CompassUpgrade): ResolvedUpgrade | null => {
-  const findMatch = (name: string): string | undefined => {
-    const allIds = new Set([
-      ...COMPASS_NODE_DEFS.map((n) => n.id),
-      ...COMPASS_MINOR_NODE_DEFS.map((n) => n.id),
-    ]);
-    if (allIds.has(name)) {
-      return name;
-    }
-    for (const id of allIds) {
-      if (id.endsWith(`-${name}`)) {
-        return id;
-      }
-    }
-    return undefined;
-  };
+const ALL_NODE_IDS = new Set([
+  ...COMPASS_NODE_DEFS.map((n) => n.id),
+  ...COMPASS_MINOR_NODE_DEFS.map((n) => n.id),
+]);
 
+const findMatch = (name: string): string | undefined => {
+  if (ALL_NODE_IDS.has(name)) {
+    return name;
+  }
+  for (const id of ALL_NODE_IDS) {
+    if (id.endsWith(`-${name}`)) {
+      return id;
+    }
+  }
+  return undefined;
+};
+
+const resolveUpgrade = (upgrade: CompassUpgrade): ResolvedUpgrade | null => {
   const matchedId = findMatch(upgrade.name);
   if (!matchedId) {
     return null;
@@ -55,8 +57,6 @@ const resolveUpgrade = (upgrade: CompassUpgrade): ResolvedUpgrade | null => {
   return null;
 };
 
-const SCROLL_DELTA = 120;
-
 export default defineScript<[CompassUpgrade[]]>({
   id: "classSpecific.compass.run",
   name: "Compass",
@@ -70,8 +70,8 @@ export default defineScript<[CompassUpgrade[]]>({
     // GUI reset check
     if (await backend.isVisible("compass/compass_cost", undefined, token)) {
       logger.log("GUI overlay detected, resetting...");
-      await backend.scroll(COMPASS_CENTER, -SCROLL_DELTA, undefined, token);
-      await backend.scroll(COMPASS_CENTER, SCROLL_DELTA, undefined, token);
+      await backend.scroll(COMPASS_CENTER, -WHEEL_DELTA, undefined, token);
+      await backend.scroll(COMPASS_CENTER, WHEEL_DELTA, undefined, token);
     }
 
     // Find starting position
