@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { COMPASS_NODE_DEFS } from "@/types/compass";
+import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
 import { parseCompassData } from "./compass-parser";
 
 const CompassDebug = () => {

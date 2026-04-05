@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { COMPASS_NODE_DEFS } from "../../../../types/compass";
+import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
 import type { Point } from "../../../backend/backend-types";
 import type { ScriptContext } from "../../define-script";
 import { defineScript } from "../../define-script";
