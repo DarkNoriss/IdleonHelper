@@ -4,9 +4,9 @@ import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
 import type { ScriptContext } from "../../define-script";
 import { defineScript } from "../../define-script";
 import {
+  COMPASS_CENTER,
   centerNodeOrThrow,
   findAnyNode,
-  findCompassCenter,
   findPath,
   openCompass,
   scrollInAtCenter,
@@ -39,12 +39,16 @@ export default defineScript({
     const visited = new Set<string>();
 
     await openCompass(backend, token, logger);
-    const center = await findCompassCenter(backend, token, logger);
-    await scrollInAtCenter(backend, token, logger, center);
+    await scrollInAtCenter(backend, token, logger, COMPASS_CENTER);
 
     const startNode = await findAnyNode(backend, token, logger);
     logger.log(`Starting from: ${startNode.id}`);
-    await backend.drag(startNode.point, center, { instant: true }, token);
+    await backend.drag(
+      startNode.point,
+      COMPASS_CENTER,
+      { instant: true },
+      token
+    );
 
     const startNeighbors = await visitNode(startNode.id, backend, token);
     graph[startNode.id] = startNeighbors;
@@ -62,7 +66,7 @@ export default defineScript({
       const next = neighbors.find((n) => !visited.has(n));
 
       if (next) {
-        await centerNodeOrThrow(next, center, backend, token);
+        await centerNodeOrThrow(next, COMPASS_CENTER, backend, token);
         const nextNeighbors = await visitNode(next, backend, token);
         graph[next] = nextNeighbors;
         visited.add(next);
@@ -92,7 +96,12 @@ export default defineScript({
       }
 
       for (let i = 1; i < shortestPath.length; i++) {
-        await centerNodeOrThrow(shortestPath[i]!, center, backend, token);
+        await centerNodeOrThrow(
+          shortestPath[i]!,
+          COMPASS_CENTER,
+          backend,
+          token
+        );
       }
       currentId = backtrackTarget;
     }

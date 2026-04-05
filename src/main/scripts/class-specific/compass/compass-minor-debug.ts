@@ -3,9 +3,9 @@ import { join } from "node:path";
 import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
 import { defineScript } from "../../define-script";
 import {
+  COMPASS_CENTER,
   centerNodeOrThrow,
   findAnyNode,
-  findCompassCenter,
   findPath,
   openCompass,
   scrollInAtCenter,
@@ -43,12 +43,16 @@ export default defineScript<[string]>({
     const graph = loadGraph();
 
     await openCompass(backend, token, logger);
-    const center = await findCompassCenter(backend, token, logger);
-    await scrollInAtCenter(backend, token, logger, center);
+    await scrollInAtCenter(backend, token, logger, COMPASS_CENTER);
 
     const startNode = await findAnyNode(backend, token, logger);
     logger.log(`Found start node: ${startNode.id}`);
-    await backend.drag(startNode.point, center, { instant: true }, token);
+    await backend.drag(
+      startNode.point,
+      COMPASS_CENTER,
+      { instant: true },
+      token
+    );
 
     if (startNode.id !== nodeId) {
       const path = findPath(startNode.id, nodeId, graph);
@@ -59,12 +63,12 @@ export default defineScript<[string]>({
       }
       logger.log(`Navigating: ${path.join(" → ")}`);
       for (let i = 1; i < path.length; i++) {
-        await centerNodeOrThrow(path[i]!, center, backend, token);
+        await centerNodeOrThrow(path[i]!, COMPASS_CENTER, backend, token);
       }
     }
 
     logger.log(`Centered on: ${nodeId}`);
-    logger.log(`Compass center: (${center.x}, ${center.y})`);
+    logger.log(`Compass center: (${COMPASS_CENTER.x}, ${COMPASS_CENTER.y})`);
     logger.log(`Scanning ${minorNodes.length} minor node images...`);
 
     const scannedImages = new Set<string>();
@@ -86,8 +90,8 @@ export default defineScript<[string]>({
         logger.log("  No matches found");
       } else {
         for (const match of result.matches) {
-          const offsetX = match.point.x - center.x;
-          const offsetY = match.point.y - center.y;
+          const offsetX = match.point.x - COMPASS_CENTER.x;
+          const offsetY = match.point.y - COMPASS_CENTER.y;
           logger.log(
             `  Match: (${match.point.x}, ${match.point.y}) similarity=${match.similarity.toFixed(3)} offset=({x: ${offsetX}, y: ${offsetY}})`
           );

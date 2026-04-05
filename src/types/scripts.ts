@@ -53,6 +53,10 @@ export type ScriptMap = {
     args: [string];
     result: undefined;
   };
+  "classSpecific.compass.calibrate": {
+    args: [];
+    result: undefined;
+  };
 };
 
 export type BossFarmerState = {

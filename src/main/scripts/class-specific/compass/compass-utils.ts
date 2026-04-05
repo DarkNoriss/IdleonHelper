@@ -9,12 +9,14 @@ const ARROW_DOWN_MAX_ATTEMPTS = 3;
 const SCROLL_IN_TIMES = 8;
 const WHEEL_DELTA = 120;
 
-export const findCompassCenter = async (
+export const COMPASS_CENTER: Point = { x: 539, y: 269 };
+
+export const calibrateCompassCenter = async (
   backend: ScriptContext["backend"],
   token: ScriptContext["token"],
   logger: ScriptContext["logger"]
 ): Promise<Point> => {
-  logger.log("Calculating compass center...");
+  logger.log("Calibrating compass center from corner images...");
   const topLeft = await backend.find(
     "compass/compass_top_left",
     undefined,
@@ -37,7 +39,9 @@ export const findCompassCenter = async (
     x: Math.round((tl.x + br.x) / 2),
     y: Math.round((tl.y + br.y) / 2),
   };
-  logger.log(`Compass center: (${center.x}, ${center.y})`);
+  logger.log(
+    `COMPASS CENTER: { x: ${center.x}, y: ${center.y} } — copy this into COMPASS_CENTER`
+  );
   return center;
 };
 

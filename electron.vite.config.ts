@@ -5,6 +5,18 @@ import { defineConfig } from "electron-vite";
 
 export default defineConfig({
   main: {
+    resolve: {
+      alias: [
+        {
+          find: /^@\/shared\/?(.*)$/,
+          replacement: path.resolve(import.meta.dirname, "./src/shared/$1"),
+        },
+        {
+          find: /^@\/types\/?(.*)$/,
+          replacement: path.resolve(import.meta.dirname, "./src/types/$1"),
+        },
+      ],
+    },
     build: {
       rollupOptions: {
         external: ["ws", "bufferutil", "utf-8-validate"],

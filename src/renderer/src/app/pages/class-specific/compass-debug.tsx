@@ -8,17 +8,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
+import {
+  COMPASS_MINOR_NODE_DEFS,
+  COMPASS_NODE_DEFS,
+} from "@/shared/compass-config";
 import { parseCompassData } from "./compass-parser";
 
 const CompassDebug = () => {
   const [selectedNode, setSelectedNode] = useState("");
   const [rawData, setRawData] = useState("");
 
-  const knownIds = useMemo(
-    () => new Set(COMPASS_NODE_DEFS.map((n) => n.id)),
-    []
-  );
+  const knownIds = useMemo(() => {
+    const ids = new Set(COMPASS_NODE_DEFS.map((n) => n.id));
+    for (const minor of COMPASS_MINOR_NODE_DEFS) {
+      ids.add(minor.id);
+    }
+    return ids;
+  }, []);
 
   const auditResult = useMemo(() => {
     if (!rawData.trim()) {
@@ -27,9 +33,23 @@ const CompassDebug = () => {
     const parsed = parseCompassData(rawData);
     const found: string[] = [];
     const missing: string[] = [];
+
+    const findMatch = (name: string): string | undefined => {
+      if (knownIds.has(name)) {
+        return name;
+      }
+      for (const id of knownIds) {
+        if (id.endsWith(`-${name}`)) {
+          return id;
+        }
+      }
+      return undefined;
+    };
+
     for (const upgrade of parsed) {
-      if (knownIds.has(upgrade.name)) {
-        found.push(upgrade.name);
+      const match = findMatch(upgrade.name);
+      if (match) {
+        found.push(match);
       } else {
         missing.push(upgrade.name);
       }
@@ -58,6 +78,11 @@ const CompassDebug = () => {
           runningLabel: "Scanning... (Click to stop)",
           disabled: !selectedNode,
           args: () => [selectedNode],
+        },
+        {
+          label: "Calibrate Center",
+          scriptId: "classSpecific.compass.calibrate",
+          runningLabel: "Calibrating... (Click to stop)",
         },
       ]}
       title="Compass Debug"

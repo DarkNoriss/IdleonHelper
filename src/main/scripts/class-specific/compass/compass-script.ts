@@ -1,8 +1,8 @@
 import type { CompassUpgrade } from "../../../../types/compass";
 import { defineScript } from "../../define-script";
 import {
+  COMPASS_CENTER,
   findAnyNode,
-  findCompassCenter,
   openCompass,
   scrollInAtCenter,
 } from "./compass-utils";
@@ -17,12 +17,16 @@ export default defineScript<[CompassUpgrade[]]>({
     }
 
     await openCompass(backend, token, logger);
-    const center = await findCompassCenter(backend, token, logger);
-    await scrollInAtCenter(backend, token, logger, center);
+    await scrollInAtCenter(backend, token, logger, COMPASS_CENTER);
 
     const startNode = await findAnyNode(backend, token, logger);
     logger.log(`Starting from: ${startNode.id}`);
-    await backend.drag(startNode.point, center, { instant: true }, token);
+    await backend.drag(
+      startNode.point,
+      COMPASS_CENTER,
+      { instant: true },
+      token
+    );
 
     logger.log("Compass script finished");
   },

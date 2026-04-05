@@ -44,16 +44,47 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "tempest-damage",
         label: "Tempest Damage",
         image: "compass/fighter-path/compass_tempest_damage",
+        minorNodes: [
+          {
+            id: "tempest-damage-i",
+            image: "compass/fighter-path/compass_tempest_damage_minor",
+            offset: { x: 467, y: 215 },
+          },
+        ],
       },
       {
         id: "tempest-accuracy",
         label: "Tempest Accuracy",
         image: "compass/fighter-path/compass_tempest_accuracy",
+        minorNodes: [
+          {
+            id: "tempest-accuracy-i",
+            image: "compass/fighter-path/compass_tempest_accuracy_minor",
+            offset: { x: 467, y: 215 },
+          },
+          {
+            id: "tempest-damage-ii",
+            image: "compass/fighter-path/compass_tempest_damage_minor",
+            offset: { x: 516, y: 188 },
+          },
+          {
+            id: "tempest-damage-iii",
+            image: "compass/fighter-path/compass_tempest_damage_minor",
+            offset: { x: 616, y: 243 },
+          },
+        ],
       },
       {
         id: "multishot",
         label: "Multishot",
         image: "compass/fighter-path/compass_multishot",
+        minorNodes: [
+          {
+            id: "tempest-accuracy-ii",
+            image: "compass/fighter-path/compass_tempest_accuracy_minor",
+            offset: { x: 613, y: 239 },
+          },
+        ],
       },
       {
         id: "tempest-crits",
@@ -64,26 +95,66 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "tempest-mega-damage",
         label: "Tempest Mega Damage",
         image: "compass/fighter-path/compass_tempest_mega_damage",
+        minorNodes: [
+          {
+            id: "tempest-damage-iv",
+            image: "compass/fighter-path/compass_tempest_damage_minor",
+            offset: { x: 572, y: 181 },
+          },
+        ],
       },
       {
         id: "tempest-rapidshot",
         label: "Tempest Rapidshot",
         image: "compass/fighter-path/compass_tempest_rapidshot",
+        minorNodes: [
+          {
+            id: "tempest-accuracy-v",
+            image: "compass/fighter-path/compass_tempest_accuracy_minor",
+            offset: { x: 577, y: 188 },
+          },
+        ],
       },
       {
         id: "tempest-bullseye",
         label: "Tempest Bullseye",
         image: "compass/fighter-path/compass_tempest_bullseye",
+        minorNodes: [
+          {
+            id: "tempest-damage-vi",
+            image: "compass/fighter-path/compass_tempest_damage_minor",
+            offset: { x: 544, y: 205 },
+          },
+          {
+            id: "tempest-accuracy-iv",
+            image: "compass/fighter-path/compass_tempest_accuracy_minor",
+            offset: { x: 626, y: 173 },
+          },
+        ],
       },
       {
         id: "tempest-maxhit",
         label: "Tempest Maxhit",
         image: "compass/fighter-path/compass_tempest_maxhit",
+        minorNodes: [
+          {
+            id: "tempest-damage-v",
+            image: "compass/fighter-path/compass_tempest_damage_minor",
+            offset: { x: 506, y: 206 },
+          },
+        ],
       },
       {
         id: "stardust-hoarding",
         label: "Stardust Hoarding",
         image: "compass/fighter-path/compass_stardust_hoarding",
+        minorNodes: [
+          {
+            id: "tempest-accuracy-iii",
+            image: "compass/fighter-path/compass_tempest_accuracy_minor",
+            offset: { x: 478, y: 204 },
+          },
+        ],
       },
     ],
   },
@@ -100,11 +171,25 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "weapon-drop",
         label: "Weapon Drop",
         image: "compass/elemental-path/compass_weapon_drop",
+        minorNodes: [
+          {
+            id: "weapon-drops",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 433, y: 283 },
+          },
+        ],
       },
       {
         id: "elemental-vision",
         label: "Elemental Vision",
         image: "compass/elemental-path/compass_elemental_vision",
+        minorNodes: [
+          {
+            id: "ring-drops-ii",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 580, y: 197 },
+          },
+        ],
       },
       {
         id: "stone-drop",
@@ -125,6 +210,13 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "ring-drop",
         label: "Ring Drop",
         image: "compass/elemental-path/compass_ring_drop",
+        minorNodes: [
+          {
+            id: "lucky-drops-iii",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 610, y: 314 },
+          },
+        ],
       },
       {
         id: "medallion-magnate",
@@ -135,11 +227,25 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "the-luck-factor",
         label: "The Luck Factor",
         image: "compass/elemental-path/compass_the_luck_factor",
+        minorNodes: [
+          {
+            id: "stone-drops-i",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 493, y: 176 },
+          },
+        ],
       },
       {
         id: "weapon-improvement",
         label: "Weapon Improvement",
         image: "compass/elemental-path/compass_weapon_improvement",
+        minorNodes: [
+          {
+            id: "stone-drops-ii",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 454, y: 230 },
+          },
+        ],
       },
       {
         id: "top-of-the-mornin",
@@ -176,6 +282,18 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "moon-of-print",
         label: "Moon Of Print",
         image: "compass/nomadic-path/compass_moon_of_print",
+        minorNodes: [
+          {
+            id: "printer-sale-i",
+            image: "compass/nomadic-path/compass_printer_sale_minor",
+            offset: { x: 515, y: 346 },
+          },
+          {
+            id: "printer-sale-ii",
+            image: "compass/nomadic-path/compass_printer_sale_minor",
+            offset: { x: 623, y: 272 },
+          },
+        ],
       },
       {
         id: "exalted-stamps",
@@ -186,6 +304,23 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "moon-of-sneak",
         label: "Moon Of Sneak",
         image: "compass/nomadic-path/compass_moon_of_sneak",
+        minorNodes: [
+          {
+            id: "sneaky-sale-i",
+            image: "compass/nomadic-path/compass_sneaky_sale_minor",
+            offset: { x: 499, y: 203 },
+          },
+          {
+            id: "sneaky-sale-ii",
+            image: "compass/nomadic-path/compass_sneaky_sale_minor",
+            offset: { x: 633, y: 292 },
+          },
+          {
+            id: "sneaky-sale-iii",
+            image: "compass/nomadic-path/compass_sneaky_sale_minor",
+            offset: { x: 552, y: 338 },
+          },
+        ],
       },
       {
         id: "magnesium-atom",
@@ -201,6 +336,23 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "moon-of-damage",
         label: "Moon Of Damage",
         image: "compass/nomadic-path/compass_moon_of_damage",
+        minorNodes: [
+          {
+            id: "damage-sale-i",
+            image: "compass/nomadic-path/compass_damage_sale_minor",
+            offset: { x: 483, y: 192 },
+          },
+          {
+            id: "damage-sale-ii",
+            image: "compass/nomadic-path/compass_damage_sale_minor",
+            offset: { x: 464, y: 333 },
+          },
+          {
+            id: "damage-sale-iii",
+            image: "compass/nomadic-path/compass_damage_sale_minor",
+            offset: { x: 567, y: 336 },
+          },
+        ],
       },
       {
         id: "talented-masters",
@@ -231,6 +383,13 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "moon-of-experience",
         label: "Moon Of Experience",
         image: "compass/nomadic-path/compass_moon_of_experience",
+        minorNodes: [
+          {
+            id: "experience-sale-iii",
+            image: "compass/nomadic-path/compass_experience_sale_minor",
+            offset: { x: 547, y: 186 },
+          },
+        ],
       },
     ],
   },
@@ -252,6 +411,23 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "tempest-defence",
         label: "Tempest Defence",
         image: "compass/survival-path/compass_tempest_defence",
+        minorNodes: [
+          {
+            id: "tempest-defence-i",
+            image: "compass/survival-path/compass_tempest_defence_minor",
+            offset: { x: 467, y: 243 },
+          },
+          {
+            id: "de-dust-i",
+            image: "compass/survival-path/compass_de_dust_minor",
+            offset: { x: 425, y: 305 },
+          },
+          {
+            id: "de-dust-ii",
+            image: "compass/survival-path/compass_de_dust_minor",
+            offset: { x: 491, y: 352 },
+          },
+        ],
       },
       {
         id: "5-minute-mile",
@@ -262,16 +438,42 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "moondust-hoarding",
         label: "Moondust Hoarding",
         image: "compass/survival-path/compass_moondust_hoarding",
+        minorNodes: [
+          {
+            id: "tempest-health-i",
+            image: "compass/survival-path/compass_tempest_health_minor",
+            offset: { x: 428, y: 296 },
+          },
+          {
+            id: "tempest-defence-iii",
+            image: "compass/survival-path/compass_tempest_defence_minor",
+            offset: { x: 538, y: 193 },
+          },
+        ],
       },
       {
         id: "solardust-hoarding",
         label: "Solardust Hoarding",
         image: "compass/survival-path/compass_solardust_hoarding",
+        minorNodes: [
+          {
+            id: "tempest-defence-ii",
+            image: "compass/survival-path/compass_tempest_defence_minor",
+            offset: { x: 489, y: 187 },
+          },
+        ],
       },
       {
         id: "tempest-reach",
         label: "Tempest Reach",
         image: "compass/survival-path/compass_tempest_reach",
+        minorNodes: [
+          {
+            id: "de-dust-iii",
+            image: "compass/survival-path/compass_de_dust_minor",
+            offset: { x: 567, y: 396 },
+          },
+        ],
       },
       {
         id: "mountains-of-dust",
@@ -287,6 +489,18 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "spire-of-dust",
         label: "Spire Of Dust",
         image: "compass/survival-path/compass_spire_of_dust",
+        minorNodes: [
+          {
+            id: "tempest-health-ii",
+            image: "compass/survival-path/compass_tempest_health_minor",
+            offset: { x: 472, y: 190 },
+          },
+          {
+            id: "de-dust-v",
+            image: "compass/survival-path/compass_de_dust_minor",
+            offset: { x: 590, y: 342 },
+          },
+        ],
       },
       {
         id: "novadust-discovery",
@@ -297,6 +511,18 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "knockoff-compass",
         label: "Knockoff Compass",
         image: "compass/survival-path/compass_knockoff_compass",
+        minorNodes: [
+          {
+            id: "de-dust-iv",
+            image: "compass/survival-path/compass_de_dust_minor",
+            offset: { x: 564, y: 344 },
+          },
+          {
+            id: "tempest-defence-iv",
+            image: "compass/survival-path/compass_tempest_defence_minor",
+            offset: { x: 502, y: 196 },
+          },
+        ],
       },
     ],
   },
@@ -433,6 +659,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "abomination-slayer-xxvi",
         label: "Abomination Slayer XXVI",
         image: "compass/abominations/compass_abomination_slayer_xxvi",
+      },
+      {
+        id: "abomination-slayer-xxvii",
+        label: "Abomination Slayer XXVII",
+        image: "compass/abominations/compass_abomination_slayer_xxvii",
       },
     ],
   },
