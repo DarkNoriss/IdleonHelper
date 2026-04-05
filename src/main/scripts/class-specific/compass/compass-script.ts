@@ -111,10 +111,6 @@ export default defineScript<[CompassUpgrade[]]>({
       const clickPoint =
         resolved.type === "minor" ? resolved.minor.offset : COMPASS_CENTER;
 
-      if (resolved.type === "minor") {
-        logger.log(`  Minor node -> parent "${navTarget}"`);
-      }
-
       // Navigate
       if (currentNode !== navTarget) {
         const result = await navigateToNode(
@@ -137,21 +133,32 @@ export default defineScript<[CompassUpgrade[]]>({
           continue;
         }
       }
-
       currentNode = navTarget;
 
-      // Click the node to open upgrade panel
-      logger.log(`  Clicking at (${clickPoint.x}, ${clickPoint.y})`);
-      await backend.click(clickPoint, undefined, token);
+      let panelIntervalOpened = 0;
+      while (panelIntervalOpened < 10) {
+        const hasCost = await backend.isVisible(
+          "compass/compass_cost",
+          undefined,
+          token
+        );
+
+        if (hasCost.length > 0) {
+          break;
+        }
+
+        await backend.click(clickPoint, undefined, token);
+        panelIntervalOpened++;
+      }
 
       // Check upgrade availability
-      const hasUpgrade = await backend.isVisible(
+      const hasUpgrade = await backend.find(
         "compass/compass_upgrade",
         { threshold: 0.995 },
         token
       );
 
-      if (hasUpgrade.length === 0) {
+      if (hasUpgrade.matches.length === 0) {
         const hasUpgradeOff = await backend.isVisible(
           "compass/compass_upgrade_off",
           undefined,
@@ -164,10 +171,22 @@ export default defineScript<[CompassUpgrade[]]>({
         }
       }
 
-      // Click again to dismiss
-      await backend.click(clickPoint, undefined, token);
-    }
+      let panelIntervalClosed = 0;
+      while (panelIntervalClosed < 10) {
+        const hasCost = await backend.isVisible(
+          "compass/compass_cost",
+          undefined,
+          token
+        );
+        if (hasCost.length === 0) {
+          break;
+        }
 
-    logger.log(`Compass: done (${upgrades.length} upgrades processed)`);
+        await backend.click(clickPoint, undefined, token);
+        panelIntervalClosed++;
+      }
+
+      logger.log(`Compass: done (${upgrades.length} upgrades processed)`);
+    }
   },
 });
