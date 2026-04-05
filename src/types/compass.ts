@@ -211,29 +211,9 @@ export const COMPASS_NODE_DEFS: CompassNodeDef[] = [
     image: "compass/elemental-path/compass_elemental_vision",
   },
   {
-    id: "fire-weapon-drops",
-    label: "Fire Weapon Drops",
-    image: "compass/elemental-path/compass_fire_weapon_drops",
-  },
-  {
-    id: "grass-weapon-drops",
-    label: "Grass Weapon Drops",
-    image: "compass/elemental-path/compass_grass_weapon_drops",
-  },
-  {
-    id: "ice-weapon-drops",
-    label: "Ice Weapon Drops",
-    image: "compass/elemental-path/compass_ice_weapon_drops",
-  },
-  {
     id: "medallion-collection",
     label: "Medallion Collection",
     image: "compass/elemental-path/compass_medallion_collection",
-  },
-  {
-    id: "medallion-drops",
-    label: "Medallion Drops",
-    image: "compass/elemental-path/compass_medallion_drops",
   },
   {
     id: "medallion-magnate",
@@ -271,18 +251,23 @@ export const COMPASS_NODE_DEFS: CompassNodeDef[] = [
     image: "compass/elemental-path/compass_weapon_drop",
   },
   {
-    id: "weapon-drops",
-    label: "Weapon Drops",
-    image: "compass/elemental-path/compass_weapon_drops",
-  },
-  {
     id: "weapon-improvment",
     label: "Weapon Improvment",
     image: "compass/elemental-path/compass_weapon_improvment",
   },
   {
-    id: "wind-weapon-drops",
-    label: "Wind Weapon Drops",
-    image: "compass/elemental-path/compass_wind_weapon_drops",
+    id: "grumblos-guarantee",
+    label: "Grumblos Guarantee",
+    image: "compass/compass_grumblos_guarantee",
+  },
+  {
+    id: "stop-drop-and-roll",
+    label: "Stop Drop And Roll",
+    image: "compass/compass_stop_drop_and_roll",
+  },
+  {
+    id: "worldfinder",
+    label: "Worldfinder",
+    image: "compass/compass_worldfinder",
   },
 ];
