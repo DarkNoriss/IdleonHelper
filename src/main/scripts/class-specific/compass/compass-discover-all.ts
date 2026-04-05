@@ -5,6 +5,7 @@ import type { Point } from "../../../backend/backend-types";
 import type { ScriptContext } from "../../define-script";
 import { defineScript } from "../../define-script";
 import {
+  findAnyNode,
   findCompassCenter,
   openCompass,
   scrollInAtCenter,
@@ -83,38 +84,22 @@ export default defineScript({
     const center = await findCompassCenter(backend, token, logger);
     await scrollInAtCenter(backend, token, logger, center);
 
-    // Find and center pathfinder
-    logger.log("Centering pathfinder...");
-    const pathfinder = await backend.find(
-      "compass/compass_pathfinder",
-      undefined,
-      token
-    );
-    if (pathfinder.matches.length === 0) {
-      throw new Error("Pathfinder not found");
-    }
-    await backend.drag(
-      pathfinder.matches[0]!,
-      center,
-      { instant: true },
-      token
-    );
+    const startNode = await findAnyNode(backend, token, logger);
+    logger.log(`Starting from: ${startNode.id}`);
+    await backend.drag(startNode.point, center, { instant: true }, token);
 
-    // Visit pathfinder
-    const pathfinderNeighbors = await visitNode("pathfinder", backend, token);
-    graph.pathfinder = pathfinderNeighbors;
-    visited.add("pathfinder");
-    let currentId = "pathfinder";
+    const startNeighbors = await visitNode(startNode.id, backend, token);
+    graph[startNode.id] = startNeighbors;
+    visited.add(startNode.id);
+    let currentId = startNode.id;
 
     logger.log(
-      `[1/${COMPASS_NODE_DEFS.length}] pathfinder -> [${pathfinderNeighbors.join(", ")}]`
+      `[1/${COMPASS_NODE_DEFS.length}] ${startNode.id} -> [${startNeighbors.join(", ")}]`
     );
 
-    // DFS traversal
     while (visited.size < COMPASS_NODE_DEFS.length) {
       token.throwIfCancelled();
 
-      // Try unvisited neighbor of current node
       const neighbors = graph[currentId] ?? [];
       const next = neighbors.find((n) => !visited.has(n));
 
@@ -131,7 +116,6 @@ export default defineScript({
         continue;
       }
 
-      // Backtrack: find nearest visited node with unvisited neighbors
       let backtrackTarget: string | null = null;
       let shortestPath: string[] | null = null;
 
@@ -149,14 +133,12 @@ export default defineScript({
         break;
       }
 
-      // Navigate through known path
       for (let i = 1; i < shortestPath.length; i++) {
         await centerNode(shortestPath[i]!, center, backend, token);
       }
       currentId = backtrackTarget;
     }
 
-    // Report unreachable nodes
     const unreachable = COMPASS_NODE_DEFS.filter((d) => !visited.has(d.id)).map(
       (d) => d.id
     );
@@ -164,7 +146,6 @@ export default defineScript({
       logger.log(`Unreachable nodes: [${unreachable.join(", ")}]`);
     }
 
-    // Save to file
     const savePath = join(
       process.cwd(),
       "resources",
