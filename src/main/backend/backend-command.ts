@@ -111,6 +111,28 @@ export const backendCommand = {
     return response.matches.length > 0;
   },
 
+  isVisibleWithDebug: async (
+    imagePath: string,
+    options:
+      | {
+          offset?: ScreenOffset;
+          threshold?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<FindWithDebugResponse> => {
+    token.throwIfCancelled();
+    const resolvedPath = resolveImagePath(imagePath);
+    const request: FindWithDebugRequest = {
+      imagePath: resolvedPath,
+      timeoutMs: backendConfig.isVisible.timeoutMs,
+      intervalMs: backendConfig.isVisible.intervalMs,
+      threshold: options?.threshold ?? backendConfig.find.threshold,
+      offset: options?.offset ?? undefined,
+    };
+    return sendCommand("findWithDebug", request);
+  },
+
   findAndClick: async (
     imagePath: string,
     options:
