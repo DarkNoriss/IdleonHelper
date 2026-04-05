@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { defineScript } from "../../define-script";
 import { COMPASS_NODES } from "./compass-graph";
 import {
@@ -7,23 +5,10 @@ import {
   centerNodeOrThrow,
   findAnyNode,
   findPath,
+  loadGraph,
   openCompass,
   scrollInAtCenter,
 } from "./compass-utils";
-
-const loadGraph = (): Record<string, string[]> => {
-  const graphPath = join(
-    process.cwd(),
-    "resources",
-    "assets",
-    "compass",
-    "graph.json"
-  );
-  return JSON.parse(readFileSync(graphPath, "utf-8")) as Record<
-    string,
-    string[]
-  >;
-};
 
 export default defineScript<[string]>({
   id: "classSpecific.compass.discover",

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   COMPASS_NODE_DEFS,
   COMPASS_NODE_GROUPS,
@@ -10,6 +12,20 @@ const SCROLL_IN_TIMES = 8;
 const WHEEL_DELTA = 120;
 
 export const COMPASS_CENTER: Point = { x: 539, y: 269 };
+
+export const loadGraph = (): Record<string, string[]> => {
+  const graphPath = join(
+    process.cwd(),
+    "resources",
+    "assets",
+    "compass",
+    "graph.json"
+  );
+  return JSON.parse(readFileSync(graphPath, "utf-8")) as Record<
+    string,
+    string[]
+  >;
+};
 
 export const calibrateCompassCenter = async (
   backend: ScriptContext["backend"],
