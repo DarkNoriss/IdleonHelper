@@ -10,7 +10,7 @@ export const backendConfig = {
   },
   click: {
     times: 1,
-    interval: 150,
+    interval: 100,
     holdTime: 50,
   },
   drag: {

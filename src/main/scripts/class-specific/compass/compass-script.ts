@@ -3,16 +3,19 @@ import {
   COMPASS_NODE_DEFS,
 } from "@/shared/compass-config";
 import type { CompassUpgrade, MinorNodeWithParent } from "@/types/compass";
-import { delay } from "../../../utils";
+import {
+  ClickPreset,
+  getClickOptionsFromPreset,
+} from "../../../backend/backend-config";
 import { defineScript } from "../../define-script";
 import {
   COMPASS_CENTER,
+  dismissPanel,
   findAnyNode,
   loadGraph,
   navigateToNode,
   openCompass,
   scrollInAtCenter,
-  WHEEL_DELTA,
 } from "./compass-utils";
 
 type ResolvedUpgrade =
@@ -65,18 +68,7 @@ export default defineScript<[CompassUpgrade[]]>({
     await openCompass(backend, token, logger);
     await scrollInAtCenter(backend, token, logger, COMPASS_CENTER);
 
-    // GUI reset: if upgrade panel is open, scroll to dismiss it
-    await delay(200, token);
-    if (
-      (await backend.isVisible("compass/compass", undefined, token)).length ===
-      0
-    ) {
-      logger.log("GUI overlay detected, resetting...");
-      await backend.scroll(COMPASS_CENTER, -WHEEL_DELTA, undefined, token);
-      await delay(200, token);
-      await backend.scroll(COMPASS_CENTER, WHEEL_DELTA, undefined, token);
-      await delay(200, token);
-    }
+    await dismissPanel(backend, token);
 
     // Find starting position
     const startNode = await findAnyNode(backend, token, logger);
@@ -151,14 +143,22 @@ export default defineScript<[CompassUpgrade[]]>({
         panelIntervalOpened++;
       }
 
-      // Check upgrade availability
+      // Click upgrade button
       const hasUpgrade = await backend.find(
         "compass/compass_upgrade",
         { threshold: 0.995 },
         token
       );
 
-      if (hasUpgrade.matches.length === 0) {
+      if (hasUpgrade.matches.length > 0) {
+        const fastClick = getClickOptionsFromPreset(ClickPreset.Fast);
+        await backend.click(
+          hasUpgrade.matches[0]!,
+          { times: resolved.change, ...fastClick },
+          token
+        );
+        logger.log(`  Clicked upgrade x${resolved.change}`);
+      } else {
         const hasUpgradeOff = await backend.isVisible(
           "compass/compass_upgrade_off",
           undefined,
@@ -171,22 +171,9 @@ export default defineScript<[CompassUpgrade[]]>({
         }
       }
 
-      let panelIntervalClosed = 0;
-      while (panelIntervalClosed < 10) {
-        const hasCost = await backend.isVisible(
-          "compass/compass_cost",
-          undefined,
-          token
-        );
-        if (hasCost.length === 0) {
-          break;
-        }
-
-        await backend.click(clickPoint, undefined, token);
-        panelIntervalClosed++;
-      }
-
-      logger.log(`Compass: done (${upgrades.length} upgrades processed)`);
+      await dismissPanel(backend, token);
     }
+
+    logger.log(`Compass: done (${upgrades.length} upgrades processed)`);
   },
 });

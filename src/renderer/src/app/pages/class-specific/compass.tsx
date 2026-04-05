@@ -56,6 +56,7 @@ const Compass = () => {
           runningLabel: "Running... (Click to stop)",
           disabled: !validation || hasMissing,
           args: () => [validation!.parsed],
+          onResult: () => setRawData(""),
         },
       ]}
       title="Compass"

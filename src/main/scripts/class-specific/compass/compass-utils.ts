@@ -13,6 +13,30 @@ export const WHEEL_DELTA = 120;
 
 export const COMPASS_CENTER: Point = { x: 539, y: 269 };
 
+const DISMISS_PANEL_MAX_ATTEMPTS = 10;
+
+export const dismissPanel = async (
+  backend: ScriptContext["backend"],
+  token: ScriptContext["token"]
+  // logger: ScriptContext["logger"]
+): Promise<boolean> => {
+  for (let attempt = 0; attempt < DISMISS_PANEL_MAX_ATTEMPTS; attempt++) {
+    const hasCost = await backend.isVisible(
+      "compass/compass_cost",
+      undefined,
+      token
+    );
+    if (hasCost.length === 0) {
+      return true;
+    }
+    if (attempt === 0) {
+      // logger.log("  Dismissing upgrade panel...");
+    }
+    await backend.findAndClick("compass/compass", undefined, token);
+  }
+  return false;
+};
+
 export const loadGraph = (): Record<string, string[]> => {
   const graphPath = join(
     process.cwd(),
@@ -204,7 +228,7 @@ export const findPath = (
   return null;
 };
 
-const CENTER_TOLERANCE = 2;
+const CENTER_TOLERANCE = 10;
 
 export const centerNode = async (
   nodeId: string,
@@ -222,6 +246,9 @@ export const centerNode = async (
   }
   await backend.drag(result.matches[0]!, center, { instant: true }, token);
 
+  // Dismiss upgrade panel if the drag accidentally opened one
+  // await dismissPanel(backend, token);
+
   // Verify centering — re-drag if the node landed off-center
   const verify = await backend.find(def.image, undefined, token);
   if (verify.matches.length > 0) {
@@ -232,6 +259,9 @@ export const centerNode = async (
       await backend.drag(pos, center, { instant: true }, token);
     }
   }
+
+  // Dismiss upgrade panel if the drag accidentally opened one
+  await dismissPanel(backend, token);
 
   return true;
 };
@@ -272,8 +302,8 @@ export const navigateToNode = async (
       token.throwIfCancelled();
       const ok = await centerNode(path[i]!, center, backend, token);
       if (!ok) {
-        lockedNodes.add(path[i]!);
         logger.log(`  Node "${path[i]}" is locked, rerouting...`);
+        lockedNodes.add(path[i]!);
         break;
       }
       current = path[i]!;
