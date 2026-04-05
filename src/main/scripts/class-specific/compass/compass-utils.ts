@@ -212,3 +212,38 @@ export const centerNodeOrThrow = async (
     throw new Error(`Node "${nodeId}" not found on screen`);
   }
 };
+
+export const navigateToNode = async (
+  from: string,
+  to: string,
+  center: Point,
+  graph: Record<string, string[]>,
+  backend: ScriptContext["backend"],
+  token: ScriptContext["token"],
+  logger: ScriptContext["logger"],
+  locked?: Set<string>
+): Promise<{ arrived: boolean; currentNode: string; locked: Set<string> }> => {
+  const lockedNodes = locked ?? new Set<string>();
+  let current = from;
+
+  while (current !== to) {
+    token.throwIfCancelled();
+    const path = findPath(current, to, graph, lockedNodes);
+    if (!path) {
+      return { arrived: false, currentNode: current, locked: lockedNodes };
+    }
+
+    for (let i = 1; i < path.length; i++) {
+      token.throwIfCancelled();
+      const ok = await centerNode(path[i]!, center, backend, token);
+      if (!ok) {
+        lockedNodes.add(path[i]!);
+        logger.log(`Node "${path[i]}" is locked, rerouting...`);
+        break;
+      }
+      current = path[i]!;
+    }
+  }
+
+  return { arrived: true, currentNode: to, locked: lockedNodes };
+};
