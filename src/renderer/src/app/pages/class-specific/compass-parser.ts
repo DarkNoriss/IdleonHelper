@@ -21,7 +21,10 @@ export const parseCompassData = (raw: string): CompassUpgrade[] => {
       continue;
     }
 
-    const name = parts[1]!.toLowerCase().replace(/\s+/g, "-");
+    const name = parts[1]!
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "")
+      .replace(/\s+/g, "-");
     const statChanges = parts[3]!;
 
     const match = statChanges.match(LEVELS_PATTERN);
