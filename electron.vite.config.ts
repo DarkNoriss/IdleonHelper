@@ -24,6 +24,10 @@ export default defineConfig({
           replacement: path.resolve(import.meta.dirname, "./src/types/$1"),
         },
         {
+          find: /^@\/shared\/?(.*)$/,
+          replacement: path.resolve(import.meta.dirname, "./src/shared/$1"),
+        },
+        {
           find: "@",
           replacement: path.resolve(import.meta.dirname, "./src/renderer/src"),
         },
