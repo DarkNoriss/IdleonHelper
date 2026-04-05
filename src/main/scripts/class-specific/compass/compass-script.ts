@@ -2,10 +2,8 @@ import {
   COMPASS_MINOR_NODE_DEFS,
   COMPASS_NODE_DEFS,
 } from "@/shared/compass-config";
-import type {
-  CompassUpgrade,
-  MinorNodeWithParent,
-} from "../../../../types/compass";
+import type { CompassUpgrade, MinorNodeWithParent } from "@/types/compass";
+import { delay } from "../../../utils";
 import { defineScript } from "../../define-script";
 import {
   COMPASS_CENTER,
@@ -67,11 +65,14 @@ export default defineScript<[CompassUpgrade[]]>({
     await openCompass(backend, token, logger);
     await scrollInAtCenter(backend, token, logger, COMPASS_CENTER);
 
-    // GUI reset check
-    if (await backend.isVisible("compass/compass_cost", undefined, token)) {
+    // GUI reset: if upgrade panel is open, scroll to dismiss it
+    await delay(200, token);
+    if (!(await backend.isVisible("compass/compass", undefined, token))) {
       logger.log("GUI overlay detected, resetting...");
       await backend.scroll(COMPASS_CENTER, -WHEEL_DELTA, undefined, token);
+      await delay(200, token);
       await backend.scroll(COMPASS_CENTER, WHEEL_DELTA, undefined, token);
+      await delay(200, token);
     }
 
     // Find starting position
@@ -139,32 +140,25 @@ export default defineScript<[CompassUpgrade[]]>({
       // Click the node to open upgrade panel
       logger.log(`  Clicking at (${clickPoint.x}, ${clickPoint.y})`);
       await backend.click(clickPoint, undefined, token);
+      await delay(2000, token);
 
-      // Debug: check upgrade button similarity
-      const upgradeResult = await backend.findWithDebug(
+      // Check upgrade availability by comparing similarities
+      const upgradeResult = await backend.find(
         "compass/compass_upgrade",
         undefined,
         token
       );
-      if (upgradeResult.matches.length > 0) {
-        logger.log(
-          `  compass_upgrade: similarity=${upgradeResult.matches[0]!.similarity.toFixed(3)}`
-        );
-      } else {
-        logger.log("  compass_upgrade: not found");
-      }
-
-      const upgradeOffResult = await backend.findWithDebug(
+      const upgradeOffResult = await backend.find(
         "compass/compass_upgrade_off",
         undefined,
         token
       );
-      if (upgradeOffResult.matches.length > 0) {
-        logger.log(
-          `  compass_upgrade_off: similarity=${upgradeOffResult.matches[0]!.similarity.toFixed(3)}`
-        );
-      } else {
-        logger.log("  compass_upgrade_off: not found");
+
+      const hasUpgrade = upgradeResult.matches.length > 0;
+      const hasUpgradeOff = upgradeOffResult.matches.length > 0;
+
+      if (!hasUpgrade || hasUpgradeOff) {
+        logger.log("  Upgrade not available");
       }
 
       // Click again to dismiss
