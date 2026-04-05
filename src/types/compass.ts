@@ -195,4 +195,94 @@ export const COMPASS_NODE_DEFS: CompassNodeDef[] = [
     label: "Abomination Slayer XXVI",
     image: "compass/abominations/compass_abomination_slayer_xxvi",
   },
+  {
+    id: "elemental-path",
+    label: "Elemental Path",
+    image: "compass/elemental-path/compass_elemental_path",
+  },
+  {
+    id: "elemental-destruction",
+    label: "Elemental Destruction",
+    image: "compass/elemental-path/compass_elemental_destruction",
+  },
+  {
+    id: "elemental-vision",
+    label: "Elemental Vision",
+    image: "compass/elemental-path/compass_elemental_vision",
+  },
+  {
+    id: "fire-weapon-drops",
+    label: "Fire Weapon Drops",
+    image: "compass/elemental-path/compass_fire_weapon_drops",
+  },
+  {
+    id: "grass-weapon-drops",
+    label: "Grass Weapon Drops",
+    image: "compass/elemental-path/compass_grass_weapon_drops",
+  },
+  {
+    id: "ice-weapon-drops",
+    label: "Ice Weapon Drops",
+    image: "compass/elemental-path/compass_ice_weapon_drops",
+  },
+  {
+    id: "medallion-collection",
+    label: "Medallion Collection",
+    image: "compass/elemental-path/compass_medallion_collection",
+  },
+  {
+    id: "medallion-drops",
+    label: "Medallion Drops",
+    image: "compass/elemental-path/compass_medallion_drops",
+  },
+  {
+    id: "medallion-magnate",
+    label: "Medallion Magnate",
+    image: "compass/elemental-path/compass_medallion_magnate",
+  },
+  {
+    id: "ring-drop",
+    label: "Ring Drop",
+    image: "compass/elemental-path/compass_ring_drop",
+  },
+  {
+    id: "stone-drop",
+    label: "Stone Drop",
+    image: "compass/elemental-path/compass_stone_drop",
+  },
+  {
+    id: "stone-failsafe",
+    label: "Stone Failsafe",
+    image: "compass/elemental-path/compass_stone_failsafe",
+  },
+  {
+    id: "the-luck-factor",
+    label: "The Luck Factor",
+    image: "compass/elemental-path/compass_the_luck_factor",
+  },
+  {
+    id: "top-of-the-mornin",
+    label: "Top Of The Mornin",
+    image: "compass/elemental-path/compass_top_of_the_mornin",
+  },
+  {
+    id: "weapon-drop",
+    label: "Weapon Drop",
+    image: "compass/elemental-path/compass_weapon_drop",
+  },
+  {
+    id: "weapon-drops",
+    label: "Weapon Drops",
+    image: "compass/elemental-path/compass_weapon_drops",
+  },
+  {
+    id: "weapon-improvment",
+    label: "Weapon Improvment",
+    image: "compass/elemental-path/compass_weapon_improvment",
+  },
+  {
+    id: "wind-weapon-drops",
+    label: "Wind Weapon Drops",
+    image: "compass/elemental-path/compass_wind_weapon_drops",
+  },
 ];
