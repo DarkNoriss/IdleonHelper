@@ -52,6 +52,13 @@ const CompassDebug = () => {
           scriptId: "classSpecific.compass.discoverAll",
           runningLabel: "Discovering All... (Click to stop)",
         },
+        {
+          label: "Debug Minor Nodes",
+          scriptId: "classSpecific.compass.minorDebug",
+          runningLabel: "Scanning... (Click to stop)",
+          disabled: !selectedNode,
+          args: () => [selectedNode],
+        },
       ]}
       title="Compass Debug"
     >

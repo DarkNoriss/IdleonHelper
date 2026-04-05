@@ -49,6 +49,10 @@ export type ScriptMap = {
     args: [];
     result: undefined;
   };
+  "classSpecific.compass.minorDebug": {
+    args: [string];
+    result: undefined;
+  };
 };
 
 export type BossFarmerState = {
