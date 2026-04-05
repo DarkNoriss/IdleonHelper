@@ -122,7 +122,6 @@ export default defineScript({
     );
     writeFileSync(savePath, JSON.stringify(graph, null, 2));
 
-    logger.log(`Graph saved to ${savePath}`);
-    logger.log(JSON.stringify(graph, null, 2));
+    logger.log(`Discover All: graph saved to ${savePath}`);
   },
 });

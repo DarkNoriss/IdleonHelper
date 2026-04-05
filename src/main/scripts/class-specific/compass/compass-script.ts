@@ -96,7 +96,7 @@ export default defineScript<[CompassUpgrade[]]>({
       token.throwIfCancelled();
       const upgrade = upgrades[i]!;
       logger.log(
-        `\n[${i + 1}/${upgrades.length}] ${upgrade.name}: +${upgrade.change}`
+        `[${i + 1}/${upgrades.length}] ${upgrade.name} +${upgrade.change}`
       );
 
       const resolved = resolveUpgrade(upgrade);
@@ -112,7 +112,7 @@ export default defineScript<[CompassUpgrade[]]>({
         resolved.type === "minor" ? resolved.minor.offset : COMPASS_CENTER;
 
       if (resolved.type === "minor") {
-        logger.log(`  Minor node -> navigating to parent "${navTarget}"`);
+        logger.log(`  Minor node -> parent "${navTarget}"`);
       }
 
       // Navigate
@@ -131,7 +131,7 @@ export default defineScript<[CompassUpgrade[]]>({
 
         if (!result.arrived) {
           logger.log(
-            `  SKIP: could not reach "${navTarget}" (locked/unreachable)`
+            `  SKIP: could not reach "${navTarget}" (locked or unreachable)`
           );
           currentNode = result.currentNode;
           continue;
@@ -168,8 +168,6 @@ export default defineScript<[CompassUpgrade[]]>({
       await backend.click(clickPoint, undefined, token);
     }
 
-    logger.log(
-      `\nCompass script finished (processed ${upgrades.length} upgrades)`
-    );
+    logger.log(`Compass: done (${upgrades.length} upgrades processed)`);
   },
 });

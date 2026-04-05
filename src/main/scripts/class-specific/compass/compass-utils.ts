@@ -56,7 +56,7 @@ export const calibrateCompassCenter = async (
     y: Math.round((tl.y + br.y) / 2),
   };
   logger.log(
-    `COMPASS CENTER: { x: ${center.x}, y: ${center.y} } — copy this into COMPASS_CENTER`
+    `Compass center: (${center.x}, ${center.y}) -> copy this into COMPASS_CENTER`
   );
   return center;
 };
@@ -273,7 +273,7 @@ export const navigateToNode = async (
       const ok = await centerNode(path[i]!, center, backend, token);
       if (!ok) {
         lockedNodes.add(path[i]!);
-        logger.log(`Node "${path[i]}" is locked, rerouting...`);
+        logger.log(`  Node "${path[i]}" is locked, rerouting...`);
         break;
       }
       current = path[i]!;

@@ -46,7 +46,7 @@ export default defineScript<[string]>({
           `No path from "${startNode.id}" to "${nodeId}" in graph`
         );
       }
-      logger.log(`Navigating: ${path.join(" → ")}`);
+      logger.log(`Navigating: ${path.join(" -> ")}`);
       for (let i = 1; i < path.length; i++) {
         await centerNodeOrThrow(path[i]!, COMPASS_CENTER, backend, token);
       }
@@ -64,7 +64,7 @@ export default defineScript<[string]>({
       scannedImages.add(minor.image);
 
       token.throwIfCancelled();
-      logger.log(`\nfindWithDebug: ${minor.image}`);
+      logger.log(`Scanning: ${minor.image}`);
       const result = await backend.findWithDebug(minor.image, undefined, token);
 
       if (result.debugImagePath) {
@@ -78,12 +78,12 @@ export default defineScript<[string]>({
           const offsetX = match.point.x - COMPASS_CENTER.x;
           const offsetY = match.point.y - COMPASS_CENTER.y;
           logger.log(
-            `  Match: (${match.point.x}, ${match.point.y}) similarity=${match.similarity.toFixed(3)} offset=({x: ${offsetX}, y: ${offsetY}})`
+            `  Match: (${match.point.x}, ${match.point.y}) similarity=${match.similarity.toFixed(3)} offset=(${offsetX}, ${offsetY})`
           );
         }
       }
     }
 
-    logger.log("\nMinor debug finished");
+    logger.log("Minor debug: done");
   },
 });

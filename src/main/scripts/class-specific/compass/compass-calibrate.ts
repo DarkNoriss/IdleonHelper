@@ -12,6 +12,6 @@ export default defineScript({
     await openCompass(backend, token, logger);
     const center = await calibrateCompassCenter(backend, token, logger);
     await scrollInAtCenter(backend, token, logger, center);
-    logger.log("Done — copy the logged center into COMPASS_CENTER");
+    logger.log("Calibrate: done -> copy the logged center into COMPASS_CENTER");
   },
 });

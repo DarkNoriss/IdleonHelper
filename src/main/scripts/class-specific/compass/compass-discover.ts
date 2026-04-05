@@ -19,7 +19,7 @@ export default defineScript<[string]>({
       throw new Error(`Unknown node: ${nodeId}`);
     }
 
-    logger.log(`Discovering neighbors of: ${nodeId}`);
+    logger.log(`Discover: scanning neighbors of ${nodeId}`);
 
     await openCompass(backend, token, logger);
     await scrollInAtCenter(backend, token, logger, COMPASS_CENTER);
@@ -41,7 +41,7 @@ export default defineScript<[string]>({
           `No path from "${startNode.id}" to "${nodeId}" in graph`
         );
       }
-      logger.log(`Navigating: ${path.join(" → ")}`);
+      logger.log(`Navigating: ${path.join(" -> ")}`);
       for (let i = 1; i < path.length; i++) {
         await centerNodeOrThrow(path[i]!, COMPASS_CENTER, backend, token);
       }
@@ -62,13 +62,13 @@ export default defineScript<[string]>({
     }
 
     if (visibleNodes.length === 0) {
-      logger.log("No neighbor nodes found");
+      logger.log("Discover: no neighbors found");
     } else {
       logger.log(
-        `\nNeighbors of "${nodeId}": [${visibleNodes.map((n) => `"${n}"`).join(", ")}]`
+        `Discover: neighbors of "${nodeId}" -> [${visibleNodes.join(", ")}]`
       );
     }
 
-    logger.log("Discovery finished");
+    logger.log("Discover: done");
   },
 });
