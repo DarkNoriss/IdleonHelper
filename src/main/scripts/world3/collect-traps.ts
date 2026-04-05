@@ -46,11 +46,13 @@ export default defineScript<[string, string]>({
 
         const quickFindEagleEye = async (): Promise<boolean> => {
           if (
-            await backend.isVisible(
-              "ui/attacks/attack_eagle_eye",
-              undefined,
-              token
-            )
+            (
+              await backend.isVisible(
+                "ui/attacks/attack_eagle_eye",
+                undefined,
+                token
+              )
+            ).length > 0
           ) {
             return backend.findAndClick(
               "ui/attacks/attack_eagle_eye",
@@ -68,11 +70,13 @@ export default defineScript<[string, string]>({
               `Scrolling down attack bar (${i + 1}/${ARROW_DOWN_MAX_ATTEMPTS})...`
             );
             if (
-              await backend.isVisible(
-                "ui/attacks/attack_arrow_down",
-                undefined,
-                token
-              )
+              (
+                await backend.isVisible(
+                  "ui/attacks/attack_arrow_down",
+                  undefined,
+                  token
+                )
+              ).length > 0
             ) {
               await backend.findAndClick(
                 "ui/attacks/attack_arrow_down",
@@ -144,7 +148,7 @@ export default defineScript<[string, string]>({
             token
           );
 
-          if (isOff) {
+          if (isOff.length > 0) {
             logger.log("Collecting not available yet!");
             await backend.keyPress(VK_ESCAPE, undefined, token);
             await delay(300, token);

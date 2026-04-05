@@ -24,7 +24,7 @@ const visitNode = async (
     }
     token.throwIfCancelled();
     const visible = await backend.isVisible(def.image, undefined, token);
-    if (visible) {
+    if (visible.length > 0) {
       neighbors.push(def.id);
     }
   }

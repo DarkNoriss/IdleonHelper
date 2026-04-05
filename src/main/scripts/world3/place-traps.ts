@@ -64,7 +64,7 @@ export default defineScript<[string, string, string]>({
         undefined,
         token
       );
-      if (!isOpen) {
+      if (isOpen.length === 0) {
         logger.log("Opening trapping UI...");
         await backend.findAndClick("trapping/trapping_drone", undefined, token);
         await delay(250, token);
@@ -73,7 +73,7 @@ export default defineScript<[string, string, string]>({
           undefined,
           token
         );
-        if (!confirmed) {
+        if (confirmed.length === 0) {
           throw new Error("Failed to open trapping UI");
         }
       }
@@ -105,7 +105,7 @@ export default defineScript<[string, string, string]>({
         undefined,
         token
       );
-      if (!atFirstChar) {
+      if (atFirstChar.length === 0) {
         logger.log("Navigating to first character...");
         await clickFast(backend, "trapping/trapping_char_back", token);
         await delay(NAV_DELAY, token);
@@ -134,7 +134,7 @@ export default defineScript<[string, string, string]>({
             undefined,
             token
           );
-          if (needsCritter) {
+          if (needsCritter.length > 0) {
             logger.log("Critter not selected, retrying...");
             await backend.findAndClick(critterImage, undefined, token);
             placeTrapClicked = await backend.findAndClick(
@@ -157,7 +157,7 @@ export default defineScript<[string, string, string]>({
             undefined,
             token
           );
-          if (!atFirstTrap) {
+          if (atFirstTrap.length === 0) {
             logger.log("Navigating to first trap page...");
             await clickFast(backend, "trapping/trapping_trap_back", token);
             await delay(NAV_DELAY, token);
@@ -189,7 +189,7 @@ export default defineScript<[string, string, string]>({
           undefined,
           token
         );
-        if (!trapVisible) {
+        if (trapVisible.length === 0) {
           throw new Error(`Trap type ${trapType} not visible after navigation`);
         }
 
@@ -225,7 +225,7 @@ export default defineScript<[string, string, string]>({
           undefined,
           token
         );
-        if (noMoreCharacters) {
+        if (noMoreCharacters.length > 0) {
           break;
         }
 

@@ -67,7 +67,10 @@ export default defineScript<[CompassUpgrade[]]>({
 
     // GUI reset: if upgrade panel is open, scroll to dismiss it
     await delay(200, token);
-    if (!(await backend.isVisible("compass/compass", undefined, token))) {
+    if (
+      (await backend.isVisible("compass/compass", undefined, token)).length ===
+      0
+    ) {
       logger.log("GUI overlay detected, resetting...");
       await backend.scroll(COMPASS_CENTER, -WHEEL_DELTA, undefined, token);
       await delay(200, token);
@@ -140,25 +143,25 @@ export default defineScript<[CompassUpgrade[]]>({
       // Click the node to open upgrade panel
       logger.log(`  Clicking at (${clickPoint.x}, ${clickPoint.y})`);
       await backend.click(clickPoint, undefined, token);
-      await delay(2000, token);
 
-      // Check upgrade availability by comparing similarities
-      const upgradeResult = await backend.find(
+      // Check upgrade availability
+      const hasUpgrade = await backend.isVisible(
         "compass/compass_upgrade",
-        undefined,
-        token
-      );
-      const upgradeOffResult = await backend.find(
-        "compass/compass_upgrade_off",
-        undefined,
+        { threshold: 0.995 },
         token
       );
 
-      const hasUpgrade = upgradeResult.matches.length > 0;
-      const hasUpgradeOff = upgradeOffResult.matches.length > 0;
-
-      if (!hasUpgrade || hasUpgradeOff) {
-        logger.log("  Upgrade not available");
+      if (hasUpgrade.length === 0) {
+        const hasUpgradeOff = await backend.isVisible(
+          "compass/compass_upgrade_off",
+          undefined,
+          token
+        );
+        if (hasUpgradeOff.length > 0) {
+          logger.log("  Upgrade not available");
+        } else {
+          logger.log("  ERROR: upgrade panel not detected");
+        }
       }
 
       // Click again to dismiss

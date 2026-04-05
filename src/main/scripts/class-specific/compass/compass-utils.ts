@@ -71,7 +71,8 @@ export const openCompass = async (
 
   const quickFindCompass = async (): Promise<boolean> => {
     if (
-      await backend.isVisible("ui/attacks/attack_compass", undefined, token)
+      (await backend.isVisible("ui/attacks/attack_compass", undefined, token))
+        .length > 0
     ) {
       return backend.findAndClick(
         "ui/attacks/attack_compass",
@@ -89,11 +90,13 @@ export const openCompass = async (
         `Scrolling down attack bar (${i + 1}/${ARROW_DOWN_MAX_ATTEMPTS})...`
       );
       if (
-        await backend.isVisible(
-          "ui/attacks/attack_arrow_down",
-          undefined,
-          token
-        )
+        (
+          await backend.isVisible(
+            "ui/attacks/attack_arrow_down",
+            undefined,
+            token
+          )
+        ).length > 0
       ) {
         await backend.findAndClick(
           "ui/attacks/attack_arrow_down",
@@ -161,12 +164,10 @@ export const findAnyNode = async (
       }
       const node = group.nodes[i]!;
       token.throwIfCancelled();
-      if (await backend.isVisible(node.image, undefined, token)) {
-        const result = await backend.find(node.image, undefined, token);
-        if (result.matches.length > 0) {
-          logger.log(`Found node: ${node.id}`);
-          return { id: node.id, point: result.matches[0]! };
-        }
+      const matches = await backend.isVisible(node.image, undefined, token);
+      if (matches.length > 0) {
+        logger.log(`Found node: ${node.id}`);
+        return { id: node.id, point: matches[0]! };
       }
     }
   }

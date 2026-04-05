@@ -96,7 +96,7 @@ export const backendCommand = {
         }
       | undefined,
     token: CancellationToken
-  ): Promise<boolean> => {
+  ): Promise<Point[]> => {
     token.throwIfCancelled();
     const resolvedPath = resolveImagePath(imagePath);
     const request: FindRequest = {
@@ -108,7 +108,7 @@ export const backendCommand = {
       debug: false,
     };
     const response = await sendCommand("find", request);
-    return response.matches.length > 0;
+    return response.matches;
   },
 
   isVisibleWithDebug: async (

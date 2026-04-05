@@ -18,7 +18,7 @@ export default defineScript({
       token
     );
 
-    if (isDepositAllVisible) {
+    if (isDepositAllVisible.length > 0) {
       logger.log("deposit_all button is visible, clicking it...");
       const clicked = await backend.findAndClick(
         "ui/codex/quik-ref/storage/deposit_all",
