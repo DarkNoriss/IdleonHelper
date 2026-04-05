@@ -672,6 +672,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         label: "Abomination Slayer XXVII",
         image: "compass/abominations/compass_abomination_slayer_xxvii",
       },
+      {
+        id: "abomination-slayer-xxviii",
+        label: "Abomination Slayer XXVIII",
+        image: "compass/abominations/compass_abomination_slayer_xxviii",
+      },
     ],
   },
 ];
