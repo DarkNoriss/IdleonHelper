@@ -156,7 +156,8 @@ export const findAnyNode = async (
 export const findPath = (
   from: string,
   to: string,
-  graph: Record<string, string[]>
+  graph: Record<string, string[]>,
+  exclude?: Set<string>
 ): string[] | null => {
   if (from === to) {
     return [from];
@@ -167,6 +168,9 @@ export const findPath = (
     const path = queue.shift()!;
     const current = path.at(-1)!;
     for (const neighbor of graph[current] ?? []) {
+      if (exclude?.has(neighbor)) {
+        continue;
+      }
       if (neighbor === to) {
         return [...path, neighbor];
       }
