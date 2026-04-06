@@ -5,21 +5,26 @@ import type {
   SolverFocus,
   SolverResult,
   SolverWeights,
-} from "@/../../types/construction";
-import { ScriptPage } from "@/components/script-page";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/../../types/construction.ts";
+import { ScriptPage } from "@/components/script-page.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card.tsx";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { notateNumber } from "@/lib/notateNumber";
-import { useGameData } from "@/providers/game-data-provider";
-import { useRawJsonStore } from "@/store/raw-json";
+} from "@/components/ui/select.tsx";
+import { notateNumber } from "@/lib/notateNumber.ts";
+import { useGameData } from "@/providers/game-data-provider.tsx";
+import { useRawJsonStore } from "@/store/raw-json.ts";
 
 const SPARE_ROWS = 5;
 const DEFAULT_SOLVE_TIME_SECONDS = 600;

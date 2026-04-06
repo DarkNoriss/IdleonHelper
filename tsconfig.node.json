@@ -5,7 +5,8 @@
     "src/main/**/*",
     "src/preload/**/*",
     "src/parsers/**/*",
-    "src/types/**/*"
+    "src/types/**/*",
+    "src/shared/**/*"
   ],
   "compilerOptions": {
     "composite": true,
@@ -13,7 +14,8 @@
     "baseUrl": ".",
     "paths": {
       "@/parsers/*": ["./src/parsers/*"],
-      "@/types/*": ["src/types/*"]
+      "@/types/*": ["src/types/*"],
+      "@/shared/*": ["src/shared/*"]
     },
     "noImplicitAny": true,
     "noImplicitOverride": true,

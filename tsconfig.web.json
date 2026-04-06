@@ -6,7 +6,8 @@
     "src/renderer/src/**/*.tsx",
     "src/preload/*.d.ts",
     "src/parsers/**/*",
-    "src/types/**/*"
+    "src/types/**/*",
+    "src/shared/**/*"
   ],
   "compilerOptions": {
     "composite": true,
@@ -36,7 +37,8 @@
     "paths": {
       "@/parsers/*": ["./src/parsers/*"],
       "@/*": ["./src/renderer/src/*"],
-      "@/types/*": ["src/types/*"]
+      "@/types/*": ["src/types/*"],
+      "@/shared/*": ["src/shared/*"]
     }
   }
 }

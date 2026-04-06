@@ -5,13 +5,13 @@ import type {
   ParsedConstructionData,
   SolverWeights,
 } from "../types/construction";
-import { getConnectionStatus, getLastError } from "./backend";
+import { getConnectionStatus, getLastError } from "./backend/index";
 import {
   allScripts,
   solver,
   weeklyBattleFetch,
   weeklyBattleGet,
-} from "./scripts";
+} from "./scripts/index";
 import { registerAllScripts } from "./scripts/registry";
 import { registerStateHandlers } from "./state-hub";
 import {
@@ -22,7 +22,7 @@ import {
   getUpdateStatus,
   installUpdate,
   logger,
-} from "./utils";
+} from "./utils/index";
 
 export const setupHandlers = (): void => {
   logger.log("Setting up IPC handlers");

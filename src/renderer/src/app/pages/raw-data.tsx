@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useRawJsonStore } from "@/store/raw-json";
+import { Button } from "@/components/ui/button.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
+import { useRawJsonStore } from "@/store/raw-json.ts";
 
 const RawData = () => {
   const rawJson = useRawJsonStore((state) => state.rawJson);

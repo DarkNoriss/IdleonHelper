@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { ScriptPage } from "@/components/script-page";
+import { ScriptPage } from "@/components/script-page.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select.tsx";
 
 const candyOptions = [
   { value: "1h", label: "1H" },

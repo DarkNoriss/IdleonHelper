@@ -1,12 +1,12 @@
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { navConfig } from "@/app/nav-config";
+import { navConfig } from "@/app/nav-config.ts";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/components/ui/collapsible.tsx";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import {
   Sidebar,
   SidebarContent,
@@ -18,8 +18,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar";
-import { useNavigationStore } from "@/store/navigation";
+} from "@/components/ui/sidebar.tsx";
+import { useNavigationStore } from "@/store/navigation.ts";
 
 import { SidebarBackendStatus } from "./backend-status";
 import { UpdateStatus } from "./update-status";

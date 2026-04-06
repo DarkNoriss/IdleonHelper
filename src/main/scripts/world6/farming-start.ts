@@ -2,7 +2,7 @@ import {
   backendConfig,
   ClickPreset,
   getClickOptionsFromPreset,
-} from "../../backend";
+} from "../../backend/index";
 import { defineScript } from "../define-script";
 
 export default defineScript({

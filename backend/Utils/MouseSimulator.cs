@@ -227,10 +227,45 @@ public static class MouseSimulator
     return new Point(x, y);
   }
 
+  public static async Task Scroll(Point point, int delta, int times, CancellationToken ct, int interval = 100)
+  {
+    var hWnd = WindowCapture.GetWindowHandle();
+
+    var clientLParam = (IntPtr)MakeLong(point.X, point.Y);
+
+    // Convert to screen coordinates for WM_MOUSEWHEEL (requires screen coords in lParam)
+    var pt = new PointStruct { X = point.X, Y = point.Y };
+    ClientToScreen(hWnd, ref pt);
+    var screenLParam = (IntPtr)MakeLong(pt.X, pt.Y);
+
+    // Move mouse so game detects cursor position (client coords)
+    PostMessage(hWnd, (uint)MouseMessages.WmMousemove, IntPtr.Zero, clientLParam);
+
+    // Scroll (screen coords in lParam)
+    for (var i = 0; i < times; i++)
+    {
+      ct.ThrowIfCancellationRequested();
+
+      var wParam = (IntPtr)(delta << 16);
+      PostMessage(hWnd, WmMousewheel, wParam, screenLParam);
+
+      if (i < times - 1)
+        await Task.Delay(interval, ct);
+    }
+  }
+
   private static int MakeLong(int low, int high)
   {
     return (high << 16) | (low & 0xFFFF);
   }
+
+  private const uint WmMousewheel = 0x020A;
+
+  [StructLayout(LayoutKind.Sequential)]
+  private struct PointStruct { public int X; public int Y; }
+
+  [DllImport("User32.dll")]
+  private static extern bool ClientToScreen(IntPtr hWnd, ref PointStruct lpPoint);
 
   [DllImport("User32.dll")]
   private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);

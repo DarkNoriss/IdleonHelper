@@ -5,14 +5,14 @@ import type {
   ParsedConstructionData,
   SolverWeights,
 } from "../../../types/construction";
-import { logger } from "../../utils";
+import { logger } from "../../utils/index";
 import {
   calculateStateScore,
   cloneInventory,
   getKeyFromPosition,
   getScoreSum,
   moveCog,
-} from "./construction-solver";
+} from "./construction-utils";
 
 const BOARD_SIZE = 96;
 

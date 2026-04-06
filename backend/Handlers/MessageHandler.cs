@@ -65,6 +65,11 @@ internal static class MessageHandler
           await KeyPressCommandHandler.Handle(ws, message, ct);
           break;
         }
+        case "scroll":
+        {
+          await ScrollCommandHandler.Handle(ws, message, ct);
+          break;
+        }
         default:
         {
           await SendError(ws, message.Id, $"Unknown command: {message.Command}", ct);

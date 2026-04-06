@@ -4,11 +4,15 @@ import {
   getLastError,
   initializeBackend,
   onStatusChange,
-} from "./backend";
-import { getMainWindow } from "./index";
-import { weeklyBattleFetch } from "./scripts";
+} from "./backend/index";
+import { getMainWindow } from "./main-window";
+import { weeklyBattleFetch } from "./scripts/index";
 import { setState } from "./state-hub";
-import { checkForUpdates, initializeUpdateService, logger } from "./utils";
+import {
+  checkForUpdates,
+  initializeUpdateService,
+  logger,
+} from "./utils/index";
 
 export const initializeApp = (): void => {
   logger.log("Initializing application...");
