@@ -142,6 +142,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             image: "compass/fighter-path/compass_tempest_damage_minor",
             offset: { x: 506, y: 206 },
           },
+          {
+            id: "tempest-accuracy-vi",
+            image: "compass/fighter-path/compass_tempest_accuracy_minor",
+            offset: { x: 618, y: 209 },
+          },
         ],
       },
       {
@@ -160,6 +165,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             offset: { x: 610, y: 201 },
           },
         ],
+      },
+      {
+        id: "tempest-ultra-damage",
+        label: "Tempest Ultra Damage",
+        image: "compass/fighter-path/compass_tempest_ultra_damage",
       },
     ],
   },
@@ -210,6 +220,13 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "elemental-destruction",
         label: "Elemental Destruction",
         image: "compass/elemental-path/compass_elemental_destruction",
+        minorNodes: [
+          {
+            id: "fire-weapon-drops",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 457, y: 290 },
+          },
+        ],
       },
       {
         id: "ring-drop",
@@ -256,6 +273,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             id: "stone-drops-ii",
             image: "compass/elemental-path/compass_elemental_minor",
             offset: { x: 454, y: 230 },
+          },
+          {
+            id: "wind-weapon-drops",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 541, y: 170 },
           },
         ],
       },
