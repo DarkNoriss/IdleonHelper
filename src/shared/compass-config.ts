@@ -170,6 +170,45 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "tempest-ultra-damage",
         label: "Tempest Ultra Damage",
         image: "compass/fighter-path/compass_tempest_ultra_damage",
+        minorNodes: [
+          {
+            id: "tempest-damage-viii",
+            image: "compass/fighter-path/compass_tempest_damage_minor",
+            offset: { x: 629, y: 270 },
+          },
+          {
+            id: "tempest-damage-ix",
+            image: "compass/fighter-path/compass_tempest_damage_minor",
+            offset: { x: 587, y: 143 },
+          },
+          {
+            id: "tempest-accuracy-vii",
+            image: "compass/fighter-path/compass_tempest_accuracy_minor",
+            offset: { x: 523, y: 200 },
+          },
+        ],
+      },
+      {
+        id: "tempest-one-huuuundred-and-eighty",
+        label: "Tempest One Huuuundred And Eighty",
+        image: "compass/fighter-path/compass_tempest_one_huuuundred_and_eighty",
+      },
+      {
+        id: "cooldust-hoarding",
+        label: "Cooldust Hoarding",
+        image: "compass/fighter-path/compass_cooldust_hoarding",
+      },
+      {
+        id: "mastery-destruction",
+        label: "Mastery Destruction",
+        image: "compass/fighter-path/compass_mastery_destruction",
+        minorNodes: [
+          {
+            id: "tempest-accuracy-viii",
+            image: "compass/fighter-path/compass_tempest_accuracy_minor",
+            offset: { x: 633, y: 303 },
+          },
+        ],
       },
     ],
   },
@@ -215,6 +254,13 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "medallion-collection",
         label: "Medallion Collection",
         image: "compass/elemental-path/compass_medallion_collection",
+        minorNodes: [
+          {
+            id: "grass-weapon-drops",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 458, y: 244 },
+          },
+        ],
       },
       {
         id: "elemental-destruction",
@@ -233,6 +279,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         label: "Ring Drop",
         image: "compass/elemental-path/compass_ring_drop",
         minorNodes: [
+          {
+            id: "lucky-drops-ii",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 600, y: 192 },
+          },
           {
             id: "lucky-drops-iii",
             image: "compass/elemental-path/compass_elemental_minor",
@@ -278,6 +329,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             id: "wind-weapon-drops",
             image: "compass/elemental-path/compass_elemental_minor",
             offset: { x: 541, y: 170 },
+          },
+          {
+            id: "ice-weapon-drops",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 571, y: 334 },
           },
         ],
       },
@@ -419,11 +475,75 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         image: "compass/nomadic-path/compass_moon_of_experience",
         minorNodes: [
           {
+            id: "experience-sale-i",
+            image: "compass/nomadic-path/compass_experience_sale_minor",
+            offset: { x: 435, y: 306 },
+          },
+          {
+            id: "experience-sale-ii",
+            image: "compass/nomadic-path/compass_experience_sale_minor",
+            offset: { x: 465, y: 228 },
+          },
+          {
             id: "experience-sale-iii",
             image: "compass/nomadic-path/compass_experience_sale_minor",
             offset: { x: 547, y: 186 },
           },
+          {
+            id: "experience-sale-iv",
+            image: "compass/nomadic-path/compass_experience_sale_minor",
+            offset: { x: 655, y: 262 },
+          },
+          {
+            id: "experience-sale-v",
+            image: "compass/nomadic-path/compass_experience_sale_minor",
+            offset: { x: 545, y: 354 },
+          },
         ],
+      },
+      {
+        id: "monument-homage",
+        label: "Monument Homage",
+        image: "compass/nomadic-path/compass_monument_homage",
+      },
+      {
+        id: "moon-of-sleep",
+        label: "Moon Of Sleep",
+        image: "compass/nomadic-path/compass_moon_of_sleep",
+        minorNodes: [
+          {
+            id: "snoozer-sale-i",
+            image: "compass/nomadic-path/compass_snoozer_sale_minor",
+            offset: { x: 472, y: 206 },
+          },
+          {
+            id: "snoozer-sale-ii",
+            image: "compass/nomadic-path/compass_snoozer_sale_minor",
+            offset: { x: 454, y: 301 },
+          },
+          {
+            id: "snoozer-sale-iii",
+            image: "compass/nomadic-path/compass_snoozer_sale_minor",
+            offset: { x: 562, y: 189 },
+          },
+        ],
+      },
+      {
+        id: "pristine-collector",
+        label: "Pristine Collector",
+        image: "compass/nomadic-path/compass_pristine_collector",
+        minorNodes: [
+          {
+            id: "pristine-sale-i",
+            image: "compass/nomadic-path/compass_pristine_sale_minor",
+            offset: { x: 529, y: 191 },
+          },
+        ],
+      },
+      {
+        id: "aluminium-atom",
+        label: "Aluminium Atom",
+        image: "compass/nomadic-path/compass_aluminium_atom",
       },
     ],
   },
@@ -538,6 +658,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             id: "de-dust-v",
             image: "compass/survival-path/compass_de_dust_minor",
             offset: { x: 590, y: 342 },
+          },
+          {
+            id: "tempest-defence-v",
+            image: "compass/survival-path/compass_tempest_defence_minor",
+            offset: { x: 433, y: 300 },
           },
         ],
       },
@@ -708,6 +833,16 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "abomination-slayer-xxviii",
         label: "Abomination Slayer XXVIII",
         image: "compass/abominations/compass_abomination_slayer_xxviii",
+      },
+      {
+        id: "abomination-slayer-xxix",
+        label: "Abomination Slayer XXIX",
+        image: "compass/abominations/compass_abomination_slayer_xxix",
+      },
+      {
+        id: "abomination-slayer-xxx",
+        label: "Abomination Slayer XXX",
+        image: "compass/abominations/compass_abomination_slayer_xxx",
       },
     ],
   },
