@@ -495,6 +495,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             image: "compass/survival-path/compass_tempest_defence_minor",
             offset: { x: 489, y: 187 },
           },
+          {
+            id: "tempest-accuracy-q",
+            image: "compass/fighter-path/compass_tempest_accuracy_minor",
+            offset: { x: 573, y: 363 },
+          },
         ],
       },
       {
