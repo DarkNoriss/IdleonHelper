@@ -229,7 +229,7 @@ export const findPath = (
   return null;
 };
 
-const CENTER_TOLERANCE = 10;
+const CENTER_TOLERANCE = 8;
 const FAST_FIND = { timeoutMs: 250 };
 
 export const centerNode = async (
