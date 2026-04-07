@@ -18,7 +18,13 @@ export const CARD_CATEGORIES: CardCategory[] = [
   {
     categoryName: "Blunder Hills",
     categoryImage: "ui/codex/cards/cards_blunder_hills",
-    cards: [],
+    cards: [
+      { cardName: "poop-card", cardImage: "ui/codex/cards/game/poop_card" },
+      {
+        cardName: "crystal-carrot-card",
+        cardImage: "ui/codex/cards/game/crystal_carrot_card",
+      },
+    ],
   },
   {
     categoryName: "Yum-Yum Desert",
@@ -48,22 +54,51 @@ export const CARD_CATEGORIES: CardCategory[] = [
   {
     categoryName: "Hyperion Nebula",
     categoryImage: "ui/codex/cards/cards_hyperion_nebula",
-    cards: [],
+    cards: [
+      {
+        cardName: "clammie-card",
+        cardImage: "ui/codex/cards/game/clammie_card",
+      },
+      {
+        cardName: "demon-genie-card",
+        cardImage: "ui/codex/cards/game/demon_genie_card",
+      },
+    ],
   },
   {
     categoryName: "Smolderin' Plateau",
     categoryImage: "ui/codex/cards/cards_smolderin_plateau",
-    cards: [],
+    cards: [
+      { cardName: "suggma-card", cardImage: "ui/codex/cards/game/suggma_card" },
+      {
+        cardName: "mister-brightside-card",
+        cardImage: "ui/codex/cards/game/mister_brightside_card",
+      },
+    ],
   },
   {
     categoryName: "Spirited Valley",
     categoryImage: "ui/codex/cards/cards_spirited_valley",
-    cards: [],
+    cards: [
+      {
+        cardName: "woodlin-spirit-card",
+        cardImage: "ui/codex/cards/game/woodlin_spirit_card",
+      },
+      {
+        cardName: "minichief-spirit-card",
+        cardImage: "ui/codex/cards/game/minichief_spirit_card",
+      },
+    ],
   },
   {
-    categoryName: "Shimmerin' Deep",
-    categoryImage: "ui/codex/cards/cards_shimmerin_deep",
-    cards: [],
+    categoryName: "Shimmerfin Deep",
+    categoryImage: "ui/codex/cards/cards_shimmerfin_deep",
+    cards: [
+      {
+        cardName: "coralcave-guardian-card",
+        cardImage: "ui/codex/cards/game/coralcave_guardian_card",
+      },
+    ],
   },
   {
     categoryName: "Dungeons",
@@ -73,7 +108,33 @@ export const CARD_CATEGORIES: CardCategory[] = [
   {
     categoryName: "Bosses & Nightmares",
     categoryImage: "ui/codex/cards/cards_bosses_and_nightmares",
-    cards: [],
+    cards: [
+      { cardName: "boop", cardImage: "ui/codex/cards/game/boop_card" },
+      {
+        cardName: "chaotic-amarok",
+        cardImage: "ui/codex/cards/game/chaotic_amarok_card",
+      },
+      {
+        cardName: "blighted-chizoar-card",
+        cardImage: "ui/codex/cards/game/blighted_chizoar_card",
+      },
+      {
+        cardName: "demented-spiritlord-card",
+        cardImage: "ui/codex/cards/game/demented_spiritlord_card",
+      },
+      {
+        cardName: "sovereign-emperor-card",
+        cardImage: "ui/codex/cards/game/sovereign_emperor_card",
+      },
+      {
+        cardName: "king-doot-card",
+        cardImage: "ui/codex/cards/game/king_doot_card",
+      },
+      {
+        cardName: "emperor-card",
+        cardImage: "ui/codex/cards/game/emperor_card",
+      },
+    ],
   },
   {
     categoryName: "Events",
