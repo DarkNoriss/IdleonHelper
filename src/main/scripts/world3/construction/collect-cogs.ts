@@ -57,7 +57,7 @@ export default defineScript({
         token
       );
 
-      if (!isBoardEmpty) {
+      if (isBoardEmpty.length === 0) {
         logger.log("Board is not empty (spare is full), collection complete");
         break;
       }

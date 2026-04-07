@@ -25,10 +25,10 @@ const clickFast = async (
   token: Parameters<Parameters<typeof defineScript>[0]["run"]>[0]["token"]
 ): Promise<void> => {
   const result = await backend.find(image, undefined, token);
-  if (result.matches.length === 0) {
+  if (result.length === 0) {
     throw new Error(`Could not find ${image}`);
   }
-  await backend.click(result.matches[0]!, FAST_CLICK, token);
+  await backend.click(result[0]!, FAST_CLICK, token);
 };
 
 export default defineScript<[string, string, string]>({
@@ -172,14 +172,10 @@ export default defineScript<[string, string, string]>({
               undefined,
               token
             );
-            if (nextBtn.matches.length === 0) {
+            if (nextBtn.length === 0) {
               throw new Error("Trap next button not found");
             }
-            await backend.click(
-              nextBtn.matches[0]!,
-              { times: trapIndex },
-              token
-            );
+            await backend.click(nextBtn[0]!, { times: trapIndex }, token);
           }
         }
 
@@ -196,11 +192,11 @@ export default defineScript<[string, string, string]>({
         // Select timer from grid
         if (isFirstCharacter || !savedTimerCoords) {
           const findResult = await backend.find(trapImage, undefined, token);
-          if (findResult.matches.length === 0) {
+          if (findResult.length === 0) {
             throw new Error(`No trap images found for ${trapType}`);
           }
 
-          const sorted = sortRowMajor(findResult.matches);
+          const sorted = sortRowMajor(findResult);
           if (timerIndex >= sorted.length) {
             throw new Error(
               `Timer index ${timerIndex} out of range (found ${sorted.length} positions)`

@@ -62,7 +62,7 @@ export const calibrateCompassCenter = async (
     undefined,
     token
   );
-  if (topLeft.matches.length === 0) {
+  if (topLeft.length === 0) {
     throw new Error("Compass top-left corner not found");
   }
   const bottomRight = await backend.find(
@@ -70,11 +70,11 @@ export const calibrateCompassCenter = async (
     undefined,
     token
   );
-  if (bottomRight.matches.length === 0) {
+  if (bottomRight.length === 0) {
     throw new Error("Compass bottom-right corner not found");
   }
-  const tl = topLeft.matches[0]!;
-  const br = bottomRight.matches[0]!;
+  const tl = topLeft[0]!;
+  const br = bottomRight[0]!;
   const center = {
     x: Math.round((tl.x + br.x) / 2),
     y: Math.round((tl.y + br.y) / 2),
@@ -242,15 +242,15 @@ export const centerNode = async (
     throw new Error(`Unknown node: ${nodeId}`);
   }
   const result = await backend.find(def.image, FAST_FIND, token);
-  if (result.matches.length === 0) {
+  if (result.length === 0) {
     return false;
   }
-  await backend.drag(result.matches[0]!, center, { instant: true }, token);
+  await backend.drag(result[0]!, center, { instant: true }, token);
 
   // Verify centering — re-drag if the node landed off-center
   const verify = await backend.find(def.image, FAST_FIND, token);
-  if (verify.matches.length > 0) {
-    const pos = verify.matches[0]!;
+  if (verify.length > 0) {
+    const pos = verify[0]!;
     const dx = Math.abs(pos.x - center.x);
     const dy = Math.abs(pos.y - center.y);
     if (dx > CENTER_TOLERANCE || dy > CENTER_TOLERANCE) {

@@ -86,7 +86,7 @@ export const construction = {
       { threshold: 0.975 },
       token
     );
-    if (isOnTargetPage) {
+    if (isOnTargetPage.length > 0) {
       logger.log(`Already on page ${targetPage}`);
       return targetPage;
     }
@@ -116,13 +116,13 @@ export const construction = {
           : "ui/codex/quik-ref/construction/cogs-page-prev";
 
       const result = await backendCommand.find(buttonImage, undefined, token);
-      if (result.matches.length === 0) {
+      if (result.length === 0) {
         throw new Error(
           `Page navigation button not found. Target: ${targetPage}, Detected: ${detectedPage}, Attempt: ${attempts}`
         );
       }
 
-      const buttonPoint = result.matches[0]!;
+      const buttonPoint = result[0]!;
       const clicksNeeded = Math.abs(pageDiff);
 
       logger.log(
@@ -142,7 +142,7 @@ export const construction = {
         { threshold: 0.975 },
         token
       );
-      if (verifyPage) {
+      if (verifyPage.length > 0) {
         logger.log(
           `Successfully navigated to page ${targetPage} on attempt ${attempts}`
         );
@@ -170,7 +170,7 @@ const detectCurrentPage = async (
       { threshold: 0.975 },
       token
     );
-    if (isVisible) {
+    if (isVisible.length > 0) {
       return page;
     }
   }
@@ -191,19 +191,19 @@ const ensurePage = async (
     undefined,
     token
   );
-  if (isOnTargetPage) {
+  if (isOnTargetPage.length > 0) {
     logger.log(`Already on ${pageName}`);
     return true;
   }
 
   const result = await backendCommand.find(buttonImage, undefined, token);
 
-  if (result.matches.length === 0) {
+  if (result.length === 0) {
     logger.log(`${buttonName} not found, assuming we're on ${pageName}`);
     return true;
   }
 
-  const buttonPoint = result.matches[0]!;
+  const buttonPoint = result[0]!;
 
   logger.log(`Clicking ${buttonName} 12 times...`);
   await backendCommand.click(
@@ -221,7 +221,7 @@ const ensurePage = async (
     undefined,
     token
   );
-  if (finalCheck.matches.length > 0) {
+  if (finalCheck.length > 0) {
     logger.log(`Reached ${pageName}`);
     return true;
   }
@@ -244,7 +244,7 @@ const ensureToggle = async (
     undefined,
     token
   );
-  if (isInTargetState) {
+  if (isInTargetState.length > 0) {
     logger.log(`${itemName} is already ${targetState}`);
     return true;
   }
@@ -266,7 +266,7 @@ const ensureToggle = async (
     undefined,
     token
   );
-  if (finalCheck) {
+  if (finalCheck.length > 0) {
     logger.log(`${itemName} is now ${targetState}`);
     return true;
   }

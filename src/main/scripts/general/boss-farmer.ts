@@ -36,12 +36,12 @@ export default defineScript<[number]>({
           token
         );
 
-        if (result.matches.length === 0) {
+        if (result.length === 0) {
           logger.error("Repeat image not found within timeout. Stopping.");
           return;
         }
 
-        const matchPoint = result.matches[0]!;
+        const matchPoint = result[0]!;
         logger.log("Found repeat image. Waiting 5s for loot...");
 
         token.throwIfCancelled();

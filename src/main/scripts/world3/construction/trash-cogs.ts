@@ -65,7 +65,7 @@ export default defineScript({
         token
       );
 
-      if (nextPageAvailable) {
+      if (nextPageAvailable.length > 0) {
         currentPage++;
         logger.log(`Navigating to page ${currentPage}...`);
         await navigation.construction.navigateToPage(currentPage, token);

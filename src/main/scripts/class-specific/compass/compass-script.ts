@@ -150,10 +150,10 @@ export default defineScript<[CompassUpgrade[]]>({
         token
       );
 
-      if (hasUpgrade.matches.length > 0) {
+      if (hasUpgrade.length > 0) {
         const fastClick = getClickOptionsFromPreset(ClickPreset.Fast);
         await backend.click(
-          hasUpgrade.matches[0]!,
+          hasUpgrade[0]!,
           { times: resolved.change, ...fastClick },
           token
         );

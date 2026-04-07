@@ -75,13 +75,13 @@ export default defineScript<[number[]]>({
     );
 
     // Step 1: Check if weekly battle is on cooldown
-    if (isOnCooldown) {
+    if (isOnCooldown.length > 0) {
       logger.log("Weekly battle is on cooldown - cannot proceed");
       return;
     }
 
     // Step 2: Check if restart is needed
-    if (needsRestart) {
+    if (needsRestart.length > 0) {
       logger.log("Restarting weekly battle...");
 
       const clicked = await backendCommand.click(
@@ -97,7 +97,7 @@ export default defineScript<[number[]]>({
           undefined,
           token
         );
-        if (!isSelectVisibleAfterRestart) {
+        if (isSelectVisibleAfterRestart.length === 0) {
           logger.error("Weekly battle select screen not found after restart");
           throw new Error("Weekly battle select screen not found");
         }
@@ -107,7 +107,7 @@ export default defineScript<[number[]]>({
       }
     } else {
       // Step 3: Verify we're on the select screen (only if no restart was needed)
-      if (!isSelectVisible) {
+      if (isSelectVisible.length === 0) {
         logger.error("Weekly battle select screen not found");
         throw new Error("Weekly battle select screen not found");
       }

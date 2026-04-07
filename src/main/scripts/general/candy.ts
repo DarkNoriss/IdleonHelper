@@ -25,12 +25,12 @@ export default defineScript<[string]>({
         token
       );
 
-      if (result.matches.length === 0) {
+      if (result.length === 0) {
         logger.log(`No more candy_${candyType} found. Done.`);
         return;
       }
 
-      const candyPoint = result.matches[0]!;
+      const candyPoint = result[0]!;
       logger.log(`Found candy_${candyType}, holding for 1s...`);
 
       token.throwIfCancelled();
