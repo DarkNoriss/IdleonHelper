@@ -12,7 +12,6 @@ import type {
   DragRequest,
   DragResponse,
   FindRequest,
-  FindResponse,
   FindWithDebugRequest,
   FindWithDebugResponse,
   KeyPressRequest,
@@ -73,7 +72,7 @@ export const backendCommand = {
         }
       | undefined,
     token: CancellationToken
-  ): Promise<FindResponse> => {
+  ): Promise<Point[]> => {
     token.throwIfCancelled();
     const resolvedPath = resolveImagePath(imagePath);
     const request: FindRequest = {
@@ -84,7 +83,8 @@ export const backendCommand = {
       offset: options?.offset ?? undefined,
       debug: options?.debug ?? false,
     };
-    return sendCommand("find", request);
+    const response = await sendCommand("find", request);
+    return response.matches;
   },
 
   isVisible: async (
@@ -151,9 +151,9 @@ export const backendCommand = {
   ): Promise<boolean> => {
     token.throwIfCancelled();
     const findResponse = await backendCommand.find(imagePath, options, token);
-    if (findResponse.matches.length > 0) {
+    if (findResponse.length > 0) {
       await backendCommand.click(
-        findResponse.matches[0]!,
+        findResponse[0]!,
         {
           times: options?.clickTimes,
           interval: options?.clickInterval,
