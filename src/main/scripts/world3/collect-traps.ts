@@ -27,10 +27,10 @@ const parseTimerToMs = (timer: string): number => {
   }
 };
 
-export default defineScript<[string, string]>({
+export default defineScript<[string]>({
   id: "world3.trapping.collectTraps",
   name: "Collect Traps",
-  run: async ({ token, backend, logger, args: [_trapType, timer] }) => {
+  run: async ({ token, backend, logger, args: [timer] }) => {
     const intervalMs = parseTimerToMs(timer);
     logger.log(`Collect Traps: looping every ${timer} (${intervalMs}ms)`);
 
@@ -45,22 +45,11 @@ export default defineScript<[string, string]>({
         let eagleEyeFound = false;
 
         const quickFindEagleEye = async (): Promise<boolean> => {
-          if (
-            (
-              await backend.isVisible(
-                "ui/attacks/attack_eagle_eye",
-                undefined,
-                token
-              )
-            ).length > 0
-          ) {
-            return backend.findAndClick(
-              "ui/attacks/attack_eagle_eye",
-              { timeoutMs: 1000 },
-              token
-            );
-          }
-          return false;
+          return backend.findAndClick(
+            "ui/attacks/attack_eagle_eye",
+            undefined,
+            token
+          );
         };
 
         const scrollAndFindEagleEye = async (): Promise<boolean> => {
@@ -80,7 +69,7 @@ export default defineScript<[string, string]>({
             ) {
               await backend.findAndClick(
                 "ui/attacks/attack_arrow_down",
-                { timeoutMs: 1000 },
+                undefined,
                 token
               );
               await delay(200, token);
@@ -106,7 +95,7 @@ export default defineScript<[string, string]>({
           logger.log("Eagle Eye not found. Opening attacks bar...");
           const attacksClicked = await backend.findAndClick(
             "ui/attacks/attacks",
-            { timeoutMs: 3000 },
+            undefined,
             token
           );
 
@@ -130,7 +119,7 @@ export default defineScript<[string, string]>({
         logger.log("Looking for Collect All button...");
         const collected = await backend.findAndClick(
           "trapping/trapping_collect_all",
-          { timeoutMs: 5000 },
+          undefined,
           token
         );
 
