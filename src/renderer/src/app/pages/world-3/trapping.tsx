@@ -45,8 +45,6 @@ const TrapPlacingSection = () => {
     setTimer("");
   };
 
-  const isReady = critter !== "" && trap !== "" && timer !== "";
-
   return (
     <ScriptPage
       actions={[
@@ -127,12 +125,6 @@ const TrapPlacingSection = () => {
           </Select>
         </div>
       </div>
-
-      {!isReady && (
-        <p className="mb-4 text-muted-foreground text-sm">
-          Select critter, trap type, and timer to start placing.
-        </p>
-      )}
 
       {placeTraps?.current && (
         <p className="mb-4 font-medium text-sm">
@@ -236,12 +228,6 @@ const TrapCollectingSection = () => {
           </Select>
         </div>
       </div>
-
-      {trap === "" || timer === "" ? (
-        <p className="mb-4 text-muted-foreground text-sm">
-          Select trap type and timer to start collecting.
-        </p>
-      ) : null}
 
       {remaining && (
         <p className="mb-4 font-medium text-sm">
