@@ -28,23 +28,29 @@ export default defineScript<[number]>({
       throw new Error("Failed to navigate to Cards");
     }
 
-    // Step 2: Open card sets panel
-    const setsClicked = await backendCommand.findAndClick(
-      "ui/codex/cards/card_sets",
-      undefined,
-      token
-    );
-    if (!setsClicked) {
-      throw new Error("Failed to click card sets tab");
-    }
-
-    const setsOpen = await backendCommand.find(
+    // Step 2: Open card sets panel (it may already be open by default)
+    const alreadyOpen = await backendCommand.isVisible(
       "ui/codex/cards/card_set_equip",
       undefined,
       token
     );
-    if (setsOpen.length === 0) {
-      throw new Error("Card sets panel did not open");
+    if (alreadyOpen.length === 0) {
+      const setsClicked = await backendCommand.findAndClick(
+        "ui/codex/cards/card_sets",
+        undefined,
+        token
+      );
+      if (!setsClicked) {
+        throw new Error("Failed to click card sets tab");
+      }
+      const setsOpen = await backendCommand.find(
+        "ui/codex/cards/card_set_equip",
+        undefined,
+        token
+      );
+      if (setsOpen.length === 0) {
+        throw new Error("Card sets panel did not open");
+      }
     }
     logger.log("Card sets panel open");
 
