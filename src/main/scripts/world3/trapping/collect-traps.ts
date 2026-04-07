@@ -1,7 +1,7 @@
-import { setState } from "../../state-hub";
-import { delay } from "../../utils/index";
-import { defineScript } from "../define-script";
-import { pressKey } from "../keys";
+import { setState } from "../../../state-hub";
+import { delay } from "../../../utils/index";
+import { defineScript } from "../../define-script";
+import { pressKey } from "../../keys";
 
 const ARROW_DOWN_MAX_ATTEMPTS = 3;
 const TIMER_HEADROOM_MS = 3000;

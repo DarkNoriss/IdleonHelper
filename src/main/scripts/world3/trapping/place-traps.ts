@@ -1,9 +1,9 @@
-import { critters, trapConfigs } from "../../../parsers/trapping";
-import type { Point } from "../../backend/backend-types";
-import { setState } from "../../state-hub";
-import { delay } from "../../utils/index";
-import { defineScript } from "../define-script";
-import { pressKey } from "../keys";
+import { critters, trapConfigs } from "../../../../parsers/trapping";
+import type { Point } from "../../../backend/backend-types";
+import { setState } from "../../../state-hub";
+import { delay } from "../../../utils/index";
+import { defineScript } from "../../define-script";
+import { pressKey } from "../../keys";
 
 const FAST_CLICK = { times: 10, interval: 30, holdTime: 15 };
 const NAV_DELAY = 200;

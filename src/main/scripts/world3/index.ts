@@ -1,16 +1,6 @@
-import collectCogs from "./collect-cogs";
-import collectTraps from "./collect-traps";
-import constructionApply from "./construction-apply";
-import placeTraps from "./place-traps";
-import trashCogs from "./trash-cogs";
+import { constructionScripts } from "./construction/index";
+import { trappingScripts } from "./trapping/index";
 
-// Solver is NOT a defineScript - stays as regular handler
-export { solver } from "./construction-solver";
+export { solver } from "./construction/index";
 
-export const world3Scripts = [
-  constructionApply,
-  collectCogs,
-  trashCogs,
-  collectTraps,
-  placeTraps,
-];
+export const world3Scripts = [...constructionScripts, ...trappingScripts];

@@ -9,8 +9,8 @@ export const pageRegistry = {
   "general/boss-farmer": () => import("./pages/general/boss-farmer"),
   "general/test": () => import("./pages/general/test"),
   "world2/weekly-battle": () => import("./pages/world-2/weekly-battle"),
-  "world3/construction": () => import("./pages/world-3/construction"),
-  "world3/trapping": () => import("./pages/world-3/trapping"),
+  "world3/construction": () => import("./pages/world-3/construction/index"),
+  "world3/trapping": () => import("./pages/world-3/trapping/index"),
   "classSpecific/compass": () => import("./pages/class-specific/compass"),
   "classSpecific/compass-debug": () =>
     import("./pages/class-specific/compass-debug"),
