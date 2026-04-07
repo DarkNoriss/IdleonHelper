@@ -1,4 +1,8 @@
 import { PRESET_CONFIGS } from "../../../parsers/card-presets";
+import {
+  ClickPreset,
+  getClickOptionsFromPreset,
+} from "../../backend/backend-config";
 import type { Point } from "../../backend/backend-types";
 import { backendCommand } from "../../backend/index";
 import { logger } from "../../utils/index";
@@ -83,13 +87,15 @@ export default defineScript<[number]>({
     logger.log(`Clicked preset slot ${config.slot}`);
 
     // Step 3: Clear all 8 card slots rapidly
+    const fastClick = getClickOptionsFromPreset(ClickPreset.Fast);
     for (const cardSlot of CARD_SLOTS) {
       token.throwIfCancelled();
-      await backendCommand.click(cardSlot, undefined, token);
+      await backendCommand.click(cardSlot, fastClick, token);
     }
     logger.log("Cleared all card slots");
 
     // Step 4: For each card, navigate to category, find it, and click twice to equip
+    let lastCategory = "";
     for (let i = 0; i < cards.length; i++) {
       token.throwIfCancelled();
       const cardName = cards[i]!;
@@ -99,7 +105,10 @@ export default defineScript<[number]>({
         `Card ${i + 1}/${cards.length}: ${cardName} in ${category.categoryName}`
       );
 
-      await navigateToCategory(category.categoryName, token);
+      if (category.categoryName !== lastCategory) {
+        await navigateToCategory(category.categoryName, token);
+        lastCategory = category.categoryName;
+      }
 
       const result = await backendCommand.findWithDebug(
         card.cardImage,

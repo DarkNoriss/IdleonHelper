@@ -68,8 +68,9 @@ export const navigateToCategory = async (
   );
 
   if (currentIndex === targetIndex) {
-    // Already visible, drag to top
-    await dragCategory(targetIndex, CARD_CATEGORY_TOP, token);
+    if (currentIndex === 0) {
+      await dragCategory(targetIndex, CARD_CATEGORY_TOP, token);
+    }
     return;
   }
 
