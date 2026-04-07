@@ -229,6 +229,7 @@ export const findPath = (
 };
 
 const CENTER_TOLERANCE = 10;
+const FAST_FIND = { timeoutMs: 250 };
 
 export const centerNode = async (
   nodeId: string,
@@ -240,17 +241,14 @@ export const centerNode = async (
   if (!def) {
     throw new Error(`Unknown node: ${nodeId}`);
   }
-  const result = await backend.find(def.image, undefined, token);
+  const result = await backend.find(def.image, FAST_FIND, token);
   if (result.matches.length === 0) {
     return false;
   }
   await backend.drag(result.matches[0]!, center, { instant: true }, token);
 
-  // Dismiss upgrade panel if the drag accidentally opened one
-  // await dismissPanel(backend, token);
-
   // Verify centering — re-drag if the node landed off-center
-  const verify = await backend.find(def.image, undefined, token);
+  const verify = await backend.find(def.image, FAST_FIND, token);
   if (verify.matches.length > 0) {
     const pos = verify.matches[0]!;
     const dx = Math.abs(pos.x - center.x);
@@ -260,7 +258,6 @@ export const centerNode = async (
     }
   }
 
-  // Dismiss upgrade panel if the drag accidentally opened one
   await dismissPanel(backend, token);
 
   return true;
