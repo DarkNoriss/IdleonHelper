@@ -1,7 +1,7 @@
-import { backendCommand } from "../../backend/index";
-import { logger } from "../../utils/index";
-import { defineScript } from "../define-script";
-import { navigation } from "../game-nav/index";
+import { backendCommand } from "../../../backend/index";
+import { logger } from "../../../utils/index";
+import { defineScript } from "../../define-script";
+import { navigation } from "../../game-nav/index";
 
 export default defineScript({
   id: "general.storeItems.run",

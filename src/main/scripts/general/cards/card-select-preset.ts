@@ -1,13 +1,13 @@
-import { PRESET_CONFIGS } from "../../../parsers/card-presets";
+import { PRESET_CONFIGS } from "../../../../parsers/card-presets";
 import {
   ClickPreset,
   getClickOptionsFromPreset,
-} from "../../backend/backend-config";
-import { backendCommand } from "../../backend/index";
-import { logger } from "../../utils/index";
-import { defineScript } from "../define-script";
-import { codex } from "../game-nav/codex";
-import { pressKey } from "../keys";
+} from "../../../backend/backend-config";
+import { backendCommand } from "../../../backend/index";
+import { logger } from "../../../utils/index";
+import { defineScript } from "../../define-script";
+import { codex } from "../../game-nav/codex";
+import { pressKey } from "../../keys";
 
 export default defineScript<[number]>({
   id: "general.cardPresets.select",

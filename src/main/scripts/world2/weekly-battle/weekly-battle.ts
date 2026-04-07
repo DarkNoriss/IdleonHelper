@@ -1,7 +1,7 @@
-import { backendCommand } from "../../backend/backend-command";
-import { getState, setState } from "../../state-hub";
-import { logger } from "../../utils/index";
-import { defineScript } from "../define-script";
+import { backendCommand } from "../../../backend/backend-command";
+import { getState, setState } from "../../../state-hub";
+import { logger } from "../../../utils/index";
+import { defineScript } from "../../define-script";
 import {
   fetchWeeklyBattleData,
   type WeeklyBattleData,
