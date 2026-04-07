@@ -1,3 +1,4 @@
+import type { CompassUpgrade } from "./compass";
 import type { OptimalStep } from "./construction";
 
 export type WeeklyBattleStep = {
@@ -26,12 +27,37 @@ export type ScriptMap = {
   "world3.construction.apply": { args: [OptimalStep[]]; result: undefined };
   "world3.construction.collectCogs": { args: []; result: undefined };
   "world3.construction.trashCogs": { args: []; result: undefined };
+  "world3.trapping.collectTraps": { args: [string]; result: undefined };
+  "world3.trapping.placeTraps": {
+    args: [string, string, string];
+    result: undefined;
+  };
   "world2.weeklyBattle.run": { args: [number[]]; result: undefined };
   "general.test.run": { args: []; result: undefined };
   "general.storeItems.run": { args: []; result: undefined };
   "general.candy.run": { args: [string]; result: undefined };
   "general.cardPresets.findSlot": { args: []; result: undefined };
   "general.bossFarmer.run": { args: [number]; result: undefined };
+  "classSpecific.compass.run": {
+    args: [CompassUpgrade[]];
+    result: undefined;
+  };
+  "classSpecific.compass.discover": {
+    args: [string];
+    result: undefined;
+  };
+  "classSpecific.compass.discoverAll": {
+    args: [];
+    result: undefined;
+  };
+  "classSpecific.compass.minorDebug": {
+    args: [string];
+    result: undefined;
+  };
+  "classSpecific.compass.calibrate": {
+    args: [];
+    result: undefined;
+  };
 };
 
 export type BossFarmerState = {
@@ -58,4 +84,6 @@ export type AppState = {
     fetchedAt: string | null;
   };
   bossFarmer: BossFarmerState;
+  collectTraps: { endsAt: number | null };
+  placeTraps: { current: number | null };
 };

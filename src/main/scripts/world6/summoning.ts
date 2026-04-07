@@ -1,4 +1,4 @@
-import { delay } from "../../utils";
+import { delay } from "../../utils/index";
 import { defineScript } from "../define-script";
 
 export const summoningStartEndless = defineScript({

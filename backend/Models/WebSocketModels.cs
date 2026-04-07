@@ -107,3 +107,27 @@ internal class StopResponse
 {
   public bool Success { get; set; }
 }
+
+internal class KeyPressRequest
+{
+  public int Key { get; set; }
+  public int? HoldTime { get; set; }
+}
+
+internal class KeyPressResponse
+{
+  public bool Success { get; set; }
+}
+
+internal class ScrollRequest
+{
+  public int Delta { get; set; }
+  public Point Point { get; set; }
+  public int? Times { get; set; }
+  public int? Interval { get; set; }
+}
+
+internal class ScrollResponse
+{
+  public bool Success { get; set; }
+}

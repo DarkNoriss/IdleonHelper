@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
+import { is } from "@electron-toolkit/utils";
 import WebSocket from "ws";
 
-import { logger } from "../utils";
+import { logger } from "../utils/index";
 import { startBackend } from "./backend-process";
 import type {
   CommandRequestMap,
@@ -10,7 +11,7 @@ import type {
   WebSocketResponse,
 } from "./backend-types";
 
-const BACKEND_PORT = 5000;
+const BACKEND_PORT = is.dev ? 5001 : 5000;
 const WS_URL = `ws://localhost:${BACKEND_PORT}/ws`;
 const CONNECTION_TIMEOUT = 500;
 const MAX_RETRIES = 30;

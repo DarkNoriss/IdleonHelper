@@ -1,7 +1,7 @@
 import { ipcMain } from "electron";
 
 import type { AppState } from "../types/scripts";
-import { getMainWindow } from "./index";
+import { getMainWindow } from "./main-window";
 
 const state: AppState = {
   scriptStatus: {
@@ -22,6 +22,12 @@ const state: AppState = {
     running: false,
     avgIterationMs: 0,
     estimatedRemainingMs: 0,
+  },
+  collectTraps: {
+    endsAt: null,
+  },
+  placeTraps: {
+    current: null,
   },
 };
 

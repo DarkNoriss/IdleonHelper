@@ -1,7 +1,7 @@
 import { app } from "electron";
 import { autoUpdater } from "electron-updater";
 
-import { getMainWindow } from "../index";
+import { getMainWindow } from "../main-window";
 import { logger } from "./logger";
 
 export type UpdateStatus =

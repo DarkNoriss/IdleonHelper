@@ -108,6 +108,28 @@ export type StopResponse = {
   success: boolean;
 };
 
+// KeyPress command
+export type KeyPressRequest = {
+  key: number;
+  holdTime?: number;
+};
+
+export type KeyPressResponse = {
+  success: boolean;
+};
+
+// Scroll command
+export type ScrollRequest = {
+  delta: number;
+  point: Point;
+  times?: number;
+  interval?: number;
+};
+
+export type ScrollResponse = {
+  success: boolean;
+};
+
 // Command type mapping for type safety
 export type CommandRequestMap = {
   find: FindRequest;
@@ -116,6 +138,8 @@ export type CommandRequestMap = {
   drag: DragRequest;
   dragRepeat: DragRepeatRequest;
   stop: StopRequest;
+  keyPress: KeyPressRequest;
+  scroll: ScrollRequest;
 };
 
 export type CommandResponseMap = {
@@ -125,6 +149,8 @@ export type CommandResponseMap = {
   drag: DragResponse;
   dragRepeat: DragRepeatResponse;
   stop: StopResponse;
+  keyPress: KeyPressResponse;
+  scroll: ScrollResponse;
 };
 
 // Helper type for creating type-safe WebSocket messages

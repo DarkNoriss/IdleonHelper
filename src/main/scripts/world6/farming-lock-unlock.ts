@@ -1,5 +1,5 @@
-import { ClickPreset, getClickOptionsFromPreset } from "../../backend";
-import { delay } from "../../utils";
+import { ClickPreset, getClickOptionsFromPreset } from "../../backend/index";
+import { delay } from "../../utils/index";
 import { defineScript } from "../define-script";
 import { FARMING_GRID } from "./farming-constants";
 

@@ -1,4 +1,4 @@
-import { ScriptPage } from "@/components/script-page";
+import { ScriptPage } from "@/components/script-page.tsx";
 
 const StoreItems = () => (
   <ScriptPage

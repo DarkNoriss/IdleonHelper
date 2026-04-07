@@ -1,7 +1,7 @@
 import { ipcMain } from "electron";
 
-import { backendCommand } from "../backend";
-import { cancellationManager, logger } from "../utils";
+import { backendCommand } from "../backend/index";
+import { cancellationManager, logger } from "../utils/index";
 import type { ScriptDescriptor } from "./define-script";
 
 let registeredScripts: ScriptDescriptor[] = [];

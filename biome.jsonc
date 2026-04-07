@@ -1,6 +1,10 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": ["ultracite/biome/core", "ultracite/biome/react"],
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/type-aware"
+  ],
   "linter": {
     "rules": {
       "performance": {
@@ -14,6 +18,14 @@
         "noExcessiveCognitiveComplexity": "off",
         // forEach is fine for side-effect iteration
         "noForEach": "off"
+      },
+      "correctness": {
+        // type-aware preset can't resolve @/ path aliases or React CJS exports
+        "noUnresolvedImports": "off",
+        // radix-ui packages are transitive deps via shadcn/ui
+        "noUndeclaredDependencies": "off",
+        // TS resolves .ts files without extensions; adding them causes TS5097
+        "useImportExtensions": "off"
       },
       "suspicious": {
         // wrapper functions returning promises don't need await

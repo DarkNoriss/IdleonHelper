@@ -1,7 +1,12 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMainState } from "@/hooks/use-main-state";
+import { Button } from "@/components/ui/button.tsx";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card.tsx";
+import { useMainState } from "@/hooks/use-main-state.ts";
 
 const WeeklyBattle = () => {
   const [loading, setLoading] = useState(false);

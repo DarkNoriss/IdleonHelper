@@ -1,5 +1,5 @@
 import { setState } from "../../state-hub";
-import { delay } from "../../utils";
+import { delay } from "../../utils/index";
 import { defineScript } from "../define-script";
 
 const INITIAL_STATE = {

@@ -1,14 +1,20 @@
 import { AlertCircle, Loader2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMainState } from "@/hooks/use-main-state";
+import { Button } from "@/components/ui/button.tsx";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card.tsx";
+import { useMainState } from "@/hooks/use-main-state.ts";
 import type { ScriptMap } from "@/types/scripts";
 
 export type ScriptAction<T extends keyof ScriptMap = keyof ScriptMap> = {
   label: string;
   scriptId: T;
   runningLabel?: string;
+  disabled?: boolean;
   args?: () => ScriptMap[T]["args"];
   onResult?: (result: ScriptMap[T]["result"]) => void;
 };
@@ -97,7 +103,7 @@ export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
               <div key={action.scriptId}>
                 <Button
                   className="w-full"
-                  disabled={isWorking && !isThisRunning}
+                  disabled={action.disabled || (isWorking && !isThisRunning)}
                   onClick={makeHandler(action)}
                   size="sm"
                 >

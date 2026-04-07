@@ -1,7 +1,7 @@
 import { AlertCircle, CheckCircle2, Download, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.tsx";
 
 type UpdateStatus =
   | "idle"

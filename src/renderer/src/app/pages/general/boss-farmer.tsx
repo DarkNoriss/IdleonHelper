@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { ScriptPage } from "@/components/script-page";
-import { Input } from "@/components/ui/input";
-import { useMainState } from "@/hooks/use-main-state";
+import { ScriptPage } from "@/components/script-page.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { useMainState } from "@/hooks/use-main-state.ts";
 
 const formatDuration = (ms: number, precise = false): string => {
   const totalSeconds = ms / 1000;

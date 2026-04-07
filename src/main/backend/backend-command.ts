@@ -15,8 +15,12 @@ import type {
   FindResponse,
   FindWithDebugRequest,
   FindWithDebugResponse,
+  KeyPressRequest,
+  KeyPressResponse,
   Point,
   ScreenOffset,
+  ScrollRequest,
+  ScrollResponse,
   StopRequest,
   StopResponse,
 } from "./backend-types";
@@ -92,7 +96,7 @@ export const backendCommand = {
         }
       | undefined,
     token: CancellationToken
-  ): Promise<boolean> => {
+  ): Promise<Point[]> => {
     token.throwIfCancelled();
     const resolvedPath = resolveImagePath(imagePath);
     const request: FindRequest = {
@@ -104,7 +108,29 @@ export const backendCommand = {
       debug: false,
     };
     const response = await sendCommand("find", request);
-    return response.matches.length > 0;
+    return response.matches;
+  },
+
+  isVisibleWithDebug: async (
+    imagePath: string,
+    options:
+      | {
+          offset?: ScreenOffset;
+          threshold?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<FindWithDebugResponse> => {
+    token.throwIfCancelled();
+    const resolvedPath = resolveImagePath(imagePath);
+    const request: FindWithDebugRequest = {
+      imagePath: resolvedPath,
+      timeoutMs: backendConfig.isVisible.timeoutMs,
+      intervalMs: backendConfig.isVisible.intervalMs,
+      threshold: options?.threshold ?? backendConfig.find.threshold,
+      offset: options?.offset ?? undefined,
+    };
+    return sendCommand("findWithDebug", request);
   },
 
   findAndClick: async (
@@ -124,14 +150,10 @@ export const backendCommand = {
     token: CancellationToken
   ): Promise<boolean> => {
     token.throwIfCancelled();
-    const findResponse = await backendCommand.findWithDebug(
-      imagePath,
-      options,
-      token
-    );
+    const findResponse = await backendCommand.find(imagePath, options, token);
     if (findResponse.matches.length > 0) {
       await backendCommand.click(
-        findResponse.matches[0]!.point,
+        findResponse.matches[0]!,
         {
           times: options?.clickTimes,
           interval: options?.clickInterval,
@@ -218,6 +240,44 @@ export const backendCommand = {
       holdTime: options?.holdTime ?? backendConfig.click.holdTime,
     };
     return sendCommand("dragRepeat", request);
+  },
+
+  keyPress: async (
+    key: number,
+    options:
+      | {
+          holdTime?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<KeyPressResponse> => {
+    token.throwIfCancelled();
+    const request: KeyPressRequest = {
+      key,
+      holdTime: options?.holdTime ?? 50,
+    };
+    return sendCommand("keyPress", request);
+  },
+
+  scroll: async (
+    point: Point,
+    delta: number,
+    options:
+      | {
+          times?: number;
+          interval?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<ScrollResponse> => {
+    token.throwIfCancelled();
+    const request: ScrollRequest = {
+      delta,
+      point,
+      times: options?.times ?? 1,
+      interval: options?.interval ?? 100,
+    };
+    return sendCommand("scroll", request);
   },
 
   stop: async (): Promise<StopResponse> => {

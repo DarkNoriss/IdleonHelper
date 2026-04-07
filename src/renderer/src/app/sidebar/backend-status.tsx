@@ -1,5 +1,5 @@
 import { Wifi, WifiOff } from "lucide-react";
-import { useMainState } from "@/hooks/use-main-state";
+import { useMainState } from "@/hooks/use-main-state.ts";
 
 export const SidebarBackendStatus = () => {
   const backendStatus = useMainState("backendStatus");

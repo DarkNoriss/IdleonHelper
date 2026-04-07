@@ -1,6 +1,6 @@
-import { backendCommand } from "../../backend";
-import { delay, logger } from "../../utils";
+import { backendCommand } from "../../backend/index";
 import type { CancellationToken } from "../../utils/cancellation-token";
+import { delay, logger } from "../../utils/index";
 import { codex } from "./codex";
 import { navigateTo } from "./helpers";
 
