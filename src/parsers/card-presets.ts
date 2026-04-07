@@ -1,11 +1,14 @@
-export type CardPreset = { value: string; label: string };
+export type CardPresetConfig = {
+  slot: number;
+  name: string;
+};
 
-export const cardPresets: CardPreset[] = [
-  { value: "1", label: "AFK" },
-  { value: "2", label: "2" },
-  { value: "3", label: "3" },
-  { value: "4", label: "4" },
-  { value: "5", label: "5" },
-  { value: "6", label: "6" },
-  { value: "7", label: "7" },
+export const PRESET_CONFIGS: CardPresetConfig[] = [
+  { slot: 1, name: "AFK" },
+  { slot: 2, name: "2" },
+  { slot: 3, name: "Crystal" },
+  { slot: 4, name: "4" },
+  { slot: 5, name: "5" },
+  { slot: 6, name: "6" },
+  { slot: 7, name: "7" },
 ];

@@ -7,30 +7,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.tsx";
-import { cardPresets } from "@/parsers/card-presets";
+import { PRESET_CONFIGS } from "@/parsers/card-presets";
 
 const CardPresets = () => {
-  const [preset, setPreset] = useState("1");
+  const [slot, setSlot] = useState("1");
 
   return (
     <ScriptPage
       actions={[
         {
-          label: "Find Card Slot",
-          scriptId: "general.cardPresets.findSlot",
+          label: "Apply Preset",
+          scriptId: "general.cardPresets.apply",
+          args: () => [Number(slot)],
         },
       ]}
       title="Card Presets"
     >
       <div className="mb-4">
-        <Select onValueChange={setPreset} value={preset}>
+        <Select onValueChange={setSlot} value={slot}>
           <SelectTrigger className="w-[120px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {cardPresets.map((p) => (
-              <SelectItem key={p.value} value={p.value}>
-                {p.label}
+            {PRESET_CONFIGS.map((p) => (
+              <SelectItem key={p.slot} value={String(p.slot)}>
+                {p.name}
               </SelectItem>
             ))}
           </SelectContent>
