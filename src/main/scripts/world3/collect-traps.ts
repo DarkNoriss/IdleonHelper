@@ -1,9 +1,9 @@
 import { setState } from "../../state-hub";
 import { delay } from "../../utils/index";
 import { defineScript } from "../define-script";
+import { pressKey } from "../keys";
 
 const ARROW_DOWN_MAX_ATTEMPTS = 3;
-const VK_ESCAPE = 0x1b;
 const TIMER_HEADROOM_MS = 3000;
 
 const parseTimerToMs = (timer: string): number => {
@@ -139,7 +139,7 @@ export default defineScript<[string, string]>({
 
           // Step 3: Close
           logger.log("Closing with Escape...");
-          await backend.keyPress(VK_ESCAPE, undefined, token);
+          await pressKey(backend, "ESCAPE", token);
           await delay(300, token);
         } else {
           const isOff = await backend.isVisible(
@@ -150,10 +150,10 @@ export default defineScript<[string, string]>({
 
           if (isOff.length > 0) {
             logger.log("Collecting not available yet!");
-            await backend.keyPress(VK_ESCAPE, undefined, token);
+            await pressKey(backend, "ESCAPE", token);
             await delay(300, token);
           } else {
-            await backend.keyPress(VK_ESCAPE, undefined, token);
+            await pressKey(backend, "ESCAPE", token);
             throw new Error("Collect All button not found");
           }
         }
