@@ -15,8 +15,8 @@ export const codex = {
 
   toCards: async (token: CancellationToken): Promise<boolean> => {
     return await navigateTo(
-      "codex/cards/card_sets",
-      "codex/cards",
+      "ui/codex/cards/card_sets",
+      "ui/codex/cards",
       ui.toCodex,
       token,
       "Cards"

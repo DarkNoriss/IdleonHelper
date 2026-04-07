@@ -20,7 +20,7 @@ const findVisibleCategory = async (
       undefined,
       token
     );
-    if (visible) {
+    if (visible.length > 0) {
       return { index: i, categoryName: category.categoryName };
     }
   }
@@ -52,11 +52,11 @@ export const navigateToCategory = async (
       token
     );
 
-    if (targetVisible) {
+    if (targetVisible.length > 0) {
       // Find exact position and drag to top
       const found = await backend.find(target.categoryImage, undefined, token);
-      if (found.matches.length > 0) {
-        const match = found.matches[0]!;
+      if (found.length > 0) {
+        const match = found[0]!;
         logger.log(
           `Found ${categoryName} at (${match.x}, ${match.y}), dragging to top`
         );

@@ -25,7 +25,7 @@ export default defineScript({
         token
       );
 
-      if (visible) {
+      if (visible.length > 0) {
         logger.log(`${label}: PASS — ${name} is visible`);
         passed++;
       } else {
