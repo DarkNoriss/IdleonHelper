@@ -7,6 +7,7 @@ export const pageRegistry = {
   "general/store-items": () => import("./pages/general/store-items"),
   "general/candy": () => import("./pages/general/candy"),
   "general/boss-farmer": () => import("./pages/general/boss-farmer"),
+  "general/card-presets": () => import("./pages/general/card-presets"),
   "general/test": () => import("./pages/general/test"),
   "world2/weekly-battle": () => import("./pages/world-2/weekly-battle"),
   "world3/construction": () => import("./pages/world-3/construction/index"),

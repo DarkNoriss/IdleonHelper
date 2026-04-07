@@ -36,6 +36,8 @@ export type ScriptMap = {
   "general.test.run": { args: []; result: undefined };
   "general.storeItems.run": { args: []; result: undefined };
   "general.candy.run": { args: [string]; result: undefined };
+  "general.cardPresets.apply": { args: [number]; result: undefined };
+  "general.cardPresets.select": { args: [number]; result: undefined };
   "general.bossFarmer.run": { args: [number]; result: undefined };
   "classSpecific.compass.run": {
     args: [CompassUpgrade[]];

@@ -1,3 +1,4 @@
+import { backendCommand } from "../backend/index";
 import type { CancellationToken } from "../utils/cancellation-token";
 
 export const Key = {
@@ -9,18 +10,9 @@ export const Key = {
 
 export type KeyName = keyof typeof Key;
 
-type Backend = {
-  keyPress: (
-    key: number,
-    options: { holdTime?: number } | undefined,
-    token: CancellationToken
-  ) => Promise<{ success: boolean }>;
-};
-
 export const pressKey = (
-  backend: Backend,
   key: KeyName,
   token: CancellationToken
 ): Promise<{ success: boolean }> => {
-  return backend.keyPress(Key[key], undefined, token);
+  return backendCommand.keyPress(Key[key], undefined, token);
 };

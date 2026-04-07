@@ -1,5 +1,6 @@
+import { backendCommand } from "../../../backend/index";
 import { setState } from "../../../state-hub";
-import { delay } from "../../../utils/index";
+import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { pressKey } from "../../keys";
 
@@ -30,7 +31,7 @@ const parseTimerToMs = (timer: string): number => {
 export default defineScript<[string]>({
   id: "world3.trapping.collectTraps",
   name: "Collect Traps",
-  run: async ({ token, backend, logger, args: [timer] }) => {
+  run: async ({ token, args: [timer] }) => {
     const intervalMs = parseTimerToMs(timer);
     logger.log(`Collect Traps: looping every ${timer} (${intervalMs}ms)`);
 
@@ -45,7 +46,7 @@ export default defineScript<[string]>({
         let eagleEyeFound = false;
 
         const quickFindEagleEye = async (): Promise<boolean> => {
-          return backend.findAndClick(
+          return backendCommand.findAndClick(
             "ui/attacks/attack_eagle_eye",
             undefined,
             token
@@ -60,14 +61,14 @@ export default defineScript<[string]>({
             );
             if (
               (
-                await backend.isVisible(
+                await backendCommand.isVisible(
                   "ui/attacks/attack_arrow_down",
                   undefined,
                   token
                 )
               ).length > 0
             ) {
-              await backend.findAndClick(
+              await backendCommand.findAndClick(
                 "ui/attacks/attack_arrow_down",
                 undefined,
                 token
@@ -93,7 +94,7 @@ export default defineScript<[string]>({
         // Slow fallback: open attacks bar, then retry
         if (!eagleEyeFound) {
           logger.log("Eagle Eye not found. Opening attacks bar...");
-          const attacksClicked = await backend.findAndClick(
+          const attacksClicked = await backendCommand.findAndClick(
             "ui/attacks/attacks",
             undefined,
             token
@@ -117,7 +118,7 @@ export default defineScript<[string]>({
 
         // Step 2: Collect traps
         logger.log("Looking for Collect All button...");
-        const collected = await backend.findAndClick(
+        const collected = await backendCommand.findAndClick(
           "trapping/trapping_collect_all",
           undefined,
           token
@@ -128,10 +129,10 @@ export default defineScript<[string]>({
 
           // Step 3: Close
           logger.log("Closing with Escape...");
-          await pressKey(backend, "ESCAPE", token);
+          await pressKey("ESCAPE", token);
           await delay(300, token);
         } else {
-          const isOff = await backend.isVisible(
+          const isOff = await backendCommand.isVisible(
             "trapping/trapping_collect_all_off",
             undefined,
             token
@@ -139,10 +140,10 @@ export default defineScript<[string]>({
 
           if (isOff.length > 0) {
             logger.log("Collecting not available yet!");
-            await pressKey(backend, "ESCAPE", token);
+            await pressKey("ESCAPE", token);
             await delay(300, token);
           } else {
-            await pressKey(backend, "ESCAPE", token);
+            await pressKey("ESCAPE", token);
             throw new Error("Collect All button not found");
           }
         }

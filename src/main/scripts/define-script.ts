@@ -1,11 +1,8 @@
-import { backendCommand } from "../backend/index";
 import type { CancellationToken } from "../utils/cancellation-token";
 import { cancellationManager, logger } from "../utils/index";
 
 export type ScriptContext<TArgs extends unknown[] = []> = {
   token: CancellationToken;
-  backend: typeof backendCommand;
-  logger: typeof logger;
   args: TArgs;
 };
 
@@ -35,8 +32,6 @@ export const defineScript = <TArgs extends unknown[] = [], TResult = void>(
     try {
       const result = await config.run({
         token,
-        backend: backendCommand,
-        logger,
         args: args as unknown as TArgs,
       });
       logger.log(`Script completed: ${config.name}`);

@@ -7,6 +7,8 @@ import {
   ClickPreset,
   getClickOptionsFromPreset,
 } from "../../../backend/backend-config";
+import { backendCommand } from "../../../backend/index";
+import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   COMPASS_CENTER,
@@ -61,19 +63,19 @@ const resolveUpgrade = (upgrade: CompassUpgrade): ResolvedUpgrade | null => {
 export default defineScript<[CompassUpgrade[]]>({
   id: "classSpecific.compass.run",
   name: "Compass",
-  run: async ({ token, backend, logger, args: [upgrades] }) => {
+  run: async ({ token, args: [upgrades] }) => {
     logger.log(`Compass: processing ${upgrades.length} upgrades`);
 
     // Setup
-    await openCompass(backend, token, logger);
-    await scrollInAtCenter(backend, token, logger, COMPASS_CENTER);
+    await openCompass(token);
+    await scrollInAtCenter(token, COMPASS_CENTER);
 
-    await dismissPanel(backend, token);
+    await dismissPanel(token);
 
     // Find starting position
-    const startNode = await findAnyNode(backend, token, logger);
+    const startNode = await findAnyNode(token);
     logger.log(`Starting from: ${startNode.id}`);
-    await backend.drag(
+    await backendCommand.drag(
       startNode.point,
       COMPASS_CENTER,
       { instant: true },
@@ -110,9 +112,7 @@ export default defineScript<[CompassUpgrade[]]>({
           navTarget,
           COMPASS_CENTER,
           graph,
-          backend,
           token,
-          logger,
           locked
         );
         locked = result.locked;
@@ -129,7 +129,7 @@ export default defineScript<[CompassUpgrade[]]>({
 
       let panelIntervalOpened = 0;
       while (panelIntervalOpened < 10) {
-        const hasCost = await backend.isVisible(
+        const hasCost = await backendCommand.isVisible(
           "compass/compass_cost",
           undefined,
           token
@@ -139,26 +139,26 @@ export default defineScript<[CompassUpgrade[]]>({
           break;
         }
 
-        await backend.click(clickPoint, undefined, token);
+        await backendCommand.click(clickPoint, undefined, token);
         panelIntervalOpened++;
       }
 
       // Click upgrade button
-      const hasUpgrade = await backend.find(
+      const hasUpgrade = await backendCommand.find(
         "compass/compass_upgrade",
         { threshold: 0.995 },
         token
       );
 
-      if (hasUpgrade.matches.length > 0) {
+      if (hasUpgrade.length > 0) {
         const fastClick = getClickOptionsFromPreset(ClickPreset.Fast);
-        await backend.click(
-          hasUpgrade.matches[0]!,
+        await backendCommand.click(
+          hasUpgrade[0]!,
           { times: resolved.change, ...fastClick },
           token
         );
       } else {
-        const hasUpgradeOff = await backend.isVisible(
+        const hasUpgradeOff = await backendCommand.isVisible(
           "compass/compass_upgrade_off",
           undefined,
           token
@@ -170,7 +170,7 @@ export default defineScript<[CompassUpgrade[]]>({
         }
       }
 
-      await dismissPanel(backend, token);
+      await dismissPanel(token);
     }
 
     logger.log(`Compass: done (${upgrades.length} upgrades processed)`);

@@ -17,7 +17,7 @@ export const navigateTo = async (
     undefined,
     token
   );
-  if (initialCheck) {
+  if (initialCheck.length > 0) {
     logger.log(`${screenName} already opened`);
     return true;
   }
@@ -30,7 +30,7 @@ export const navigateTo = async (
   );
 
   // Step 3: If button not visible and fallback provided, call fallback
-  if (!isButtonVisible) {
+  if (isButtonVisible.length === 0) {
     if (!fallback) {
       logger.error(`${screenName} button not found and no fallback available`);
       return false;
@@ -50,7 +50,7 @@ export const navigateTo = async (
       undefined,
       token
     );
-    if (postFallbackCheck) {
+    if (postFallbackCheck.length > 0) {
       logger.log(`${screenName} already opened after fallback`);
       return true;
     }
@@ -74,7 +74,7 @@ export const navigateTo = async (
     undefined,
     token
   );
-  if (confirmationResult.matches.length > 0) {
+  if (confirmationResult.length > 0) {
     logger.log(`${screenName} opened successfully`);
     return true;
   }

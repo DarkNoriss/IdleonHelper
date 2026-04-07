@@ -13,8 +13,8 @@
     "postinstall": "electron-builder install-app-deps",
     "build:backend": "powershell -ExecutionPolicy Bypass -File .\\scripts\\build-backend.ps1",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
-    "check": "ultracite check",
-    "fix": "ultracite fix",
+    "check": "ultracite check && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "fix": "ultracite fix && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "prepare": "husky"
   },
   "dependencies": {
