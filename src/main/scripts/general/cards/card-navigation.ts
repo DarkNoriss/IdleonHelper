@@ -60,7 +60,7 @@ export const navigateToCategory = async (
         logger.log(
           `Found ${categoryName} at (${match.x}, ${match.y}), dragging to top`
         );
-        await backend.drag(match, CARD_CATEGORY_TOP, undefined, token);
+        await backend.drag(match, CARD_CATEGORY_TOP, { instant: true }, token);
       }
       return;
     }
@@ -81,7 +81,7 @@ export const navigateToCategory = async (
       await backend.drag(
         CARD_CATEGORY_BOTTOM,
         CARD_CATEGORY_TOP,
-        undefined,
+        { instant: true },
         token
       );
     } else {
@@ -89,7 +89,7 @@ export const navigateToCategory = async (
       await backend.drag(
         CARD_CATEGORY_TOP,
         CARD_CATEGORY_BOTTOM,
-        undefined,
+        { instant: true },
         token
       );
     }
