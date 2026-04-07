@@ -20,6 +20,11 @@ const CardPresets = () => {
           scriptId: "general.cardPresets.apply",
           args: () => [Number(slot)],
         },
+        {
+          label: "Select Set",
+          scriptId: "general.cardPresets.select",
+          args: () => [Number(slot)],
+        },
       ]}
       title="Card Presets"
     >
