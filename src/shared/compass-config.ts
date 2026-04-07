@@ -844,6 +844,31 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         label: "Abomination Slayer XXX",
         image: "compass/abominations/compass_abomination_slayer_xxx",
       },
+      {
+        id: "abomination-slayer-xxxi",
+        label: "Abomination Slayer XXXI",
+        image: "compass/abominations/compass_abomination_slayer_xxxi",
+      },
+      {
+        id: "abomination-slayer-xxxii",
+        label: "Abomination Slayer XXXII",
+        image: "compass/abominations/compass_abomination_slayer_xxxii",
+      },
+      {
+        id: "abomination-slayer-xxxiii",
+        label: "Abomination Slayer XXXIII",
+        image: "compass/abominations/compass_abomination_slayer_xxxiii",
+      },
+      {
+        id: "abomination-slayer-xxxiv",
+        label: "Abomination Slayer XXXIV",
+        image: "compass/abominations/compass_abomination_slayer_xxxiv",
+      },
+      {
+        id: "abomination-slayer-xxxv",
+        label: "Abomination Slayer XXXV",
+        image: "compass/abominations/compass_abomination_slayer_xxxv",
+      },
     ],
   },
 ];
