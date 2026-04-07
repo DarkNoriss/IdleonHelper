@@ -41,7 +41,7 @@ const dragCategory = async (
   if (found.length === 0) {
     throw new Error(`Category ${category.categoryName} not found on screen`);
   }
-  const point = found[0]!;
+  const point = { x: 410, y: found[0]!.y - 7 };
   logger.log(
     `Dragging ${category.categoryName} from (${point.x}, ${point.y}) to anchor`
   );

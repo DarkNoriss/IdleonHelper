@@ -12,8 +12,8 @@ export type CardCategory = {
   cards: Card[];
 };
 
-export const CARD_CATEGORY_TOP: Point = { x: 471, y: 173 };
-export const CARD_CATEGORY_BOTTOM: Point = { x: 486, y: 491 };
+export const CARD_CATEGORY_TOP: Point = { x: 410, y: 173 };
+export const CARD_CATEGORY_BOTTOM: Point = { x: 410, y: 491 };
 
 export const CARD_CATEGORIES: CardCategory[] = [
   {
