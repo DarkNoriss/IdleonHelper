@@ -1,18 +1,7 @@
-import type { Point } from "@/types/backend-types";
+import { delay } from "../../utils";
 import { defineScript } from "../define-script";
 import { codex } from "../game-nav/codex";
-
-const _CARD_CATEGORY_TOP = { x: 471, y: 173 };
-const _CARD_SLOTS: Point[] = [
-  { x: 702, y: 363 },
-  { x: 770, y: 363 },
-  { x: 838, y: 363 },
-  { x: 906, y: 363 },
-  { x: 702, y: 453 },
-  { x: 770, y: 453 },
-  { x: 838, y: 453 },
-  { x: 906, y: 453 },
-];
+import { CARD_CATEGORIES, navigateToCategory } from "./cards";
 
 export default defineScript({
   id: "general.cardPresets.findSlot",
@@ -23,22 +12,21 @@ export default defineScript({
       throw new Error("Failed to navigate to Cards");
     }
 
-    const result = await backend.findWithDebug(
-      "codex/cards/cards_medium_resources",
-      undefined,
-      token
-    );
+    // Test 1: Navigate to Events (deterministic)
+    logger.log("Test 1/11: Navigating to Events");
+    await navigateToCategory("Events", backend, token, logger);
+    await delay(5000, token);
 
-    for (const match of result.matches) {
-      logger.log(
-        `medium_resources found at: (${match.point.x}, ${match.point.y}) similarity: ${match.similarity}`
-      );
+    // Tests 2-11: Random categories
+    for (let i = 0; i < 10; i++) {
+      token.throwIfCancelled();
+      const randomIndex = Math.floor(Math.random() * CARD_CATEGORIES.length);
+      const category = CARD_CATEGORIES[randomIndex]!;
+      logger.log(`Test ${i + 2}/11: Navigating to ${category.categoryName}`);
+      await navigateToCategory(category.categoryName, backend, token, logger);
+      await delay(5000, token);
     }
 
-    if (result.matches.length === 0) {
-      logger.log("medium_resources not found on screen");
-    }
-
-    logger.log("Card debug: done");
+    logger.log("Navigation test complete");
   },
 });
