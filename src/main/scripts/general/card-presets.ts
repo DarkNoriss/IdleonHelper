@@ -1,5 +1,5 @@
 import { backendCommand } from "../../backend/index";
-import { delay, logger } from "../../utils/index";
+import { logger } from "../../utils/index";
 import { defineScript } from "../define-script";
 import { codex } from "../game-nav/codex";
 import { CARD_CATEGORIES, navigateToCategory } from "./cards";
@@ -27,14 +27,14 @@ export default defineScript({
       );
 
       if (visible.length > 0) {
-        logger.log(`${label}: PASS — ${name} is visible`);
+        logger.log(`${label}: PASS - ${name} is visible`);
         passed++;
       } else {
-        logger.log(`${label}: FAIL — ${name} not visible after navigation`);
+        logger.log(`${label}: FAIL - ${name} not visible after navigation`);
         failed++;
       }
 
-      await delay(5000, token);
+      // await delay(5000, token);
     };
 
     // Test 1: Navigate to Events (deterministic)
