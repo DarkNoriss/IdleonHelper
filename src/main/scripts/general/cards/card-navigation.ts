@@ -1,6 +1,6 @@
-import type { backendCommand } from "@/backend";
-import type { logger as Logger } from "@/utils";
-import type { CancellationToken } from "@/utils/cancellation-token";
+import { backendCommand } from "../../../backend/index";
+import type { CancellationToken } from "../../../utils/cancellation-token";
+import { logger } from "../../../utils/index";
 import {
   CARD_CATEGORIES,
   CARD_CATEGORY_BOTTOM,
@@ -10,12 +10,11 @@ import {
 const MAX_SCROLL_ATTEMPTS = 20;
 
 const findVisibleCategory = async (
-  backend: typeof backendCommand,
   token: CancellationToken
 ): Promise<{ index: number; categoryName: string } | undefined> => {
   for (let i = 0; i < CARD_CATEGORIES.length; i++) {
     const category = CARD_CATEGORIES[i]!;
-    const visible = await backend.isVisible(
+    const visible = await backendCommand.isVisible(
       category.categoryImage,
       undefined,
       token
@@ -29,9 +28,7 @@ const findVisibleCategory = async (
 
 export const navigateToCategory = async (
   categoryName: string,
-  backend: typeof backendCommand,
-  token: CancellationToken,
-  logger: typeof Logger
+  token: CancellationToken
 ): Promise<void> => {
   const targetIndex = CARD_CATEGORIES.findIndex(
     (c) => c.categoryName === categoryName
@@ -46,7 +43,7 @@ export const navigateToCategory = async (
     token.throwIfCancelled();
 
     // Check if target is already visible
-    const targetVisible = await backend.isVisible(
+    const targetVisible = await backendCommand.isVisible(
       target.categoryImage,
       undefined,
       token
@@ -54,19 +51,28 @@ export const navigateToCategory = async (
 
     if (targetVisible.length > 0) {
       // Find exact position and drag to top
-      const found = await backend.find(target.categoryImage, undefined, token);
+      const found = await backendCommand.find(
+        target.categoryImage,
+        undefined,
+        token
+      );
       if (found.length > 0) {
         const match = found[0]!;
         logger.log(
           `Found ${categoryName} at (${match.x}, ${match.y}), dragging to top`
         );
-        await backend.drag(match, CARD_CATEGORY_TOP, { instant: true }, token);
+        await backendCommand.drag(
+          match,
+          CARD_CATEGORY_TOP,
+          { instant: true },
+          token
+        );
       }
       return;
     }
 
     // Find any visible category as reference
-    const reference = await findVisibleCategory(backend, token);
+    const reference = await findVisibleCategory(token);
     if (!reference) {
       throw new Error("No card category visible on screen");
     }
@@ -78,7 +84,7 @@ export const navigateToCategory = async (
     // Scroll toward target
     if (targetIndex > reference.index) {
       // Target is below — drag bottom to top (scroll down)
-      await backend.drag(
+      await backendCommand.drag(
         CARD_CATEGORY_BOTTOM,
         CARD_CATEGORY_TOP,
         { instant: true },
@@ -86,7 +92,7 @@ export const navigateToCategory = async (
       );
     } else {
       // Target is above — drag top to bottom (scroll up)
-      await backend.drag(
+      await backendCommand.drag(
         CARD_CATEGORY_TOP,
         CARD_CATEGORY_BOTTOM,
         { instant: true },

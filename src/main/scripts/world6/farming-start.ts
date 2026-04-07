@@ -1,14 +1,16 @@
 import {
+  backendCommand,
   backendConfig,
   ClickPreset,
   getClickOptionsFromPreset,
 } from "../../backend/index";
+import { logger } from "../../utils/index";
 import { defineScript } from "../define-script";
 
 export default defineScript({
   id: "world6.farming.start",
   name: "Start Farming",
-  run: async ({ token, backend, logger }) => {
+  run: async ({ token }) => {
     while (!token.isCancelled()) {
       token.throwIfCancelled();
       logger.log("Searching for farming images with threshold 99.25%...");
@@ -21,9 +23,9 @@ export default defineScript({
       };
 
       const [og3Result, og4Result, og5Result] = await Promise.all([
-        backend.find("farming/og-3", findOptions, token),
-        backend.find("farming/og-4", findOptions, token),
-        backend.find("farming/og-5", findOptions, token),
+        backendCommand.find("farming/og-3", findOptions, token),
+        backendCommand.find("farming/og-4", findOptions, token),
+        backendCommand.find("farming/og-5", findOptions, token),
       ]);
 
       const allCoordinates = [...og3Result, ...og4Result, ...og5Result];
@@ -62,7 +64,7 @@ export default defineScript({
       const presetOptions = getClickOptionsFromPreset(ClickPreset.Extreme);
       for (const coordinate of allCoordinates) {
         token.throwIfCancelled();
-        await backend.click(coordinate, presetOptions, token);
+        await backendCommand.click(coordinate, presetOptions, token);
       }
 
       logger.log(`Clicked on ${allCoordinates.length} farming images`);

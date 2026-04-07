@@ -1,4 +1,4 @@
-import type { Point } from "@/types/backend-types";
+import type { Point } from "../../../backend/backend-types";
 
 export type Card = {
   cardName: string;

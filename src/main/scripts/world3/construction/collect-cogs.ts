@@ -3,6 +3,7 @@ import {
   ClickPreset,
   getClickOptionsFromPreset,
 } from "../../../backend/index";
+import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { navigation } from "../../game-nav/index";
 import {
@@ -16,7 +17,7 @@ import {
 export default defineScript({
   id: "world3.construction.collectCogs",
   name: "Collect Cogs",
-  run: async ({ token, logger }) => {
+  run: async ({ token }) => {
     logger.log("Navigating to cogs tab...");
     const navigationSuccess = await navigation.construction.toCogsTab(token);
     if (!navigationSuccess) {

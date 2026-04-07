@@ -1,12 +1,16 @@
-import { ClickPreset, getClickOptionsFromPreset } from "../../backend/index";
-import { delay } from "../../utils/index";
+import {
+  backendCommand,
+  ClickPreset,
+  getClickOptionsFromPreset,
+} from "../../backend/index";
+import { delay, logger } from "../../utils/index";
 import { defineScript } from "../define-script";
 import { FARMING_GRID } from "./farming-constants";
 
 export default defineScript({
   id: "world6.farming.lockUnlock",
   name: "Lock/Unlock Crops",
-  run: async ({ token, backend, logger }) => {
+  run: async ({ token }) => {
     token.throwIfCancelled();
 
     await delay(100, token);
@@ -29,7 +33,7 @@ export default defineScript({
     const presetOptions = getClickOptionsFromPreset(ClickPreset.Extreme);
     for (const coordinate of allCoordinates) {
       token.throwIfCancelled();
-      await backend.click(coordinate, presetOptions, token);
+      await backendCommand.click(coordinate, presetOptions, token);
     }
 
     logger.log(`Clicked on ${allCoordinates.length} crop positions`);

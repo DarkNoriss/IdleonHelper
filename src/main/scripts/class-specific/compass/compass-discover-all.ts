@@ -1,7 +1,9 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
-import type { ScriptContext } from "../../define-script";
+import { backendCommand } from "../../../backend/index";
+import type { CancellationToken } from "../../../utils/cancellation-token";
+import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   COMPASS_CENTER,
@@ -14,8 +16,7 @@ import {
 
 const visitNode = async (
   nodeId: string,
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"]
+  token: CancellationToken
 ): Promise<string[]> => {
   const neighbors: string[] = [];
   for (const def of COMPASS_NODE_DEFS) {
@@ -23,7 +24,7 @@ const visitNode = async (
       continue;
     }
     token.throwIfCancelled();
-    const visible = await backend.isVisible(def.image, undefined, token);
+    const visible = await backendCommand.isVisible(def.image, undefined, token);
     if (visible.length > 0) {
       neighbors.push(def.id);
     }
@@ -34,23 +35,23 @@ const visitNode = async (
 export default defineScript({
   id: "classSpecific.compass.discoverAll",
   name: "Compass Discover All",
-  run: async ({ token, backend, logger }) => {
+  run: async ({ token }) => {
     const graph: Record<string, string[]> = {};
     const visited = new Set<string>();
 
-    await openCompass(backend, token, logger);
-    await scrollInAtCenter(backend, token, logger, COMPASS_CENTER);
+    await openCompass(token);
+    await scrollInAtCenter(token, COMPASS_CENTER);
 
-    const startNode = await findAnyNode(backend, token, logger);
+    const startNode = await findAnyNode(token);
     logger.log(`Starting from: ${startNode.id}`);
-    await backend.drag(
+    await backendCommand.drag(
       startNode.point,
       COMPASS_CENTER,
       { instant: true },
       token
     );
 
-    const startNeighbors = await visitNode(startNode.id, backend, token);
+    const startNeighbors = await visitNode(startNode.id, token);
     graph[startNode.id] = startNeighbors;
     visited.add(startNode.id);
     let currentId = startNode.id;
@@ -66,8 +67,8 @@ export default defineScript({
       const next = neighbors.find((n) => !visited.has(n));
 
       if (next) {
-        await centerNodeOrThrow(next, COMPASS_CENTER, backend, token);
-        const nextNeighbors = await visitNode(next, backend, token);
+        await centerNodeOrThrow(next, COMPASS_CENTER, token);
+        const nextNeighbors = await visitNode(next, token);
         graph[next] = nextNeighbors;
         visited.add(next);
         currentId = next;
@@ -96,12 +97,7 @@ export default defineScript({
       }
 
       for (let i = 1; i < shortestPath.length; i++) {
-        await centerNodeOrThrow(
-          shortestPath[i]!,
-          COMPASS_CENTER,
-          backend,
-          token
-        );
+        await centerNodeOrThrow(shortestPath[i]!, COMPASS_CENTER, token);
       }
       currentId = backtrackTarget;
     }

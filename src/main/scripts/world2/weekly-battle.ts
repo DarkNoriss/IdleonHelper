@@ -52,7 +52,7 @@ export const weeklyBattleOnChange = (
 export default defineScript<[number[]]>({
   id: "world2.weeklyBattle.run",
   name: "Weekly Battle Run",
-  run: async ({ args: [steps], token, logger }) => {
+  run: async ({ args: [steps], token }) => {
     logger.log(`Weekly battle steps: ${steps.join(", ")}`);
 
     // Note: do not run these concurrently. The backend window capture is not safe

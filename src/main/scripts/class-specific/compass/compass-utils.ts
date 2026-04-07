@@ -5,7 +5,9 @@ import {
   COMPASS_NODE_GROUPS,
 } from "@/shared/compass-config";
 import type { Point } from "../../../backend/backend-types";
-import type { ScriptContext } from "../../define-script";
+import { backendCommand } from "../../../backend/index";
+import type { CancellationToken } from "../../../utils/cancellation-token";
+import { logger } from "../../../utils/index";
 
 const ARROW_DOWN_MAX_ATTEMPTS = 3;
 const SCROLL_IN_TIMES = 8;
@@ -16,12 +18,10 @@ export const COMPASS_CENTER: Point = { x: 539, y: 269 };
 const DISMISS_PANEL_MAX_ATTEMPTS = 10;
 
 export const dismissPanel = async (
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"]
-  // logger: ScriptContext["logger"]
+  token: CancellationToken
 ): Promise<boolean> => {
   for (let attempt = 0; attempt < DISMISS_PANEL_MAX_ATTEMPTS; attempt++) {
-    const hasCost = await backend.isVisible(
+    const hasCost = await backendCommand.isVisible(
       "compass/compass_cost",
       undefined,
       token
@@ -29,10 +29,7 @@ export const dismissPanel = async (
     if (hasCost.length === 0) {
       return true;
     }
-    if (attempt === 0) {
-      // logger.log("  Dismissing upgrade panel...");
-    }
-    await backend.findAndClick("compass/compass", undefined, token);
+    await backendCommand.findAndClick("compass/compass", undefined, token);
   }
   return false;
 };
@@ -52,12 +49,10 @@ export const loadGraph = (): Record<string, string[]> => {
 };
 
 export const calibrateCompassCenter = async (
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"],
-  logger: ScriptContext["logger"]
+  token: CancellationToken
 ): Promise<Point> => {
   logger.log("Calibrating compass center from corner images...");
-  const topLeft = await backend.find(
+  const topLeft = await backendCommand.find(
     "compass/compass_top_left",
     undefined,
     token
@@ -65,7 +60,7 @@ export const calibrateCompassCenter = async (
   if (topLeft.length === 0) {
     throw new Error("Compass top-left corner not found");
   }
-  const bottomRight = await backend.find(
+  const bottomRight = await backendCommand.find(
     "compass/compass_bottom_right",
     undefined,
     token
@@ -85,20 +80,21 @@ export const calibrateCompassCenter = async (
   return center;
 };
 
-export const openCompass = async (
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"],
-  logger: ScriptContext["logger"]
-): Promise<void> => {
+export const openCompass = async (token: CancellationToken): Promise<void> => {
   logger.log("Looking for Compass skill...");
   let compassFound = false;
 
   const quickFindCompass = async (): Promise<boolean> => {
     if (
-      (await backend.isVisible("ui/attacks/attack_compass", undefined, token))
-        .length > 0
+      (
+        await backendCommand.isVisible(
+          "ui/attacks/attack_compass",
+          undefined,
+          token
+        )
+      ).length > 0
     ) {
-      return backend.findAndClick(
+      return backendCommand.findAndClick(
         "ui/attacks/attack_compass",
         undefined,
         token
@@ -115,14 +111,14 @@ export const openCompass = async (
       );
       if (
         (
-          await backend.isVisible(
+          await backendCommand.isVisible(
             "ui/attacks/attack_arrow_down",
             undefined,
             token
           )
         ).length > 0
       ) {
-        await backend.findAndClick(
+        await backendCommand.findAndClick(
           "ui/attacks/attack_arrow_down",
           undefined,
           token
@@ -144,7 +140,7 @@ export const openCompass = async (
 
   if (!compassFound) {
     logger.log("Compass not found. Opening attacks bar...");
-    const attacksClicked = await backend.findAndClick(
+    const attacksClicked = await backendCommand.findAndClick(
       "ui/attacks/attacks",
       undefined,
       token
@@ -165,19 +161,20 @@ export const openCompass = async (
 };
 
 export const scrollInAtCenter = async (
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"],
-  logger: ScriptContext["logger"],
+  token: CancellationToken,
   center: Point
 ): Promise<void> => {
   logger.log(`Scrolling in ${SCROLL_IN_TIMES} times...`);
-  await backend.scroll(center, WHEEL_DELTA, { times: SCROLL_IN_TIMES }, token);
+  await backendCommand.scroll(
+    center,
+    WHEEL_DELTA,
+    { times: SCROLL_IN_TIMES },
+    token
+  );
 };
 
 export const findAnyNode = async (
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"],
-  logger: ScriptContext["logger"]
+  token: CancellationToken
 ): Promise<{ id: string; point: Point }> => {
   logger.log("Scanning for any visible node...");
   const maxLen = Math.max(...COMPASS_NODE_GROUPS.map((g) => g.nodes.length));
@@ -188,7 +185,11 @@ export const findAnyNode = async (
       }
       const node = group.nodes[i]!;
       token.throwIfCancelled();
-      const matches = await backend.isVisible(node.image, undefined, token);
+      const matches = await backendCommand.isVisible(
+        node.image,
+        undefined,
+        token
+      );
       if (matches.length > 0) {
         logger.log(`Found node: ${node.id}`);
         return { id: node.id, point: matches[0]! };
@@ -234,31 +235,30 @@ const FAST_FIND = { timeoutMs: 250 };
 export const centerNode = async (
   nodeId: string,
   center: Point,
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"]
+  token: CancellationToken
 ): Promise<boolean> => {
   const def = COMPASS_NODE_DEFS.find((d) => d.id === nodeId);
   if (!def) {
     throw new Error(`Unknown node: ${nodeId}`);
   }
-  const result = await backend.find(def.image, FAST_FIND, token);
+  const result = await backendCommand.find(def.image, FAST_FIND, token);
   if (result.length === 0) {
     return false;
   }
-  await backend.drag(result[0]!, center, { instant: true }, token);
+  await backendCommand.drag(result[0]!, center, { instant: true }, token);
 
   // Verify centering — re-drag if the node landed off-center
-  const verify = await backend.find(def.image, FAST_FIND, token);
+  const verify = await backendCommand.find(def.image, FAST_FIND, token);
   if (verify.length > 0) {
     const pos = verify[0]!;
     const dx = Math.abs(pos.x - center.x);
     const dy = Math.abs(pos.y - center.y);
     if (dx > CENTER_TOLERANCE || dy > CENTER_TOLERANCE) {
-      await backend.drag(pos, center, { instant: true }, token);
+      await backendCommand.drag(pos, center, { instant: true }, token);
     }
   }
 
-  await dismissPanel(backend, token);
+  await dismissPanel(token);
 
   return true;
 };
@@ -266,10 +266,9 @@ export const centerNode = async (
 export const centerNodeOrThrow = async (
   nodeId: string,
   center: Point,
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"]
+  token: CancellationToken
 ): Promise<void> => {
-  const ok = await centerNode(nodeId, center, backend, token);
+  const ok = await centerNode(nodeId, center, token);
   if (!ok) {
     throw new Error(`Node "${nodeId}" not found on screen`);
   }
@@ -280,9 +279,7 @@ export const navigateToNode = async (
   to: string,
   center: Point,
   graph: Record<string, string[]>,
-  backend: ScriptContext["backend"],
-  token: ScriptContext["token"],
-  logger: ScriptContext["logger"],
+  token: CancellationToken,
   locked?: Set<string>
 ): Promise<{ arrived: boolean; currentNode: string; locked: Set<string> }> => {
   const lockedNodes = locked ?? new Set<string>();
@@ -297,10 +294,10 @@ export const navigateToNode = async (
 
     for (let i = 1; i < path.length; i++) {
       token.throwIfCancelled();
-      let ok = await centerNode(path[i]!, center, backend, token);
+      let ok = await centerNode(path[i]!, center, token);
       if (!ok) {
-        await dismissPanel(backend, token);
-        ok = await centerNode(path[i]!, center, backend, token);
+        await dismissPanel(token);
+        ok = await centerNode(path[i]!, center, token);
       }
       if (!ok) {
         logger.log(`  Node "${path[i]}" is locked, rerouting...`);

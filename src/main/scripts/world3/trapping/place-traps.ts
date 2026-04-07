@@ -1,7 +1,8 @@
 import { critters, trapConfigs } from "../../../../parsers/trapping";
 import type { Point } from "../../../backend/backend-types";
+import { backendCommand } from "../../../backend/index";
 import { setState } from "../../../state-hub";
-import { delay } from "../../../utils/index";
+import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { pressKey } from "../../keys";
 
@@ -20,21 +21,20 @@ const sortRowMajor = (points: Point[]): Point[] => {
 };
 
 const clickFast = async (
-  backend: Parameters<Parameters<typeof defineScript>[0]["run"]>[0]["backend"],
   image: string,
   token: Parameters<Parameters<typeof defineScript>[0]["run"]>[0]["token"]
 ): Promise<void> => {
-  const result = await backend.find(image, undefined, token);
+  const result = await backendCommand.find(image, undefined, token);
   if (result.length === 0) {
     throw new Error(`Could not find ${image}`);
   }
-  await backend.click(result[0]!, FAST_CLICK, token);
+  await backendCommand.click(result[0]!, FAST_CLICK, token);
 };
 
 export default defineScript<[string, string, string]>({
   id: "world3.trapping.placeTraps",
   name: "Place Traps",
-  run: async ({ token, backend, logger, args: [critter, trapType, timer] }) => {
+  run: async ({ token, args: [critter, trapType, timer] }) => {
     if (!critters.some((c) => c.value === critter)) {
       throw new Error(`Unknown critter: ${critter}`);
     }
@@ -59,16 +59,20 @@ export default defineScript<[string, string, string]>({
 
     try {
       // Open trapping UI
-      const isOpen = await backend.isVisible(
+      const isOpen = await backendCommand.isVisible(
         "trapping/trapping_delete_trap",
         undefined,
         token
       );
       if (isOpen.length === 0) {
         logger.log("Opening trapping UI...");
-        await backend.findAndClick("trapping/trapping_drone", undefined, token);
+        await backendCommand.findAndClick(
+          "trapping/trapping_drone",
+          undefined,
+          token
+        );
         await delay(250, token);
-        const confirmed = await backend.isVisible(
+        const confirmed = await backendCommand.isVisible(
           "trapping/trapping_delete_trap",
           undefined,
           token
@@ -80,34 +84,38 @@ export default defineScript<[string, string, string]>({
 
       // Delete all existing traps
       logger.log("Deleting all traps...");
-      await backend.findAndClick(
+      await backendCommand.findAndClick(
         "trapping/trapping_delete_trap",
         undefined,
         token
       );
       await delay(250, token);
-      await backend.findAndClick(
+      await backendCommand.findAndClick(
         "trapping/trapping_trash_all",
         undefined,
         token
       );
-      await pressKey(backend, "ESCAPE", token);
+      await pressKey("ESCAPE", token);
       await delay(250, token);
 
       // Reopen and select critter
       logger.log("Reopening UI, selecting critter...");
-      await backend.findAndClick("trapping/trapping_drone", undefined, token);
-      await backend.findAndClick(critterImage, undefined, token);
+      await backendCommand.findAndClick(
+        "trapping/trapping_drone",
+        undefined,
+        token
+      );
+      await backendCommand.findAndClick(critterImage, undefined, token);
 
       // Navigate to first character
-      const atFirstChar = await backend.isVisible(
+      const atFirstChar = await backendCommand.isVisible(
         "trapping/trapping_char_back_off",
         undefined,
         token
       );
       if (atFirstChar.length === 0) {
         logger.log("Navigating to first character...");
-        await clickFast(backend, "trapping/trapping_char_back", token);
+        await clickFast("trapping/trapping_char_back", token);
         await delay(NAV_DELAY, token);
       }
 
@@ -122,22 +130,22 @@ export default defineScript<[string, string, string]>({
         logger.log(`Character ${characterNum}: placing trap...`);
 
         // Click place trap
-        let placeTrapClicked = await backend.findAndClick(
+        let placeTrapClicked = await backendCommand.findAndClick(
           "trapping/trapping_place_trap",
           undefined,
           token
         );
 
         if (!placeTrapClicked) {
-          const needsCritter = await backend.isVisible(
+          const needsCritter = await backendCommand.isVisible(
             "trapping/trapping_select_critter",
             undefined,
             token
           );
           if (needsCritter.length > 0) {
             logger.log("Critter not selected, retrying...");
-            await backend.findAndClick(critterImage, undefined, token);
-            placeTrapClicked = await backend.findAndClick(
+            await backendCommand.findAndClick(critterImage, undefined, token);
+            placeTrapClicked = await backendCommand.findAndClick(
               "trapping/trapping_place_trap",
               undefined,
               token
@@ -152,14 +160,14 @@ export default defineScript<[string, string, string]>({
 
         // Navigate to trap type page (first character only)
         if (isFirstCharacter) {
-          const atFirstTrap = await backend.isVisible(
+          const atFirstTrap = await backendCommand.isVisible(
             "trapping/trapping_trap_back_off",
             undefined,
             token
           );
           if (atFirstTrap.length === 0) {
             logger.log("Navigating to first trap page...");
-            await clickFast(backend, "trapping/trapping_trap_back", token);
+            await clickFast("trapping/trapping_trap_back", token);
             await delay(NAV_DELAY, token);
           }
 
@@ -167,7 +175,7 @@ export default defineScript<[string, string, string]>({
             logger.log(
               `Navigating to ${trapType} page (${trapIndex} clicks)...`
             );
-            const nextBtn = await backend.find(
+            const nextBtn = await backendCommand.find(
               "trapping/trapping_trap_next",
               undefined,
               token
@@ -175,12 +183,16 @@ export default defineScript<[string, string, string]>({
             if (nextBtn.length === 0) {
               throw new Error("Trap next button not found");
             }
-            await backend.click(nextBtn[0]!, { times: trapIndex }, token);
+            await backendCommand.click(
+              nextBtn[0]!,
+              { times: trapIndex },
+              token
+            );
           }
         }
 
         // Verify trap type visible
-        const trapVisible = await backend.isVisible(
+        const trapVisible = await backendCommand.isVisible(
           trapImage,
           undefined,
           token
@@ -191,7 +203,11 @@ export default defineScript<[string, string, string]>({
 
         // Select timer from grid
         if (isFirstCharacter || !savedTimerCoords) {
-          const findResult = await backend.find(trapImage, undefined, token);
+          const findResult = await backendCommand.find(
+            trapImage,
+            undefined,
+            token
+          );
           if (findResult.length === 0) {
             throw new Error(`No trap images found for ${trapType}`);
           }
@@ -209,14 +225,18 @@ export default defineScript<[string, string, string]>({
           );
         }
 
-        await backend.click(savedTimerCoords, FAST_CLICK, token);
+        await backendCommand.click(savedTimerCoords, FAST_CLICK, token);
 
         // Return to character select
-        await backend.findAndClick("trapping/trapping_drone", undefined, token);
+        await backendCommand.findAndClick(
+          "trapping/trapping_drone",
+          undefined,
+          token
+        );
         await delay(300, token);
 
         // Check for next character
-        const noMoreCharacters = await backend.isVisible(
+        const noMoreCharacters = await backendCommand.isVisible(
           "trapping/trapping_char_next_off",
           undefined,
           token
@@ -225,7 +245,7 @@ export default defineScript<[string, string, string]>({
           break;
         }
 
-        await backend.findAndClick(
+        await backendCommand.findAndClick(
           "trapping/trapping_char_next",
           undefined,
           token
@@ -236,7 +256,7 @@ export default defineScript<[string, string, string]>({
       }
 
       // Close
-      await pressKey(backend, "ESCAPE", token);
+      await pressKey("ESCAPE", token);
       logger.log(`Done! Placed traps for ${characterNum} characters.`);
     } finally {
       setState("placeTraps", { current: null });

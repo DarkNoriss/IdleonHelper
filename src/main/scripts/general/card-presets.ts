@@ -1,4 +1,5 @@
-import { delay } from "../../utils";
+import { backendCommand } from "../../backend/index";
+import { delay, logger } from "../../utils/index";
 import { defineScript } from "../define-script";
 import { codex } from "../game-nav/codex";
 import { CARD_CATEGORIES, navigateToCategory } from "./cards";
@@ -6,7 +7,7 @@ import { CARD_CATEGORIES, navigateToCategory } from "./cards";
 export default defineScript({
   id: "general.cardPresets.findSlot",
   name: "Card Presets - Find Slot",
-  run: async ({ token, backend, logger }) => {
+  run: async ({ token }) => {
     const navigated = await codex.toCards(token);
     if (!navigated) {
       throw new Error("Failed to navigate to Cards");
@@ -17,9 +18,9 @@ export default defineScript({
 
     const testNavigation = async (name: string, label: string) => {
       logger.log(`${label}: Navigating to ${name}`);
-      await navigateToCategory(name, backend, token, logger);
+      await navigateToCategory(name, token);
 
-      const visible = await backend.isVisible(
+      const visible = await backendCommand.isVisible(
         CARD_CATEGORIES.find((c) => c.categoryName === name)!.categoryImage,
         undefined,
         token

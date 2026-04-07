@@ -1,4 +1,6 @@
 import type { OptimalStep } from "../../../../types/construction";
+import { backendCommand } from "../../../backend/index";
+import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { navigation } from "../../game-nav/index";
 import {
@@ -54,7 +56,7 @@ const calculateSpareCoords = (
 export default defineScript<[OptimalStep[]]>({
   id: "world3.construction.apply",
   name: "Apply Construction",
-  run: async ({ args: [steps], token, backend, logger }) => {
+  run: async ({ args: [steps], token }) => {
     logger.log("Navigating to construction screen...");
     const navigationSuccess = await navigation.construction.toCogsTab(token);
     if (!navigationSuccess) {
@@ -97,7 +99,7 @@ export default defineScript<[OptimalStep[]]>({
       logger.log(
         `Dragging from (${fromCoords.x}, ${fromCoords.y}) to (${toCoords.x}, ${toCoords.y})`
       );
-      await backend.drag(fromCoords, toCoords, { instant: true }, token);
+      await backendCommand.drag(fromCoords, toCoords, { instant: true }, token);
     }
 
     logger.log("Optimized board applied successfully");
