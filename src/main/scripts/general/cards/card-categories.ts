@@ -50,7 +50,9 @@ export const CARD_CATEGORIES: CardCategory[] = [
   {
     categoryName: "Hard Resources",
     categoryImage: "ui/codex/cards/cards_hard_resources",
-    cards: [],
+    cards: [
+      { cardName: "bunny-card", cardImage: "ui/codex/cards/game/bunny_card" },
+    ],
   },
   {
     categoryName: "Hyperion Nebula",
@@ -64,6 +66,10 @@ export const CARD_CATEGORIES: CardCategory[] = [
         cardName: "demon-genie-card",
         cardImage: "ui/codex/cards/game/demon_genie_card",
       },
+      {
+        cardName: "stilted-seeker-card",
+        cardImage: "ui/codex/cards/game/stilted_seeker_card",
+      },
     ],
   },
   {
@@ -74,6 +80,10 @@ export const CARD_CATEGORIES: CardCategory[] = [
       {
         cardName: "mister-brightside-card",
         cardImage: "ui/codex/cards/game/mister_brightside_card",
+      },
+      {
+        cardName: "tremor-wurm-card",
+        cardImage: "ui/codex/cards/game/tremor_wurm_card",
       },
     ],
   },
@@ -88,6 +98,14 @@ export const CARD_CATEGORIES: CardCategory[] = [
       {
         cardName: "minichief-spirit-card",
         cardImage: "ui/codex/cards/game/minichief_spirit_card",
+      },
+      {
+        cardName: "mama-troll-card",
+        cardImage: "ui/codex/cards/game/mama_troll_card",
+      },
+      {
+        cardName: "river-spirit-card",
+        cardImage: "ui/codex/cards/game/river_spirit_card",
       },
     ],
   },
@@ -141,6 +159,10 @@ export const CARD_CATEGORIES: CardCategory[] = [
         cardName: "chaotic-emperor-card",
         cardImage: "ui/codex/cards/game/chaotic_emperor_card",
         expectedX: 480,
+      },
+      {
+        cardName: "chaotic-troll-card",
+        cardImage: "ui/codex/cards/game/chaotic_troll_card",
       },
     ],
   },

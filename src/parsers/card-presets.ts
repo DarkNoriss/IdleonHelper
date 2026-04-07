@@ -5,7 +5,7 @@ export type CardPresetConfig = {
 
 export const PRESET_CONFIGS: CardPresetConfig[] = [
   { slot: 1, name: "AFK" },
-  { slot: 2, name: "2" },
+  { slot: 2, name: "Skilling" },
   { slot: 3, name: "Crystal" },
   { slot: 4, name: "4" },
   { slot: 5, name: "5" },

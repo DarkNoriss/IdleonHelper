@@ -32,6 +32,16 @@ const PRESET_CARDS: Record<number, string[]> = {
     "woodlin-spirit-card",
     "sovereign-emperor-card",
   ],
+  2: [
+    "chaotic-amarok-card",
+    "mama-troll-card",
+    "bunny-card",
+    "blighted-chizoar-card",
+    "river-spirit-card",
+    "tremor-wurm-card",
+    "stilted-seeker-card",
+    "chaotic-troll-card",
+  ],
   3: [
     "poop-card",
     "crystal-carrot-card",
@@ -111,27 +121,34 @@ export default defineScript<[number]>({
         currentCategoryIndex
       );
 
-      const points = await backendCommand.find(
+      const result = await backendCommand.findWithDebug(
         card.cardImage,
         undefined,
         token
       );
 
-      if (points.length === 0) {
+      if (result.matches.length === 0) {
         logger.log("  Not found on screen - skipping");
         continue;
       }
 
-      // Pick best match: if expectedX is set, prefer the closest by X
-      let bestPoint = points[0]!;
-      if (card.expectedX !== undefined && points.length > 1) {
-        bestPoint = points.reduce((best, p) =>
-          Math.abs(p.x - card.expectedX!) < Math.abs(best.x - card.expectedX!)
-            ? p
-            : best
-        );
+      for (const match of result.matches) {
         logger.log(
-          `  ${points.length} matches - picked (${bestPoint.x}, ${bestPoint.y}) by expectedX=${card.expectedX}`
+          `  match: (${match.point.x}, ${match.point.y}) similarity=${match.similarity.toFixed(4)}`
+        );
+      }
+
+      // Pick best match: if expectedX is set, prefer the closest by X
+      let bestPoint = result.matches[0]!.point;
+      if (card.expectedX !== undefined && result.matches.length > 1) {
+        bestPoint = result.matches.reduce((best, m) =>
+          Math.abs(m.point.x - card.expectedX!) <
+          Math.abs(best.point.x - card.expectedX!)
+            ? m
+            : best
+        ).point;
+        logger.log(
+          `  ${result.matches.length} matches - picked (${bestPoint.x}, ${bestPoint.y}) by expectedX=${card.expectedX}`
         );
       }
 
