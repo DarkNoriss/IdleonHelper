@@ -1,10 +1,12 @@
+import { backendCommand } from "../../backend/index";
+import { logger } from "../../utils/index";
 import { defineScript } from "../define-script";
 import { navigation } from "../game-nav/index";
 
 export default defineScript({
   id: "general.storeItems.run",
   name: "Store Items",
-  run: async ({ token, backend, logger }) => {
+  run: async ({ token }) => {
     token.throwIfCancelled();
     logger.log("Store items script: navigating to Storage...");
     await navigation.quickRef.toStorage(token);
@@ -12,7 +14,7 @@ export default defineScript({
     // Check if deposit_all.png is visible (quick check with 100ms timeout)
     token.throwIfCancelled();
     logger.log("Checking if deposit_all button is visible...");
-    const isDepositAllVisible = await backend.isVisible(
+    const isDepositAllVisible = await backendCommand.isVisible(
       "ui/codex/quik-ref/storage/deposit_all",
       undefined,
       token
@@ -20,7 +22,7 @@ export default defineScript({
 
     if (isDepositAllVisible.length > 0) {
       logger.log("deposit_all button is visible, clicking it...");
-      const clicked = await backend.findAndClick(
+      const clicked = await backendCommand.findAndClick(
         "ui/codex/quik-ref/storage/deposit_all",
         undefined,
         token
@@ -32,14 +34,14 @@ export default defineScript({
       logger.log(
         "deposit_all button not visible, clicking info.png to open info screen..."
       );
-      const infoClicked = await backend.findAndClick(
+      const infoClicked = await backendCommand.findAndClick(
         "ui/codex/quik-ref/storage/info",
         undefined,
         token
       );
       if (infoClicked) {
         logger.log("Info screen opened, now clicking deposit_all...");
-        const depositAllClicked = await backend.findAndClick(
+        const depositAllClicked = await backendCommand.findAndClick(
           "ui/codex/quik-ref/storage/deposit_all",
           undefined,
           token
@@ -55,7 +57,7 @@ export default defineScript({
     // Click deposit_cash.png
     token.throwIfCancelled();
     logger.log("Clicking deposit_cash button...");
-    const depositCashClicked = await backend.findAndClick(
+    const depositCashClicked = await backendCommand.findAndClick(
       "ui/codex/quik-ref/storage/deposit_cash",
       undefined,
       token
@@ -67,7 +69,7 @@ export default defineScript({
     // Click deposit_cash_max.png
     token.throwIfCancelled();
     logger.log("Clicking deposit_cash_max button...");
-    const depositCashMaxClicked = await backend.findAndClick(
+    const depositCashMaxClicked = await backendCommand.findAndClick(
       "ui/codex/quik-ref/storage/deposit_cash_max",
       undefined,
       token
@@ -79,7 +81,7 @@ export default defineScript({
     // Click ui/items.png
     token.throwIfCancelled();
     logger.log("Clicking ui/items button...");
-    const itemsClicked = await backend.findAndClick(
+    const itemsClicked = await backendCommand.findAndClick(
       "ui/items",
       undefined,
       token

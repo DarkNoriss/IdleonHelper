@@ -1,5 +1,6 @@
+import { backendCommand } from "../../backend/index";
 import { setState } from "../../state-hub";
-import { delay } from "../../utils/index";
+import { delay, logger } from "../../utils/index";
 import { defineScript } from "../define-script";
 
 const INITIAL_STATE = {
@@ -10,7 +11,7 @@ const INITIAL_STATE = {
 export default defineScript<[number]>({
   id: "general.bossFarmer.run",
   name: "Boss Farmer",
-  run: async ({ token, backend, logger, args: [totalIterations] }) => {
+  run: async ({ token, args: [totalIterations] }) => {
     const total = totalIterations;
 
     logger.log(`Boss Farmer: starting ${total} iterations...`);
@@ -30,18 +31,18 @@ export default defineScript<[number]>({
         token.throwIfCancelled();
 
         logger.log(`Iteration ${i + 1}/${total}: waiting for repeat image...`);
-        const result = await backend.find(
+        const result = await backendCommand.find(
           "general/repeat",
           { timeoutMs: 120_000, intervalMs: 225 },
           token
         );
 
-        if (result.matches.length === 0) {
+        if (result.length === 0) {
           logger.error("Repeat image not found within timeout. Stopping.");
           return;
         }
 
-        const matchPoint = result.matches[0]!;
+        const matchPoint = result[0]!;
         logger.log("Found repeat image. Waiting 5s for loot...");
 
         token.throwIfCancelled();
@@ -50,7 +51,7 @@ export default defineScript<[number]>({
         if (i < total - 1) {
           logger.log(`Clicking to start fight ${i + 2}...`);
           token.throwIfCancelled();
-          await backend.click(matchPoint, {}, token);
+          await backendCommand.click(matchPoint, {}, token);
           await delay(500, token);
 
           const now = Date.now();

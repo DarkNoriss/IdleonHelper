@@ -1,11 +1,12 @@
-import { delay } from "../../utils/index";
+import { backendCommand } from "../../backend/index";
+import { delay, logger } from "../../utils/index";
 import { defineScript } from "../define-script";
 import { navigation } from "../game-nav/index";
 
 export default defineScript<[string]>({
   id: "general.candy.run",
   name: "Candy",
-  run: async ({ token, backend, logger, args: [candyType] }) => {
+  run: async ({ token, args: [candyType] }) => {
     token.throwIfCancelled();
     logger.log(`Candy clicker: starting for candy_${candyType}...`);
 
@@ -19,22 +20,22 @@ export default defineScript<[string]>({
       }
 
       token.throwIfCancelled();
-      const result = await backend.find(
+      const result = await backendCommand.find(
         `items/candy_${candyType}`,
         { threshold: 0.96 },
         token
       );
 
-      if (result.matches.length === 0) {
+      if (result.length === 0) {
         logger.log(`No more candy_${candyType} found. Done.`);
         return;
       }
 
-      const candyPoint = result.matches[0]!;
+      const candyPoint = result[0]!;
       logger.log(`Found candy_${candyType}, holding for 1s...`);
 
       token.throwIfCancelled();
-      await backend.click(candyPoint, { holdTime: 1000 }, token);
+      await backendCommand.click(candyPoint, { holdTime: 1000 }, token);
 
       logger.log("Candy used. Waiting for Items to close...");
       await delay(500, token);

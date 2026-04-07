@@ -12,4 +12,14 @@ export const codex = {
       "Quick Ref"
     );
   },
+
+  toCards: async (token: CancellationToken): Promise<boolean> => {
+    return await navigateTo(
+      "ui/codex/cards/card_sets",
+      "ui/codex/cards",
+      ui.toCodex,
+      token,
+      "Cards"
+    );
+  },
 } as const;

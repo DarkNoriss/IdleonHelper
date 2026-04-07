@@ -1,4 +1,6 @@
 import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
+import { backendCommand } from "../../../backend/index";
+import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   COMPASS_CENTER,
@@ -13,7 +15,7 @@ import {
 export default defineScript<[string]>({
   id: "classSpecific.compass.minorDebug",
   name: "Compass Minor Debug",
-  run: async ({ token, backend, logger, args: [nodeId] }) => {
+  run: async ({ token, args: [nodeId] }) => {
     const targetDef = COMPASS_NODE_DEFS.find((d) => d.id === nodeId);
     if (!targetDef) {
       throw new Error(`Unknown node: ${nodeId}`);
@@ -27,12 +29,12 @@ export default defineScript<[string]>({
 
     const graph = loadGraph();
 
-    await openCompass(backend, token, logger);
-    await scrollInAtCenter(backend, token, logger, COMPASS_CENTER);
+    await openCompass(token);
+    await scrollInAtCenter(token, COMPASS_CENTER);
 
-    const startNode = await findAnyNode(backend, token, logger);
+    const startNode = await findAnyNode(token);
     logger.log(`Found start node: ${startNode.id}`);
-    await backend.drag(
+    await backendCommand.drag(
       startNode.point,
       COMPASS_CENTER,
       { instant: true },
@@ -48,7 +50,7 @@ export default defineScript<[string]>({
       }
       logger.log(`Navigating: ${path.join(" -> ")}`);
       for (let i = 1; i < path.length; i++) {
-        await centerNodeOrThrow(path[i]!, COMPASS_CENTER, backend, token);
+        await centerNodeOrThrow(path[i]!, COMPASS_CENTER, token);
       }
     }
 
@@ -65,7 +67,11 @@ export default defineScript<[string]>({
 
       token.throwIfCancelled();
       logger.log(`Scanning: ${minor.image}`);
-      const result = await backend.findWithDebug(minor.image, undefined, token);
+      const result = await backendCommand.findWithDebug(
+        minor.image,
+        undefined,
+        token
+      );
 
       if (result.debugImagePath) {
         logger.log(`Debug image: ${result.debugImagePath}`);
