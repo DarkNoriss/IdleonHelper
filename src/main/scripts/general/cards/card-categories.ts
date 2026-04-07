@@ -3,6 +3,7 @@ import type { Point } from "../../../backend/backend-types";
 export type Card = {
   cardName: string;
   cardImage: string;
+  expectedX?: number;
 };
 
 export type CardCategory = {
@@ -125,6 +126,7 @@ export const CARD_CATEGORIES: CardCategory[] = [
       {
         cardName: "sovereign-emperor-card",
         cardImage: "ui/codex/cards/game/sovereign_emperor_card",
+        expectedX: 511,
       },
       {
         cardName: "king-doot-card",
@@ -133,6 +135,12 @@ export const CARD_CATEGORIES: CardCategory[] = [
       {
         cardName: "emperor-card",
         cardImage: "ui/codex/cards/game/emperor_card",
+        expectedX: 449,
+      },
+      {
+        cardName: "chaotic-emperor-card",
+        cardImage: "ui/codex/cards/game/chaotic_emperor_card",
+        expectedX: 480,
       },
     ],
   },

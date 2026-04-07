@@ -89,7 +89,7 @@ export default defineScript<[number]>({
     }
     logger.log("Cleared all card slots");
 
-    // Step 4: For each card, navigate to category and findWithDebug
+    // Step 4: For each card, navigate to category, find it, and click twice to equip
     for (let i = 0; i < cards.length; i++) {
       token.throwIfCancelled();
       const cardName = cards[i]!;
@@ -99,31 +99,39 @@ export default defineScript<[number]>({
         `Card ${i + 1}/${cards.length}: ${cardName} in ${category.categoryName}`
       );
 
-      // Navigate to the card's category
       await navigateToCategory(category.categoryName, token);
 
-      // Debug: find the card image
       const result = await backendCommand.findWithDebug(
         card.cardImage,
         undefined,
         token
       );
 
-      if (result.debugImagePath) {
-        logger.log(`Debug image: ${result.debugImagePath}`);
+      if (result.matches.length === 0) {
+        logger.log("  Not found on screen - skipping");
+        continue;
       }
 
-      if (result.matches.length === 0) {
-        logger.log("  Not found on screen");
-      } else {
-        for (const match of result.matches) {
-          logger.log(
-            `  Match: (${match.point.x}, ${match.point.y}) similarity=${match.similarity.toFixed(3)}`
-          );
-        }
+      // Pick best match: if expectedX is set, prefer the closest match by X
+      let bestMatch = result.matches[0]!;
+      if (card.expectedX !== undefined && result.matches.length > 1) {
+        bestMatch = result.matches.reduce((best, m) =>
+          Math.abs(m.point.x - card.expectedX!) <
+          Math.abs(best.point.x - card.expectedX!)
+            ? m
+            : best
+        );
+        logger.log(
+          `  ${result.matches.length} matches - picked (${bestMatch.point.x}, ${bestMatch.point.y}) by expectedX=${card.expectedX}`
+        );
       }
+
+      // Click twice to add card to preset
+      await backendCommand.click(bestMatch.point, undefined, token);
+      await backendCommand.click(bestMatch.point, undefined, token);
+      logger.log(`  Equipped ${cardName}`);
     }
 
-    logger.log(`Preset ${config.name}: debug scan complete`);
+    logger.log(`Preset ${config.name}: applied successfully`);
   },
 });

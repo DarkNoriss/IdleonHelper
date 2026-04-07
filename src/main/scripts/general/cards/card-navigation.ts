@@ -111,12 +111,6 @@ export const navigateToCategory = async (
     }
   }
 
-  // Target is now visible, drag to top and click to deselect any accidental selection
+  // Target is now visible, drag to top
   await dragCategory(targetIndex, CARD_CATEGORY_TOP, token);
-
-  await backendCommand.findAndClick(
-    CARD_CATEGORIES[targetIndex]!.categoryImage,
-    undefined,
-    token
-  );
 };
