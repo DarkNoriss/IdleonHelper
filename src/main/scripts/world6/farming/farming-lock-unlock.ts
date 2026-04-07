@@ -2,9 +2,9 @@ import {
   backendCommand,
   ClickPreset,
   getClickOptionsFromPreset,
-} from "../../backend/index";
-import { delay, logger } from "../../utils/index";
-import { defineScript } from "../define-script";
+} from "../../../backend/index";
+import { delay, logger } from "../../../utils/index";
+import { defineScript } from "../../define-script";
 import { FARMING_GRID } from "./farming-constants";
 
 export default defineScript({

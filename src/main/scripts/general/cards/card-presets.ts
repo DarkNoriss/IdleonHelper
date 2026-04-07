@@ -1,14 +1,15 @@
-import { PRESET_CONFIGS } from "../../../parsers/card-presets";
+import { PRESET_CONFIGS } from "../../../../parsers/card-presets";
 import {
   ClickPreset,
   getClickOptionsFromPreset,
-} from "../../backend/backend-config";
-import type { Point } from "../../backend/backend-types";
-import { backendCommand } from "../../backend/index";
-import { logger } from "../../utils/index";
-import { defineScript } from "../define-script";
-import { codex } from "../game-nav/codex";
-import { CARD_CATEGORIES, navigateToCategory } from "./cards";
+} from "../../../backend/backend-config";
+import type { Point } from "../../../backend/backend-types";
+import { backendCommand } from "../../../backend/index";
+import { logger } from "../../../utils/index";
+import { defineScript } from "../../define-script";
+import { codex } from "../../game-nav/codex";
+import { CARD_CATEGORIES } from "./card-categories";
+import { navigateToCategory } from "./card-navigation";
 
 const CARD_SLOTS: Point[] = [
   { x: 702, y: 363 },

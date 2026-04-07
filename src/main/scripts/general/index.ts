@@ -1,8 +1,8 @@
 import bossFarmer from "./boss-farmer";
 import candy from "./candy";
-import cardPresets from "./card-presets";
-import cardSelectPreset from "./card-select-preset";
-import storeItems from "./store-items";
+import cardPresets from "./cards/card-presets";
+import cardSelectPreset from "./cards/card-select-preset";
+import storeItems from "./storage";
 import test from "./test";
 
 export const generalScripts = [

@@ -1,5 +1,4 @@
-import farmingLockUnlock from "./farming-lock-unlock";
-import farmingStart from "./farming-start";
+import { farmingLockUnlock, farmingStart } from "./farming";
 import { summoningStartAutobattler, summoningStartEndless } from "./summoning";
 
 export const world6Scripts = [

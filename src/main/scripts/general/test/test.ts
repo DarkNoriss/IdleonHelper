@@ -1,6 +1,6 @@
-import { logger } from "../../utils/index";
-import { defineScript } from "../define-script";
-import { navigation } from "../game-nav/index";
+import { logger } from "../../../utils/index";
+import { defineScript } from "../../define-script";
+import { navigation } from "../../game-nav/index";
 
 export default defineScript({
   id: "general.test.run",

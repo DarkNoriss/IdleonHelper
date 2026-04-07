@@ -1,7 +1,7 @@
-import { backendCommand } from "../../backend/index";
-import { setState } from "../../state-hub";
-import { delay, logger } from "../../utils/index";
-import { defineScript } from "../define-script";
+import { backendCommand } from "../../../backend/index";
+import { setState } from "../../../state-hub";
+import { delay, logger } from "../../../utils/index";
+import { defineScript } from "../../define-script";
 
 const INITIAL_STATE = {
   avgIterationMs: 0,
