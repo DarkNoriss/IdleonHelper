@@ -109,9 +109,9 @@ export const CARD_CATEGORIES: CardCategory[] = [
     categoryName: "Bosses & Nightmares",
     categoryImage: "ui/codex/cards/cards_bosses_and_nightmares",
     cards: [
-      { cardName: "boop", cardImage: "ui/codex/cards/game/boop_card" },
+      { cardName: "boop-card", cardImage: "ui/codex/cards/game/boop_card" },
       {
-        cardName: "chaotic-amarok",
+        cardName: "chaotic-amarok-card",
         cardImage: "ui/codex/cards/game/chaotic_amarok_card",
       },
       {

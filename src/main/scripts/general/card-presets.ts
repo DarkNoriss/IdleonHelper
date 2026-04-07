@@ -27,8 +27,8 @@ const PRESETS: CardPreset[] = [
     name: "AFK",
     slot: 1,
     cards: [
-      "chaotic-amarok",
-      "boop",
+      "chaotic-amarok-card",
+      "boop-card",
       "demented-spiritlord-card",
       "blighted-chizoar-card",
       "clammie-card",
