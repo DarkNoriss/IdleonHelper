@@ -1,11 +1,11 @@
-import { getPosition } from "../../../parsers/construction";
+import { getPosition } from "../../../../parsers/construction";
 import type {
   ParsedCog,
   ParsedConstructionData,
   SolverResult,
   SolverWeights,
-} from "../../../types/construction";
-import { logger } from "../../utils/index";
+} from "../../../../types/construction";
+import { logger } from "../../../utils/index";
 import { getOptimalSteps } from "./construction-steps";
 import {
   calculateStateScore,

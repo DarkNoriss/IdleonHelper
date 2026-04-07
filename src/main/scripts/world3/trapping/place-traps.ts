@@ -1,10 +1,10 @@
-import { critters, trapConfigs } from "../../../parsers/trapping";
-import type { Point } from "../../backend/backend-types";
-import { setState } from "../../state-hub";
-import { delay } from "../../utils/index";
-import { defineScript } from "../define-script";
+import { critters, trapConfigs } from "../../../../parsers/trapping";
+import type { Point } from "../../../backend/backend-types";
+import { setState } from "../../../state-hub";
+import { delay } from "../../../utils/index";
+import { defineScript } from "../../define-script";
+import { pressKey } from "../../keys";
 
-const VK_ESCAPE = 0x1b;
 const FAST_CLICK = { times: 10, interval: 30, holdTime: 15 };
 const NAV_DELAY = 200;
 
@@ -91,7 +91,7 @@ export default defineScript<[string, string, string]>({
         undefined,
         token
       );
-      await backend.keyPress(VK_ESCAPE, undefined, token);
+      await pressKey(backend, "ESCAPE", token);
       await delay(250, token);
 
       // Reopen and select critter
@@ -240,7 +240,7 @@ export default defineScript<[string, string, string]>({
       }
 
       // Close
-      await backend.keyPress(VK_ESCAPE, undefined, token);
+      await pressKey(backend, "ESCAPE", token);
       logger.log(`Done! Placed traps for ${characterNum} characters.`);
     } finally {
       setState("placeTraps", { current: null });

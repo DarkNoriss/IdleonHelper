@@ -1,11 +1,11 @@
-import { getPosition, SPARE_START } from "../../../parsers/construction";
+import { getPosition, SPARE_START } from "../../../../parsers/construction";
 import type {
   OptimalStep,
   ParsedCog,
   ParsedConstructionData,
   SolverWeights,
-} from "../../../types/construction";
-import { logger } from "../../utils/index";
+} from "../../../../types/construction";
+import { logger } from "../../../utils/index";
 import {
   calculateStateScore,
   cloneInventory,

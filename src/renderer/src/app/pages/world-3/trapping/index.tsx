@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select.tsx";
 import { useMainState } from "@/hooks/use-main-state.ts";
-import { critters, trapConfigs } from "./trapping-data";
+import { critters, trapConfigs } from "@/parsers/trapping";
 
 const formatCountdown = (ms: number): string => {
   if (ms <= 0) {
@@ -32,20 +32,84 @@ const formatCountdown = (ms: number): string => {
   return `${seconds}s`;
 };
 
+type TrapTimerSelectsProps = {
+  trap: string;
+  onTrapChange: (value: string) => void;
+  timer: string;
+  onTimerChange: (value: string) => void;
+  idPrefix: string;
+};
+
+const TrapTimerSelects = ({
+  trap,
+  onTrapChange,
+  timer,
+  onTimerChange,
+  idPrefix,
+}: TrapTimerSelectsProps) => {
+  const selectedTrap = trapConfigs.find((t) => t.value === trap);
+
+  return (
+    <>
+      <div>
+        <label
+          className="mb-1.5 block font-medium text-sm"
+          htmlFor={`${idPrefix}-trap`}
+        >
+          Trap Type
+        </label>
+        <Select onValueChange={onTrapChange} value={trap}>
+          <SelectTrigger id={`${idPrefix}-trap`}>
+            <SelectValue placeholder="Select trap" />
+          </SelectTrigger>
+          <SelectContent>
+            {trapConfigs.map((t) => (
+              <SelectItem key={t.value} value={t.value}>
+                {t.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <label
+          className="mb-1.5 block font-medium text-sm"
+          htmlFor={`${idPrefix}-timer`}
+        >
+          Timer
+        </label>
+        <Select
+          disabled={!selectedTrap}
+          onValueChange={onTimerChange}
+          value={timer}
+        >
+          <SelectTrigger id={`${idPrefix}-timer`}>
+            <SelectValue placeholder="Select timer" />
+          </SelectTrigger>
+          <SelectContent>
+            {selectedTrap?.timers.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </>
+  );
+};
+
 const TrapPlacingSection = () => {
   const [critter, setCritter] = useState<string>("");
   const [trap, setTrap] = useState<string>("");
   const [timer, setTimer] = useState<string>("");
   const placeTraps = useMainState("placeTraps");
 
-  const selectedTrap = trapConfigs.find((t) => t.value === trap);
-
   const handleTrapChange = (value: string) => {
     setTrap(value);
     setTimer("");
   };
-
-  const isReady = critter !== "" && trap !== "" && timer !== "";
 
   return (
     <ScriptPage
@@ -59,7 +123,7 @@ const TrapPlacingSection = () => {
       ]}
       title="Trap Placing"
     >
-      <div className="mb-4 flex flex-wrap gap-4">
+      <div className="mb-4 grid grid-cols-3 gap-4">
         <div>
           <label
             className="mb-1.5 block font-medium text-sm"
@@ -68,7 +132,7 @@ const TrapPlacingSection = () => {
             Critter
           </label>
           <Select onValueChange={setCritter} value={critter}>
-            <SelectTrigger className="w-[200px]" id="place-critter">
+            <SelectTrigger id="place-critter">
               <SelectValue placeholder="Select critter" />
             </SelectTrigger>
             <SelectContent>
@@ -81,58 +145,14 @@ const TrapPlacingSection = () => {
           </Select>
         </div>
 
-        <div>
-          <label
-            className="mb-1.5 block font-medium text-sm"
-            htmlFor="place-trap"
-          >
-            Trap Type
-          </label>
-          <Select onValueChange={handleTrapChange} value={trap}>
-            <SelectTrigger className="w-[240px]" id="place-trap">
-              <SelectValue placeholder="Select trap" />
-            </SelectTrigger>
-            <SelectContent>
-              {trapConfigs.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label
-            className="mb-1.5 block font-medium text-sm"
-            htmlFor="place-timer"
-          >
-            Timer
-          </label>
-          <Select
-            disabled={!selectedTrap}
-            onValueChange={setTimer}
-            value={timer}
-          >
-            <SelectTrigger className="w-[140px]" id="place-timer">
-              <SelectValue placeholder="Select timer" />
-            </SelectTrigger>
-            <SelectContent>
-              {selectedTrap?.timers.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <TrapTimerSelects
+          idPrefix="place"
+          onTimerChange={setTimer}
+          onTrapChange={handleTrapChange}
+          timer={timer}
+          trap={trap}
+        />
       </div>
-
-      {!isReady && (
-        <p className="mb-4 text-muted-foreground text-sm">
-          Select critter, trap type, and timer to start placing.
-        </p>
-      )}
 
       {placeTraps?.current && (
         <p className="mb-4 font-medium text-sm">
@@ -148,8 +168,6 @@ const TrapCollectingSection = () => {
   const [timer, setTimer] = useState<string>("");
   const [remaining, setRemaining] = useState<string | null>(null);
   const collectTraps = useMainState("collectTraps");
-
-  const selectedTrap = trapConfigs.find((t) => t.value === trap);
 
   const handleTrapChange = (value: string) => {
     setTrap(value);
@@ -184,64 +202,20 @@ const TrapCollectingSection = () => {
           label: "Collect Traps",
           scriptId: "world3.trapping.collectTraps",
           runningLabel: "Collecting... (Click to stop)",
-          args: () => [trap, timer],
+          args: () => [timer],
         },
       ]}
       title="Trap Collecting"
     >
-      <div className="mb-4 flex flex-wrap gap-4">
-        <div>
-          <label
-            className="mb-1.5 block font-medium text-sm"
-            htmlFor="collect-trap"
-          >
-            Trap Type
-          </label>
-          <Select onValueChange={handleTrapChange} value={trap}>
-            <SelectTrigger className="w-[240px]" id="collect-trap">
-              <SelectValue placeholder="Select trap" />
-            </SelectTrigger>
-            <SelectContent>
-              {trapConfigs.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label
-            className="mb-1.5 block font-medium text-sm"
-            htmlFor="collect-timer"
-          >
-            Timer
-          </label>
-          <Select
-            disabled={!selectedTrap}
-            onValueChange={setTimer}
-            value={timer}
-          >
-            <SelectTrigger className="w-[140px]" id="collect-timer">
-              <SelectValue placeholder="Select timer" />
-            </SelectTrigger>
-            <SelectContent>
-              {selectedTrap?.timers.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="mb-4 grid grid-cols-2 gap-4">
+        <TrapTimerSelects
+          idPrefix="collect"
+          onTimerChange={setTimer}
+          onTrapChange={handleTrapChange}
+          timer={timer}
+          trap={trap}
+        />
       </div>
-
-      {trap === "" || timer === "" ? (
-        <p className="mb-4 text-muted-foreground text-sm">
-          Select trap type and timer to start collecting.
-        </p>
-      ) : null}
 
       {remaining && (
         <p className="mb-4 font-medium text-sm">

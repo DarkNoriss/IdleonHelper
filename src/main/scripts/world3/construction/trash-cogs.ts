@@ -2,9 +2,9 @@ import {
   backendCommand,
   ClickPreset,
   getClickOptionsFromPreset,
-} from "../../backend/index";
-import { defineScript } from "../define-script";
-import { navigation } from "../game-nav/index";
+} from "../../../backend/index";
+import { defineScript } from "../../define-script";
+import { navigation } from "../../game-nav/index";
 import {
   COGS_STEP,
   SPARE_COLUMNS,

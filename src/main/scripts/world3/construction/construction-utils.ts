@@ -3,13 +3,13 @@ import {
   getPosition,
   INV_COLUMNS,
   SPARE_START,
-} from "../../../parsers/construction";
+} from "../../../../parsers/construction";
 import type {
   ParsedCog,
   ParsedConstructionData,
   Score,
   SolverWeights,
-} from "../../../types/construction";
+} from "../../../../types/construction";
 
 export const getKeyFromPosition = (
   location: "board" | "build" | "spare",
