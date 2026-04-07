@@ -95,7 +95,7 @@ export default defineScript<[number]>({
     logger.log("Cleared all card slots");
 
     // Step 4: For each card, navigate to category, find it, and click twice to equip
-    let lastCategory = "";
+    let currentCategoryIndex: number | undefined;
     for (let i = 0; i < cards.length; i++) {
       token.throwIfCancelled();
       const cardName = cards[i]!;
@@ -105,39 +105,39 @@ export default defineScript<[number]>({
         `Card ${i + 1}/${cards.length}: ${cardName} in ${category.categoryName}`
       );
 
-      if (category.categoryName !== lastCategory) {
-        await navigateToCategory(category.categoryName, token);
-        lastCategory = category.categoryName;
-      }
+      currentCategoryIndex = await navigateToCategory(
+        category.categoryName,
+        token,
+        currentCategoryIndex
+      );
 
-      const result = await backendCommand.findWithDebug(
+      const points = await backendCommand.find(
         card.cardImage,
         undefined,
         token
       );
 
-      if (result.matches.length === 0) {
+      if (points.length === 0) {
         logger.log("  Not found on screen - skipping");
         continue;
       }
 
-      // Pick best match: if expectedX is set, prefer the closest match by X
-      let bestMatch = result.matches[0]!;
-      if (card.expectedX !== undefined && result.matches.length > 1) {
-        bestMatch = result.matches.reduce((best, m) =>
-          Math.abs(m.point.x - card.expectedX!) <
-          Math.abs(best.point.x - card.expectedX!)
-            ? m
+      // Pick best match: if expectedX is set, prefer the closest by X
+      let bestPoint = points[0]!;
+      if (card.expectedX !== undefined && points.length > 1) {
+        bestPoint = points.reduce((best, p) =>
+          Math.abs(p.x - card.expectedX!) < Math.abs(best.x - card.expectedX!)
+            ? p
             : best
         );
         logger.log(
-          `  ${result.matches.length} matches - picked (${bestMatch.point.x}, ${bestMatch.point.y}) by expectedX=${card.expectedX}`
+          `  ${points.length} matches - picked (${bestPoint.x}, ${bestPoint.y}) by expectedX=${card.expectedX}`
         );
       }
 
       // Click twice to add card to preset
-      await backendCommand.click(bestMatch.point, undefined, token);
-      await backendCommand.click(bestMatch.point, undefined, token);
+      await backendCommand.click(bestPoint, undefined, token);
+      await backendCommand.click(bestPoint, undefined, token);
       logger.log(`  Equipped ${cardName}`);
     }
 

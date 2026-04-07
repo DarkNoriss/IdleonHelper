@@ -9,8 +9,6 @@ import {
 
 const MAX_SCROLL_ATTEMPTS = 20;
 
-// Initial scan - find any visible category to determine where we are.
-// This is the slowest part since we don't know our position.
 const findCurrentCategory = async (
   token: CancellationToken
 ): Promise<number> => {
@@ -52,8 +50,9 @@ const dragCategory = async (
 
 export const navigateToCategory = async (
   categoryName: string,
-  token: CancellationToken
-): Promise<void> => {
+  token: CancellationToken,
+  knownIndex?: number
+): Promise<number> => {
   const targetIndex = CARD_CATEGORIES.findIndex(
     (c) => c.categoryName === categoryName
   );
@@ -61,17 +60,17 @@ export const navigateToCategory = async (
     throw new Error(`Unknown card category: ${categoryName}`);
   }
 
-  // Find where we are (slow initial scan)
-  const currentIndex = await findCurrentCategory(token);
+  const currentIndex =
+    knownIndex === undefined ? await findCurrentCategory(token) : knownIndex;
   logger.log(
     `Current: ${CARD_CATEGORIES[currentIndex]!.categoryName} (${currentIndex}), target: ${categoryName} (${targetIndex})`
   );
 
   if (currentIndex === targetIndex) {
-    if (currentIndex === 0) {
+    if (knownIndex === undefined) {
       await dragCategory(targetIndex, CARD_CATEGORY_TOP, token);
     }
-    return;
+    return targetIndex;
   }
 
   const scrollDown = targetIndex > currentIndex;
@@ -114,4 +113,5 @@ export const navigateToCategory = async (
 
   // Target is now visible, drag to top
   await dragCategory(targetIndex, CARD_CATEGORY_TOP, token);
+  return targetIndex;
 };
