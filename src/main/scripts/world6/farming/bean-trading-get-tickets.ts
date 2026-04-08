@@ -146,7 +146,7 @@ export default defineScript({
       token.throwIfCancelled();
 
       // Find empty inventory slots and pick one we haven't used yet
-      let emptySlots = await backendCommand.find(
+      let emptySlots = await backendCommand.isVisible(
         `${STORAGE_PATH}/storage_empty`,
         undefined,
         token
@@ -183,7 +183,12 @@ export default defineScript({
       }
 
       usedSlots.push(targetSlot);
-      await backendCommand.drag(okPosition, targetSlot, undefined, token);
+      await backendCommand.drag(
+        okPosition,
+        targetSlot,
+        { instant: true },
+        token
+      );
       logger.log(
         `bean-trading-get-tickets - ticket ${i}/${BEAN_TRADING_TICKET_COUNT}`
       );
