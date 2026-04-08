@@ -74,7 +74,7 @@ export default defineScript({
       return;
     }
 
-    const dropTarget = { x: tab1[0]!.x, y: tab1[0]!.y - 20 };
+    const dropTarget = { x: tab1[0]!.x, y: tab1[0]!.y - 50 };
     logger.log(
       `bean-trading-trade-crops-debug - tab_1 at (${tab1[0]!.x}, ${tab1[0]!.y}), dropping at (${dropTarget.x}, ${dropTarget.y})`
     );
