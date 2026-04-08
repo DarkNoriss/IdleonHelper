@@ -140,7 +140,17 @@ export default defineScript({
       `bean-trading-get-tickets - OK button cached at (${okPosition.x}, ${okPosition.y})`
     );
 
-    // 8. Loop: split and drag tickets to empty inventory slots
+    // 8. Scroll inventory to first page
+    token.throwIfCancelled();
+    logger.log("bean-trading-get-tickets - scrolling inventory to first page");
+    await backendCommand.scroll(
+      INVENTORY_CENTER,
+      SCROLL_DELTA,
+      { times: 30 },
+      token
+    );
+
+    // 9. Loop: split and drag tickets to empty inventory slots
     const usedSlots: Array<{ x: number; y: number }> = [];
     for (let i = 1; i <= BEAN_TRADING_TICKET_COUNT; i++) {
       token.throwIfCancelled();
