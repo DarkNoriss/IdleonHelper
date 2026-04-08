@@ -1,11 +1,14 @@
+import type { Point } from "../../../backend/backend-types";
 import { backendCommand } from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
 import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { navigation } from "../../game-nav/index";
+import { pressKey } from "../../keys";
 import {
   BEAN_TRADING_TICKET_COUNT,
   FARMING_GRID,
+  INVENTORY_CENTER,
   TICKET_DROP_TARGET,
 } from "./farming-constants";
 
@@ -14,12 +17,88 @@ const WORLD6_PATH = "ui/map/world-6";
 const TRADER_PATH = "ui/map/world-6/troll-broodnest";
 const TOWN_PATH = "ui/map/world-6/town";
 const FARMING_PATH = "ui/map/world-6/town/farming";
+const SCROLL_DELTA = 120;
+const MAX_INVENTORY_PAGES = 10;
+
+const findTicketFromFirstPage = async (
+  token: CancellationToken
+): Promise<Point | null> => {
+  await backendCommand.scroll(
+    INVENTORY_CENTER,
+    SCROLL_DELTA,
+    { times: 10, interval: 20 },
+    token
+  );
+
+  for (let page = 0; page < MAX_INVENTORY_PAGES; page++) {
+    const ticket = await backendCommand.isVisible(
+      "game-items/crop_transfer_ticket",
+      undefined,
+      token
+    );
+    if (ticket.length > 0) {
+      logger.log(`bean-trading-trade-crops - ticket found on page ${page + 1}`);
+      return ticket[0]!;
+    }
+
+    logger.log(
+      `bean-trading-trade-crops - ticket not on page ${page + 1}, scrolling`
+    );
+    await backendCommand.scroll(
+      INVENTORY_CENTER,
+      -SCROLL_DELTA,
+      undefined,
+      token
+    );
+    await delay(200, token);
+  }
+
+  return null;
+};
+
+const findTicketOnCurrentPage = async (
+  token: CancellationToken
+): Promise<Point | null> => {
+  const ticket = await backendCommand.isVisible(
+    "game-items/crop_transfer_ticket",
+    undefined,
+    token
+  );
+  if (ticket.length > 0) {
+    return ticket[0]!;
+  }
+
+  // Try next page
+  await backendCommand.scroll(
+    INVENTORY_CENTER,
+    -SCROLL_DELTA,
+    undefined,
+    token
+  );
+  await delay(200, token);
+
+  const ticketNext = await backendCommand.isVisible(
+    "game-items/crop_transfer_ticket",
+    undefined,
+    token
+  );
+  if (ticketNext.length > 0) {
+    logger.log("bean-trading-trade-crops - ticket found on next page");
+    return ticketNext[0]!;
+  }
+
+  return null;
+};
 
 const teleportToTrader = async (token: CancellationToken): Promise<boolean> => {
   logger.log("bean-trading-trade-crops - teleporting to trader map");
-  const mapOpened = await navigation.ui.toMap(token);
-  if (!mapOpened) {
-    logger.log("bean-trading-trade-crops - failed to open map");
+  const mapClicked = await backendCommand.findAndClick(
+    `${MAP_PATH}`,
+    undefined,
+    token
+  );
+  if (!mapClicked) {
+    logger.log("bean-trading-trade-crops - map button not found");
     return false;
   }
 
@@ -59,7 +138,11 @@ const walkToTrader = async (token: CancellationToken): Promise<boolean> => {
     return false;
   }
 
-  await backendCommand.click(feet[0]!, undefined, token);
+  await backendCommand.click(
+    { x: feet[0]!.x, y: feet[0]!.y + 10 },
+    undefined,
+    token
+  );
   return true;
 };
 
@@ -73,22 +156,20 @@ const dropTicket = async (token: CancellationToken): Promise<boolean> => {
     return false;
   }
 
-  const ticket = await backendCommand.find(
-    "game-items/crop_transfer_ticket",
-    undefined,
-    token
-  );
-  if (ticket.length === 0) {
+  const ticket = await findTicketOnCurrentPage(token);
+  if (!ticket) {
     logger.log("bean-trading-trade-crops - ticket not found in inventory");
     return false;
   }
 
   await backendCommand.drag(
-    ticket[0]!,
+    ticket,
     TICKET_DROP_TARGET,
     { instant: true },
     token
   );
+
+  await pressKey("ESCAPE", token);
 
   logger.log("bean-trading-trade-crops - waiting for trade dialog");
   const dialog = await backendCommand.find(
@@ -106,9 +187,13 @@ const dropTicket = async (token: CancellationToken): Promise<boolean> => {
 
 const teleportToTown = async (token: CancellationToken): Promise<boolean> => {
   logger.log("bean-trading-trade-crops - teleporting to town");
-  const mapOpened = await navigation.ui.toMap(token);
-  if (!mapOpened) {
-    logger.log("bean-trading-trade-crops - failed to open map");
+  const mapClicked = await backendCommand.findAndClick(
+    `${MAP_PATH}`,
+    undefined,
+    token
+  );
+  if (!mapClicked) {
+    logger.log("bean-trading-trade-crops - map button not found");
     return false;
   }
 
@@ -154,7 +239,7 @@ const collectCrop = async (
     return false;
   }
 
-  await delay(1000, token);
+  await delay(800, token);
 
   const col = plotIndex % FARMING_GRID.COLUMNS;
   const row = Math.floor(plotIndex / FARMING_GRID.COLUMNS);
@@ -171,25 +256,15 @@ export default defineScript({
   id: "world6.farming.beanTradingTradeCrops",
   name: "Bean Trading - Trade Crops",
   run: async ({ token }) => {
-    if (TICKET_DROP_TARGET.x === 0 && TICKET_DROP_TARGET.y === 0) {
-      logger.log(
-        "bean-trading-trade-crops - TICKET_DROP_TARGET not configured, run debug script first"
-      );
-      return;
-    }
-
     // Verify at least one ticket exists in inventory
     const itemsOpened = await navigation.ui.toItems(token);
     if (!itemsOpened) {
       logger.log("bean-trading-trade-crops - failed to open inventory");
       return;
     }
-    const ticketCheck = await backendCommand.isVisible(
-      "game-items/crop_transfer_ticket",
-      undefined,
-      token
-    );
-    if (ticketCheck.length === 0) {
+
+    const initialTicket = await findTicketFromFirstPage(token);
+    if (!initialTicket) {
       logger.log("bean-trading-trade-crops - no tickets found in inventory");
       return;
     }

@@ -13,10 +13,6 @@ const Farming = () => (
         label: "Bean Trading - Trade Crops",
         scriptId: "world6.farming.beanTradingTradeCrops",
       },
-      {
-        label: "Bean Trading - Trade Crops (Debug)",
-        scriptId: "world6.farming.beanTradingTradeCropsDebug",
-      },
     ]}
     title="Farming"
   />

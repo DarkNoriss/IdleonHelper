@@ -24,7 +24,6 @@ export type ScriptMap = {
   "world6.farming.lockUnlock": { args: []; result: undefined };
   "world6.farming.beanTradingGetTickets": { args: []; result: undefined };
   "world6.farming.beanTradingTradeCrops": { args: []; result: undefined };
-  "world6.farming.beanTradingTradeCropsDebug": { args: []; result: undefined };
   "world6.summoning.startAutobattler": { args: []; result: undefined };
   "world6.summoning.startEndlessAutobattler": { args: []; result: undefined };
   "world3.construction.apply": { args: [OptimalStep[]]; result: undefined };
