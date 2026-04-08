@@ -22,8 +22,8 @@ export const ui = {
   },
   toMap: async (token: CancellationToken): Promise<boolean> => {
     return await navigateTo(
-      "ui/map",
       "ui/map/world_1",
+      "ui/map",
       undefined,
       token,
       "Map"
