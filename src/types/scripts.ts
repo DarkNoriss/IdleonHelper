@@ -22,7 +22,6 @@ export type WeeklyBattleData = {
 export type ScriptMap = {
   "world6.farming.start": { args: []; result: undefined };
   "world6.farming.lockUnlock": { args: []; result: undefined };
-  "world6.farming.beanTradingDebug": { args: []; result: undefined };
   "world6.farming.beanTradingGetTickets": { args: []; result: undefined };
   "world6.summoning.startAutobattler": { args: []; result: undefined };
   "world6.summoning.startEndlessAutobattler": { args: []; result: undefined };

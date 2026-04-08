@@ -9,10 +9,6 @@ const Farming = () => (
         label: "Bean Trading - Get Tickets",
         scriptId: "world6.farming.beanTradingGetTickets",
       },
-      {
-        label: "Bean Trading - Debug",
-        scriptId: "world6.farming.beanTradingDebug",
-      },
     ]}
     title="Farming"
   />

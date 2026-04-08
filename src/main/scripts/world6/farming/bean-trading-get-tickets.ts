@@ -17,7 +17,6 @@ export default defineScript({
   name: "Bean Trading - Get Tickets",
   run: async ({ token }) => {
     // 1. Navigate to storage
-    token.throwIfCancelled();
     if (STORAGE_CENTER.x === 0 && STORAGE_CENTER.y === 0) {
       logger.log(
         "bean-trading-get-tickets - STORAGE_CENTER not configured, run debug script first"
@@ -34,7 +33,6 @@ export default defineScript({
     await navigation.quickRef.toStorage(token);
 
     // 2. Ensure small mode is OFF
-    token.throwIfCancelled();
     const smallModeOn = await backendCommand.isVisible(
       `${STORAGE_PATH}/storage_small_mode`,
       undefined,
@@ -55,7 +53,6 @@ export default defineScript({
     }
 
     // 3. Ensure split stack is ON
-    token.throwIfCancelled();
     const splitStackOff = await backendCommand.isVisible(
       `${STORAGE_PATH}/storage_split_stack_off`,
       undefined,
@@ -76,17 +73,15 @@ export default defineScript({
     }
 
     // 4. Scroll storage to first page (scroll up to go back to first tab)
-    token.throwIfCancelled();
     logger.log("bean-trading-get-tickets - scrolling storage to first page");
     await backendCommand.scroll(
       STORAGE_CENTER,
       SCROLL_DELTA,
-      { times: 30 },
+      { times: 30, interval: 80 },
       token
     );
 
     // 5. Find the ticket in storage (scroll down page by page, up to 30 times)
-    token.throwIfCancelled();
     logger.log("bean-trading-get-tickets - looking for crop transfer ticket");
     let ticketVisible = await backendCommand.isVisibleWithDebug(
       "game-items/crop_transfer_ticket",
@@ -103,7 +98,7 @@ export default defineScript({
         undefined,
         token
       );
-      await delay(100, token);
+      await delay(200, token);
       ticketVisible = await backendCommand.isVisibleWithDebug(
         "game-items/crop_transfer_ticket",
         undefined,
@@ -116,7 +111,6 @@ export default defineScript({
     }
 
     // 6. Click the ticket (triggers split popup)
-    token.throwIfCancelled();
     logger.log("bean-trading-get-tickets - clicking ticket");
     await backendCommand.findAndClick(
       "game-items/crop_transfer_ticket",
@@ -125,7 +119,6 @@ export default defineScript({
     );
 
     // 7. Find and cache OK button position
-    token.throwIfCancelled();
     const okResults = await backendCommand.find(
       `${STORAGE_PATH}/storage_ok`,
       undefined,
@@ -141,20 +134,17 @@ export default defineScript({
     );
 
     // 8. Scroll inventory to first page
-    token.throwIfCancelled();
     logger.log("bean-trading-get-tickets - scrolling inventory to first page");
     await backendCommand.scroll(
       INVENTORY_CENTER,
       SCROLL_DELTA,
-      { times: 30 },
+      { times: 10, interval: 20 },
       token
     );
 
     // 9. Loop: split and drag tickets to empty inventory slots
     const usedSlots: Array<{ x: number; y: number }> = [];
     for (let i = 1; i <= BEAN_TRADING_TICKET_COUNT; i++) {
-      token.throwIfCancelled();
-
       // Find empty inventory slots and pick one we haven't used yet
       let emptySlots = await backendCommand.isVisible(
         `${STORAGE_PATH}/storage_empty`,
@@ -177,7 +167,7 @@ export default defineScript({
           token
         );
         usedSlots.length = 0;
-        emptySlots = await backendCommand.find(
+        emptySlots = await backendCommand.isVisible(
           `${STORAGE_PATH}/storage_empty`,
           undefined,
           token
@@ -204,8 +194,7 @@ export default defineScript({
       );
     }
 
-    // 9. Close storage
-    token.throwIfCancelled();
+    // 10. Close storage
     await pressKey("ESCAPE", token);
     logger.log("bean-trading-get-tickets - done");
   },
