@@ -1,5 +1,5 @@
-import { backendCommand } from "../../../backend/index";
-import { delay, logger } from "../../../utils/index";
+import { backendCommand, backendConfig } from "../../../backend/index";
+import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { navigation } from "../../game-nav/index";
 import { pressKey } from "../../keys";
@@ -83,7 +83,7 @@ export default defineScript({
 
     // 5. Find the ticket in storage (scroll down page by page, up to 30 times)
     logger.log("bean-trading-get-tickets - looking for crop transfer ticket");
-    let ticketVisible = await backendCommand.isVisibleWithDebug(
+    let ticketVisible = await backendCommand.isVisible(
       "game-items/crop_transfer_ticket",
       undefined,
       token
@@ -98,10 +98,9 @@ export default defineScript({
         undefined,
         token
       );
-      await delay(200, token);
-      ticketVisible = await backendCommand.isVisibleWithDebug(
+      ticketVisible = await backendCommand.find(
         "game-items/crop_transfer_ticket",
-        undefined,
+        { timeoutMs: backendConfig.find.intervalMs * 4 },
         token
       );
     }
@@ -167,7 +166,7 @@ export default defineScript({
           token
         );
         usedSlots.length = 0;
-        emptySlots = await backendCommand.isVisible(
+        emptySlots = await backendCommand.find(
           `${STORAGE_PATH}/storage_empty`,
           undefined,
           token
