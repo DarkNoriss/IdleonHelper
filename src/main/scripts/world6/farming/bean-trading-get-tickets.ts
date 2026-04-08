@@ -75,41 +75,45 @@ export default defineScript({
       }
     }
 
-    // 4. Scroll storage to first page (scroll down to reach page 1)
+    // 4. Scroll storage to first page (scroll up to go back to first tab)
     token.throwIfCancelled();
     logger.log("bean-trading-get-tickets - scrolling storage to first page");
     await backendCommand.scroll(
       STORAGE_CENTER,
-      -SCROLL_DELTA,
+      SCROLL_DELTA,
       { times: 30 },
       token
     );
 
-    // 5. Find the ticket in storage (scroll up page by page, up to 30 times)
+    // 5. Find the ticket in storage (scroll down page by page, up to 30 times)
     token.throwIfCancelled();
     logger.log("bean-trading-get-tickets - looking for crop transfer ticket");
-    let ticketVisible = await backendCommand.isVisible(
+    let ticketVisible = await backendCommand.isVisibleWithDebug(
       "game-items/crop_transfer_ticket",
       undefined,
       token
     );
-    for (let page = 1; ticketVisible.length === 0 && page <= 30; page++) {
+    for (
+      let page = 1;
+      ticketVisible.matches.length === 0 && page <= 30;
+      page++
+    ) {
       logger.log(
-        `bean-trading-get-tickets - ticket not found, scrolling up (${page}/30)`
+        `bean-trading-get-tickets - ticket not found, scrolling down (${page}/30)`
       );
       await backendCommand.scroll(
         STORAGE_CENTER,
-        SCROLL_DELTA,
+        -SCROLL_DELTA,
         undefined,
         token
       );
-      ticketVisible = await backendCommand.isVisible(
+      ticketVisible = await backendCommand.isVisibleWithDebug(
         "game-items/crop_transfer_ticket",
         undefined,
         token
       );
     }
-    if (ticketVisible.length === 0) {
+    if (ticketVisible.matches.length === 0) {
       logger.log("bean-trading-get-tickets - ticket not found in storage");
       return;
     }
@@ -140,41 +144,48 @@ export default defineScript({
     );
 
     // 8. Loop: split and drag tickets to empty inventory slots
+    const usedSlots: Array<{ x: number; y: number }> = [];
     for (let i = 1; i <= BEAN_TRADING_TICKET_COUNT; i++) {
       token.throwIfCancelled();
 
-      // Find empty inventory slot
-      let emptySlot = await backendCommand.find(
+      // Find empty inventory slots and pick one we haven't used yet
+      let emptySlots = await backendCommand.find(
         `${STORAGE_PATH}/storage_empty`,
         undefined,
         token
       );
+      let targetSlot = emptySlots.find(
+        (slot) =>
+          !usedSlots.some((used) => used.x === slot.x && used.y === slot.y)
+      );
 
-      if (emptySlot.length === 0) {
+      if (!targetSlot) {
         logger.log(
           "bean-trading-get-tickets - no empty slot, scrolling inventory"
         );
         await backendCommand.scroll(
           INVENTORY_CENTER,
-          SCROLL_DELTA,
+          -SCROLL_DELTA,
           undefined,
           token
         );
-        emptySlot = await backendCommand.find(
+        usedSlots.length = 0;
+        emptySlots = await backendCommand.find(
           `${STORAGE_PATH}/storage_empty`,
           undefined,
           token
         );
+        targetSlot = emptySlots[0];
       }
 
-      if (emptySlot.length === 0) {
+      if (!targetSlot) {
         logger.log(
           "bean-trading-get-tickets - no empty slots available, stopping"
         );
         break;
       }
 
-      const targetSlot = emptySlot[0]!;
+      usedSlots.push(targetSlot);
       await backendCommand.drag(okPosition, targetSlot, undefined, token);
       logger.log(
         `bean-trading-get-tickets - ticket ${i}/${BEAN_TRADING_TICKET_COUNT}`
