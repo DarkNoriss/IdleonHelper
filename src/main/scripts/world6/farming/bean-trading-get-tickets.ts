@@ -81,11 +81,11 @@ export default defineScript({
     await backendCommand.scroll(
       STORAGE_CENTER,
       -SCROLL_DELTA,
-      { times: 10 },
+      { times: 30 },
       token
     );
 
-    // 5. Find the ticket in storage
+    // 5. Find the ticket in storage (scroll up page by page, up to 30 times)
     token.throwIfCancelled();
     logger.log("bean-trading-get-tickets - looking for crop transfer ticket");
     let ticketVisible = await backendCommand.isVisible(
@@ -93,8 +93,10 @@ export default defineScript({
       undefined,
       token
     );
-    if (ticketVisible.length === 0) {
-      logger.log("bean-trading-get-tickets - ticket not found, scrolling up");
+    for (let page = 1; ticketVisible.length === 0 && page <= 30; page++) {
+      logger.log(
+        `bean-trading-get-tickets - ticket not found, scrolling up (${page}/30)`
+      );
       await backendCommand.scroll(
         STORAGE_CENTER,
         SCROLL_DELTA,
