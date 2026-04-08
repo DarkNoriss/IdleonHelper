@@ -18,6 +18,18 @@ export default defineScript({
   run: async ({ token }) => {
     // 1. Navigate to storage
     token.throwIfCancelled();
+    if (STORAGE_CENTER.x === 0 && STORAGE_CENTER.y === 0) {
+      logger.log(
+        "bean-trading-get-tickets - STORAGE_CENTER not configured, run debug script first"
+      );
+      return;
+    }
+    if (INVENTORY_CENTER.x === 0 && INVENTORY_CENTER.y === 0) {
+      logger.log(
+        "bean-trading-get-tickets - INVENTORY_CENTER not configured, run debug script first"
+      );
+      return;
+    }
     logger.log("bean-trading-get-tickets - navigating to storage");
     await navigation.quickRef.toStorage(token);
 
@@ -30,11 +42,16 @@ export default defineScript({
     );
     if (smallModeOn.length > 0) {
       logger.log("bean-trading-get-tickets - turning off small mode");
-      await backendCommand.findAndClick(
+      const clicked = await backendCommand.findAndClick(
         `${STORAGE_PATH}/storage_small_mode`,
         undefined,
         token
       );
+      if (!clicked) {
+        logger.log(
+          "bean-trading-get-tickets - failed to click small mode toggle"
+        );
+      }
     }
 
     // 3. Ensure split stack is ON
@@ -46,11 +63,16 @@ export default defineScript({
     );
     if (splitStackOff.length > 0) {
       logger.log("bean-trading-get-tickets - enabling split stack");
-      await backendCommand.findAndClick(
+      const clicked = await backendCommand.findAndClick(
         `${STORAGE_PATH}/storage_split_stack_off`,
         undefined,
         token
       );
+      if (!clicked) {
+        logger.log(
+          "bean-trading-get-tickets - failed to click split stack toggle"
+        );
+      }
     }
 
     // 4. Scroll storage to first page (scroll down to reach page 1)
