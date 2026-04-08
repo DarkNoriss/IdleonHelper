@@ -11,7 +11,7 @@ import { pressKey } from "../../keys";
 
 export default defineScript<[number]>({
   id: "general.cardPresets.select",
-  name: "Card Presets - Select Set",
+  name: "Card Presets - Select Preset",
   run: async ({ token, args: [slot] }) => {
     const config = PRESET_CONFIGS.find((p) => p.slot === slot);
     if (!config) {
@@ -28,7 +28,19 @@ export default defineScript<[number]>({
       throw new Error("Failed to navigate to Cards");
     }
 
-    // Step 2: Open card sets panel (it may already be open by default)
+    // Step 2: Click the preset slot
+    const presetImage = `ui/codex/cards/card_preset_${config.slot}`;
+    const presetClicked = await backendCommand.findAndClick(
+      presetImage,
+      undefined,
+      token
+    );
+    if (!presetClicked) {
+      throw new Error(`Failed to find preset slot ${config.slot}`);
+    }
+    logger.log(`Clicked preset slot ${config.slot}`);
+
+    // Step 3: Open card sets panel (it may already be open by default)
     const alreadyOpen = await backendCommand.isVisible(
       "ui/codex/cards/card_set_equip",
       undefined,
@@ -54,22 +66,22 @@ export default defineScript<[number]>({
     }
     logger.log("Card sets panel open");
 
-    // Step 3: Reset to page 1 with 10 fast clicks on prev
+    // Step 4: Reset to page 1 with 10 fast clicks on prev
     const prevMatches = await backendCommand.isVisible(
       "ui/codex/cards/cards_set_prev",
       undefined,
       token
     );
     if (prevMatches.length > 0) {
-      const fastClick = getClickOptionsFromPreset(ClickPreset.Fast);
+      const extremeClick = getClickOptionsFromPreset(ClickPreset.Extreme);
       for (let i = 0; i < 10; i++) {
         token.throwIfCancelled();
-        await backendCommand.click(prevMatches[0]!, fastClick, token);
+        await backendCommand.click(prevMatches[0]!, extremeClick, token);
       }
     }
     logger.log("Reset to page 1");
 
-    // Step 4: Find the target set (loop up to 6 pages)
+    // Step 5: Find the target set (loop up to 6 pages)
     let foundPoint: { x: number; y: number } | undefined;
     for (let page = 0; page < 6; page++) {
       token.throwIfCancelled();
@@ -98,7 +110,7 @@ export default defineScript<[number]>({
       return;
     }
 
-    // Step 5: Check if already active, activate if not
+    // Step 6: Check if already active, activate if not
     const activatePoint = { x: foundPoint.x + 40, y: foundPoint.y };
     const activeMatches = await backendCommand.isVisible(
       "ui/codex/cards/card_set_active",
@@ -116,7 +128,7 @@ export default defineScript<[number]>({
       logger.log("Activated card set");
     }
 
-    // Step 6: Close menu
+    // Step 7: Close menu
     await pressKey("ESCAPE", token);
     logger.log(`Card set for ${config.name} selected`);
   },

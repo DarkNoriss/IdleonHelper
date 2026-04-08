@@ -21,7 +21,7 @@ const CardPresets = () => {
           args: () => [Number(slot)],
         },
         {
-          label: "Select Set",
+          label: "Select Preset",
           scriptId: "general.cardPresets.select",
           args: () => [Number(slot)],
         },
