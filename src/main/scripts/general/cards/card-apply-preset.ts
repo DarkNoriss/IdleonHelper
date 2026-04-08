@@ -67,7 +67,7 @@ const findCardCategory = (cardName: string) => {
 
 export default defineScript<[number]>({
   id: "general.cardPresets.apply",
-  name: "Card Presets - Apply",
+  name: "Card Presets - Apply Preset",
   run: async ({ token, args: [slot] }) => {
     const config = PRESET_CONFIGS.find((p) => p.slot === slot);
     if (!config) {
