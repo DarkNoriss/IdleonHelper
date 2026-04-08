@@ -16,4 +16,4 @@ export const BEAN_TRADING_TICKET_COUNT = 37;
 
 export const STORAGE_CENTER: Point = { x: 377, y: 316 };
 export const INVENTORY_CENTER: Point = { x: 788, y: 315 };
-export const TICKET_DROP_TARGET: Point = { x: 0, y: 0 };
+export const TICKET_DROP_TARGET: Point = { x: 650, y: 80 };
