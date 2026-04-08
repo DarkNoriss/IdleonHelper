@@ -1,5 +1,5 @@
 import { backendCommand } from "../../../backend/index";
-import { logger } from "../../../utils/index";
+import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { navigation } from "../../game-nav/index";
 import { pressKey } from "../../keys";
@@ -103,6 +103,7 @@ export default defineScript({
         undefined,
         token
       );
+      await delay(100, token);
       ticketVisible = await backendCommand.isVisibleWithDebug(
         "game-items/crop_transfer_ticket",
         undefined,
