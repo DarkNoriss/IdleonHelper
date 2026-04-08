@@ -14,6 +14,5 @@ export const FARMING_GRID = {
 // Bean trading
 export const BEAN_TRADING_TICKET_COUNT = 37;
 
-// These coordinates will be populated after running the debug script
-export const STORAGE_CENTER: Point = { x: 0, y: 0 };
-export const INVENTORY_CENTER: Point = { x: 0, y: 0 };
+export const STORAGE_CENTER: Point = { x: 377, y: 316 };
+export const INVENTORY_CENTER: Point = { x: 788, y: 315 };
