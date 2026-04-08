@@ -93,11 +93,7 @@ export default defineScript({
       undefined,
       token
     );
-    for (
-      let page = 1;
-      ticketVisible.matches.length === 0 && page <= 30;
-      page++
-    ) {
+    for (let page = 1; ticketVisible.length === 0 && page <= 30; page++) {
       logger.log(
         `bean-trading-get-tickets - ticket not found, scrolling down (${page}/30)`
       );
@@ -113,7 +109,7 @@ export default defineScript({
         token
       );
     }
-    if (ticketVisible.matches.length === 0) {
+    if (ticketVisible.length === 0) {
       logger.log("bean-trading-get-tickets - ticket not found in storage");
       return;
     }
