@@ -1,12 +1,14 @@
 import {
   backendCommand,
   ClickPreset,
+  getClickOptionsFromPreset,
   getDragOptionsFromPreset,
 } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   buildSushiRegions,
+  SUSHI_COOK,
   SUSHI_GRID,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
@@ -107,7 +109,20 @@ export default defineScript({
       }
 
       if (!merged) {
-        // Re-scan if no merge happened
+        logger.log("sushi-station-merge - no pairs, cooking more sushi");
+        const cookButton = await backendCommand.isVisible(
+          SUSHI_COOK,
+          undefined,
+          token
+        );
+        if (cookButton.length > 0) {
+          const clickOptions = getClickOptionsFromPreset(ClickPreset.Extreme);
+          await backendCommand.click(
+            cookButton[0]!,
+            { ...clickOptions, times: 20 },
+            token
+          );
+        }
       }
     }
   },
