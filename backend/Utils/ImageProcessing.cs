@@ -262,5 +262,154 @@ public static class ImageProcessing
 
     return (matches, debugPath);
   }
+
+  public record RegionRect(
+    int X,
+    int Y,
+    int Width,
+    int Height
+  );
+
+  public record HsvColor(
+    int H,
+    int S,
+    int V
+  );
+
+  public record RegionResult(
+    int RegionIndex,
+    string? MatchedTemplate,
+    double Similarity,
+    int NonZeroPixels,
+    string? DebugImagePath
+  );
+
+  public static List<RegionResult> ReadRegions(
+    Mat colorScreenshot,
+    List<RegionRect> regions,
+    HsvColor hsvLower,
+    HsvColor hsvUpper,
+    List<string> templatePaths,
+    double threshold,
+    bool debug,
+    CancellationToken ct
+  )
+  {
+    ct.ThrowIfCancellationRequested();
+
+    var results = new List<RegionResult>();
+
+    var templates = new List<(string name, Mat mat)>();
+    foreach (var path in templatePaths)
+    {
+      if (!File.Exists(path)) continue;
+      var template = LoadImage(path);
+      var name = Path.GetFileNameWithoutExtension(path);
+      templates.Add((name, template));
+    }
+
+    var debugDir = debug ? Path.Combine(AppContext.BaseDirectory, "debug-regions") : null;
+    if (debug && debugDir != null)
+    {
+      Directory.CreateDirectory(debugDir);
+    }
+
+    try
+    {
+      using var hsvImage = new Mat();
+      Cv2.CvtColor(colorScreenshot, hsvImage, ColorConversionCodes.BGR2HSV);
+
+      var lowerScalar = new Scalar(hsvLower.H, hsvLower.S, hsvLower.V);
+      var upperScalar = new Scalar(hsvUpper.H, hsvUpper.S, hsvUpper.V);
+
+      for (var i = 0; i < regions.Count; i++)
+      {
+        ct.ThrowIfCancellationRequested();
+
+        var region = regions[i];
+
+        var roiX = Math.Clamp(region.X, 0, colorScreenshot.Width - 1);
+        var roiY = Math.Clamp(region.Y, 0, colorScreenshot.Height - 1);
+        var roiW = Math.Min(region.Width, colorScreenshot.Width - roiX);
+        var roiH = Math.Min(region.Height, colorScreenshot.Height - roiY);
+
+        if (roiW <= 0 || roiH <= 0)
+        {
+          results.Add(new RegionResult(i, null, 0, 0, null));
+          continue;
+        }
+
+        var roiRect = new Rect(roiX, roiY, roiW, roiH);
+
+        using var hsvRoi = new Mat(hsvImage, roiRect);
+        using var mask = new Mat();
+        Cv2.InRange(hsvRoi, lowerScalar, upperScalar, mask);
+
+        var nonZeroCount = Cv2.CountNonZero(mask);
+        if (nonZeroCount < 10)
+        {
+          results.Add(new RegionResult(i, null, 0, nonZeroCount, null));
+          continue;
+        }
+
+        using var colorRoi = new Mat(colorScreenshot, roiRect);
+        using var masked = new Mat();
+        colorRoi.CopyTo(masked, mask);
+
+        using var grayRoi = new Mat();
+        Cv2.CvtColor(masked, grayRoi, ColorConversionCodes.BGR2GRAY);
+
+        using var binaryRoi = new Mat();
+        Cv2.Threshold(grayRoi, binaryRoi, 1, 255, ThresholdTypes.Binary);
+
+        string? debugImagePath = null;
+        if (debug && debugDir != null)
+        {
+          var rawRoiPath = Path.Combine(debugDir, $"roi-{i}-raw.png");
+          var filteredPath = Path.Combine(debugDir, $"roi-{i}-filtered.png");
+          using var rawColorRoi = new Mat(colorScreenshot, roiRect);
+          Cv2.ImWrite(rawRoiPath, rawColorRoi);
+          Cv2.ImWrite(filteredPath, binaryRoi);
+          debugImagePath = filteredPath;
+        }
+
+        string? bestMatch = null;
+        var bestSimilarity = 0.0;
+
+        foreach (var (name, template) in templates)
+        {
+          if (binaryRoi.Width < template.Width || binaryRoi.Height < template.Height)
+            continue;
+
+          using var result = new Mat();
+          Cv2.MatchTemplate(binaryRoi, template, result, TemplateMatchModes.CCoeffNormed);
+          Cv2.MinMaxLoc(result, out _, out var maxVal, out _, out _);
+
+          if (maxVal > bestSimilarity)
+          {
+            bestSimilarity = maxVal;
+            bestMatch = name;
+          }
+        }
+
+        results.Add(new RegionResult(
+          i,
+          bestSimilarity >= threshold ? bestMatch : null,
+          bestSimilarity,
+          nonZeroCount,
+          debugImagePath
+        ));
+      }
+    }
+    finally
+    {
+      foreach (var (_, mat) in templates)
+      {
+        mat.Dispose();
+      }
+    }
+
+    return results;
+  }
 }
 
