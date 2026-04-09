@@ -383,7 +383,7 @@ export const backendCommand = {
       hsvLower,
       hsvUpper,
       templates: resolvedTemplates,
-      threshold: options?.threshold ?? 0.8,
+      threshold: options?.threshold ?? backendConfig.find.threshold,
       debug: options?.debug ?? false,
     };
     const payloadSize = JSON.stringify(payload).length;
