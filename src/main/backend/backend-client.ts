@@ -286,6 +286,12 @@ export const sendCommand = async <T extends keyof CommandRequestMap>(
   };
   const messageJson = JSON.stringify(message);
 
+  if (messageJson.length > 10_000) {
+    console.log(
+      `[sendCommand] Large message: ${command}, ${messageJson.length} bytes`
+    );
+  }
+
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       messageHandlers.delete(messageId);
