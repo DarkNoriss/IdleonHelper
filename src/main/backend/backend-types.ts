@@ -60,6 +60,17 @@ export type FindWithDebugResponse = {
   debugImagePath?: string | null;
 };
 
+// Find parallel command
+export type FindParallelRequest = {
+  imagePaths: string[];
+  threshold: number;
+  offset?: ScreenOffset;
+};
+
+export type FindParallelResponse = {
+  results: Record<string, Point[]>;
+};
+
 // Click command
 export type ClickRequest = {
   point: Point;
@@ -140,6 +151,7 @@ export type CommandRequestMap = {
   stop: StopRequest;
   keyPress: KeyPressRequest;
   scroll: ScrollRequest;
+  findParallel: FindParallelRequest;
 };
 
 export type CommandResponseMap = {
@@ -151,6 +163,7 @@ export type CommandResponseMap = {
   stop: StopResponse;
   keyPress: KeyPressResponse;
   scroll: ScrollResponse;
+  findParallel: FindParallelResponse;
 };
 
 // Helper type for creating type-safe WebSocket messages

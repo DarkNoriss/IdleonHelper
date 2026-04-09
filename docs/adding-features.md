@@ -26,24 +26,79 @@ Scripts live at `src/main/scripts/<world>/<script-name>.ts`. Use `defineScript()
 
 ```ts
 // src/main/scripts/world6/my-script.ts
+import { backendCommand } from "../../backend/index";
+import { logger } from "../../utils/index";
 import { defineScript } from "../define-script";
 
 export default defineScript({
   id: "world6.myFeature.run",  // dot-separated: world.feature.action
   name: "My Feature",
-  run: async ({ token, backend, logger }) => {
-    logger.log("Starting...");
+  run: async ({ token }) => {
+    logger.log("my-feature - starting");
     token.throwIfCancelled();
-    await backend.click({ x: 100, y: 200 }, {}, token);
+    await backendCommand.click({ x: 100, y: 200 }, undefined, token);
   },
 });
 ```
 
 The `ScriptContext` provides:
 - `token` — `CancellationToken`; call `token.throwIfCancelled()` inside loops and between async operations
-- `backend` — typed wrapper around backend commands (find, click, etc.)
-- `logger` — structured logger whose output appears in the Logs page
 - `args` — typed tuple from `TArgs` generic (defaults to `[]`)
+
+Always import these directly (never pass as function parameters):
+- `backendCommand` from `../../backend/index` — backend commands (find, click, etc.)
+- `logger` from `../../utils/index` — structured logger whose output appears in the Logs page
+
+### Backend Command API
+
+All commands take `CancellationToken` as the last argument and `undefined` for default options.
+
+**Single-image commands:**
+
+| Command | Signature | Description |
+|---------|-----------|-------------|
+| `find` | `(imagePath, options?, token) → Point[]` | Blocking search with retry (default 5s timeout, 50ms interval) |
+| `isVisible` | `(imagePath, options?, token) → Point[]` | Non-blocking check (50ms timeout) |
+| `findAndClick` | `(imagePath, options?, token) → boolean` | Find then click first match |
+| `click` | `(point, options?, token) → ClickResponse` | Click at coordinates |
+| `drag` | `(start, end, options?, token) → DragResponse` | Drag between points |
+| `scroll` | `(point, delta, options?, token) → ScrollResponse` | Scroll at point |
+| `keyPress` | `(key, options?, token) → KeyPressResponse` | Press a key |
+
+**Parallel commands** — check/find multiple images in one call:
+
+| Command | Signature | Description |
+|---------|-----------|-------------|
+| `isVisibleParallel` | `(images, options?, token) → Record<string, Point[]>` | Non-blocking check for all images |
+| `findParallel` | `(images, options?, token) → Record<string, Point[]>` | Blocking search with retry for all images |
+
+The `images` parameter is a `Record<string, string>` — keys are your chosen labels, values are image paths. Results use the same keys:
+
+```ts
+const vis = await backendCommand.isVisibleParallel(
+  { back: "ui/farming/back", info: "ui/farming/crop_info" },
+  undefined,
+  token
+);
+if (vis.back.length > 0) { /* back button visible */ }
+if (vis.info.length > 0) { /* crop info visible */ }
+
+const found = await backendCommand.findParallel(
+  { "4": "ui/farming/og_4", "5": "ui/farming/og_5" },
+  { timeoutMs: 60000 },
+  token
+);
+// found["4"] → Point[], found["5"] → Point[]
+```
+
+**Click presets** — import `ClickPreset` and `getClickOptionsFromPreset` from `../../backend/index`:
+
+```ts
+const clickOptions = getClickOptionsFromPreset(ClickPreset.Fast);
+await backendCommand.click(point, clickOptions, token);
+```
+
+Presets: `Standard` (100ms), `Fast` (50ms), `UltraFast` (25ms), `Extreme` (12.5ms), `Slow` (200ms).
 
 ### Export from the barrel
 

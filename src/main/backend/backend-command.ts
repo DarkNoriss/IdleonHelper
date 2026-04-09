@@ -11,6 +11,7 @@ import type {
   DragRepeatResponse,
   DragRequest,
   DragResponse,
+  FindParallelRequest,
   FindRequest,
   FindWithDebugRequest,
   FindWithDebugResponse,
@@ -279,6 +280,80 @@ export const backendCommand = {
       interval: options?.interval ?? 100,
     };
     return sendCommand("scroll", request);
+  },
+
+  findParallel: async (
+    images: Record<string, string>,
+    options:
+      | {
+          timeoutMs?: number;
+          intervalMs?: number;
+          threshold?: number;
+          offset?: ScreenOffset;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<Record<string, Point[]>> => {
+    token.throwIfCancelled();
+    const entries = Object.entries(images);
+    const resolvedPaths = entries.map(([, path]) => resolveImagePath(path));
+    const timeoutMs = options?.timeoutMs ?? backendConfig.find.timeoutMs;
+    const intervalMs = options?.intervalMs ?? backendConfig.find.intervalMs;
+    const threshold = options?.threshold ?? backendConfig.find.threshold;
+    const start = Date.now();
+
+    while (Date.now() - start < timeoutMs) {
+      token.throwIfCancelled();
+      const request: FindParallelRequest = {
+        imagePaths: resolvedPaths,
+        threshold,
+        offset: options?.offset ?? undefined,
+      };
+      const response = await sendCommand("findParallel", request);
+      const responseValues = Object.values(response.results);
+      const hasMatch = responseValues.some((m) => m.length > 0);
+      if (hasMatch) {
+        const result: Record<string, Point[]> = {};
+        for (let i = 0; i < entries.length; i++) {
+          result[entries[i]![0]] = responseValues[i] ?? [];
+        }
+        return result;
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+
+    const emptyResult: Record<string, Point[]> = {};
+    for (const [key] of entries) {
+      emptyResult[key] = [];
+    }
+    return emptyResult;
+  },
+
+  isVisibleParallel: async (
+    images: Record<string, string>,
+    options:
+      | {
+          offset?: ScreenOffset;
+          threshold?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<Record<string, Point[]>> => {
+    token.throwIfCancelled();
+    const entries = Object.entries(images);
+    const resolvedPaths = entries.map(([, path]) => resolveImagePath(path));
+    const request: FindParallelRequest = {
+      imagePaths: resolvedPaths,
+      threshold: options?.threshold ?? backendConfig.find.threshold,
+      offset: options?.offset ?? undefined,
+    };
+    const response = await sendCommand("findParallel", request);
+    const responseValues = Object.values(response.results);
+    const result: Record<string, Point[]> = {};
+    for (let i = 0; i < entries.length; i++) {
+      result[entries[i]![0]] = responseValues[i] ?? [];
+    }
+    return result;
   },
 
   stop: async (): Promise<StopResponse> => {
