@@ -192,63 +192,16 @@ public class WindowCapture : IDisposable
 
     private Mat CaptureWindow(IntPtr hwnd, CancellationToken ct)
     {
-        ct.ThrowIfCancellationRequested();
-
-        if (_captureItem == null || _framePool == null || _captureSession == null)
-            InitializeCaptureForWindow(hwnd);
-
-        var frameTask = new TaskCompletionSource<Direct3D11CaptureFrame?>();
-
-        void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
-        {
-            var frame = sender.TryGetNextFrame();
-            frameTask.TrySetResult(frame);
-        }
-
-        _framePool!.FrameArrived += OnFrameArrived;
-
-        try
-        {
-            _captureSession!.StartCapture();
-
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            cts.CancelAfter(CaptureTimeoutMs);
-
-            Direct3D11CaptureFrame? frame = null;
-            try
-            {
-                var completed = frameTask.Task.Wait(CaptureTimeoutMs, ct);
-                if (completed)
-                    frame = frameTask.Task.Result;
-                else
-                    throw new TimeoutException("Capture frame timeout - no frame received");
-            }
-            catch (OperationCanceledException)
-            {
-                throw new TimeoutException("Capture frame timeout - operation cancelled");
-            }
-            catch (AggregateException ae)
-            {
-                throw ae.InnerException ?? ae;
-            }
-
-            if (frame == null)
-                throw new InvalidOperationException("Failed to capture frame - frame is null");
-
-            using (frame)
-            {
-                using var bitmap = ConvertFrameToBitmap(frame);
-                return bitmap.ToMat().CvtColor(ColorConversionCodes.BGR2GRAY);
-            }
-        }
-        finally
-        {
-            _framePool!.FrameArrived -= OnFrameArrived;
-            CleanupCaptureResources();
-        }
+        using var colorMat = CaptureWindowCore(hwnd, ct);
+        return colorMat.CvtColor(ColorConversionCodes.BGR2GRAY);
     }
 
     private Mat CaptureWindowColor(IntPtr hwnd, CancellationToken ct)
+    {
+        return CaptureWindowCore(hwnd, ct);
+    }
+
+    private Mat CaptureWindowCore(IntPtr hwnd, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 

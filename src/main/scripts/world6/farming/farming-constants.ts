@@ -25,6 +25,7 @@ export const OVERGROWTH_ROI = {
   HEIGHT: 24,
 } as const;
 
+// Placeholder: full HSV range = no filtering. Calibrate using debug script output
 export const OVERGROWTH_HSV_LOWER = { h: 0, s: 0, v: 0 } as const;
 export const OVERGROWTH_HSV_UPPER = { h: 180, s: 255, v: 255 } as const;
 

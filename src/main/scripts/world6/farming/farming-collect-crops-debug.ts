@@ -23,16 +23,8 @@ export default defineScript({
 
     const response = await backendCommand.readRegions(
       regions,
-      {
-        h: OVERGROWTH_HSV_LOWER.h,
-        s: OVERGROWTH_HSV_LOWER.s,
-        v: OVERGROWTH_HSV_LOWER.v,
-      },
-      {
-        h: OVERGROWTH_HSV_UPPER.h,
-        s: OVERGROWTH_HSV_UPPER.s,
-        v: OVERGROWTH_HSV_UPPER.v,
-      },
+      { ...OVERGROWTH_HSV_LOWER },
+      { ...OVERGROWTH_HSV_UPPER },
       OVERGROWTH_TEMPLATES,
       { debug: true },
       token
