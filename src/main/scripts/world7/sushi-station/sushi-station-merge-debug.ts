@@ -48,7 +48,7 @@ export default defineScript({
       logger.log("sushi-station-debug - tiers already on");
     }
 
-    // 2. Scan grid with readRegions debug
+    // 2. Scan grid with readRegions (no debug to avoid writing 240 images)
     logger.log("sushi-station-debug - scanning grid with HSV matching");
 
     const regions = buildSushiRegions();
@@ -58,7 +58,7 @@ export default defineScript({
       { ...SUSHI_HSV_LOWER },
       { ...SUSHI_HSV_UPPER },
       SUSHI_TEMPLATES,
-      { debug: true },
+      undefined,
       token
     );
 
@@ -77,6 +77,5 @@ export default defineScript({
     logger.log(
       `sushi-station-debug - total matched: ${matched.length}/${response.results.length}`
     );
-    logger.log("sushi-station-debug - check debug-regions folder for images");
   },
 });
