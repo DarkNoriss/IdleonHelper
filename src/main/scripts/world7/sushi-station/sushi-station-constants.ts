@@ -18,6 +18,9 @@ export const SUSHI_HSV_UPPER = { h: 180, s: 255, v: 255 } as const;
 
 const SUSHI_PATH = "ui/map/world-7/sushi-station";
 
+export const SUSHI_TIERS_ON = `${SUSHI_PATH}/sushi_tiers`;
+export const SUSHI_TIERS_OFF = `${SUSHI_PATH}/sushi_tiers_off`;
+
 export const SUSHI_TEMPLATES = Array.from(
   { length: 16 },
   (_, i) => `${SUSHI_PATH}/sushi_t${i + 1}`

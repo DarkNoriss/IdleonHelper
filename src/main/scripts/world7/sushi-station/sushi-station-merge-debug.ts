@@ -1,34 +1,34 @@
 import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
-
-const SUSHI_PATH = "ui/map/world-7/sushi-station";
+import { SUSHI_TIERS_OFF, SUSHI_TIERS_ON } from "./sushi-station-constants";
 
 export default defineScript({
   id: "world7.sushiStation.sushiStationMergeDebug",
   name: "Sushi Station - Debug",
   run: async ({ token }) => {
-    logger.log("sushi-station-debug - finding grid slots with debug");
+    logger.log("sushi-station-debug - checking tiers visibility");
 
-    const response = await backendCommand.findWithDebug(
-      `${SUSHI_PATH}/grid_slot`,
+    const visibility = await backendCommand.isVisibleParallel(
+      { tiersOn: SUSHI_TIERS_ON, tiersOff: SUSHI_TIERS_OFF },
       undefined,
       token
     );
 
+    const tiersOn = visibility.tiersOn ?? [];
+    const tiersOff = visibility.tiersOff ?? [];
+
     logger.log(
-      `sushi-station-debug - found ${response.matches.length} matches`
+      `sushi-station-debug - tiers on: ${tiersOn.length} matches, tiers off: ${tiersOff.length} matches`
     );
 
-    for (const match of response.matches) {
-      logger.log(
-        `sushi-station-debug - x=${match.point.x} y=${match.point.y} similarity=${match.similarity}`
-      );
+    for (const match of tiersOn) {
+      logger.log(`sushi-station-debug - tiers on at x=${match.x} y=${match.y}`);
     }
 
-    if (response.debugImagePath) {
+    for (const match of tiersOff) {
       logger.log(
-        `sushi-station-debug - debug image: ${response.debugImagePath}`
+        `sushi-station-debug - tiers off at x=${match.x} y=${match.y}`
       );
     }
 

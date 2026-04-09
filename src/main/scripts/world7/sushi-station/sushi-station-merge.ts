@@ -7,6 +7,8 @@ import {
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
   SUSHI_TEMPLATES,
+  SUSHI_TIERS_OFF,
+  SUSHI_TIERS_ON,
 } from "./sushi-station-constants";
 
 const cellToPoint = (cellIndex: number) => {
@@ -22,6 +24,31 @@ export default defineScript({
   id: "world7.sushiStation.sushiStationMerge",
   name: "Sushi Station - Merge",
   run: async ({ token }) => {
+    logger.log("sushi-station-merge - ensuring tiers are visible");
+
+    const visibility = await backendCommand.isVisibleParallel(
+      { tiersOn: SUSHI_TIERS_ON, tiersOff: SUSHI_TIERS_OFF },
+      undefined,
+      token
+    );
+
+    const tiersOff = visibility.tiersOff ?? [];
+
+    if (tiersOff.length > 0) {
+      logger.log("sushi-station-merge - tiers off, clicking to enable");
+      await backendCommand.click(tiersOff[0]!, undefined, token);
+      const confirm = await backendCommand.isVisible(
+        SUSHI_TIERS_ON,
+        undefined,
+        token
+      );
+      if (confirm.length === 0) {
+        logger.log("sushi-station-merge - failed to enable tiers");
+        return;
+      }
+      logger.log("sushi-station-merge - tiers enabled");
+    }
+
     logger.log("sushi-station-merge - starting continuous merge loop");
 
     const regions = buildSushiRegions();
