@@ -21,9 +21,10 @@ const SUSHI_PATH = "ui/map/world-7/sushi-station";
 export const SUSHI_TIERS_ON = `${SUSHI_PATH}/sushi_tiers`;
 export const SUSHI_TIERS_OFF = `${SUSHI_PATH}/sushi_tiers_off`;
 
-export const SUSHI_TEMPLATES = Array.from(
-  { length: 16 },
-  (_, i) => `${SUSHI_PATH}/sushi_t${i + 1}`
+const SUSHI_TIERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20];
+
+export const SUSHI_TEMPLATES = SUSHI_TIERS.map(
+  (t) => `${SUSHI_PATH}/sushi_t${t}`
 );
 
 export const buildSushiRegions = (): Rect[] => {
