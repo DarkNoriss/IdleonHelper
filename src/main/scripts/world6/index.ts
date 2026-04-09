@@ -1,9 +1,9 @@
-import { farmingLockUnlock, farmingStart } from "./farming";
+import { beanTradingGetTickets, beanTradingTradeCrops } from "./farming";
 import { summoningStartAutobattler, summoningStartEndless } from "./summoning";
 
 export const world6Scripts = [
-  farmingStart,
-  farmingLockUnlock,
+  beanTradingGetTickets,
+  beanTradingTradeCrops,
   summoningStartEndless,
   summoningStartAutobattler,
 ];

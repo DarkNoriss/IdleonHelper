@@ -61,7 +61,7 @@ export default defineScript<[string]>({
         undefined,
         token
       );
-      if (visible.matches.length > 0) {
+      if (visible.length > 0) {
         visibleNodes.push(id);
         logger.log(`  Visible: ${id}`);
       }

@@ -20,4 +20,13 @@ export const ui = {
       "Items"
     );
   },
+  toMap: async (token: CancellationToken): Promise<boolean> => {
+    return await navigateTo(
+      "ui/map/world_1",
+      "ui/map",
+      undefined,
+      token,
+      "Map"
+    );
+  },
 } as const;

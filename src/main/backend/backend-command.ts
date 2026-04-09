@@ -120,7 +120,7 @@ export const backendCommand = {
         }
       | undefined,
     token: CancellationToken
-  ): Promise<FindWithDebugResponse> => {
+  ): Promise<Point[]> => {
     token.throwIfCancelled();
     const resolvedPath = resolveImagePath(imagePath);
     const request: FindWithDebugRequest = {
@@ -130,7 +130,8 @@ export const backendCommand = {
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
     };
-    return sendCommand("findWithDebug", request);
+    const response = await sendCommand("findWithDebug", request);
+    return response.matches.map((m) => m.point);
   },
 
   findAndClick: async (
