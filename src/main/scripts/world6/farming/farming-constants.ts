@@ -20,22 +20,35 @@ export const TICKET_DROP_TARGET: Point = { x: 650, y: 80 };
 
 // Overgrowth detection
 export const OVERGROWTH_ROI = {
-  Y_OFFSET: 30,
-  WIDTH: 50,
-  HEIGHT: 24,
+  Y_OFFSET: 60,
+  WIDTH: 96,
+  HEIGHT: 32,
 } as const;
 
 // Placeholder: full HSV range = no filtering. Calibrate using debug script output
 export const OVERGROWTH_HSV_LOWER = { h: 0, s: 0, v: 0 } as const;
 export const OVERGROWTH_HSV_UPPER = { h: 180, s: 255, v: 255 } as const;
 
+const FARMING_PATH = "ui/map/world-6/town/farming";
+
 export const OVERGROWTH_TEMPLATES = [
-  "overgrowth/8x",
-  "overgrowth/16x",
-  "overgrowth/32x",
-  "overgrowth/64x",
-  "overgrowth/128x",
-  "overgrowth/256x",
+  `${FARMING_PATH}/farming_og_2x`,
+  `${FARMING_PATH}/farming_og_4x`,
+  `${FARMING_PATH}/farming_og_8x`,
+  `${FARMING_PATH}/farming_og_32x`,
+  `${FARMING_PATH}/farming_og_64x`,
+  `${FARMING_PATH}/farming_og_128x`,
+  `${FARMING_PATH}/farming_og_256x`,
+  `${FARMING_PATH}/farming_og_512x`,
+  `${FARMING_PATH}/farming_og_1024x`,
+  `${FARMING_PATH}/farming_og_2048x`,
+  `${FARMING_PATH}/farming_og_4096x`,
+  `${FARMING_PATH}/farming_og_8192x`,
+  `${FARMING_PATH}/farming_og_16384x`,
+  `${FARMING_PATH}/farming_og_32768x`,
+  `${FARMING_PATH}/farming_og_65536x`,
+  `${FARMING_PATH}/farming_og_131072x`,
+  `${FARMING_PATH}/farming_og_262144x`,
 ];
 
 export const MIN_OVERGROWTH_MULTIPLIER = 8;

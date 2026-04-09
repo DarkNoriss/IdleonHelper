@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select.tsx";
 
-const overgrowthOptions = Array.from({ length: 15 }, (_, i) => ({
+const overgrowthOptions = Array.from({ length: 19 }, (_, i) => ({
   value: String(i),
   label: `>= ${i === 0 ? 0 : 2 ** i}x`,
 }));

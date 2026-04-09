@@ -15,7 +15,8 @@ import {
 } from "./farming-constants";
 
 const parseMultiplier = (match: string): number => {
-  const num = Number.parseInt(match.replace("x", ""), 10);
+  const digits = match.replace(/\D+/g, "");
+  const num = Number.parseInt(digits, 10);
   return Number.isNaN(num) ? 0 : num;
 };
 
@@ -32,47 +33,44 @@ export default defineScript<[number]>({
     logger.log(`farming-collect-crops - collecting overgrowth >= ${label}`);
 
     const regions = buildOvergrowthRegions();
+    const clickOptions = getClickOptionsFromPreset(ClickPreset.Extreme);
 
-    const response = await backendCommand.readRegions(
-      regions,
-      { ...OVERGROWTH_HSV_LOWER },
-      { ...OVERGROWTH_HSV_UPPER },
-      OVERGROWTH_TEMPLATES,
-      undefined,
-      token
-    );
-
-    const matches = response.results.filter(
-      (r) => r.match !== null && parseMultiplier(r.match) >= minMultiplier
-    );
-
-    logger.log(
-      `farming-collect-crops - found ${matches.length} crops >= ${label}`
-    );
-
-    if (matches.length === 0) {
-      logger.log("farming-collect-crops - no overgrown crops found, done");
-      return;
-    }
-
-    const clickOptions = getClickOptionsFromPreset(ClickPreset.Fast);
-
-    for (const match of matches) {
+    while (true) {
       token.throwIfCancelled();
-      const col = match.regionIndex % FARMING_GRID.COLUMNS;
-      const row = Math.floor(match.regionIndex / FARMING_GRID.COLUMNS);
-      const cropX = FARMING_GRID.FIRST_POSITION.x + col * FARMING_GRID.X_STEP;
-      const cropY = FARMING_GRID.FIRST_POSITION.y + row * FARMING_GRID.Y_STEP;
 
-      const ogLabel = match.match!;
-      logger.log(
-        `farming-collect-crops - clicking ${ogLabel} at [${row},${col}] (${cropX}, ${cropY})`
+      const response = await backendCommand.readRegions(
+        regions,
+        { ...OVERGROWTH_HSV_LOWER },
+        { ...OVERGROWTH_HSV_UPPER },
+        OVERGROWTH_TEMPLATES,
+        undefined,
+        token
       );
-      await backendCommand.click({ x: cropX, y: cropY }, clickOptions, token);
-    }
 
-    logger.log(
-      `farming-collect-crops - collected ${matches.length} crops, done`
-    );
+      const matches = response.results.filter(
+        (r) => r.match !== null && parseMultiplier(r.match) >= minMultiplier
+      );
+
+      if (matches.length === 0) {
+        continue;
+      }
+
+      logger.log(
+        `farming-collect-crops - found ${matches.length} crops >= ${label}`
+      );
+
+      for (const match of matches) {
+        token.throwIfCancelled();
+        const col = match.regionIndex % FARMING_GRID.COLUMNS;
+        const row = Math.floor(match.regionIndex / FARMING_GRID.COLUMNS);
+        const cropX = FARMING_GRID.FIRST_POSITION.x + col * FARMING_GRID.X_STEP;
+        const cropY = FARMING_GRID.FIRST_POSITION.y + row * FARMING_GRID.Y_STEP;
+
+        logger.log(
+          `farming-collect-crops - clicking ${match.match!} at [${row},${col}]`
+        );
+        await backendCommand.click({ x: cropX, y: cropY }, clickOptions, token);
+      }
+    }
   },
 });
