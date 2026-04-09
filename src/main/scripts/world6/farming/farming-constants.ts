@@ -35,6 +35,7 @@ export const OVERGROWTH_TEMPLATES = [
   `${FARMING_PATH}/farming_og_2x`,
   `${FARMING_PATH}/farming_og_4x`,
   `${FARMING_PATH}/farming_og_8x`,
+  `${FARMING_PATH}/farming_og_16x`,
   `${FARMING_PATH}/farming_og_32x`,
   `${FARMING_PATH}/farming_og_64x`,
   `${FARMING_PATH}/farming_og_128x`,
