@@ -5,7 +5,6 @@ import {
   buildSushiRegions,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
-  SUSHI_TEMPLATES,
   SUSHI_TIERS_OFF,
   SUSHI_TIERS_ON,
 } from "./sushi-station-constants";
@@ -47,38 +46,30 @@ export default defineScript({
       logger.log("sushi-station-debug - tiers already on");
     }
 
-    // 2. Full grid scan with all templates
+    // 2. Full grid scan - no templates, debug mode to save raw + filtered images
     const regions = buildSushiRegions();
 
     logger.log(
-      `sushi-station-debug - scanning ${regions.length} regions with ${SUSHI_TEMPLATES.length} templates`
+      `sushi-station-debug - scanning ${regions.length} regions, no templates, debug=true`
     );
 
     const response = await backendCommand.readRegions(
       regions,
       { ...SUSHI_HSV_LOWER },
       { ...SUSHI_HSV_UPPER },
-      SUSHI_TEMPLATES,
-      undefined,
+      [],
+      { debug: true },
       token
     );
 
     logger.log(`sushi-station-debug - got ${response.results.length} results`);
 
     for (const result of response.results) {
-      if (result.match === null && result.nonZeroPixels < 10) {
-        continue;
-      }
       const col = result.regionIndex % 15;
       const row = Math.floor(result.regionIndex / 15);
       logger.log(
-        `sushi-station-debug - [${row},${col}] match=${result.match ?? "none"} similarity=${result.similarity} pixels=${result.nonZeroPixels}`
+        `sushi-station-debug - [${row},${col}] pixels=${result.nonZeroPixels}${result.debugImagePath ? ` path=${result.debugImagePath}` : ""}`
       );
     }
-
-    const matched = response.results.filter((r) => r.match !== null);
-    logger.log(
-      `sushi-station-debug - total matched: ${matched.length}/${response.results.length}`
-    );
   },
 });
