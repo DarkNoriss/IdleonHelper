@@ -26,10 +26,10 @@ const cellToPoint = (cellIndex: number) => {
   };
 };
 
-export default defineScript({
+export default defineScript<[boolean]>({
   id: "world7.sushiStation.sushiStationMerge",
   name: "Sushi Station - Merge",
-  run: async ({ token }) => {
+  run: async ({ token, args: [shouldCook] }) => {
     logger.log("sushi-station-merge - ensuring tiers are visible");
 
     const visibility = await backendCommand.isVisibleParallel(
@@ -108,7 +108,7 @@ export default defineScript({
         break;
       }
 
-      if (!merged) {
+      if (!merged && shouldCook) {
         logger.log("sushi-station-merge - no pairs, cooking more sushi");
         const cookButton = await backendCommand.isVisible(
           SUSHI_COOK,
