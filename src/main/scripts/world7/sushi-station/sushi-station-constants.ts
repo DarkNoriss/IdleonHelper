@@ -22,7 +22,9 @@ export const SUSHI_TIERS_ON = `${SUSHI_PATH}/sushi_tiers`;
 export const SUSHI_TIERS_OFF = `${SUSHI_PATH}/sushi_tiers_off`;
 export const SUSHI_COOK = `${SUSHI_PATH}/sushi_cook`;
 
-const SUSHI_TIERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20];
+const SUSHI_TIERS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+];
 
 export const SUSHI_TEMPLATES = SUSHI_TIERS.map(
   (t) => `${SUSHI_PATH}/sushi_t${t}`
