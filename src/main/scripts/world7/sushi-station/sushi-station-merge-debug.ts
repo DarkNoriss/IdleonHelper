@@ -3,7 +3,6 @@ import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   buildSushiRegions,
-  SUSHI_GRID,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
   SUSHI_TEMPLATES,
@@ -48,34 +47,32 @@ export default defineScript({
       logger.log("sushi-station-debug - tiers already on");
     }
 
-    // 2. Scan grid with readRegions (no debug to avoid writing 240 images)
-    logger.log("sushi-station-debug - scanning grid with HSV matching");
+    // 2. Minimal test: scan first 3 cells with just sushi_t1 template
+    const firstRegion = buildSushiRegions().slice(0, 3);
+    const singleTemplate = [SUSHI_TEMPLATES[0]!];
 
-    const regions = buildSushiRegions();
+    logger.log(
+      `sushi-station-debug - testing ${firstRegion.length} regions with ${singleTemplate[0]}`
+    );
+    logger.log(
+      `sushi-station-debug - region 0: x=${firstRegion[0]!.x} y=${firstRegion[0]!.y} w=${firstRegion[0]!.width} h=${firstRegion[0]!.height}`
+    );
 
     const response = await backendCommand.readRegions(
-      regions,
+      firstRegion,
       { ...SUSHI_HSV_LOWER },
       { ...SUSHI_HSV_UPPER },
-      SUSHI_TEMPLATES,
+      singleTemplate,
       undefined,
       token
     );
 
+    logger.log(`sushi-station-debug - got ${response.results.length} results`);
+
     for (const result of response.results) {
-      if (result.match === null && result.nonZeroPixels < 10) {
-        continue;
-      }
-      const col = result.regionIndex % SUSHI_GRID.COLUMNS;
-      const row = Math.floor(result.regionIndex / SUSHI_GRID.COLUMNS);
       logger.log(
-        `sushi-station-debug - [${row},${col}] match=${result.match ?? "none"} similarity=${result.similarity} pixels=${result.nonZeroPixels}`
+        `sushi-station-debug - region ${result.regionIndex} match=${result.match ?? "none"} similarity=${result.similarity} pixels=${result.nonZeroPixels}`
       );
     }
-
-    const matched = response.results.filter((r) => r.match !== null);
-    logger.log(
-      `sushi-station-debug - total matched: ${matched.length}/${response.results.length}`
-    );
   },
 });
