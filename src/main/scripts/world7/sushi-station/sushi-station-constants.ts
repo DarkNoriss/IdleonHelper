@@ -13,7 +13,7 @@ export const SUSHI_ROI = {
   HEIGHT: 45,
 } as const;
 
-export const SUSHI_HSV_LOWER = { h: 0, s: 0, v: 0 } as const;
+export const SUSHI_HSV_LOWER = { h: 0, s: 0, v: 120 } as const;
 export const SUSHI_HSV_UPPER = { h: 180, s: 255, v: 255 } as const;
 
 const SUSHI_PATH = "ui/map/world-7/sushi-station";
