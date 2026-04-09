@@ -3,6 +3,7 @@ import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   buildSushiRegions,
+  SUSHI_GRID,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
   SUSHI_TIERS_OFF,
@@ -67,8 +68,8 @@ export default defineScript({
     for (const result of scan.results) {
       if (result.nonZeroPixels >= 10 && result.debugImagePath) {
         templates.push(result.debugImagePath);
-        const col = result.regionIndex % 15;
-        const row = Math.floor(result.regionIndex / 15);
+        const col = result.regionIndex % SUSHI_GRID.COLUMNS;
+        const row = Math.floor(result.regionIndex / SUSHI_GRID.COLUMNS);
         logger.log(
           `sushi-station-debug - [${row},${col}] pixels=${result.nonZeroPixels} -> template`
         );
