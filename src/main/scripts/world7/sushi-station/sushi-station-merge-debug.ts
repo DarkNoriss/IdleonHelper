@@ -22,7 +22,7 @@ export default defineScript({
 
     for (const match of response.matches) {
       logger.log(
-        `sushi-station-debug - x=${match.point.x} y=${match.point.y} similarity=${(match.similarity * 100).toFixed(1)}%`
+        `sushi-station-debug - x=${match.point.x} y=${match.point.y} similarity=${match.similarity}`
       );
     }
 
