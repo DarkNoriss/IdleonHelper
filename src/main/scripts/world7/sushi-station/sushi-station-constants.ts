@@ -3,9 +3,9 @@ import type { Rect } from "../../../backend/backend-types";
 export const SUSHI_GRID = {
   ROWS: 8,
   COLUMNS: 15,
-  FIRST_POSITION: { x: 0, y: 0 },
-  X_STEP: 0,
-  Y_STEP: 0,
+  FIRST_POSITION: { x: 49, y: 85 },
+  X_STEP: 47,
+  Y_STEP: 47,
 } as const;
 
 export const SUSHI_ROI = {
