@@ -76,6 +76,38 @@ public static class ImageProcessing
     return matches;
   }
 
+  public static Dictionary<string, List<Match>> FindParallel(
+    Mat screenshot,
+    List<string> imagePaths,
+    double threshold,
+    ScreenOffset? offset,
+    CancellationToken ct
+  )
+  {
+    ct.ThrowIfCancellationRequested();
+
+    offset ??= new ScreenOffset();
+    var results = new Dictionary<string, List<Match>>();
+
+    foreach (var imagePath in imagePaths)
+    {
+      ct.ThrowIfCancellationRequested();
+
+      using var templateImage = LoadImage(imagePath);
+
+      if (templateImage.Empty())
+      {
+        results[imagePath] = [];
+        continue;
+      }
+
+      var foundMatches = MatchTemplate(screenshot, templateImage, threshold, false, ct);
+      var filteredMatches = FilterMatchesByOffset(foundMatches, offset);
+      results[imagePath] = filteredMatches;
+    }
+
+    return results;
+  }
 
   public static Mat LoadImage(string imagePath)
   {
