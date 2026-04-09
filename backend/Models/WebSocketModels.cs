@@ -131,3 +131,15 @@ internal class ScrollResponse
 {
   public bool Success { get; set; }
 }
+
+internal class FindParallelRequest
+{
+  public List<string>? ImagePaths { get; set; }
+  public double? Threshold { get; set; }
+  public ScreenOffsetDto? Offset { get; set; }
+}
+
+internal class FindParallelResponse
+{
+  public Dictionary<string, List<Point>> Results { get; set; } = new();
+}
