@@ -1,60 +1,66 @@
 import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
-
-const FARMING_PATH = "ui/map/world-6/town/farming";
+import {
+  buildOvergrowthRegions,
+  FARMING_GRID,
+  OVERGROWTH_HSV_LOWER,
+  OVERGROWTH_HSV_UPPER,
+  OVERGROWTH_TEMPLATES,
+} from "./farming-constants";
 
 export default defineScript({
   id: "world6.farming.farmingCollectCropsDebug",
   name: "Farming - Collect Crops Debug",
   run: async ({ token }) => {
-    logger.log("farming-collect-crops-debug - scanning all overgrowth images");
+    token.throwIfCancelled();
 
-    // Check panel state
-    for (const name of ["farming_back", "farming_crop_info"]) {
-      token.throwIfCancelled();
-      const result = await backendCommand.findWithDebug(
-        `${FARMING_PATH}/${name}`,
-        undefined,
-        token
+    const regions = buildOvergrowthRegions();
+
+    logger.log(
+      `farming-collect-crops-debug - scanning ${regions.length} crop positions`
+    );
+
+    const response = await backendCommand.readRegions(
+      regions,
+      {
+        h: OVERGROWTH_HSV_LOWER.h,
+        s: OVERGROWTH_HSV_LOWER.s,
+        v: OVERGROWTH_HSV_LOWER.v,
+      },
+      {
+        h: OVERGROWTH_HSV_UPPER.h,
+        s: OVERGROWTH_HSV_UPPER.s,
+        v: OVERGROWTH_HSV_UPPER.v,
+      },
+      OVERGROWTH_TEMPLATES,
+      { debug: true },
+      token
+    );
+
+    logger.log("farming-collect-crops-debug - scan results");
+
+    let matchCount = 0;
+    for (const result of response.results) {
+      const col = result.regionIndex % FARMING_GRID.COLUMNS;
+      const row = Math.floor(result.regionIndex / FARMING_GRID.COLUMNS);
+      const pixels = `pixels=${result.nonZeroPixels}`;
+      const match = result.match
+        ? `MATCH: ${result.match} (${(result.similarity * 100).toFixed(1)}%)`
+        : `no match (similarity: ${(result.similarity * 100).toFixed(1)}%)`;
+      const debug = result.debugImagePath
+        ? ` saved: ${result.debugImagePath}`
+        : "";
+      logger.log(
+        `plot [${row},${col}] (index ${result.regionIndex}): ${pixels}, ${match}${debug}`
       );
-      if (result.matches.length === 0) {
-        logger.log(`${name} - no matches`);
-      } else {
-        for (const match of result.matches) {
-          logger.log(
-            `${name} - (${match.point.x}, ${match.point.y}) similarity=${match.similarity.toFixed(4)}`
-          );
-        }
-      }
-      if (result.debugImagePath) {
-        logger.log(`  debug image: ${result.debugImagePath}`);
+      if (result.match) {
+        matchCount++;
       }
     }
 
-    // Scan all overgrowth levels
-    for (let i = 0; i <= 14; i++) {
-      token.throwIfCancelled();
-      const ogLabel = i === 0 ? "0x" : `${2 ** i}x`;
-      const result = await backendCommand.findWithDebug(
-        `${FARMING_PATH}/farming_og_${i}`,
-        undefined,
-        token
-      );
-      if (result.matches.length === 0) {
-        logger.log(`og_${i} (${ogLabel}) - no matches`);
-      } else {
-        for (const match of result.matches) {
-          logger.log(
-            `og_${i} (${ogLabel}) - (${match.point.x}, ${match.point.y}) similarity=${match.similarity.toFixed(4)}`
-          );
-        }
-      }
-      if (result.debugImagePath) {
-        logger.log(`  debug image: ${result.debugImagePath}`);
-      }
-    }
-
-    logger.log("farming-collect-crops-debug - done");
+    logger.log(
+      `farming-collect-crops-debug - ${matchCount} of ${regions.length} plots have overgrowth`
+    );
   },
 });
