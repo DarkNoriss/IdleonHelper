@@ -283,7 +283,7 @@ export const backendCommand = {
   },
 
   findParallel: async (
-    imagePaths: string[],
+    images: Record<string, string>,
     options:
       | {
           timeoutMs?: number;
@@ -295,13 +295,8 @@ export const backendCommand = {
     token: CancellationToken
   ): Promise<Record<string, Point[]>> => {
     token.throwIfCancelled();
-    const uniquePaths = [...new Set(imagePaths)];
-    const resolvedToOriginal = new Map<string, string>();
-    const resolvedPaths = uniquePaths.map((p) => {
-      const resolved = resolveImagePath(p);
-      resolvedToOriginal.set(resolved, p);
-      return resolved;
-    });
+    const entries = Object.entries(images);
+    const resolvedPaths = entries.map(([, path]) => resolveImagePath(path));
     const timeoutMs = options?.timeoutMs ?? backendConfig.find.timeoutMs;
     const intervalMs = options?.intervalMs ?? backendConfig.find.intervalMs;
     const threshold = options?.threshold ?? backendConfig.find.threshold;
@@ -315,17 +310,12 @@ export const backendCommand = {
         offset: options?.offset ?? undefined,
       };
       const response = await sendCommand("findParallel", request);
-      const hasMatch = Object.values(response.results).some(
-        (m) => m.length > 0
-      );
+      const responseValues = Object.values(response.results);
+      const hasMatch = responseValues.some((m) => m.length > 0);
       if (hasMatch) {
         const result: Record<string, Point[]> = {};
-        for (const [resolvedPath, matches] of Object.entries(
-          response.results
-        )) {
-          const originalPath =
-            resolvedToOriginal.get(resolvedPath) ?? resolvedPath;
-          result[originalPath] = matches;
+        for (let i = 0; i < entries.length; i++) {
+          result[entries[i]![0]] = responseValues[i] ?? [];
         }
         return result;
       }
@@ -333,14 +323,14 @@ export const backendCommand = {
     }
 
     const emptyResult: Record<string, Point[]> = {};
-    for (const p of uniquePaths) {
-      emptyResult[p] = [];
+    for (const [key] of entries) {
+      emptyResult[key] = [];
     }
     return emptyResult;
   },
 
   isVisibleParallel: async (
-    imagePaths: string[],
+    images: Record<string, string>,
     options:
       | {
           offset?: ScreenOffset;
@@ -350,23 +340,18 @@ export const backendCommand = {
     token: CancellationToken
   ): Promise<Record<string, Point[]>> => {
     token.throwIfCancelled();
-    const uniquePaths = [...new Set(imagePaths)];
-    const resolvedToOriginal = new Map<string, string>();
-    const resolvedPaths = uniquePaths.map((p) => {
-      const resolved = resolveImagePath(p);
-      resolvedToOriginal.set(resolved, p);
-      return resolved;
-    });
+    const entries = Object.entries(images);
+    const resolvedPaths = entries.map(([, path]) => resolveImagePath(path));
     const request: FindParallelRequest = {
       imagePaths: resolvedPaths,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
     };
     const response = await sendCommand("findParallel", request);
+    const responseValues = Object.values(response.results);
     const result: Record<string, Point[]> = {};
-    for (const [resolvedPath, matches] of Object.entries(response.results)) {
-      const originalPath = resolvedToOriginal.get(resolvedPath) ?? resolvedPath;
-      result[originalPath] = matches;
+    for (let i = 0; i < entries.length; i++) {
+      result[entries[i]![0]] = responseValues[i] ?? [];
     }
     return result;
   },

@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select.tsx";
 
-const overgrowthOptions = Array.from({ length: 13 }, (_, i) => ({
+const overgrowthOptions = Array.from({ length: 15 }, (_, i) => ({
   value: String(i),
   label: `>= ${i === 0 ? 0 : 2 ** i}x`,
 }));
@@ -24,6 +24,10 @@ const Farming = () => {
           scriptId: "world6.farming.farmingCollectCrops",
           runningLabel: "Stop",
           args: () => [Number(selectedOvergrowth)],
+        },
+        {
+          label: "Collect Crops Debug",
+          scriptId: "world6.farming.farmingCollectCropsDebug",
         },
         {
           label: "Bean Trading - Get Tickets",
