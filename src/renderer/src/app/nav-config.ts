@@ -50,4 +50,8 @@ export const navConfig: NavEntry[] = [
       { title: "Farming", page: "world6/farming" },
     ],
   },
+  {
+    title: "World 7",
+    items: [{ title: "Sushi Station", page: "world7/sushi-station" }],
+  },
 ];

@@ -17,6 +17,7 @@ export const pageRegistry = {
     import("./pages/class-specific/compass-debug"),
   "world6/farming": () => import("./pages/world-6/farming/index"),
   "world6/summoning": () => import("./pages/world-6/summoning/index"),
+  "world7/sushi-station": () => import("./pages/world-7/sushi-station/index"),
 } as const satisfies Record<
   string,
   () => Promise<{ default: React.ComponentType }>
