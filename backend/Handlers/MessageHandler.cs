@@ -70,6 +70,11 @@ internal static class MessageHandler
           await ScrollCommandHandler.Handle(ws, message, ct);
           break;
         }
+        case "findParallel":
+        {
+          await FindParallelCommandHandler.Handle(ws, message, ct);
+          break;
+        }
         default:
         {
           await SendError(ws, message.Id, $"Unknown command: {message.Command}", ct);
