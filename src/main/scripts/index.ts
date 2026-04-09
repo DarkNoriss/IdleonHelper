@@ -4,6 +4,7 @@ import { generalScripts } from "./general/index";
 import { world2Scripts } from "./world2/index";
 import { world3Scripts } from "./world3/index";
 import { world6Scripts } from "./world6/index";
+import { world7Scripts } from "./world7/index";
 
 export const allScripts: ScriptDescriptor[] = [
   ...generalScripts,
@@ -11,6 +12,7 @@ export const allScripts: ScriptDescriptor[] = [
   ...world2Scripts,
   ...world3Scripts,
   ...world6Scripts,
+  ...world7Scripts,
 ];
 
 // Re-export navigation for scripts that use it

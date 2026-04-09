@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { is } from "@electron-toolkit/utils";
 
 import type { CancellationToken } from "../utils/cancellation-token";
@@ -29,6 +29,10 @@ import type {
 } from "./backend-types";
 
 const resolveImagePath = (imagePath: string): string => {
+  if (isAbsolute(imagePath)) {
+    return imagePath;
+  }
+
   const normalizedPath = imagePath.replace(/^[/\\]+|[/\\]+$/g, "");
 
   const pathWithExtension = normalizedPath.includes(".")
@@ -379,7 +383,7 @@ export const backendCommand = {
       hsvLower,
       hsvUpper,
       templates: resolvedTemplates,
-      threshold: options?.threshold ?? 0.8,
+      threshold: options?.threshold ?? backendConfig.find.threshold,
       debug: options?.debug ?? false,
     });
   },

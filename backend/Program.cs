@@ -20,13 +20,20 @@ app.Map("/ws", async context =>
     }
 
     using var ws = await context.WebSockets.AcceptWebSocketAsync();
-    var buffer = new byte[1024 * 4];
+    var buffer = new byte[1024 * 64];
 
     try
     {
         while (ws.State == WebSocketState.Open)
         {
-            var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), context.RequestAborted);
+            using var ms = new MemoryStream();
+            WebSocketReceiveResult result;
+
+            do
+            {
+                result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), context.RequestAborted);
+                ms.Write(buffer, 0, result.Count);
+            } while (!result.EndOfMessage);
 
             if (result.MessageType == WebSocketMessageType.Close)
             {
@@ -36,7 +43,7 @@ app.Map("/ws", async context =>
 
             if (result.MessageType != WebSocketMessageType.Text) continue;
 
-            var messageJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            var messageJson = Encoding.UTF8.GetString(ms.ToArray());
 
             _ = Task.Run(async () =>
             {

@@ -60,3 +60,11 @@ export const getClickOptionsFromPreset = (
       return { interval: standardInterval, holdTime: standardHoldTime };
   }
 };
+
+export const getDragOptionsFromPreset = (
+  preset: ClickPreset,
+  instant = false
+): { interval: number; holdTime: number; instant: boolean } => {
+  const { interval, holdTime } = getClickOptionsFromPreset(preset);
+  return { interval, holdTime, instant };
+};

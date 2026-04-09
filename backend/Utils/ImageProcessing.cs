@@ -321,7 +321,6 @@ public static class ImageProcessing
 
       var lowerScalar = new Scalar(hsvLower.H, hsvLower.S, hsvLower.V);
       var upperScalar = new Scalar(hsvUpper.H, hsvUpper.S, hsvUpper.V);
-
       for (var i = 0; i < regions.Count; i++)
       {
         ct.ThrowIfCancellationRequested();
