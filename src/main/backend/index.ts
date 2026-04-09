@@ -20,6 +20,7 @@ export {
   backendConfig,
   ClickPreset,
   getClickOptionsFromPreset,
+  getDragOptionsFromPreset,
 } from "./backend-config";
 // Backend process exports
 export {

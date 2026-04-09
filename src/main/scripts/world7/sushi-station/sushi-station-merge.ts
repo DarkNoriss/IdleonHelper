@@ -1,4 +1,8 @@
-import { backendCommand } from "../../../backend/index";
+import {
+  backendCommand,
+  ClickPreset,
+  getDragOptionsFromPreset,
+} from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
@@ -96,7 +100,8 @@ export default defineScript({
         );
 
         token.throwIfCancelled();
-        await backendCommand.drag(from, to, { instant: true }, token);
+        const dragOptions = getDragOptionsFromPreset(ClickPreset.Extreme, true);
+        await backendCommand.drag(from, to, dragOptions, token);
         merged = true;
         break;
       }
