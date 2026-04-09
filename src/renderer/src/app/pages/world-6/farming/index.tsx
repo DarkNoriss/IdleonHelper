@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { ScriptAction } from "@/components/script-page.tsx";
 import { ScriptPage } from "@/components/script-page.tsx";
 import {
   Select,
@@ -15,31 +16,42 @@ const overgrowthOptions = Array.from({ length: 19 }, (_, i) => ({
 
 const Farming = () => {
   const [selectedOvergrowth, setSelectedOvergrowth] = useState("0");
+  const [isDev, setIsDev] = useState(false);
+
+  useEffect(() => {
+    window.api.app
+      .isDev()
+      .then(setIsDev)
+      .catch(() => setIsDev(false));
+  }, []);
+
+  const actions: ScriptAction[] = [
+    {
+      label: "Collect Crops",
+      scriptId: "world6.farming.farmingCollectCrops",
+      runningLabel: "Stop",
+      args: () => [Number(selectedOvergrowth)],
+    },
+    ...(isDev
+      ? [
+          {
+            label: "Collect Crops Debug",
+            scriptId: "world6.farming.farmingCollectCropsDebug",
+          } satisfies ScriptAction,
+        ]
+      : []),
+    {
+      label: "Bean Trading - Get Tickets",
+      scriptId: "world6.farming.beanTradingGetTickets",
+    },
+    {
+      label: "Bean Trading - Trade Crops",
+      scriptId: "world6.farming.beanTradingTradeCrops",
+    },
+  ];
 
   return (
-    <ScriptPage
-      actions={[
-        {
-          label: "Collect Crops",
-          scriptId: "world6.farming.farmingCollectCrops",
-          runningLabel: "Stop",
-          args: () => [Number(selectedOvergrowth)],
-        },
-        {
-          label: "Collect Crops Debug",
-          scriptId: "world6.farming.farmingCollectCropsDebug",
-        },
-        {
-          label: "Bean Trading - Get Tickets",
-          scriptId: "world6.farming.beanTradingGetTickets",
-        },
-        {
-          label: "Bean Trading - Trade Crops",
-          scriptId: "world6.farming.beanTradingTradeCrops",
-        },
-      ]}
-      title="Farming"
-    >
+    <ScriptPage actions={actions} title="Farming">
       <div className="mb-4">
         <Select
           onValueChange={setSelectedOvergrowth}
