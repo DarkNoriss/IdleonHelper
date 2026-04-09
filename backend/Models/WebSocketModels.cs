@@ -143,3 +143,42 @@ internal class FindParallelResponse
 {
   public Dictionary<string, List<Point>> Results { get; set; } = new();
 }
+
+internal class RectDto
+{
+  public int X { get; set; }
+  public int Y { get; set; }
+  public int Width { get; set; }
+  public int Height { get; set; }
+}
+
+internal class HsvColorDto
+{
+  public int H { get; set; }
+  public int S { get; set; }
+  public int V { get; set; }
+}
+
+internal class RegionResultDto
+{
+  public int RegionIndex { get; set; }
+  public string? Match { get; set; }
+  public double Similarity { get; set; }
+  public int NonZeroPixels { get; set; }
+  public string? DebugImagePath { get; set; }
+}
+
+internal class ReadRegionsRequest
+{
+  public List<RectDto> Regions { get; set; } = new();
+  public HsvColorDto? HsvLower { get; set; }
+  public HsvColorDto? HsvUpper { get; set; }
+  public List<string> Templates { get; set; } = new();
+  public double? Threshold { get; set; }
+  public bool? Debug { get; set; }
+}
+
+internal class ReadRegionsResponse
+{
+  public List<RegionResultDto> Results { get; set; } = new();
+}
