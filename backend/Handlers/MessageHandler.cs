@@ -75,6 +75,11 @@ internal static class MessageHandler
           await FindParallelCommandHandler.Handle(ws, message, ct);
           break;
         }
+        case "readRegions":
+        {
+          await ReadRegionsCommandHandler.Handle(ws, message, ct);
+          break;
+        }
         default:
         {
           await SendError(ws, message.Id, $"Unknown command: {message.Command}", ct);

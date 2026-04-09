@@ -51,6 +51,14 @@ public class WindowCapture : IDisposable
         return instance.CaptureWindow(hwnd, ct);
     }
 
+    public static Mat CaptureScreenShotColor(CancellationToken ct)
+    {
+        var hwnd = GetWindowHandle();
+        EnsureCorrectWindowSize(hwnd, ct);
+        var instance = GetInstance();
+        return instance.CaptureWindowColor(hwnd, ct);
+    }
+
     public static IntPtr GetWindowHandle()
     {
         if (_cachedWindowHandle != IntPtr.Zero && IsWindow(_cachedWindowHandle))
@@ -184,6 +192,17 @@ public class WindowCapture : IDisposable
 
     private Mat CaptureWindow(IntPtr hwnd, CancellationToken ct)
     {
+        using var colorMat = CaptureWindowCore(hwnd, ct);
+        return colorMat.CvtColor(ColorConversionCodes.BGR2GRAY);
+    }
+
+    private Mat CaptureWindowColor(IntPtr hwnd, CancellationToken ct)
+    {
+        return CaptureWindowCore(hwnd, ct);
+    }
+
+    private Mat CaptureWindowCore(IntPtr hwnd, CancellationToken ct)
+    {
         ct.ThrowIfCancellationRequested();
 
         if (_captureItem == null || _framePool == null || _captureSession == null)
@@ -230,7 +249,7 @@ public class WindowCapture : IDisposable
             using (frame)
             {
                 using var bitmap = ConvertFrameToBitmap(frame);
-                return bitmap.ToMat().CvtColor(ColorConversionCodes.BGR2GRAY);
+                return bitmap.ToMat();
             }
         }
         finally

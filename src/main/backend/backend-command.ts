@@ -15,9 +15,12 @@ import type {
   FindRequest,
   FindWithDebugRequest,
   FindWithDebugResponse,
+  HsvColor,
   KeyPressRequest,
   KeyPressResponse,
   Point,
+  ReadRegionsResponse,
+  Rect,
   ScreenOffset,
   ScrollRequest,
   ScrollResponse,
@@ -354,6 +357,31 @@ export const backendCommand = {
       result[entries[i]![0]] = responseValues[i] ?? [];
     }
     return result;
+  },
+
+  readRegions: async (
+    regions: Rect[],
+    hsvLower: HsvColor,
+    hsvUpper: HsvColor,
+    templates: string[],
+    options:
+      | {
+          threshold?: number;
+          debug?: boolean;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<ReadRegionsResponse> => {
+    token.throwIfCancelled();
+    const resolvedTemplates = templates.map(resolveImagePath);
+    return sendCommand("readRegions", {
+      regions,
+      hsvLower,
+      hsvUpper,
+      templates: resolvedTemplates,
+      threshold: options?.threshold ?? 0.8,
+      debug: options?.debug ?? false,
+    });
   },
 
   stop: async (): Promise<StopResponse> => {
