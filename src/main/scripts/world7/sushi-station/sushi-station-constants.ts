@@ -9,8 +9,8 @@ export const SUSHI_GRID = {
 } as const;
 
 export const SUSHI_ROI = {
-  WIDTH: 45,
-  HEIGHT: 45,
+  WIDTH: 41,
+  HEIGHT: 41,
 } as const;
 
 export const SUSHI_HSV_LOWER = { h: 0, s: 0, v: 120 } as const;

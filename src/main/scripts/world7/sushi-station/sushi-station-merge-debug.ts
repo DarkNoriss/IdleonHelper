@@ -46,14 +46,14 @@ export default defineScript({
       logger.log("sushi-station-debug - tiers already on");
     }
 
-    // 2. Full grid scan - no templates, debug mode to save raw + filtered images
+    // 2. Scan grid with debug to save filtered images
     const regions = buildSushiRegions();
 
     logger.log(
-      `sushi-station-debug - scanning ${regions.length} regions, no templates, debug=true`
+      `sushi-station-debug - step 1: scanning ${regions.length} regions, debug=true`
     );
 
-    const response = await backendCommand.readRegions(
+    const scan = await backendCommand.readRegions(
       regions,
       { ...SUSHI_HSV_LOWER },
       { ...SUSHI_HSV_UPPER },
@@ -62,13 +62,54 @@ export default defineScript({
       token
     );
 
-    logger.log(`sushi-station-debug - got ${response.results.length} results`);
+    // Collect non-empty filtered images as templates
+    const templates: string[] = [];
+    for (const result of scan.results) {
+      if (result.nonZeroPixels >= 10 && result.debugImagePath) {
+        templates.push(result.debugImagePath);
+        const col = result.regionIndex % 15;
+        const row = Math.floor(result.regionIndex / 15);
+        logger.log(
+          `sushi-station-debug - [${row},${col}] pixels=${result.nonZeroPixels} -> template`
+        );
+      }
+    }
 
-    for (const result of response.results) {
-      const col = result.regionIndex % 15;
-      const row = Math.floor(result.regionIndex / 15);
+    logger.log(
+      `sushi-station-debug - found ${templates.length} non-empty cells`
+    );
+
+    if (templates.length === 0) {
+      logger.log("sushi-station-debug - no sushi found, done");
+      return;
+    }
+
+    // 3. Re-scan using filtered images as templates to verify uniqueness
+    logger.log(
+      `sushi-station-debug - step 2: verifying with ${templates.length} templates`
+    );
+
+    const verify = await backendCommand.readRegions(
+      regions,
+      { ...SUSHI_HSV_LOWER },
+      { ...SUSHI_HSV_UPPER },
+      templates,
+      undefined,
+      token
+    );
+
+    // Count how many cells matched each template
+    const matchCounts = new Map<string, number>();
+    for (const result of verify.results) {
+      if (result.match === null) {
+        continue;
+      }
+      matchCounts.set(result.match, (matchCounts.get(result.match) ?? 0) + 1);
+    }
+
+    for (const [template, count] of matchCounts) {
       logger.log(
-        `sushi-station-debug - [${row},${col}] pixels=${result.nonZeroPixels}${result.debugImagePath ? ` path=${result.debugImagePath}` : ""}`
+        `sushi-station-debug - ${template}: ${count} match${count > 1 ? "es" : ""}`
       );
     }
   },
