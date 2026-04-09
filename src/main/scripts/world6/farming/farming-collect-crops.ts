@@ -5,15 +5,18 @@ import {
 } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
+import {
+  buildOvergrowthRegions,
+  FARMING_GRID,
+  MIN_OVERGROWTH_MULTIPLIER,
+  OVERGROWTH_HSV_LOWER,
+  OVERGROWTH_HSV_UPPER,
+  OVERGROWTH_TEMPLATES,
+} from "./farming-constants";
 
-const FARMING_PATH = "ui/map/world-6/town/farming";
-
-const buildOvergrowthImages = (minLevel: number): Record<string, string> => {
-  const images: Record<string, string> = {};
-  for (let i = minLevel; i <= 14; i++) {
-    images[String(i)] = `${FARMING_PATH}/farming_og_${i}`;
-  }
-  return images;
+const parseMultiplier = (match: string): number => {
+  const num = Number.parseInt(match.replace("x", ""), 10);
+  return Number.isNaN(num) ? 0 : num;
 };
 
 export default defineScript<[number]>({
@@ -21,81 +24,63 @@ export default defineScript<[number]>({
   name: "Farming - Collect Crops",
   run: async ({ token, args }) => {
     const [minOvergrowth] = args;
-    const label = minOvergrowth === 0 ? "0x" : `${2 ** minOvergrowth}x`;
+    const minMultiplier =
+      minOvergrowth === 0
+        ? 0
+        : Math.max(2 ** minOvergrowth, MIN_OVERGROWTH_MULTIPLIER);
+    const label = minOvergrowth === 0 ? "0x" : `${minMultiplier}x`;
     logger.log(`farming-collect-crops - collecting overgrowth >= ${label}`);
 
-    // 1. Open crop info panel
-    const visibility = await backendCommand.isVisibleParallel(
+    const regions = buildOvergrowthRegions();
+
+    const response = await backendCommand.readRegions(
+      regions,
       {
-        back: `${FARMING_PATH}/farming_back`,
-        cropInfo: `${FARMING_PATH}/farming_crop_info`,
+        h: OVERGROWTH_HSV_LOWER.h,
+        s: OVERGROWTH_HSV_LOWER.s,
+        v: OVERGROWTH_HSV_LOWER.v,
       },
+      {
+        h: OVERGROWTH_HSV_UPPER.h,
+        s: OVERGROWTH_HSV_UPPER.s,
+        v: OVERGROWTH_HSV_UPPER.v,
+      },
+      OVERGROWTH_TEMPLATES,
       undefined,
       token
     );
 
-    const backMatches = visibility.back ?? [];
-    const cropInfoMatches = visibility.cropInfo ?? [];
+    const matches = response.results.filter(
+      (r) => r.match !== null && parseMultiplier(r.match) >= minMultiplier
+    );
 
-    if (backMatches.length > 0) {
-      logger.log("farming-collect-crops - crop info panel already open");
-    } else if (cropInfoMatches.length > 0) {
-      logger.log("farming-collect-crops - clicking crop info to open panel");
-      await backendCommand.click(cropInfoMatches[0]!, undefined, token);
-      const backCheck = await backendCommand.find(
-        `${FARMING_PATH}/farming_back`,
-        undefined,
-        token
-      );
-      if (backCheck.length === 0) {
-        logger.log(
-          "farming-collect-crops - back button not found after clicking crop info, aborting"
-        );
-        return;
-      }
-      logger.log("farming-collect-crops - crop info panel opened");
-    } else {
-      logger.log(
-        "farming-collect-crops - neither back nor crop info found, aborting"
-      );
+    logger.log(
+      `farming-collect-crops - found ${matches.length} crops >= ${label}`
+    );
+
+    if (matches.length === 0) {
+      logger.log("farming-collect-crops - no overgrown crops found, done");
       return;
     }
 
-    // 2. Prepare overgrowth images
-    const images = buildOvergrowthImages(minOvergrowth);
-    logger.log(
-      `farming-collect-crops - scanning for ${Object.keys(images).length} overgrowth levels`
-    );
-
-    // 3. Find and click loop
     const clickOptions = getClickOptionsFromPreset(ClickPreset.Fast);
 
-    while (true) {
+    for (const match of matches) {
       token.throwIfCancelled();
+      const col = match.regionIndex % FARMING_GRID.COLUMNS;
+      const row = Math.floor(match.regionIndex / FARMING_GRID.COLUMNS);
+      const cropX = FARMING_GRID.FIRST_POSITION.x + col * FARMING_GRID.X_STEP;
+      const cropY = FARMING_GRID.FIRST_POSITION.y + row * FARMING_GRID.Y_STEP;
 
-      const results = await backendCommand.findParallel(
-        images,
-        { timeoutMs: 60_000, threshold: 0.95 },
-        token
-      );
-
-      const match = Object.entries(results).find(
-        ([, points]) => points.length > 0
-      );
-
-      if (!match) {
-        logger.log("farming-collect-crops - no overgrown crops found, done");
-        return;
-      }
-
-      const [level, points] = match;
-      const point = points[0]!;
-      const ogLabel = Number(level) === 0 ? "0x" : `${2 ** Number(level)}x`;
-
+      const ogLabel = match.match!;
       logger.log(
-        `farming-collect-crops - found ${ogLabel} at (${point.x}, ${point.y}), clicking`
+        `farming-collect-crops - clicking ${ogLabel} at [${row},${col}] (${cropX}, ${cropY})`
       );
-      await backendCommand.click(point, clickOptions, token);
+      await backendCommand.click({ x: cropX, y: cropY }, clickOptions, token);
     }
+
+    logger.log(
+      `farming-collect-crops - collected ${matches.length} crops, done`
+    );
   },
 });
