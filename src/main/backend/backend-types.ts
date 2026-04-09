@@ -141,6 +141,41 @@ export type ScrollResponse = {
   success: boolean;
 };
 
+// ReadRegions command
+export type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type HsvColor = {
+  h: number;
+  s: number;
+  v: number;
+};
+
+export type RegionResult = {
+  regionIndex: number;
+  match: string | null;
+  similarity: number;
+  nonZeroPixels: number;
+  debugImagePath: string | null;
+};
+
+export type ReadRegionsRequest = {
+  regions: Rect[];
+  hsvLower: HsvColor;
+  hsvUpper: HsvColor;
+  templates: string[];
+  threshold?: number;
+  debug?: boolean;
+};
+
+export type ReadRegionsResponse = {
+  results: RegionResult[];
+};
+
 // Command type mapping for type safety
 export type CommandRequestMap = {
   find: FindRequest;
@@ -152,6 +187,7 @@ export type CommandRequestMap = {
   keyPress: KeyPressRequest;
   scroll: ScrollRequest;
   findParallel: FindParallelRequest;
+  readRegions: ReadRegionsRequest;
 };
 
 export type CommandResponseMap = {
@@ -164,6 +200,7 @@ export type CommandResponseMap = {
   keyPress: KeyPressResponse;
   scroll: ScrollResponse;
   findParallel: FindParallelResponse;
+  readRegions: ReadRegionsResponse;
 };
 
 // Helper type for creating type-safe WebSocket messages
