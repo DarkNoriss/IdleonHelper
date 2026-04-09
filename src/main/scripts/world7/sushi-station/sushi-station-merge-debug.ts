@@ -1,12 +1,21 @@
 import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
-import { SUSHI_TIERS_OFF, SUSHI_TIERS_ON } from "./sushi-station-constants";
+import {
+  buildSushiRegions,
+  SUSHI_GRID,
+  SUSHI_HSV_LOWER,
+  SUSHI_HSV_UPPER,
+  SUSHI_TEMPLATES,
+  SUSHI_TIERS_OFF,
+  SUSHI_TIERS_ON,
+} from "./sushi-station-constants";
 
 export default defineScript({
   id: "world7.sushiStation.sushiStationMergeDebug",
   name: "Sushi Station - Debug",
   run: async ({ token }) => {
+    // 1. Check tiers visibility and enable if off
     logger.log("sushi-station-debug - checking tiers visibility");
 
     const visibility = await backendCommand.isVisibleParallel(
@@ -22,16 +31,52 @@ export default defineScript({
       `sushi-station-debug - tiers on: ${tiersOn.length} matches, tiers off: ${tiersOff.length} matches`
     );
 
-    for (const match of tiersOn) {
-      logger.log(`sushi-station-debug - tiers on at x=${match.x} y=${match.y}`);
+    if (tiersOff.length > 0) {
+      logger.log("sushi-station-debug - tiers off, clicking to enable");
+      await backendCommand.click(tiersOff[0]!, undefined, token);
+      const confirm = await backendCommand.isVisible(
+        SUSHI_TIERS_ON,
+        undefined,
+        token
+      );
+      if (confirm.length === 0) {
+        logger.log("sushi-station-debug - failed to enable tiers");
+        return;
+      }
+      logger.log("sushi-station-debug - tiers enabled");
+    } else {
+      logger.log("sushi-station-debug - tiers already on");
     }
 
-    for (const match of tiersOff) {
+    // 2. Scan grid with readRegions debug
+    logger.log("sushi-station-debug - scanning grid with HSV matching");
+
+    const regions = buildSushiRegions();
+
+    const response = await backendCommand.readRegions(
+      regions,
+      { ...SUSHI_HSV_LOWER },
+      { ...SUSHI_HSV_UPPER },
+      SUSHI_TEMPLATES,
+      { debug: true },
+      token
+    );
+
+    for (const result of response.results) {
+      if (result.match === null && result.nonZeroPixels < 10) {
+        continue;
+      }
+      const col = result.regionIndex % SUSHI_GRID.COLUMNS;
+      const row = Math.floor(result.regionIndex / SUSHI_GRID.COLUMNS);
       logger.log(
-        `sushi-station-debug - tiers off at x=${match.x} y=${match.y}`
+        `sushi-station-debug - [${row},${col}] match=${result.match ?? "none"} similarity=${result.similarity} pixels=${result.nonZeroPixels}`
       );
     }
 
-    logger.log("sushi-station-debug - done");
+    const matched = response.results.filter((r) => r.match !== null);
+    logger.log(
+      `sushi-station-debug - total matched: ${matched.length}/${response.results.length}`
+    );
+    logger.log("sushi-station-debug - check debug-regions folder for images");
   },
 });
