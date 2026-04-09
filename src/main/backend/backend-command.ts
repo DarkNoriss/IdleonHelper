@@ -378,19 +378,14 @@ export const backendCommand = {
   ): Promise<ReadRegionsResponse> => {
     token.throwIfCancelled();
     const resolvedTemplates = templates.map(resolveImagePath);
-    const payload = {
+    return sendCommand("readRegions", {
       regions,
       hsvLower,
       hsvUpper,
       templates: resolvedTemplates,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       debug: options?.debug ?? false,
-    };
-    const payloadSize = JSON.stringify(payload).length;
-    console.log(
-      `[readRegions] sending: ${regions.length} regions, ${resolvedTemplates.length} templates, debug=${payload.debug}, payload=${payloadSize} bytes`
-    );
-    return sendCommand("readRegions", payload);
+    });
   },
 
   stop: async (): Promise<StopResponse> => {
