@@ -69,6 +69,14 @@ internal static class FindParallelCommandHandler
     {
       await MessageHandler.SendError(ws, message.Id, "Operation was cancelled", ct);
     }
+    catch (FileNotFoundException ex)
+    {
+      await MessageHandler.SendError(ws, message.Id, $"Image file not found: {ex.Message}", ct);
+    }
+    catch (ArgumentException ex)
+    {
+      await MessageHandler.SendError(ws, message.Id, $"Invalid argument: {ex.Message}", ct);
+    }
     catch (Exception ex)
     {
       await MessageHandler.SendError(ws, message.Id, $"Error in parallel find: {ex.Message}", ct);

@@ -293,8 +293,9 @@ export const backendCommand = {
     token: CancellationToken
   ): Promise<Record<string, Point[]>> => {
     token.throwIfCancelled();
+    const uniquePaths = [...new Set(imagePaths)];
     const resolvedToOriginal = new Map<string, string>();
-    const resolvedPaths = imagePaths.map((p) => {
+    const resolvedPaths = uniquePaths.map((p) => {
       const resolved = resolveImagePath(p);
       resolvedToOriginal.set(resolved, p);
       return resolved;
