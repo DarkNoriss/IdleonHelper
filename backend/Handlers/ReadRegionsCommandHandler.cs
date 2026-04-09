@@ -47,8 +47,15 @@ internal static class ReadRegionsCommandHandler
         request.HsvUpper.H, request.HsvUpper.S, request.HsvUpper.V
       );
 
-      using var colorScreenshot = WindowCapture.CaptureScreenShotColor(linkedCt);
+      Console.WriteLine($"[ReadRegions] Starting: {regions.Count} regions, {request.Templates.Count} templates, threshold={request.Threshold ?? 0.8}, debug={request.Debug ?? false}");
+      Console.WriteLine($"[ReadRegions] HSV lower=({hsvLower.H},{hsvLower.S},{hsvLower.V}) upper=({hsvUpper.H},{hsvUpper.S},{hsvUpper.V})");
+      Console.WriteLine($"[ReadRegions] First region: x={regions[0].X} y={regions[0].Y} w={regions[0].Width} h={regions[0].Height}");
 
+      var sw = System.Diagnostics.Stopwatch.StartNew();
+      using var colorScreenshot = WindowCapture.CaptureScreenShotColor(linkedCt);
+      Console.WriteLine($"[ReadRegions] Screenshot captured in {sw.ElapsedMilliseconds}ms ({colorScreenshot.Width}x{colorScreenshot.Height})");
+
+      sw.Restart();
       var results = ImageProcessing.ReadRegions(
         colorScreenshot,
         regions,
@@ -59,6 +66,7 @@ internal static class ReadRegionsCommandHandler
         request.Debug ?? false,
         linkedCt
       );
+      Console.WriteLine($"[ReadRegions] Processing done in {sw.ElapsedMilliseconds}ms, {results.Count} results");
 
       var response = new ReadRegionsResponse
       {

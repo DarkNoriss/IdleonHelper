@@ -302,11 +302,17 @@ public static class ImageProcessing
     var templates = new List<(string name, Mat mat)>();
     foreach (var path in templatePaths)
     {
-      if (!File.Exists(path)) continue;
+      if (!File.Exists(path))
+      {
+        Console.WriteLine($"[ReadRegions] Template not found: {path}");
+        continue;
+      }
       var template = LoadImage(path);
       var name = Path.GetFileNameWithoutExtension(path);
+      Console.WriteLine($"[ReadRegions] Loaded template: {name} ({template.Width}x{template.Height})");
       templates.Add((name, template));
     }
+    Console.WriteLine($"[ReadRegions] {templates.Count}/{templatePaths.Count} templates loaded");
 
     var debugDir = debug ? Path.Combine(AppContext.BaseDirectory, "debug-regions") : null;
     if (debug && debugDir != null)
@@ -322,11 +328,14 @@ public static class ImageProcessing
       var lowerScalar = new Scalar(hsvLower.H, hsvLower.S, hsvLower.V);
       var upperScalar = new Scalar(hsvUpper.H, hsvUpper.S, hsvUpper.V);
 
+      var regionSw = Stopwatch.StartNew();
       for (var i = 0; i < regions.Count; i++)
       {
         ct.ThrowIfCancellationRequested();
 
         var region = regions[i];
+        if (i == 0 || i == regions.Count - 1 || i % 30 == 0)
+          Console.WriteLine($"[ReadRegions] Processing region {i}/{regions.Count} x={region.X} y={region.Y} w={region.Width} h={region.Height}");
 
         var roiX = Math.Clamp(region.X, 0, colorScreenshot.Width - 1);
         var roiY = Math.Clamp(region.Y, 0, colorScreenshot.Height - 1);
@@ -409,6 +418,7 @@ public static class ImageProcessing
       }
     }
 
+    Console.WriteLine($"[ReadRegions] All regions processed in {regionSw.ElapsedMilliseconds}ms");
     return results;
   }
 }
