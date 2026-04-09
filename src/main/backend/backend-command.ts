@@ -11,6 +11,7 @@ import type {
   DragRepeatResponse,
   DragRequest,
   DragResponse,
+  FindParallelRequest,
   FindRequest,
   FindWithDebugRequest,
   FindWithDebugResponse,
@@ -279,6 +280,37 @@ export const backendCommand = {
       interval: options?.interval ?? 100,
     };
     return sendCommand("scroll", request);
+  },
+
+  isVisibleParallel: async (
+    imagePaths: string[],
+    options:
+      | {
+          offset?: ScreenOffset;
+          threshold?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<Record<string, Point[]>> => {
+    token.throwIfCancelled();
+    const resolvedToOriginal = new Map<string, string>();
+    const resolvedPaths = imagePaths.map((p) => {
+      const resolved = resolveImagePath(p);
+      resolvedToOriginal.set(resolved, p);
+      return resolved;
+    });
+    const request: FindParallelRequest = {
+      imagePaths: resolvedPaths,
+      threshold: options?.threshold ?? backendConfig.find.threshold,
+      offset: options?.offset ?? undefined,
+    };
+    const response = await sendCommand("findParallel", request);
+    const result: Record<string, Point[]> = {};
+    for (const [resolvedPath, matches] of Object.entries(response.results)) {
+      const originalPath = resolvedToOriginal.get(resolvedPath) ?? resolvedPath;
+      result[originalPath] = matches;
+    }
+    return result;
   },
 
   stop: async (): Promise<StopResponse> => {
