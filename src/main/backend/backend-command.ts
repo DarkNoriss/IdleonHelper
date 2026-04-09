@@ -282,6 +282,63 @@ export const backendCommand = {
     return sendCommand("scroll", request);
   },
 
+  findParallel: async (
+    imagePaths: string[],
+    options:
+      | {
+          timeoutMs?: number;
+          intervalMs?: number;
+          threshold?: number;
+          offset?: ScreenOffset;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<Record<string, Point[]>> => {
+    token.throwIfCancelled();
+    const uniquePaths = [...new Set(imagePaths)];
+    const resolvedToOriginal = new Map<string, string>();
+    const resolvedPaths = uniquePaths.map((p) => {
+      const resolved = resolveImagePath(p);
+      resolvedToOriginal.set(resolved, p);
+      return resolved;
+    });
+    const timeoutMs = options?.timeoutMs ?? backendConfig.find.timeoutMs;
+    const intervalMs = options?.intervalMs ?? backendConfig.find.intervalMs;
+    const threshold = options?.threshold ?? backendConfig.find.threshold;
+    const start = Date.now();
+
+    while (Date.now() - start < timeoutMs) {
+      token.throwIfCancelled();
+      const request: FindParallelRequest = {
+        imagePaths: resolvedPaths,
+        threshold,
+        offset: options?.offset ?? undefined,
+      };
+      const response = await sendCommand("findParallel", request);
+      const hasMatch = Object.values(response.results).some(
+        (m) => m.length > 0
+      );
+      if (hasMatch) {
+        const result: Record<string, Point[]> = {};
+        for (const [resolvedPath, matches] of Object.entries(
+          response.results
+        )) {
+          const originalPath =
+            resolvedToOriginal.get(resolvedPath) ?? resolvedPath;
+          result[originalPath] = matches;
+        }
+        return result;
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+
+    const emptyResult: Record<string, Point[]> = {};
+    for (const p of uniquePaths) {
+      emptyResult[p] = [];
+    }
+    return emptyResult;
+  },
+
   isVisibleParallel: async (
     imagePaths: string[],
     options:
