@@ -9,8 +9,8 @@ export const SUSHI_GRID = {
 } as const;
 
 export const SUSHI_ROI = {
-  WIDTH: 0,
-  HEIGHT: 0,
+  WIDTH: 45,
+  HEIGHT: 45,
 } as const;
 
 export const SUSHI_HSV_LOWER = { h: 0, s: 0, v: 0 } as const;
@@ -19,7 +19,7 @@ export const SUSHI_HSV_UPPER = { h: 180, s: 255, v: 255 } as const;
 const SUSHI_PATH = "ui/map/world-7/sushi-station";
 
 export const SUSHI_TEMPLATES = Array.from(
-  { length: 50 },
+  { length: 16 },
   (_, i) => `${SUSHI_PATH}/sushi_t${i + 1}`
 );
 
