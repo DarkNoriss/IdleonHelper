@@ -320,6 +320,7 @@ public static class ImageProcessing
       Directory.CreateDirectory(debugDir);
     }
 
+    var regionSw = Stopwatch.StartNew();
     try
     {
       using var hsvImage = new Mat();
@@ -327,8 +328,6 @@ public static class ImageProcessing
 
       var lowerScalar = new Scalar(hsvLower.H, hsvLower.S, hsvLower.V);
       var upperScalar = new Scalar(hsvUpper.H, hsvUpper.S, hsvUpper.V);
-
-      var regionSw = Stopwatch.StartNew();
       for (var i = 0; i < regions.Count; i++)
       {
         ct.ThrowIfCancellationRequested();
