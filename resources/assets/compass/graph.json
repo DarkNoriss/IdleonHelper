@@ -1,19 +1,4 @@
 {
-  "pathfinder": [
-    "worldfinder",
-    "stop-drop-and-roll",
-    "fighter-path",
-    "tempest-damage",
-    "elemental-vision",
-    "nomadic-path",
-    "critter-culture",
-    "jade-coinage",
-    "moon-of-print",
-    "tempest-defence",
-    "abomination-slayer-i",
-    "abomination-slayer-ii",
-    "abomination-slayer-iii"
-  ],
   "worldfinder": [
     "pathfinder",
     "stop-drop-and-roll",
@@ -31,6 +16,25 @@
     "tempest-heartbeat",
     "abomination-slayer-i",
     "abomination-slayer-ii"
+  ],
+  "pathfinder": [
+    "worldfinder",
+    "stop-drop-and-roll",
+    "fighter-path",
+    "tempest-damage",
+    "elemental-path",
+    "weapon-drop",
+    "elemental-vision",
+    "nomadic-path",
+    "critter-culture",
+    "jade-coinage",
+    "moon-of-print",
+    "survival-path",
+    "tempest-heartbeat",
+    "tempest-defence",
+    "abomination-slayer-i",
+    "abomination-slayer-ii",
+    "abomination-slayer-iii"
   ],
   "stop-drop-and-roll": [
     "pathfinder",
@@ -124,7 +128,6 @@
     "tempest-rapidshot",
     "tempest-bullseye",
     "tempest-maxhit",
-    "tempest-one-huuuundred-and-eighty",
     "abomination-slayer-i",
     "abomination-slayer-ii",
     "abomination-slayer-iii",
@@ -180,7 +183,7 @@
     "tempest-crits",
     "tempest-rapidshot",
     "stardust-hoarding",
-    "cooldust-hoarding",
+    "weapon-drop",
     "elemental-vision",
     "ring-drop",
     "stone-failsafe"
@@ -203,7 +206,6 @@
   "tempest-bullseye": [
     "tempest-accuracy",
     "multishot",
-    "tempest-crits",
     "tempest-rapidshot",
     "tempest-maxhit",
     "tempest-one-huuuundred-and-eighty",
@@ -270,7 +272,6 @@
   ],
   "cooldust-hoarding": [
     "tempest-crits",
-    "tempest-mega-damage",
     "tempest-rapidshot",
     "tempest-maxhit",
     "stardust-hoarding",
@@ -294,7 +295,6 @@
     "tempest-bullseye",
     "nomadic-path",
     "moon-of-print",
-    "talented-masters",
     "atomic-cost-crash",
     "abomination-slayer-i",
     "abomination-slayer-ii",
@@ -392,7 +392,6 @@
     "stone-failsafe"
   ],
   "medallion-collection": [
-    "stop-drop-and-roll",
     "elemental-path",
     "weapon-drop",
     "elemental-vision",
@@ -483,6 +482,22 @@
     "weapon-improvement",
     "stone-failsafe"
   ],
+  "survival-path": [
+    "pathfinder",
+    "worldfinder",
+    "fighter-path",
+    "elemental-path",
+    "weapon-drop",
+    "nomadic-path",
+    "critter-culture",
+    "jade-coinage",
+    "exalted-stamps",
+    "tempest-heartbeat",
+    "tempest-defence",
+    "moondust-hoarding",
+    "abomination-slayer-i",
+    "abomination-slayer-ii"
+  ],
   "critter-culture": [
     "nomadic-path",
     "jade-coinage",
@@ -509,7 +524,6 @@
     "survival-path",
     "5-minute-mile",
     "abomination-slayer-i",
-    "abomination-slayer-ii",
     "abomination-slayer-iv"
   ],
   "moon-of-print": [
@@ -531,6 +545,7 @@
     "abomination-slayer-vii"
   ],
   "exalted-stamps": [
+    "nomadic-path",
     "critter-culture",
     "jade-coinage",
     "moon-of-print",
@@ -567,8 +582,7 @@
     "atomic-cost-crash",
     "my-talent-is-best-talent",
     "moon-of-experience",
-    "monument-homage",
-    "pristine-collector"
+    "monument-homage"
   ],
   "all-knowing-eye": [
     "exalted-stamps",
@@ -602,7 +616,8 @@
     "moon-of-experience",
     "monument-homage",
     "moon-of-sleep",
-    "aluminium-atom"
+    "aluminium-atom",
+    "villagerz-learnz"
   ],
   "atomic-potential": [
     "moon-of-sneak",
@@ -620,10 +635,12 @@
     "moon-of-experience",
     "monument-homage",
     "moon-of-sleep",
-    "aluminium-atom"
+    "aluminium-atom",
+    "villagerz-learnz"
   ],
   "moon-of-experience": [
     "moon-of-print",
+    "exalted-stamps",
     "magnesium-atom",
     "moon-of-damage",
     "talented-masters",
@@ -632,7 +649,8 @@
     "my-talent-is-best-talent",
     "monument-homage",
     "pristine-collector",
-    "aluminium-atom"
+    "aluminium-atom",
+    "villagerz-learnz"
   ],
   "talented-masters": [
     "jade-coinage",
@@ -644,7 +662,6 @@
     "moon-of-experience",
     "monument-homage",
     "pristine-collector",
-    "aluminium-atom",
     "abomination-slayer-i",
     "abomination-slayer-ii",
     "abomination-slayer-iv",
@@ -681,20 +698,48 @@
     "magnesium-atom",
     "moon-of-damage",
     "opa-opa-opa",
+    "atomic-potential",
     "my-talent-is-best-talent",
     "moon-of-experience",
     "pristine-collector",
-    "aluminium-atom"
+    "aluminium-atom",
+    "villagerz-learnz"
   ],
   "aluminium-atom": [
     "opa-opa-opa",
     "my-talent-is-best-talent",
     "moon-of-experience",
     "monument-homage",
+    "moon-of-sleep",
     "pristine-collector",
+    "villagerz-learnz",
     "abomination-slayer-xxxii",
     "abomination-slayer-xxxiii",
     "abomination-slayer-xxxiv",
+    "abomination-slayer-xxxv"
+  ],
+  "moon-of-sleep": [
+    "all-knowing-eye",
+    "opa-opa-opa",
+    "atomic-potential",
+    "my-talent-is-best-talent",
+    "villagerz-learnz"
+  ],
+  "villagerz-learnz": [
+    "opa-opa-opa",
+    "my-talent-is-best-talent",
+    "monument-homage",
+    "moon-of-sleep",
+    "aluminium-atom",
+    "abomination-slayer-xxxiv",
+    "abomination-slayer-xxxv"
+  ],
+  "abomination-slayer-xxxiv": [
+    "pristine-collector",
+    "aluminium-atom",
+    "villagerz-learnz",
+    "abomination-slayer-xxxii",
+    "abomination-slayer-xxxiii",
     "abomination-slayer-xxxv"
   ],
   "abomination-slayer-xxxii": [
@@ -704,7 +749,8 @@
     "abomination-slayer-xxx",
     "abomination-slayer-xxxi",
     "abomination-slayer-xxxiii",
-    "abomination-slayer-xxxiv"
+    "abomination-slayer-xxxiv",
+    "abomination-slayer-xxxv"
   ],
   "abomination-slayer-xiv": [
     "atomic-cost-crash",
@@ -738,7 +784,8 @@
     "abomination-slayer-xi",
     "abomination-slayer-xii",
     "abomination-slayer-xiii",
-    "abomination-slayer-xiv"
+    "abomination-slayer-xiv",
+    "abomination-slayer-xv"
   ],
   "abomination-slayer-iv": [
     "fighter-path",
@@ -776,26 +823,11 @@
     "talented-masters",
     "survival-path",
     "tempest-heartbeat",
+    "tempest-defence",
     "abomination-slayer-ii",
     "abomination-slayer-iii",
     "abomination-slayer-iv",
     "abomination-slayer-v"
-  ],
-  "survival-path": [
-    "pathfinder",
-    "worldfinder",
-    "fighter-path",
-    "elemental-path",
-    "weapon-drop",
-    "nomadic-path",
-    "critter-culture",
-    "jade-coinage",
-    "exalted-stamps",
-    "tempest-heartbeat",
-    "tempest-defence",
-    "moondust-hoarding",
-    "abomination-slayer-i",
-    "abomination-slayer-ii"
   ],
   "tempest-heartbeat": [
     "pathfinder",
@@ -806,12 +838,10 @@
     "tempest-defence",
     "5-minute-mile",
     "moondust-hoarding",
-    "solardust-hoarding",
     "novadust-discovery",
     "abomination-slayer-i"
   ],
   "tempest-defence": [
-    "pathfinder",
     "nomadic-path",
     "critter-culture",
     "moon-of-sneak",
@@ -820,14 +850,13 @@
     "5-minute-mile",
     "moondust-hoarding",
     "solardust-hoarding",
-    "mountains-of-dust",
     "spire-of-dust",
     "novadust-discovery"
   ],
   "5-minute-mile": [
+    "nomadic-path",
     "critter-culture",
     "moon-of-sneak",
-    "all-knowing-eye",
     "tempest-defence",
     "moondust-hoarding",
     "solardust-hoarding",
@@ -849,11 +878,12 @@
   "solardust-hoarding": [
     "tempest-defence",
     "5-minute-mile",
-    "moondust-hoarding",
     "mountains-of-dust",
     "cant-touch-this",
     "spire-of-dust",
-    "novadust-discovery"
+    "novadust-discovery",
+    "knockoff-compass",
+    "circle-supermacy"
   ],
   "mountains-of-dust": [
     "moon-of-sneak",
@@ -868,13 +898,15 @@
     "mountains-of-dust",
     "cant-touch-this",
     "novadust-discovery",
-    "knockoff-compass"
+    "knockoff-compass",
+    "circle-supermacy"
   ],
   "cant-touch-this": [
     "solardust-hoarding",
     "spire-of-dust",
     "novadust-discovery",
-    "knockoff-compass"
+    "knockoff-compass",
+    "circle-supermacy"
   ],
   "novadust-discovery": [
     "tempest-heartbeat",
@@ -900,7 +932,13 @@
     "tempest-reach",
     "cant-touch-this",
     "spire-of-dust",
-    "novadust-discovery"
+    "novadust-discovery",
+    "circle-supermacy"
+  ],
+  "circle-supermacy": [
+    "solardust-hoarding",
+    "cant-touch-this",
+    "spire-of-dust"
   ],
   "abomination-slayer-ii": [
     "pathfinder",
@@ -914,7 +952,6 @@
     "jade-coinage",
     "moon-of-print",
     "talented-masters",
-    "survival-path",
     "abomination-slayer-i",
     "abomination-slayer-iii",
     "abomination-slayer-iv",
@@ -979,7 +1016,6 @@
     "multishot",
     "tempest-bullseye",
     "tempest-maxhit",
-    "tempest-one-huuuundred-and-eighty",
     "abomination-slayer-iv",
     "abomination-slayer-v",
     "abomination-slayer-vi",
@@ -1064,7 +1100,6 @@
     "abomination-slayer-xxxi"
   ],
   "abomination-slayer-xv": [
-    "atomic-cost-crash",
     "pristine-collector",
     "abomination-slayer-vii",
     "abomination-slayer-viii",
@@ -1073,6 +1108,7 @@
     "abomination-slayer-xiv",
     "abomination-slayer-xvi",
     "abomination-slayer-xvii",
+    "abomination-slayer-xviii",
     "abomination-slayer-xxviii",
     "abomination-slayer-xxix",
     "abomination-slayer-xxx",
@@ -1255,7 +1291,8 @@
     "abomination-slayer-xxvii",
     "abomination-slayer-xxviii",
     "abomination-slayer-xxx",
-    "abomination-slayer-xxxi"
+    "abomination-slayer-xxxi",
+    "abomination-slayer-xxxii"
   ],
   "abomination-slayer-xxx": [
     "abomination-slayer-xiii",
@@ -1287,21 +1324,10 @@
     "abomination-slayer-xxxiv",
     "abomination-slayer-xxxv"
   ],
-  "abomination-slayer-xxxiv": [
-    "aluminium-atom",
-    "abomination-slayer-xxxii",
-    "abomination-slayer-xxxiii",
-    "abomination-slayer-xxxv"
-  ],
   "abomination-slayer-xxxv": [
     "aluminium-atom",
+    "villagerz-learnz",
     "abomination-slayer-xxxiii",
     "abomination-slayer-xxxiv"
-  ],
-  "moon-of-sleep": [
-    "all-knowing-eye",
-    "opa-opa-opa",
-    "atomic-potential",
-    "my-talent-is-best-talent"
   ]
 }
