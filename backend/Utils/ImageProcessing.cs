@@ -81,6 +81,7 @@ public static class ImageProcessing
     List<string> imagePaths,
     double threshold,
     ScreenOffset? offset,
+    bool debug,
     CancellationToken ct
   )
   {
@@ -101,12 +102,71 @@ public static class ImageProcessing
         continue;
       }
 
-      var foundMatches = MatchTemplate(screenshot, templateImage, threshold, false, ct);
+      var foundMatches = MatchTemplate(screenshot, templateImage, threshold, debug, ct);
       var filteredMatches = FilterMatchesByOffset(foundMatches, offset);
       results[imagePath] = filteredMatches;
     }
 
     return results;
+  }
+
+  public static Dictionary<string, string?> GenerateDebugImages(
+    Mat screenshotGray,
+    Dictionary<string, List<Match>> allMatches,
+    List<string> imagePaths,
+    CancellationToken ct
+  )
+  {
+    ct.ThrowIfCancellationRequested();
+
+    var debugPaths = new Dictionary<string, string?>();
+
+    using var screenshotColor = new Mat();
+    Cv2.CvtColor(screenshotGray, screenshotColor, ColorConversionCodes.GRAY2BGR);
+
+    var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff");
+
+    foreach (var imagePath in imagePaths)
+    {
+      ct.ThrowIfCancellationRequested();
+
+      if (!allMatches.TryGetValue(imagePath, out var matches) || matches.Count == 0)
+      {
+        debugPaths[imagePath] = null;
+        continue;
+      }
+
+      using var template = LoadImage(imagePath);
+      var templateSize = template.Size();
+      using var annotated = screenshotColor.Clone();
+
+      for (var i = 0; i < matches.Count; i++)
+      {
+        var match = matches[i];
+        var p = match.Point;
+        var x = Math.Clamp(p.X - templateSize.Width / 2, 0, annotated.Width - templateSize.Width);
+        var y = Math.Clamp(p.Y - templateSize.Height / 2, 0, annotated.Height - templateSize.Height);
+        var rect = new Rect(x, y, templateSize.Width, templateSize.Height);
+
+        Cv2.Rectangle(annotated, rect, new Scalar(0, 0, 255), 2);
+        Cv2.PutText(annotated, i.ToString(), new OpenCvSharp.Point(x, y - 4),
+          HersheyFonts.HersheySimplex, 0.5, new Scalar(0, 0, 255));
+
+        var textY = y + templateSize.Height + 15;
+        Cv2.PutText(annotated, $"({p.X}, {p.Y})", new OpenCvSharp.Point(x, textY),
+          HersheyFonts.HersheySimplex, 0.5, new Scalar(0, 0, 255));
+        Cv2.PutText(annotated, $"{match.Similarity:P2}", new OpenCvSharp.Point(x, textY + 15),
+          HersheyFonts.HersheySimplex, 0.5, new Scalar(0, 255, 0));
+      }
+
+      var baseName = Path.GetFileNameWithoutExtension(imagePath);
+      var debugFileName = $"annotated-{baseName}-{timestamp}.png";
+      var debugPath = Path.Combine(AppContext.BaseDirectory, debugFileName);
+      Cv2.ImWrite(debugPath, annotated);
+      debugPaths[imagePath] = debugPath;
+    }
+
+    return debugPaths;
   }
 
   public static Mat LoadImage(string imagePath)

@@ -65,10 +65,12 @@ export type FindParallelRequest = {
   imagePaths: string[];
   threshold: number;
   offset?: ScreenOffset;
+  debug?: boolean;
 };
 
 export type FindParallelResponse = {
   results: Record<string, Point[]>;
+  debugImagePaths?: Record<string, string | null>;
 };
 
 // Click command

@@ -61,7 +61,7 @@ export default defineScript<[string]>({
     token.throwIfCancelled();
     const results = await backendCommand.isVisibleParallel(
       images,
-      undefined,
+      { debug: true },
       token
     );
 
@@ -70,7 +70,6 @@ export default defineScript<[string]>({
       if (matches.length > 0) {
         visibleNodes.push(id);
         logger.log(`  Visible: ${id}`);
-        await backendCommand.isVisible(images[id]!, { debug: true }, token);
       }
     }
 
