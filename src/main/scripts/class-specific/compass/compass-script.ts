@@ -144,30 +144,26 @@ export default defineScript<[CompassUpgrade[]]>({
       }
 
       // Click upgrade button
-      const hasUpgrade = await backendCommand.find(
-        "compass/compass_upgrade",
+      const panelState = await backendCommand.findParallel(
+        {
+          upgrade: "compass/compass_upgrade",
+          upgradeOff: "compass/compass_upgrade_off",
+        },
         { threshold: 0.995 },
         token
       );
 
-      if (hasUpgrade.length > 0) {
+      if (panelState.upgrade!.length > 0) {
         const fastClick = getClickOptionsFromPreset(ClickPreset.Fast);
         await backendCommand.click(
-          hasUpgrade[0]!,
+          panelState.upgrade![0]!,
           { times: resolved.change, ...fastClick },
           token
         );
+      } else if (panelState.upgradeOff!.length > 0) {
+        logger.log("  Upgrade not available");
       } else {
-        const hasUpgradeOff = await backendCommand.isVisible(
-          "compass/compass_upgrade_off",
-          undefined,
-          token
-        );
-        if (hasUpgradeOff.length > 0) {
-          logger.log("  Upgrade not available");
-        } else {
-          logger.log("  ERROR: upgrade panel not detected");
-        }
+        logger.log("  ERROR: upgrade panel not detected");
       }
 
       await dismissPanel(token);

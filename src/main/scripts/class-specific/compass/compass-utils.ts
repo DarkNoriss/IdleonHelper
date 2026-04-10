@@ -49,24 +49,22 @@ export const calibrateCompassCenter = async (
   token: CancellationToken
 ): Promise<Point> => {
   logger.log("Calibrating compass center from corner images...");
-  const topLeft = await backendCommand.find(
-    "compass/compass_top_left",
+  const corners = await backendCommand.findParallel(
+    {
+      topLeft: "compass/compass_top_left",
+      bottomRight: "compass/compass_bottom_right",
+    },
     undefined,
     token
   );
-  if (topLeft.length === 0) {
+  if (corners.topLeft!.length === 0) {
     throw new Error("Compass top-left corner not found");
   }
-  const bottomRight = await backendCommand.find(
-    "compass/compass_bottom_right",
-    undefined,
-    token
-  );
-  if (bottomRight.length === 0) {
+  if (corners.bottomRight!.length === 0) {
     throw new Error("Compass bottom-right corner not found");
   }
-  const tl = topLeft[0]!;
-  const br = bottomRight[0]!;
+  const tl = corners.topLeft![0]!;
+  const br = corners.bottomRight![0]!;
   const center = {
     x: Math.round((tl.x + br.x) / 2),
     y: Math.round((tl.y + br.y) / 2),
@@ -79,25 +77,13 @@ export const calibrateCompassCenter = async (
 
 export const openCompass = async (token: CancellationToken): Promise<void> => {
   logger.log("Looking for Compass skill...");
-  let compassFound = false;
 
   const quickFindCompass = async (): Promise<boolean> => {
-    if (
-      (
-        await backendCommand.isVisible(
-          "ui/attacks/attack_compass",
-          undefined,
-          token
-        )
-      ).length > 0
-    ) {
-      return backendCommand.findAndClick(
-        "ui/attacks/attack_compass",
-        undefined,
-        token
-      );
-    }
-    return false;
+    return backendCommand.findAndClick(
+      "ui/attacks/attack_compass",
+      undefined,
+      token
+    );
   };
 
   const scrollAndFindCompass = async (): Promise<boolean> => {
@@ -106,55 +92,50 @@ export const openCompass = async (token: CancellationToken): Promise<void> => {
       logger.log(
         `Scrolling down attack bar (${i + 1}/${ARROW_DOWN_MAX_ATTEMPTS})...`
       );
-      if (
-        (
-          await backendCommand.isVisible(
-            "ui/attacks/attack_arrow_down",
-            undefined,
-            token
-          )
-        ).length > 0
-      ) {
-        await backendCommand.findAndClick(
-          "ui/attacks/attack_arrow_down",
-          undefined,
-          token
-        );
-        const found = await quickFindCompass();
-        if (found) {
-          return true;
-        }
+      const visible = await backendCommand.isVisibleParallel(
+        {
+          compass: "ui/attacks/attack_compass",
+          arrowDown: "ui/attacks/attack_arrow_down",
+        },
+        undefined,
+        token
+      );
+      if (visible.compass!.length > 0) {
+        await backendCommand.click(visible.compass![0]!, undefined, token);
+        return true;
+      }
+      if (visible.arrowDown!.length > 0) {
+        await backendCommand.click(visible.arrowDown![0]!, undefined, token);
       }
     }
     return false;
   };
 
-  compassFound = await quickFindCompass();
-
-  if (!compassFound) {
-    compassFound = await scrollAndFindCompass();
+  if (await quickFindCompass()) {
+    return;
   }
 
-  if (!compassFound) {
-    logger.log("Compass not found. Opening attacks bar...");
-    const attacksClicked = await backendCommand.findAndClick(
-      "ui/attacks/attacks",
-      undefined,
-      token
-    );
+  if (await scrollAndFindCompass()) {
+    return;
+  }
 
-    if (attacksClicked) {
-      compassFound = await quickFindCompass();
+  logger.log("Compass not found. Opening attacks bar...");
+  const attacksClicked = await backendCommand.findAndClick(
+    "ui/attacks/attacks",
+    undefined,
+    token
+  );
 
-      if (!compassFound) {
-        compassFound = await scrollAndFindCompass();
-      }
+  if (attacksClicked) {
+    if (await quickFindCompass()) {
+      return;
+    }
+    if (await scrollAndFindCompass()) {
+      return;
     }
   }
 
-  if (!compassFound) {
-    throw new Error("Compass skill not found on attack bar");
-  }
+  throw new Error("Compass skill not found on attack bar");
 };
 
 export const scrollInAtCenter = async (
