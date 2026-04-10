@@ -101,12 +101,24 @@ export const backendCommand = {
       | {
           offset?: ScreenOffset;
           threshold?: number;
+          debug?: boolean;
         }
       | undefined,
     token: CancellationToken
   ): Promise<Point[]> => {
     token.throwIfCancelled();
     const resolvedPath = resolveImagePath(imagePath);
+    if (options?.debug) {
+      const request: FindWithDebugRequest = {
+        imagePath: resolvedPath,
+        timeoutMs: backendConfig.isVisible.timeoutMs,
+        intervalMs: backendConfig.isVisible.intervalMs,
+        threshold: options?.threshold ?? backendConfig.find.threshold,
+        offset: options?.offset ?? undefined,
+      };
+      const response = await sendCommand("findWithDebug", request);
+      return response.matches.map((m) => m.point);
+    }
     const request: FindRequest = {
       imagePath: resolvedPath,
       timeoutMs: backendConfig.isVisible.timeoutMs,
@@ -117,29 +129,6 @@ export const backendCommand = {
     };
     const response = await sendCommand("find", request);
     return response.matches;
-  },
-
-  isVisibleWithDebug: async (
-    imagePath: string,
-    options:
-      | {
-          offset?: ScreenOffset;
-          threshold?: number;
-        }
-      | undefined,
-    token: CancellationToken
-  ): Promise<Point[]> => {
-    token.throwIfCancelled();
-    const resolvedPath = resolveImagePath(imagePath);
-    const request: FindWithDebugRequest = {
-      imagePath: resolvedPath,
-      timeoutMs: backendConfig.isVisible.timeoutMs,
-      intervalMs: backendConfig.isVisible.intervalMs,
-      threshold: options?.threshold ?? backendConfig.find.threshold,
-      offset: options?.offset ?? undefined,
-    };
-    const response = await sendCommand("findWithDebug", request);
-    return response.matches.map((m) => m.point);
   },
 
   findAndClick: async (

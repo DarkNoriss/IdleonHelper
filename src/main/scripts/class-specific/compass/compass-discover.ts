@@ -70,7 +70,7 @@ export default defineScript<[string]>({
       if (matches.length > 0) {
         visibleNodes.push(id);
         logger.log(`  Visible: ${id}`);
-        await backendCommand.isVisibleWithDebug(images[id]!, undefined, token);
+        await backendCommand.isVisible(images[id]!, { debug: true }, token);
       }
     }
 
