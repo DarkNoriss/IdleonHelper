@@ -1,9 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  COMPASS_NODE_DEFS,
-  COMPASS_NODE_GROUPS,
-} from "@/shared/compass-config";
+import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
 import type { Point } from "../../../backend/backend-types";
 import { backendCommand } from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
@@ -177,25 +174,26 @@ export const findAnyNode = async (
   token: CancellationToken
 ): Promise<{ id: string; point: Point }> => {
   logger.log("Scanning for any visible node...");
-  const maxLen = Math.max(...COMPASS_NODE_GROUPS.map((g) => g.nodes.length));
-  for (let i = 0; i < maxLen; i++) {
-    for (const group of COMPASS_NODE_GROUPS) {
-      if (i >= group.nodes.length) {
-        continue;
-      }
-      const node = group.nodes[i]!;
-      token.throwIfCancelled();
-      const matches = await backendCommand.isVisible(
-        node.image,
-        undefined,
-        token
-      );
-      if (matches.length > 0) {
-        logger.log(`Found node: ${node.id}`);
-        return { id: node.id, point: matches[0]! };
-      }
+
+  const images: Record<string, string> = {};
+  for (const def of COMPASS_NODE_DEFS) {
+    images[def.id] = def.image;
+  }
+
+  token.throwIfCancelled();
+  const results = await backendCommand.isVisibleParallel(
+    images,
+    undefined,
+    token
+  );
+
+  for (const [id, matches] of Object.entries(results)) {
+    if (matches.length > 0) {
+      logger.log(`Found node: ${id}`);
+      return { id, point: matches[0]! };
     }
   }
+
   throw new Error("No compass node found on screen");
 };
 
