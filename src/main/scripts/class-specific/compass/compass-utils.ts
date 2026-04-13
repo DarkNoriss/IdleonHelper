@@ -5,8 +5,8 @@ import type { Point } from "../../../backend/backend-types";
 import { backendCommand } from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
 import { logger } from "../../../utils/index";
+import { navigation } from "../../game-nav/index";
 
-const ARROW_DOWN_MAX_ATTEMPTS = 3;
 const SCROLL_IN_TIMES = 8;
 export const WHEEL_DELTA = 120;
 
@@ -76,66 +76,14 @@ export const calibrateCompassCenter = async (
 };
 
 export const openCompass = async (token: CancellationToken): Promise<void> => {
-  logger.log("Looking for Compass skill...");
-
-  const quickFindCompass = async (): Promise<boolean> => {
-    return backendCommand.findAndClick(
-      "ui/attacks/attack_compass",
-      undefined,
-      token
-    );
-  };
-
-  const scrollAndFindCompass = async (): Promise<boolean> => {
-    for (let i = 0; i < ARROW_DOWN_MAX_ATTEMPTS; i++) {
-      token.throwIfCancelled();
-      logger.log(
-        `Scrolling down attack bar (${i + 1}/${ARROW_DOWN_MAX_ATTEMPTS})...`
-      );
-      const visible = await backendCommand.isVisibleParallel(
-        {
-          compass: "ui/attacks/attack_compass",
-          arrowDown: "ui/attacks/attack_arrow_down",
-        },
-        undefined,
-        token
-      );
-      if (visible.compass!.length > 0) {
-        await backendCommand.click(visible.compass![0]!, undefined, token);
-        return true;
-      }
-      if (visible.arrowDown!.length > 0) {
-        await backendCommand.click(visible.arrowDown![0]!, undefined, token);
-      }
-    }
-    return false;
-  };
-
-  if (await quickFindCompass()) {
-    return;
-  }
-
-  if (await scrollAndFindCompass()) {
-    return;
-  }
-
-  logger.log("Compass not found. Opening attacks bar...");
-  const attacksClicked = await backendCommand.findAndClick(
-    "ui/attacks/attacks",
-    undefined,
-    token
+  const clicked = await navigation.findAttackSkill(
+    "ui/attacks/attack_compass",
+    token,
+    "Compass"
   );
-
-  if (attacksClicked) {
-    if (await quickFindCompass()) {
-      return;
-    }
-    if (await scrollAndFindCompass()) {
-      return;
-    }
+  if (!clicked) {
+    throw new Error("Compass skill not found on attack bar");
   }
-
-  throw new Error("Compass skill not found on attack bar");
 };
 
 export const scrollInAtCenter = async (
