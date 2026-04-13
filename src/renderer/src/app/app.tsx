@@ -1,4 +1,4 @@
-import { type ComponentType, lazy, Suspense, useEffect, useState } from "react";
+import { type ComponentType, lazy, Suspense } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar.tsx";
 import { GameDataProvider } from "@/providers/game-data-provider.tsx";
@@ -18,20 +18,8 @@ const lazyPages = Object.fromEntries(
 
 export const App = () => {
   const currentPage = useNavigationStore((state) => state.currentPage);
-  const [isDev, setIsDev] = useState(false);
-
-  useEffect(() => {
-    window.api.app
-      .isDev()
-      .then(setIsDev)
-      .catch(() => setIsDev(false));
-  }, []);
 
   const ActivePage = lazyPages[currentPage];
-
-  if (currentPage === "general/test" && !isDev) {
-    return null;
-  }
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
