@@ -170,6 +170,7 @@ export const centerNode = async (
   }
   const result = await backendCommand.find(def.image, FAST_FIND, token);
   if (result.length === 0) {
+    logger.log(`    "${nodeId}" not visible within ${FAST_FIND.timeoutMs}ms`);
     return false;
   }
   await backendCommand.drag(result[0]!, center, { instant: true }, token);
@@ -181,11 +182,15 @@ export const centerNode = async (
     const dx = Math.abs(pos.x - center.x);
     const dy = Math.abs(pos.y - center.y);
     if (dx > CENTER_TOLERANCE || dy > CENTER_TOLERANCE) {
+      logger.log(`    "${nodeId}" off-center by (${dx}, ${dy}), re-dragging`);
       await backendCommand.drag(pos, center, { instant: true }, token);
     }
   }
 
-  await dismissPanel(token);
+  const dismissed = await dismissPanel(token);
+  if (!dismissed) {
+    logger.log(`    "${nodeId}" panel did not dismiss cleanly`);
+  }
 
   return true;
 };
@@ -212,28 +217,46 @@ export const navigateToNode = async (
   const lockedNodes = locked ?? new Set<string>();
   let current = from;
 
+  logger.log(`Navigating: "${current}" -> "${to}"`);
+  if (lockedNodes.size > 0) {
+    logger.log(`  Pre-locked: [${[...lockedNodes].join(", ")}]`);
+  }
+
   while (current !== to) {
     token.throwIfCancelled();
     const path = findPath(current, to, graph, lockedNodes);
     if (!path) {
+      logger.error(
+        `  No path from "${current}" to "${to}" - locked: [${[...lockedNodes].join(", ") || "none"}]`
+      );
       return { arrived: false, currentNode: current, locked: lockedNodes };
     }
 
+    const hops = path.length - 1;
+    logger.log(`  Route (${hops} hops): ${path.join(" -> ")}`);
+
     for (let i = 1; i < path.length; i++) {
       token.throwIfCancelled();
-      let ok = await centerNode(path[i]!, center, token);
+      const nextNode = path[i]!;
+      logger.log(`  Hop ${i}/${hops}: "${current}" -> "${nextNode}"`);
+
+      let ok = await centerNode(nextNode, center, token);
       if (!ok) {
+        logger.log(`    Retry after dismissPanel for "${nextNode}"`);
         await dismissPanel(token);
-        ok = await centerNode(path[i]!, center, token);
+        ok = await centerNode(nextNode, center, token);
       }
       if (!ok) {
-        logger.log(`  Node "${path[i]}" is locked, rerouting...`);
-        lockedNodes.add(path[i]!);
+        logger.log(
+          `    "${nextNode}" unreachable from "${current}" (image not found - locked or off-screen). Rerouting...`
+        );
+        lockedNodes.add(nextNode);
         break;
       }
-      current = path[i]!;
+      current = nextNode;
     }
   }
 
+  logger.log(`Arrived at "${to}"`);
   return { arrived: true, currentNode: to, locked: lockedNodes };
 };
