@@ -118,7 +118,7 @@ export default defineScript<[boolean]>({
           const clickOptions = getClickOptionsFromPreset("16x");
           await backendCommand.click(
             cookButton[0]!,
-            { ...clickOptions, times: 20 },
+            { ...clickOptions, times: 40 },
             token
           );
         }
