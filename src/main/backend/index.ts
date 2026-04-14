@@ -15,10 +15,10 @@ export {
 
 // Backend command exports
 export { backendCommand } from "./backend-command";
+export type { ClickPreset } from "./backend-config";
 // Backend config exports
 export {
   backendConfig,
-  ClickPreset,
   getClickOptionsFromPreset,
   getDragOptionsFromPreset,
 } from "./backend-config";

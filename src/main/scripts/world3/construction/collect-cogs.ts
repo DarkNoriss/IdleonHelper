@@ -1,6 +1,5 @@
 import {
   backendCommand,
-  ClickPreset,
   getClickOptionsFromPreset,
 } from "../../../backend/index";
 import { logger } from "../../../utils/index";
@@ -68,7 +67,7 @@ export default defineScript({
         `Board is empty, clicking collect ultimate cogs button 10 times (iteration ${iteration}/${MAX_ITERATIONS})...`
       );
 
-      const presetOptions = getClickOptionsFromPreset(ClickPreset.UltraFast);
+      const presetOptions = getClickOptionsFromPreset("4x");
 
       await backendCommand.click(
         COLLECT_ULTIMATE_COGS,

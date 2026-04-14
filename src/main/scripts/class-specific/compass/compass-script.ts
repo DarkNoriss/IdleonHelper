@@ -3,10 +3,7 @@ import {
   COMPASS_NODE_DEFS,
 } from "@/shared/compass-config";
 import type { CompassUpgrade, MinorNodeWithParent } from "@/types/compass";
-import {
-  ClickPreset,
-  getClickOptionsFromPreset,
-} from "../../../backend/backend-config";
+import { getClickOptionsFromPreset } from "../../../backend/backend-config";
 import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
@@ -151,7 +148,7 @@ export default defineScript<[CompassUpgrade[]]>({
       );
 
       if (panelState.upgrade!.length > 0) {
-        const fastClick = getClickOptionsFromPreset(ClickPreset.Fast);
+        const fastClick = getClickOptionsFromPreset("2x");
         await backendCommand.click(
           panelState.upgrade![0]!,
           { times: resolved.change, ...fastClick },

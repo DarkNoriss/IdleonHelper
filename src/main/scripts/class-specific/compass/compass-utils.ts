@@ -4,7 +4,6 @@ import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
 import type { Point } from "../../../backend/backend-types";
 import {
   backendCommand,
-  ClickPreset,
   getDragOptionsFromPreset,
 } from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
@@ -188,7 +187,7 @@ export const centerNode = async (
   await backendCommand.drag(
     result[0]!,
     center,
-    { ...getDragOptionsFromPreset(ClickPreset.Fast), instant: true },
+    { ...getDragOptionsFromPreset("2x"), instant: true },
     token
   );
 
@@ -209,7 +208,7 @@ export const centerNode = async (
       await backendCommand.drag(
         pos,
         center,
-        { ...getDragOptionsFromPreset(ClickPreset.Extreme), instant: true },
+        { ...getDragOptionsFromPreset("8x"), instant: true },
         token
       );
     }

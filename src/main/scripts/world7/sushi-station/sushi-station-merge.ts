@@ -1,6 +1,5 @@
 import {
   backendCommand,
-  ClickPreset,
   getClickOptionsFromPreset,
   getDragOptionsFromPreset,
 } from "../../../backend/index";
@@ -102,7 +101,7 @@ export default defineScript<[boolean]>({
         );
 
         token.throwIfCancelled();
-        const dragOptions = getDragOptionsFromPreset(ClickPreset.Extreme, true);
+        const dragOptions = getDragOptionsFromPreset("16x", true);
         await backendCommand.drag(from, to, dragOptions, token);
         merged = true;
         break;
@@ -116,7 +115,7 @@ export default defineScript<[boolean]>({
           token
         );
         if (cookButton.length > 0) {
-          const clickOptions = getClickOptionsFromPreset(ClickPreset.Extreme);
+          const clickOptions = getClickOptionsFromPreset("16x");
           await backendCommand.click(
             cookButton[0]!,
             { ...clickOptions, times: 20 },

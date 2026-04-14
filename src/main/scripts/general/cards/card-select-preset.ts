@@ -1,8 +1,5 @@
 import { PRESET_CONFIGS } from "../../../../parsers/card-presets";
-import {
-  ClickPreset,
-  getClickOptionsFromPreset,
-} from "../../../backend/backend-config";
+import { getClickOptionsFromPreset } from "../../../backend/backend-config";
 import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
@@ -73,7 +70,7 @@ export default defineScript<[number]>({
       token
     );
     if (prevMatches.length > 0) {
-      const extremeClick = getClickOptionsFromPreset(ClickPreset.Extreme);
+      const extremeClick = getClickOptionsFromPreset("8x");
       for (let i = 0; i < 10; i++) {
         token.throwIfCancelled();
         await backendCommand.click(prevMatches[0]!, extremeClick, token);

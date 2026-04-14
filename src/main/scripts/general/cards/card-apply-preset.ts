@@ -1,8 +1,5 @@
 import { PRESET_CONFIGS } from "../../../../parsers/card-presets";
-import {
-  ClickPreset,
-  getClickOptionsFromPreset,
-} from "../../../backend/backend-config";
+import { getClickOptionsFromPreset } from "../../../backend/backend-config";
 import type { Point } from "../../../backend/backend-types";
 import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
@@ -98,7 +95,7 @@ export default defineScript<[number]>({
     logger.log(`Clicked preset slot ${config.slot}`);
 
     // Step 3: Clear all 8 card slots rapidly
-    const fastClick = getClickOptionsFromPreset(ClickPreset.Fast);
+    const fastClick = getClickOptionsFromPreset("2x");
     for (const cardSlot of CARD_SLOTS) {
       token.throwIfCancelled();
       await backendCommand.click(cardSlot, fastClick, token);
