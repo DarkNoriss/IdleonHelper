@@ -27,6 +27,11 @@ const Debug = () => {
           runningLabel: "Searching... (Click to stop)",
           args: () => [selectedSkill],
         },
+        {
+          label: "Compass Nav Stress Test",
+          scriptId: "classSpecific.compass.stressTestNav",
+          runningLabel: "Stress testing... (Click to stop)",
+        },
       ]}
       title="Debug"
     >

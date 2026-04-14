@@ -66,6 +66,10 @@ export type ScriptMap = {
     args: [];
     result: undefined;
   };
+  "classSpecific.compass.stressTestNav": {
+    args: [];
+    result: undefined;
+  };
 };
 
 export type BossFarmerState = {
