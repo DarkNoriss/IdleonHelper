@@ -84,7 +84,6 @@ export default defineScript<[CompassUpgrade[]]>({
 
     const graph = loadGraph();
     let currentNode = startNode.id;
-    let locked = new Set<string>();
 
     for (let i = 0; i < upgrades.length; i++) {
       token.throwIfCancelled();
@@ -112,10 +111,8 @@ export default defineScript<[CompassUpgrade[]]>({
           navTarget,
           COMPASS_CENTER,
           graph,
-          token,
-          locked
+          token
         );
-        locked = result.locked;
 
         if (!result.arrived) {
           logger.log(

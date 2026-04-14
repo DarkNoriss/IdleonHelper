@@ -2,9 +2,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { COMPASS_NODE_DEFS } from "@/shared/compass-config";
 import type { Point } from "../../../backend/backend-types";
-import { backendCommand } from "../../../backend/index";
+import {
+  backendCommand,
+  ClickPreset,
+  getDragOptionsFromPreset,
+} from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
-import { logger } from "../../../utils/index";
+import { delay, logger } from "../../../utils/index";
 import { navigation } from "../../game-nav/index";
 
 const SCROLL_IN_TIMES = 8;
@@ -156,41 +160,65 @@ export const findPath = (
   return null;
 };
 
-const CENTER_TOLERANCE = 12;
+const CENTER_TOLERANCE = 16;
 const FAST_FIND = { timeoutMs: 250 };
 
 export const centerNode = async (
   nodeId: string,
   center: Point,
-  token: CancellationToken
+  token: CancellationToken,
+  opts?: { quiet?: boolean }
 ): Promise<boolean> => {
+  const quiet = opts?.quiet ?? false;
   const def = COMPASS_NODE_DEFS.find((d) => d.id === nodeId);
   if (!def) {
     throw new Error(`Unknown node: ${nodeId}`);
   }
-  const result = await backendCommand.find(def.image, FAST_FIND, token);
+  const result = await backendCommand.find(
+    def.image,
+    { ...FAST_FIND, threshold: 0.9 },
+    token
+  );
   if (result.length === 0) {
-    logger.log(`    "${nodeId}" not visible within ${FAST_FIND.timeoutMs}ms`);
+    if (!quiet) {
+      logger.log(`    "${nodeId}" not visible within ${FAST_FIND.timeoutMs}ms`);
+    }
     return false;
   }
-  await backendCommand.drag(result[0]!, center, { instant: true }, token);
+  await backendCommand.drag(
+    result[0]!,
+    center,
+    { ...getDragOptionsFromPreset(ClickPreset.Fast), instant: true },
+    token
+  );
 
   // Verify centering — re-drag if the node landed off-center
-  const verify = await backendCommand.find(def.image, FAST_FIND, token);
+  const verify = await backendCommand.find(
+    def.image,
+    { timeoutMs: FAST_FIND.timeoutMs, threshold: 0.9 },
+    token
+  );
   if (verify.length > 0) {
     const pos = verify[0]!;
     const dx = Math.abs(pos.x - center.x);
     const dy = Math.abs(pos.y - center.y);
     if (dx > CENTER_TOLERANCE || dy > CENTER_TOLERANCE) {
-      logger.log(`    "${nodeId}" off-center by (${dx}, ${dy}), re-dragging`);
-      await backendCommand.drag(pos, center, { instant: true }, token);
+      if (!quiet) {
+        logger.log(`    "${nodeId}" off-center by (${dx}, ${dy}), re-dragging`);
+      }
+      await backendCommand.drag(
+        pos,
+        center,
+        { ...getDragOptionsFromPreset(ClickPreset.Extreme), instant: true },
+        token
+      );
     }
   }
 
-  const dismissed = await dismissPanel(token);
-  if (!dismissed) {
-    logger.log(`    "${nodeId}" panel did not dismiss cleanly`);
-  }
+  // const dismissed = await dismissPanel(token);
+  // if (!(dismissed || quiet)) {
+  //   logger.log(`    "${nodeId}" panel did not dismiss cleanly`);
+  // }
 
   return true;
 };
@@ -206,50 +234,77 @@ export const centerNodeOrThrow = async (
   }
 };
 
+const formatAttempt = (path: string[], failedAt?: string): string => {
+  if (!failedAt) {
+    return path.join(" -> ");
+  }
+  return path.map((n) => (n === failedAt ? `[${n}]` : n)).join(" -> ");
+};
+
 export const navigateToNode = async (
   from: string,
   to: string,
   center: Point,
   graph: Record<string, string[]>,
   token: CancellationToken,
-  locked?: Set<string>
+  opts?: { quiet?: boolean }
 ): Promise<{ arrived: boolean; currentNode: string; locked: Set<string> }> => {
-  const lockedNodes = locked ?? new Set<string>();
+  const quiet = opts?.quiet ?? false;
+  const lockedNodes = new Set<string>();
+  const attempts: { path: string[]; failedAt?: string }[] = [];
   let current = from;
 
-  logger.log(`Navigating: "${current}" -> "${to}"`);
-  if (lockedNodes.size > 0) {
-    logger.log(`  Pre-locked: [${[...lockedNodes].join(", ")}]`);
+  if (!quiet) {
+    logger.log(`Navigating: "${current}" -> "${to}"`);
   }
 
   while (current !== to) {
     token.throwIfCancelled();
     const path = findPath(current, to, graph, lockedNodes);
     if (!path) {
+      if (quiet) {
+        for (const a of attempts) {
+          logger.log(`  Tried: ${formatAttempt(a.path, a.failedAt)}`);
+        }
+      }
       logger.error(
         `  No path from "${current}" to "${to}" - locked: [${[...lockedNodes].join(", ") || "none"}]`
       );
       return { arrived: false, currentNode: current, locked: lockedNodes };
     }
 
+    const attempt: { path: string[]; failedAt?: string } = { path: [...path] };
+    attempts.push(attempt);
+
     const hops = path.length - 1;
-    logger.log(`  Route (${hops} hops): ${path.join(" -> ")}`);
+    if (!quiet) {
+      logger.log(`  Route (${hops} hops): ${path.join(" -> ")}`);
+    }
 
     for (let i = 1; i < path.length; i++) {
       token.throwIfCancelled();
       const nextNode = path[i]!;
-      logger.log(`  Hop ${i}/${hops}: "${current}" -> "${nextNode}"`);
+      if (!quiet) {
+        logger.log(`  Hop ${i}/${hops}: "${current}" -> "${nextNode}"`);
+      }
 
-      let ok = await centerNode(nextNode, center, token);
+      let ok = await centerNode(nextNode, center, token, { quiet });
       if (!ok) {
-        logger.log(`    Retry after dismissPanel for "${nextNode}"`);
+        if (!quiet) {
+          logger.log(`    Retry after dismissPanel for "${nextNode}"`);
+        }
+        await delay(200, token);
+
         await dismissPanel(token);
-        ok = await centerNode(nextNode, center, token);
+        ok = await centerNode(nextNode, center, token, { quiet });
       }
       if (!ok) {
-        logger.log(
-          `    "${nextNode}" unreachable from "${current}" (image not found - locked or off-screen). Rerouting...`
-        );
+        attempt.failedAt = nextNode;
+        if (!quiet) {
+          logger.log(
+            `    "${nextNode}" unreachable from "${current}" (image not found - locked or off-screen). Rerouting...`
+          );
+        }
         lockedNodes.add(nextNode);
         break;
       }
@@ -257,6 +312,8 @@ export const navigateToNode = async (
     }
   }
 
-  logger.log(`Arrived at "${to}"`);
+  if (!quiet) {
+    logger.log(`Arrived at "${to}"`);
+  }
   return { arrived: true, currentNode: to, locked: lockedNodes };
 };
