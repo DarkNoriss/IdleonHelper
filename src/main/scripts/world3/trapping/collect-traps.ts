@@ -2,9 +2,9 @@ import { backendCommand } from "../../../backend/index";
 import { setState } from "../../../state-hub";
 import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
+import { navigation } from "../../game-nav/index";
 import { pressKey } from "../../keys";
 
-const ARROW_DOWN_MAX_ATTEMPTS = 3;
 const TIMER_HEADROOM_MS = 3000;
 
 const parseTimerToMs = (timer: string): number => {
@@ -41,74 +41,11 @@ export default defineScript<[string]>({
         setState("collectTraps", { endsAt: null });
 
         // Step 1: Find and open Eagle Eye
-        // Try fast path first: quick visibility checks before slow findAndClick
-        logger.log("Looking for Eagle Eye skill...");
-        let eagleEyeFound = false;
-
-        const quickFindEagleEye = async (): Promise<boolean> => {
-          return backendCommand.findAndClick(
-            "ui/attacks/attack_eagle_eye",
-            undefined,
-            token
-          );
-        };
-
-        const scrollAndFindEagleEye = async (): Promise<boolean> => {
-          for (let i = 0; i < ARROW_DOWN_MAX_ATTEMPTS; i++) {
-            token.throwIfCancelled();
-            logger.log(
-              `Scrolling down attack bar (${i + 1}/${ARROW_DOWN_MAX_ATTEMPTS})...`
-            );
-            if (
-              (
-                await backendCommand.isVisible(
-                  "ui/attacks/attack_arrow_down",
-                  undefined,
-                  token
-                )
-              ).length > 0
-            ) {
-              await backendCommand.findAndClick(
-                "ui/attacks/attack_arrow_down",
-                undefined,
-                token
-              );
-              await delay(200, token);
-              const found = await quickFindEagleEye();
-              if (found) {
-                return true;
-              }
-            }
-          }
-          return false;
-        };
-
-        // Fast: check if eagle eye is already visible
-        eagleEyeFound = await quickFindEagleEye();
-
-        // Fast: scroll through attack bar rows
-        if (!eagleEyeFound) {
-          eagleEyeFound = await scrollAndFindEagleEye();
-        }
-
-        // Slow fallback: open attacks bar, then retry
-        if (!eagleEyeFound) {
-          logger.log("Eagle Eye not found. Opening attacks bar...");
-          const attacksClicked = await backendCommand.findAndClick(
-            "ui/attacks/attacks",
-            undefined,
-            token
-          );
-
-          if (attacksClicked) {
-            await delay(500, token);
-            eagleEyeFound = await quickFindEagleEye();
-
-            if (!eagleEyeFound) {
-              eagleEyeFound = await scrollAndFindEagleEye();
-            }
-          }
-        }
+        const eagleEyeFound = await navigation.findAttackSkill(
+          "ui/attacks/attack_eagle_eye",
+          token,
+          "Eagle Eye"
+        );
 
         if (!eagleEyeFound) {
           throw new Error("Eagle Eye skill not found on attack bar");

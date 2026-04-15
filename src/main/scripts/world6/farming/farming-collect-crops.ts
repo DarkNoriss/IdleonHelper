@@ -1,6 +1,5 @@
 import {
   backendCommand,
-  ClickPreset,
   getClickOptionsFromPreset,
 } from "../../../backend/index";
 import { logger } from "../../../utils/index";
@@ -33,7 +32,7 @@ export default defineScript<[number]>({
     logger.log(`farming-collect-crops - collecting overgrowth >= ${label}`);
 
     const regions = buildOvergrowthRegions();
-    const clickOptions = getClickOptionsFromPreset(ClickPreset.Extreme);
+    const clickOptions = getClickOptionsFromPreset("8x");
 
     while (true) {
       token.throwIfCancelled();

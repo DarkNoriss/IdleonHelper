@@ -164,6 +164,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             image: "compass/fighter-path/compass_tempest_damage_minor",
             offset: { x: 610, y: 201 },
           },
+          {
+            id: "tempest-damage-x",
+            image: "compass/fighter-path/compass_tempest_damage_minor",
+            offset: { x: 546, y: 159 },
+          },
         ],
       },
       {
@@ -341,6 +346,18 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "top-of-the-mornin",
         label: "Top Of The Mornin",
         image: "compass/elemental-path/compass_top_of_the_mornin",
+        minorNodes: [
+          {
+            id: "lucky-drops-i",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 479, y: 184 },
+          },
+          {
+            id: "ring-drops-i",
+            image: "compass/elemental-path/compass_elemental_minor",
+            offset: { x: 595, y: 172 },
+          },
+        ],
       },
       {
         id: "stone-failsafe",
@@ -526,6 +543,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             image: "compass/nomadic-path/compass_snoozer_sale_minor",
             offset: { x: 562, y: 189 },
           },
+          {
+            id: "snoozer-sale-iv",
+            image: "compass/nomadic-path/compass_snoozer_sale_minor",
+            offset: { x: 665, y: 265 },
+          },
         ],
       },
       {
@@ -538,12 +560,22 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             image: "compass/nomadic-path/compass_pristine_sale_minor",
             offset: { x: 529, y: 191 },
           },
+          {
+            id: "pristine-sale-ii",
+            image: "compass/nomadic-path/compass_pristine_sale_minor",
+            offset: { x: 618, y: 269 },
+          },
         ],
       },
       {
         id: "aluminium-atom",
         label: "Aluminium Atom",
         image: "compass/nomadic-path/compass_aluminium_atom",
+      },
+      {
+        id: "villagerz-learnz",
+        label: "Villagerz Learnz",
+        image: "compass/nomadic-path/compass_villagerz_learnz",
       },
     ],
   },
@@ -638,6 +670,13 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
         id: "mountains-of-dust",
         label: "Mountains Of Dust",
         image: "compass/survival-path/compass_mountains_of_dust",
+        minorNodes: [
+          {
+            id: "tempest-defence-vi",
+            image: "compass/survival-path/compass_tempest_defence_minor",
+            offset: { x: 620, y: 284 },
+          },
+        ],
       },
       {
         id: "cant-touch-this",
@@ -687,6 +726,11 @@ export const COMPASS_NODE_GROUPS: CompassNodeGroup[] = [
             offset: { x: 502, y: 196 },
           },
         ],
+      },
+      {
+        id: "circle-supermacy",
+        label: "Circle Supermacy",
+        image: "compass/survival-path/compass_circle_supermacy",
       },
     ],
   },

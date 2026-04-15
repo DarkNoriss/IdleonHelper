@@ -10,7 +10,7 @@ export const backendConfig = {
   },
   click: {
     times: 1,
-    interval: 100,
+    interval: 80,
     holdTime: 80,
   },
   drag: {
@@ -19,46 +19,25 @@ export const backendConfig = {
   },
 } as const;
 
-export enum ClickPreset {
-  Standard = "Standard",
-  Fast = "Fast",
-  Slow = "Slow",
-  UltraFast = "UltraFast",
-  Extreme = "Extreme",
-}
+export type ClickPreset = "0.5x" | "1x" | "2x" | "4x" | "8x" | "16x";
+
+const PRESET_MULTIPLIERS: Record<ClickPreset, number> = {
+  "0.5x": 0.5,
+  "1x": 1,
+  "2x": 2,
+  "4x": 4,
+  "8x": 8,
+  "16x": 16,
+};
 
 export const getClickOptionsFromPreset = (
   preset: ClickPreset
 ): { interval: number; holdTime: number } => {
-  const standardInterval = backendConfig.click.interval;
-  const standardHoldTime = backendConfig.click.holdTime;
-
-  switch (preset) {
-    case ClickPreset.Standard:
-      return { interval: standardInterval, holdTime: standardHoldTime };
-    case ClickPreset.Fast:
-      return {
-        interval: Math.round(standardInterval / 2),
-        holdTime: Math.round(standardHoldTime / 2),
-      };
-    case ClickPreset.UltraFast:
-      return {
-        interval: Math.round(standardInterval / 4),
-        holdTime: Math.round(standardHoldTime / 4),
-      };
-    case ClickPreset.Extreme:
-      return {
-        interval: Math.round(standardInterval / 8),
-        holdTime: Math.round(standardHoldTime / 8),
-      };
-    case ClickPreset.Slow:
-      return {
-        interval: standardInterval * 2,
-        holdTime: standardHoldTime * 2,
-      };
-    default:
-      return { interval: standardInterval, holdTime: standardHoldTime };
-  }
+  const multiplier = PRESET_MULTIPLIERS[preset];
+  return {
+    interval: Math.round(backendConfig.click.interval / multiplier),
+    holdTime: Math.round(backendConfig.click.holdTime / multiplier),
+  };
 };
 
 export const getDragOptionsFromPreset = (

@@ -137,11 +137,13 @@ internal class FindParallelRequest
   public List<string>? ImagePaths { get; set; }
   public double? Threshold { get; set; }
   public ScreenOffsetDto? Offset { get; set; }
+  public bool? Debug { get; set; }
 }
 
 internal class FindParallelResponse
 {
   public Dictionary<string, List<Point>> Results { get; set; } = new();
+  public Dictionary<string, string?>? DebugImagePaths { get; set; }
 }
 
 internal class RectDto

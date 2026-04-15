@@ -91,14 +91,14 @@ const found = await backendCommand.findParallel(
 // found["4"] → Point[], found["5"] → Point[]
 ```
 
-**Click presets** — import `ClickPreset` and `getClickOptionsFromPreset` from `../../backend/index`:
+**Click presets** — import `getClickOptionsFromPreset` from `../../backend/index` and pass a speed string:
 
 ```ts
-const clickOptions = getClickOptionsFromPreset(ClickPreset.Fast);
+const clickOptions = getClickOptionsFromPreset("2x");
 await backendCommand.click(point, clickOptions, token);
 ```
 
-Presets: `Standard` (100ms), `Fast` (50ms), `UltraFast` (25ms), `Extreme` (12.5ms), `Slow` (200ms).
+Presets (interval / holdTime relative to `1x` at 100ms / 80ms): `"0.5x"` (slower), `"1x"`, `"2x"`, `"4x"`, `"8x"`, `"16x"` (faster). Bigger number = faster.
 
 ### Export from the barrel
 

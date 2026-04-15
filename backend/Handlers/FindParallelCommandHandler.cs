@@ -45,6 +45,8 @@ internal static class FindParallelCommandHandler
         )
         : null;
 
+      var debug = request.Debug ?? false;
+
       using var screenshot = WindowCapture.CaptureScreenShot(linkedCt);
 
       var matches = ImageProcessing.FindParallel(
@@ -52,6 +54,7 @@ internal static class FindParallelCommandHandler
         request.ImagePaths,
         request.Threshold.Value,
         offset,
+        debug,
         linkedCt
       );
 
@@ -62,6 +65,13 @@ internal static class FindParallelCommandHandler
           kvp => kvp.Value.Select(m => m.Point).ToList()
         )
       };
+
+      if (debug)
+      {
+        response.DebugImagePaths = ImageProcessing.GenerateDebugImages(
+          screenshot, matches, request.ImagePaths, linkedCt
+        );
+      }
 
       await MessageHandler.SendResponse(ws, message.Id, response, ct);
     }
