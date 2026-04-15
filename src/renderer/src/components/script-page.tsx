@@ -14,9 +14,9 @@ export type ScriptAction<T extends keyof ScriptMap = keyof ScriptMap> = {
   label: string;
   scriptId: T;
   runningLabel?: string;
+  queuedLabel?: string;
   disabled?: boolean;
   args?: () => ScriptMap[T]["args"];
-  onResult?: (result: ScriptMap[T]["result"]) => void;
 };
 
 type ScriptPageProps = {
@@ -27,51 +27,37 @@ type ScriptPageProps = {
 
 export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
   const [error, setError] = useState<string | null>(null);
-  const [activeScript, setActiveScript] = useState<string | null>(null);
-  const scriptStatus = useMainState("scriptStatus");
-  const isWorking = scriptStatus?.isWorking ?? false;
+  const queue = useMainState("queue");
+  const running = queue?.runningItem ?? null;
+  const queuedItems = queue?.queue ?? [];
 
   const makeHandler = (action: ScriptAction) => async () => {
-    const isThisRunning = activeScript === action.scriptId;
-
-    if (isThisRunning) {
-      try {
-        await window.api.script.cancel();
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to cancel operation"
-        );
-      }
-      return;
-    }
-
-    if (isWorking) {
-      setError("Another operation is already running");
-      return;
-    }
-
-    setError(null);
-    setActiveScript(action.scriptId);
+    const myRunning = running?.scriptId === action.scriptId ? running : null;
+    const myQueued = queuedItems.find(
+      (i) => i.scriptId === action.scriptId && i.status === "queued"
+    );
 
     try {
+      if (myRunning) {
+        await window.api.queue.remove(myRunning.itemId);
+        return;
+      }
+      if (myQueued) {
+        await window.api.queue.remove(myQueued.itemId);
+        return;
+      }
+      setError(null);
       const args = action.args?.() ?? [];
-      const result = await (
-        window.api.script.run as (
+      await (
+        window.api.queue.enqueue as (
           id: keyof ScriptMap,
           ...args: unknown[]
-        ) => Promise<unknown>
+        ) => Promise<{ itemId: string }>
       )(action.scriptId, ...(args as unknown[]));
-      (action.onResult as ((result: unknown) => void) | undefined)?.(result);
     } catch (err) {
-      if (
-        !(err instanceof Error && err.message === "Operation was cancelled")
-      ) {
-        setError(
-          err instanceof Error ? err.message : `Failed to run ${action.label}`
-        );
-      }
-    } finally {
-      setActiveScript(null);
+      setError(
+        err instanceof Error ? err.message : `Failed to run ${action.label}`
+      );
     }
   };
 
@@ -95,23 +81,30 @@ export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
 
         <div className={buttonGrid}>
           {actions.map((action) => {
-            const isThisRunning = activeScript === action.scriptId;
+            const myRunning = running?.scriptId === action.scriptId;
+            const myQueued = queuedItems.some(
+              (i) => i.scriptId === action.scriptId && i.status === "queued"
+            );
             const runningLabel =
               action.runningLabel ?? "Running... (Click to stop)";
+            const queuedLabel =
+              action.queuedLabel ?? "Queued (click to remove)";
 
             return (
               <div key={action.scriptId}>
                 <Button
                   className="w-full"
-                  disabled={action.disabled || (isWorking && !isThisRunning)}
+                  disabled={action.disabled}
                   onClick={makeHandler(action)}
                   size="sm"
                 >
-                  {isThisRunning ? (
+                  {myRunning ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       {runningLabel}
                     </>
+                  ) : myQueued ? (
+                    queuedLabel
                   ) : (
                     action.label
                   )}
