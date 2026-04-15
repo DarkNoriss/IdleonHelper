@@ -4,6 +4,11 @@ import type { AppState } from "../types/scripts";
 import { getMainWindow } from "./main-window";
 
 const state: AppState = {
+  queue: {
+    engineState: "idle",
+    runningItem: null,
+    queue: [],
+  },
   scriptStatus: {
     current: null,
     isWorking: false,

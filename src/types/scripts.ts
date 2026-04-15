@@ -82,7 +82,31 @@ export type BossFarmerState = {
 
 export type ConnectionStatus = "connecting" | "connected" | "error";
 
+export type EngineState = "idle" | "running" | "paused";
+
+export type QueueItemStatus = "queued" | "running" | "failed";
+
+export type QueueItem = {
+  itemId: string;
+  scriptId: keyof ScriptMap;
+  scriptName: string;
+  args: unknown[];
+  enqueuedAt: number;
+  nextRunAt: number;
+  recurring: boolean;
+  intervalMs?: number;
+  status: QueueItemStatus;
+  lastError?: string;
+};
+
+export type QueueSnapshot = {
+  engineState: EngineState;
+  runningItem: QueueItem | null;
+  queue: QueueItem[];
+};
+
 export type AppState = {
+  queue: QueueSnapshot;
   scriptStatus: {
     current: string | null;
     isWorking: boolean;
