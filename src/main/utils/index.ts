@@ -1,7 +1,7 @@
 // Barrel file for utils module
 // Re-exports all utilities for cleaner imports
 
-export { cancellationManager, delay } from "./cancellation-token";
+export { createCancellationToken, delay } from "./cancellation-token";
 export {
   clearLogs,
   getLogs,

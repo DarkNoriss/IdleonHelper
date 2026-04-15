@@ -11,10 +11,9 @@ import { useMainState } from "@/hooks/use-main-state.ts";
 const WeeklyBattle = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeScript, setActiveScript] = useState<string | null>(null);
-  const scriptStatus = useMainState("scriptStatus");
+  const queue = useMainState("queue");
   const weeklyBattle = useMainState("weeklyBattle");
-  const isWorking = scriptStatus?.isWorking ?? false;
+  const running = queue?.runningItem ?? null;
   const data = weeklyBattle?.data ?? null;
 
   const handleFetch = async () => {
@@ -33,45 +32,21 @@ const WeeklyBattle = () => {
     }
   };
 
-  const handleRun = async (steps: number[], stepName: string) => {
-    const scriptName = stepName.toLowerCase().includes("skull")
-      ? "weeklyBattle.skulls"
-      : "weeklyBattle.trophy";
-    const isThisButtonRunning = activeScript === scriptName;
-
-    if (isThisButtonRunning) {
-      try {
-        await window.api.script.cancel();
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to cancel operation"
-        );
-      }
-      return;
-    }
-
-    if (isWorking) {
-      setError("Another operation is already running");
-      return;
-    }
-
-    setError(null);
-    setActiveScript(scriptName);
+  const handleRun = async (steps: number[], _stepName: string) => {
+    const scriptId = "world2.weeklyBattle.run" as const;
+    const isMyRunning = running?.scriptId === scriptId;
 
     try {
-      await window.api.script.run("world2.weeklyBattle.run", steps);
-    } catch (err) {
-      if (
-        !(err instanceof Error && err.message === "Operation was cancelled")
-      ) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to run weekly battle steps"
-        );
+      if (isMyRunning && running) {
+        await window.api.queue.remove(running.itemId);
+        return;
       }
-    } finally {
-      setActiveScript(null);
+      setError(null);
+      await window.api.queue.enqueue(scriptId, steps);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to run weekly battle steps"
+      );
     }
   };
 
@@ -123,12 +98,9 @@ const WeeklyBattle = () => {
                   const isSkulls = step.stepName
                     .toLowerCase()
                     .includes("skull");
-                  const scriptName = isSkulls
-                    ? "weeklyBattle.skulls"
-                    : "weeklyBattle.trophy";
-                  const isThisButtonRunning = activeScript === scriptName;
-                  const isDisabled = isWorking && !isThisButtonRunning;
-                  const buttonText = isThisButtonRunning
+                  const isRunning =
+                    running?.scriptId === "world2.weeklyBattle.run";
+                  const buttonText = isRunning
                     ? "Running... (Click to stop)"
                     : isSkulls
                       ? "Start skulls"
@@ -140,7 +112,6 @@ const WeeklyBattle = () => {
                       </div>
                       <Button
                         className="w-full"
-                        disabled={isDisabled}
                         onClick={() => handleRun(step.steps, step.stepName)}
                         size="sm"
                       >
