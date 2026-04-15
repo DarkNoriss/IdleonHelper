@@ -4,10 +4,7 @@ import { queueEngine } from "../queue/index";
 import { logger } from "../utils/index";
 import type { ScriptDescriptor } from "./define-script";
 
-let registeredScripts: ScriptDescriptor[] = [];
-
 export const registerAllScripts = (scripts: ScriptDescriptor[]): void => {
-  registeredScripts = scripts;
   queueEngine.registerScripts(scripts);
 
   ipcMain.handle(
@@ -42,5 +39,3 @@ export const registerAllScripts = (scripts: ScriptDescriptor[]): void => {
 
   logger.log(`Registered ${scripts.length} scripts`);
 };
-
-export const getRegisteredScripts = (): ScriptDescriptor[] => registeredScripts;
