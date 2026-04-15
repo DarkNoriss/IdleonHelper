@@ -117,6 +117,10 @@ export const CARD_CATEGORIES: CardCategory[] = [
         cardName: "coralcave-guardian-card",
         cardImage: "ui/codex/cards/game/coralcave_guardian_card",
       },
+      {
+        cardName: "mantaray-card",
+        cardImage: "ui/codex/cards/game/mantaray_card",
+      },
     ],
   },
   {
