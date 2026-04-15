@@ -167,6 +167,7 @@ export const CARD_CATEGORIES: CardCategory[] = [
       {
         cardName: "chaotic-troll-card",
         cardImage: "ui/codex/cards/game/chaotic_troll_card",
+        expectedX: 480,
       },
     ],
   },
