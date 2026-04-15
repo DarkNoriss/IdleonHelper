@@ -43,6 +43,26 @@ const api = {
       },
     },
   },
+  queue: {
+    enqueue: (id: string, ...args: unknown[]) => {
+      return ipcRenderer.invoke("queue:enqueue", id, ...args);
+    },
+    remove: (itemId: string) => {
+      return ipcRenderer.invoke("queue:remove", itemId);
+    },
+    pause: () => {
+      return ipcRenderer.invoke("queue:pause");
+    },
+    resume: () => {
+      return ipcRenderer.invoke("queue:resume");
+    },
+    clear: () => {
+      return ipcRenderer.invoke("queue:clear");
+    },
+    get: () => {
+      return ipcRenderer.invoke("queue:get");
+    },
+  },
   app: {
     isDev: () => {
       return ipcRenderer.invoke("app:isDev");
