@@ -5,6 +5,7 @@ import type {
   QueueSnapshot,
   ScriptMap,
 } from "../../types/scripts";
+import { backendCommand } from "../backend/index";
 import type { ScriptDescriptor } from "../scripts/define-script";
 import { setState } from "../state-hub";
 import {
@@ -47,6 +48,14 @@ const clearTickTimer = (): void => {
     clearTimeout(tickTimer);
     tickTimer = null;
   }
+};
+
+const sendBackendStop = (): void => {
+  backendCommand.stop().catch((error) => {
+    logger.error(
+      `queue: backend stop failed - ${error instanceof Error ? error.message : String(error)}`
+    );
+  });
 };
 
 const scheduleTick = (): void => {
@@ -227,6 +236,7 @@ export const queueEngine = {
     if (item.status === "running") {
       if (currentToken) {
         currentToken.cancel();
+        sendBackendStop();
       }
       // Finalization (remove or re-schedule recurring) happens in tick's catch.
       logger.log(`queue: cancelling running ${item.scriptName}`);
@@ -245,6 +255,7 @@ export const queueEngine = {
     engineState = "paused";
     if (currentToken) {
       currentToken.cancel();
+      sendBackendStop();
     }
     clearTickTimer();
     logger.log("queue: paused");

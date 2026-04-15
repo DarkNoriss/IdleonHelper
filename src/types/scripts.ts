@@ -84,7 +84,7 @@ export type ConnectionStatus = "connecting" | "connected" | "error";
 
 export type EngineState = "idle" | "running" | "paused";
 
-export type QueueItemStatus = "queued" | "running" | "failed";
+export type QueueItemStatus = "queued" | "running";
 
 export type QueueItem = {
   itemId: string;
