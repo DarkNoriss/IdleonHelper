@@ -90,12 +90,18 @@ export const queueEngine = {
   },
 
   pause: (): void => {
+    if (engineState === "paused") {
+      return;
+    }
     engineState = "paused";
     logger.log("queue: paused");
     emit();
   },
 
   resume: (): void => {
+    if (engineState !== "paused") {
+      return;
+    }
     engineState = "idle";
     logger.log("queue: resumed");
     emit();
@@ -109,4 +115,4 @@ export const queueEngine = {
   },
 
   get: (): QueueSnapshot => buildSnapshot(),
-};
+} as const;
