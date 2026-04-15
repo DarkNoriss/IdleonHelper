@@ -42,7 +42,7 @@ const PRESET_CARDS: Record<number, string[]> = {
   ],
   3: [
     "poop-card",
-    "crystal-carrot-card",
+    "mantaray-card",
     "mister-brightside-card",
     "minichief-spirit-card",
     "king-doot-card",
