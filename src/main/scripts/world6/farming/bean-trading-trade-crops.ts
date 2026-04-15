@@ -20,30 +20,32 @@ const FARMING_PATH = "ui/map/world-6/town/farming";
 const SCROLL_DELTA = 120;
 const MAX_INVENTORY_PAGES = 10;
 
-const findTicketFromFirstPage = async (
-  token: CancellationToken
-): Promise<Point | null> => {
+const scrollToFirstPage = async (token: CancellationToken): Promise<void> => {
   await backendCommand.scroll(
     INVENTORY_CENTER,
     SCROLL_DELTA,
-    { times: 10, interval: 20 },
+    { times: MAX_INVENTORY_PAGES, interval: 20 },
     token
   );
+};
 
-  for (let page = 0; page < MAX_INVENTORY_PAGES; page++) {
+let currentPage = 0;
+
+const resetPageTracking = (): void => {
+  currentPage = 0;
+};
+
+const findTicket = async (token: CancellationToken): Promise<Point | null> => {
+  for (; currentPage < MAX_INVENTORY_PAGES; currentPage++) {
     const ticket = await backendCommand.isVisible(
       "game-items/crop_transfer_ticket",
       undefined,
       token
     );
     if (ticket.length > 0) {
-      logger.log(`bean-trading-trade-crops - ticket found on page ${page + 1}`);
       return ticket[0]!;
     }
 
-    logger.log(
-      `bean-trading-trade-crops - ticket not on page ${page + 1}, scrolling`
-    );
     await backendCommand.scroll(
       INVENTORY_CENTER,
       -SCROLL_DELTA,
@@ -51,40 +53,6 @@ const findTicketFromFirstPage = async (
       token
     );
     await delay(200, token);
-  }
-
-  return null;
-};
-
-const findTicketOnCurrentPage = async (
-  token: CancellationToken
-): Promise<Point | null> => {
-  const ticket = await backendCommand.isVisible(
-    "game-items/crop_transfer_ticket",
-    undefined,
-    token
-  );
-  if (ticket.length > 0) {
-    return ticket[0]!;
-  }
-
-  // Try next page
-  await backendCommand.scroll(
-    INVENTORY_CENTER,
-    -SCROLL_DELTA,
-    undefined,
-    token
-  );
-  await delay(200, token);
-
-  const ticketNext = await backendCommand.isVisible(
-    "game-items/crop_transfer_ticket",
-    undefined,
-    token
-  );
-  if (ticketNext.length > 0) {
-    logger.log("bean-trading-trade-crops - ticket found on next page");
-    return ticketNext[0]!;
   }
 
   return null;
@@ -139,8 +107,8 @@ const walkToTrader = async (token: CancellationToken): Promise<boolean> => {
   }
 
   await backendCommand.click(
-    { x: feet[0]!.x, y: feet[0]!.y + 10 },
-    undefined,
+    { x: feet[0]!.x, y: feet[0]!.y + 15 },
+    { times: 2 },
     token
   );
   return true;
@@ -156,7 +124,7 @@ const dropTicket = async (token: CancellationToken): Promise<boolean> => {
     return false;
   }
 
-  const ticket = await findTicketOnCurrentPage(token);
+  const ticket = await findTicket(token);
   if (!ticket) {
     logger.log("bean-trading-trade-crops - ticket not found in inventory");
     return false;
@@ -263,7 +231,10 @@ export default defineScript({
       return;
     }
 
-    const initialTicket = await findTicketFromFirstPage(token);
+    await scrollToFirstPage(token);
+    resetPageTracking();
+
+    const initialTicket = await findTicket(token);
     if (!initialTicket) {
       logger.log("bean-trading-trade-crops - no tickets found in inventory");
       return;
