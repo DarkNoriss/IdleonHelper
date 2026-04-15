@@ -3,10 +3,7 @@ import {
   COMPASS_NODE_DEFS,
 } from "@/shared/compass-config";
 import type { CompassUpgrade, MinorNodeWithParent } from "@/types/compass";
-import {
-  ClickPreset,
-  getClickOptionsFromPreset,
-} from "../../../backend/backend-config";
+import { getClickOptionsFromPreset } from "../../../backend/backend-config";
 import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
@@ -84,7 +81,6 @@ export default defineScript<[CompassUpgrade[]]>({
 
     const graph = loadGraph();
     let currentNode = startNode.id;
-    let locked = new Set<string>();
 
     for (let i = 0; i < upgrades.length; i++) {
       token.throwIfCancelled();
@@ -112,10 +108,8 @@ export default defineScript<[CompassUpgrade[]]>({
           navTarget,
           COMPASS_CENTER,
           graph,
-          token,
-          locked
+          token
         );
-        locked = result.locked;
 
         if (!result.arrived) {
           logger.log(
@@ -144,30 +138,26 @@ export default defineScript<[CompassUpgrade[]]>({
       }
 
       // Click upgrade button
-      const hasUpgrade = await backendCommand.find(
-        "compass/compass_upgrade",
+      const panelState = await backendCommand.findParallel(
+        {
+          upgrade: "compass/compass_upgrade",
+          upgradeOff: "compass/compass_upgrade_off",
+        },
         { threshold: 0.995 },
         token
       );
 
-      if (hasUpgrade.length > 0) {
-        const fastClick = getClickOptionsFromPreset(ClickPreset.Fast);
+      if (panelState.upgrade!.length > 0) {
+        const fastClick = getClickOptionsFromPreset("2x");
         await backendCommand.click(
-          hasUpgrade[0]!,
+          panelState.upgrade![0]!,
           { times: resolved.change, ...fastClick },
           token
         );
+      } else if (panelState.upgradeOff!.length > 0) {
+        logger.log("  Upgrade not available");
       } else {
-        const hasUpgradeOff = await backendCommand.isVisible(
-          "compass/compass_upgrade_off",
-          undefined,
-          token
-        );
-        if (hasUpgradeOff.length > 0) {
-          logger.log("  Upgrade not available");
-        } else {
-          logger.log("  ERROR: upgrade panel not detected");
-        }
+        logger.log("  ERROR: upgrade panel not detected");
       }
 
       await dismissPanel(token);

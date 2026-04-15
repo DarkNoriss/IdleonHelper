@@ -101,12 +101,24 @@ export const backendCommand = {
       | {
           offset?: ScreenOffset;
           threshold?: number;
+          debug?: boolean;
         }
       | undefined,
     token: CancellationToken
   ): Promise<Point[]> => {
     token.throwIfCancelled();
     const resolvedPath = resolveImagePath(imagePath);
+    if (options?.debug) {
+      const request: FindWithDebugRequest = {
+        imagePath: resolvedPath,
+        timeoutMs: backendConfig.isVisible.timeoutMs,
+        intervalMs: backendConfig.isVisible.intervalMs,
+        threshold: options?.threshold ?? backendConfig.find.threshold,
+        offset: options?.offset ?? undefined,
+      };
+      const response = await sendCommand("findWithDebug", request);
+      return response.matches.map((m) => m.point);
+    }
     const request: FindRequest = {
       imagePath: resolvedPath,
       timeoutMs: backendConfig.isVisible.timeoutMs,
@@ -117,29 +129,6 @@ export const backendCommand = {
     };
     const response = await sendCommand("find", request);
     return response.matches;
-  },
-
-  isVisibleWithDebug: async (
-    imagePath: string,
-    options:
-      | {
-          offset?: ScreenOffset;
-          threshold?: number;
-        }
-      | undefined,
-    token: CancellationToken
-  ): Promise<Point[]> => {
-    token.throwIfCancelled();
-    const resolvedPath = resolveImagePath(imagePath);
-    const request: FindWithDebugRequest = {
-      imagePath: resolvedPath,
-      timeoutMs: backendConfig.isVisible.timeoutMs,
-      intervalMs: backendConfig.isVisible.intervalMs,
-      threshold: options?.threshold ?? backendConfig.find.threshold,
-      offset: options?.offset ?? undefined,
-    };
-    const response = await sendCommand("findWithDebug", request);
-    return response.matches.map((m) => m.point);
   },
 
   findAndClick: async (
@@ -297,6 +286,7 @@ export const backendCommand = {
           intervalMs?: number;
           threshold?: number;
           offset?: ScreenOffset;
+          debug?: boolean;
         }
       | undefined,
     token: CancellationToken
@@ -307,6 +297,7 @@ export const backendCommand = {
     const timeoutMs = options?.timeoutMs ?? backendConfig.find.timeoutMs;
     const intervalMs = options?.intervalMs ?? backendConfig.find.intervalMs;
     const threshold = options?.threshold ?? backendConfig.find.threshold;
+    const debug = options?.debug ?? false;
     const start = Date.now();
 
     while (Date.now() - start < timeoutMs) {
@@ -315,6 +306,7 @@ export const backendCommand = {
         imagePaths: resolvedPaths,
         threshold,
         offset: options?.offset ?? undefined,
+        debug,
       };
       const response = await sendCommand("findParallel", request);
       const responseValues = Object.values(response.results);
@@ -342,6 +334,7 @@ export const backendCommand = {
       | {
           offset?: ScreenOffset;
           threshold?: number;
+          debug?: boolean;
         }
       | undefined,
     token: CancellationToken
@@ -353,6 +346,7 @@ export const backendCommand = {
       imagePaths: resolvedPaths,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
+      debug: options?.debug ?? false,
     };
     const response = await sendCommand("findParallel", request);
     const responseValues = Object.values(response.results);

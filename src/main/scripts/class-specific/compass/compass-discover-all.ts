@@ -18,15 +18,25 @@ const visitNode = async (
   nodeId: string,
   token: CancellationToken
 ): Promise<string[]> => {
-  const neighbors: string[] = [];
+  const images: Record<string, string> = {};
   for (const def of COMPASS_NODE_DEFS) {
     if (def.id === nodeId) {
       continue;
     }
-    token.throwIfCancelled();
-    const visible = await backendCommand.isVisible(def.image, undefined, token);
-    if (visible.length > 0) {
-      neighbors.push(def.id);
+    images[def.id] = def.image;
+  }
+
+  token.throwIfCancelled();
+  const results = await backendCommand.isVisibleParallel(
+    images,
+    undefined,
+    token
+  );
+
+  const neighbors: string[] = [];
+  for (const [id, matches] of Object.entries(results)) {
+    if (matches.length > 0) {
+      neighbors.push(id);
     }
   }
   return neighbors;

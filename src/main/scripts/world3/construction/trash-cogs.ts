@@ -1,6 +1,5 @@
 import {
   backendCommand,
-  ClickPreset,
   getClickOptionsFromPreset,
 } from "../../../backend/index";
 import { logger } from "../../../utils/index";
@@ -47,9 +46,7 @@ export default defineScript({
           const x = SPARE_FIRST_COORDS.x + col * COGS_STEP;
           const y = SPARE_FIRST_COORDS.y + row * COGS_STEP;
 
-          const presetOptions = getClickOptionsFromPreset(
-            ClickPreset.UltraFast
-          );
+          const presetOptions = getClickOptionsFromPreset("4x");
 
           await backendCommand.click(
             { x, y },

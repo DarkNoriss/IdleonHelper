@@ -50,18 +50,24 @@ export default defineScript<[string]>({
     }
 
     logger.log("Scanning for visible nodes...");
-    const visibleNodes: string[] = [];
+    const images: Record<string, string> = {};
     for (const [id, n] of Object.entries(COMPASS_NODES)) {
       if (id === nodeId) {
         continue;
       }
-      token.throwIfCancelled();
-      const visible = await backendCommand.isVisibleWithDebug(
-        n.image,
-        undefined,
-        token
-      );
-      if (visible.length > 0) {
+      images[id] = n.image;
+    }
+
+    token.throwIfCancelled();
+    const results = await backendCommand.isVisibleParallel(
+      images,
+      { debug: true },
+      token
+    );
+
+    const visibleNodes: string[] = [];
+    for (const [id, matches] of Object.entries(results)) {
+      if (matches.length > 0) {
         visibleNodes.push(id);
         logger.log(`  Visible: ${id}`);
       }
