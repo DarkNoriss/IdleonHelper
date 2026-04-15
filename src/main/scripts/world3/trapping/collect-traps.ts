@@ -84,8 +84,11 @@ export default defineScript<[string]>({
         }
       }
     } finally {
-      // Countdown for the page UI - cleared again when the next iteration starts.
-      setState("collectTraps", { endsAt: Date.now() + intervalMs });
+      // Clear countdown when cancelled (pause or user remove) so stale timers
+      // do not keep ticking. Otherwise show time until next iteration.
+      setState("collectTraps", {
+        endsAt: token.isCancelled() ? null : Date.now() + intervalMs,
+      });
     }
   },
 });

@@ -233,17 +233,17 @@ export const queueEngine = {
       return;
     }
     const item = queue[index]!;
-    if (item.status === "running") {
-      if (currentToken) {
-        currentToken.cancel();
-        sendBackendStop();
-      }
-      // Finalization (remove or re-schedule recurring) happens in tick's catch.
-      logger.log(`queue: cancelling running ${item.scriptName}`);
-      return;
-    }
+    const wasRunning = item.status === "running";
+    // Splice first so tick's finalizeItem sees the item is gone and does not
+    // re-schedule recurring items. The user clicked X - they mean remove.
     queue.splice(index, 1);
-    logger.log(`queue: removed ${item.scriptName} (${itemId})`);
+    if (wasRunning && currentToken) {
+      currentToken.cancel();
+      sendBackendStop();
+      logger.log(`queue: cancelled and removed running ${item.scriptName}`);
+    } else {
+      logger.log(`queue: removed ${item.scriptName} (${itemId})`);
+    }
     emit();
     scheduleTick();
   },
