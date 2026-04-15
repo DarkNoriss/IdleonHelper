@@ -40,34 +40,6 @@ export const registerAllScripts = (scripts: ScriptDescriptor[]): void => {
 
   ipcMain.handle("queue:get", () => queueEngine.get());
 
-  // Back-compat handlers kept until Phase D (frontend migration done):
-  for (const script of scripts) {
-    ipcMain.handle(
-      `script:${script.id}`,
-      async (_event, ...args: unknown[]) => {
-        logger.log(`IPC (legacy): script:${script.id}`);
-        const { itemId } = queueEngine.enqueue(
-          script.id as keyof ScriptMap,
-          args
-        );
-        return itemId;
-      }
-    );
-  }
-
-  ipcMain.handle("script:cancel", () => {
-    logger.log("IPC (legacy): script:cancel");
-    const snapshot = queueEngine.get();
-    if (snapshot.runningItem) {
-      queueEngine.remove(snapshot.runningItem.itemId);
-    }
-  });
-
-  ipcMain.handle("script:get-status", () => {
-    const snapshot = queueEngine.get();
-    return { isWorking: snapshot.engineState === "running" };
-  });
-
   logger.log(`Registered ${scripts.length} scripts`);
 };
 

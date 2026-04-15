@@ -9,12 +9,6 @@ const api = {
   },
   backend: {},
   script: {
-    run: (id: string, ...args: unknown[]) => {
-      return ipcRenderer.invoke(`script:${id}`, ...args);
-    },
-    cancel: () => {
-      return ipcRenderer.invoke("script:cancel");
-    },
     world2: {
       weeklyBattle: {
         fetch: () => {

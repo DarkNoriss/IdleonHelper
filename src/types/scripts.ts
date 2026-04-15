@@ -107,10 +107,6 @@ export type QueueSnapshot = {
 
 export type AppState = {
   queue: QueueSnapshot;
-  scriptStatus: {
-    current: string | null;
-    isWorking: boolean;
-  };
   backendStatus: {
     status: ConnectionStatus;
     error: string | null;

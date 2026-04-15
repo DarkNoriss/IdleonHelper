@@ -9,10 +9,6 @@ const state: AppState = {
     runningItem: null,
     queue: [],
   },
-  scriptStatus: {
-    current: null,
-    isWorking: false,
-  },
   backendStatus: {
     status: "connecting",
     error: null,

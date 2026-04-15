@@ -50,11 +50,6 @@ declare global {
       };
       backend: Record<string, never>;
       script: {
-        run: <T extends keyof ScriptMap>(
-          id: T,
-          ...args: ScriptMap[T]["args"]
-        ) => Promise<ScriptMap[T]["result"]>;
-        cancel: () => Promise<void>;
         world2: {
           weeklyBattle: {
             fetch: () => Promise<WeeklyBattleData>;
