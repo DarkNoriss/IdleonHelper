@@ -6,7 +6,7 @@ import type {
   Score,
   SolverWeights,
 } from "../types/construction";
-import type { AppState, ScriptMap } from "../types/scripts";
+import type { AppState, QueueSnapshot, ScriptMap } from "../types/scripts";
 
 type ConnectionStatus = "connecting" | "connected" | "error";
 
@@ -50,11 +50,6 @@ declare global {
       };
       backend: Record<string, never>;
       script: {
-        run: <T extends keyof ScriptMap>(
-          id: T,
-          ...args: ScriptMap[T]["args"]
-        ) => Promise<ScriptMap[T]["result"]>;
-        cancel: () => Promise<void>;
         world2: {
           weeklyBattle: {
             fetch: () => Promise<WeeklyBattleData>;
@@ -74,6 +69,17 @@ declare global {
             } | null>;
           };
         };
+      };
+      queue: {
+        enqueue: <T extends keyof ScriptMap>(
+          id: T,
+          ...args: ScriptMap[T]["args"]
+        ) => Promise<{ itemId: string }>;
+        remove: (itemId: string) => Promise<void>;
+        pause: () => Promise<void>;
+        resume: () => Promise<void>;
+        clear: () => Promise<void>;
+        get: () => Promise<QueueSnapshot>;
       };
       app: {
         isDev: () => Promise<boolean>;

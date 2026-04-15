@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ScriptPage } from "@/components/script-page.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
+import { useMainState } from "@/hooks/use-main-state.ts";
 import {
   COMPASS_MINOR_NODE_DEFS,
   COMPASS_NODE_DEFS,
@@ -9,6 +10,17 @@ import { parseCompassData } from "./compass-parser";
 
 const Compass = () => {
   const [rawData, setRawData] = useState("");
+  const queue = useMainState("queue");
+  const wasDiscoverRunningRef = useRef(false);
+
+  useEffect(() => {
+    const isDiscoverRunning =
+      queue?.runningItem?.scriptId === "classSpecific.compass.discover";
+    if (wasDiscoverRunningRef.current && !isDiscoverRunning) {
+      setRawData("");
+    }
+    wasDiscoverRunningRef.current = isDiscoverRunning;
+  }, [queue?.runningItem?.scriptId]);
 
   const knownIds = useMemo(() => {
     const ids = new Set(COMPASS_NODE_DEFS.map((n) => n.id));
@@ -56,7 +68,6 @@ const Compass = () => {
           runningLabel: "Running... (Click to stop)",
           disabled: !validation || hasMissing,
           args: () => [validation!.parsed],
-          onResult: () => setRawData(""),
         },
       ]}
       title="Compass"

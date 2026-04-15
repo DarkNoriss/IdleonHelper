@@ -4,9 +4,10 @@ import type { AppState } from "../types/scripts";
 import { getMainWindow } from "./main-window";
 
 const state: AppState = {
-  scriptStatus: {
-    current: null,
-    isWorking: false,
+  queue: {
+    engineState: "idle",
+    runningItem: null,
+    queue: [],
   },
   backendStatus: {
     status: "connecting",

@@ -1,4 +1,5 @@
 import { type ComponentType, lazy, Suspense } from "react";
+import { QueueDrawer } from "@/components/queue-drawer";
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar.tsx";
 import { GameDataProvider } from "@/providers/game-data-provider.tsx";
@@ -39,6 +40,7 @@ export const App = () => {
             </SidebarInset>
           </SidebarProvider>
         </div>
+        <QueueDrawer />
       </GameDataProvider>
     </ThemeProvider>
   );

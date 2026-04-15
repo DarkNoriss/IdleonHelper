@@ -9,12 +9,6 @@ const api = {
   },
   backend: {},
   script: {
-    run: (id: string, ...args: unknown[]) => {
-      return ipcRenderer.invoke(`script:${id}`, ...args);
-    },
-    cancel: () => {
-      return ipcRenderer.invoke("script:cancel");
-    },
     world2: {
       weeklyBattle: {
         fetch: () => {
@@ -41,6 +35,26 @@ const api = {
           );
         },
       },
+    },
+  },
+  queue: {
+    enqueue: (id: string, ...args: unknown[]) => {
+      return ipcRenderer.invoke("queue:enqueue", id, ...args);
+    },
+    remove: (itemId: string) => {
+      return ipcRenderer.invoke("queue:remove", itemId);
+    },
+    pause: () => {
+      return ipcRenderer.invoke("queue:pause");
+    },
+    resume: () => {
+      return ipcRenderer.invoke("queue:resume");
+    },
+    clear: () => {
+      return ipcRenderer.invoke("queue:clear");
+    },
+    get: () => {
+      return ipcRenderer.invoke("queue:get");
     },
   },
   app: {

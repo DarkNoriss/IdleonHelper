@@ -168,6 +168,10 @@ const TrapCollectingSection = () => {
   const [timer, setTimer] = useState<string>("");
   const [remaining, setRemaining] = useState<string | null>(null);
   const collectTraps = useMainState("collectTraps");
+  const queue = useMainState("queue");
+  const hasCollectTrapsItem =
+    queue?.queue.some((i) => i.scriptId === "world3.trapping.collectTraps") ??
+    false;
 
   const handleTrapChange = (value: string) => {
     setTrap(value);
@@ -176,7 +180,7 @@ const TrapCollectingSection = () => {
 
   useEffect(() => {
     const endsAt = collectTraps?.endsAt;
-    if (!endsAt) {
+    if (!(endsAt && hasCollectTrapsItem)) {
       setRemaining(null);
       return;
     }
@@ -193,7 +197,7 @@ const TrapCollectingSection = () => {
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [collectTraps?.endsAt]);
+  }, [collectTraps?.endsAt, hasCollectTrapsItem]);
 
   return (
     <ScriptPage
