@@ -16,7 +16,7 @@ const formatDuration = (ms: number, precise = false): string => {
 };
 
 const BossFarmer = () => {
-  const [iterations, setIterations] = useState("100");
+  const [iterations, setIterations] = useState("150");
   const bossFarmer = useMainState("bossFarmer");
   const isRunning = bossFarmer?.running ?? false;
 
@@ -52,7 +52,7 @@ const BossFarmer = () => {
             disabled={isRunning}
             id="iterations"
             onChange={handleChange}
-            placeholder="100"
+            placeholder="150"
             value={iterations}
           />
         </div>
