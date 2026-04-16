@@ -1,8 +1,4 @@
-import type {
-  HsvColor,
-  Point,
-  ScreenOffset,
-} from "../../../backend/backend-types";
+import type { HsvColor, Point } from "../../../backend/backend-types";
 
 export const ALCHEMY_PATH = "ui/map/world-2/alchemy";
 
@@ -28,31 +24,27 @@ export const CAULDRON_ORDER: readonly CauldronKey[] = [
 export type CauldronLayout = {
   upArrow: Point;
   downArrow: Point;
-  searchRegion: ScreenOffset;
 };
 
-// Operator fills these once the HSV capture tool has been used to locate the
-// exact pixel positions. Zeros are placeholders that will NOT match any region
-// and will cause the script to log a "not found" failure until updated.
+// Operator fills these up-arrow and down-arrow pixel positions once the HSV
+// capture tool has been used to locate them. Zero placeholders click the top-
+// left corner and fail silently, so the script will log "not found" until
+// updated.
 export const CAULDRON_LAYOUTS: Record<CauldronKey, CauldronLayout> = {
   power: {
     upArrow: { x: 0, y: 0 },
     downArrow: { x: 0, y: 0 },
-    searchRegion: { left: 0, right: 0, top: 0, bottom: 0 },
   },
   quicc: {
     upArrow: { x: 0, y: 0 },
     downArrow: { x: 0, y: 0 },
-    searchRegion: { left: 0, right: 0, top: 0, bottom: 0 },
   },
   highIq: {
     upArrow: { x: 0, y: 0 },
     downArrow: { x: 0, y: 0 },
-    searchRegion: { left: 0, right: 0, top: 0, bottom: 0 },
   },
   kazam: {
     upArrow: { x: 0, y: 0 },
     downArrow: { x: 0, y: 0 },
-    searchRegion: { left: 0, right: 0, top: 0, bottom: 0 },
   },
 };
