@@ -13,6 +13,18 @@ import { BUBBLES_BY_CAULDRON, CAULDRON_LABELS } from "./bubble-registry";
 
 const NONE = "__none__";
 const DEFAULT_INTERVAL_MINUTES = 5;
+const MIN_INTERVAL_MINUTES = 1;
+const MAX_INTERVAL_MINUTES = 1440;
+
+const clampInterval = (raw: number): number => {
+  if (!Number.isFinite(raw)) {
+    return MIN_INTERVAL_MINUTES;
+  }
+  return Math.max(
+    MIN_INTERVAL_MINUTES,
+    Math.min(MAX_INTERVAL_MINUTES, Math.floor(raw))
+  );
+};
 
 const INITIAL: Selections = {
   power: null,
@@ -47,7 +59,7 @@ const AlchemyUpgrade = () => {
           scriptId: "world2.alchemyUpgrade.run",
           runningLabel: "Upgrading... (Click to stop)",
           args: () => [selections, intervalMinutes],
-          disabled: !hasAny || intervalMinutes < 1,
+          disabled: !hasAny || intervalMinutes < MIN_INTERVAL_MINUTES,
         },
       ]}
       title="Alchemy Upgrade"
@@ -94,10 +106,12 @@ const AlchemyUpgrade = () => {
         <Input
           className="w-32"
           id="alchemy-interval-minutes"
-          min={1}
+          max={MAX_INTERVAL_MINUTES}
+          min={MIN_INTERVAL_MINUTES}
           onChange={(e) =>
-            setIntervalMinutes(Math.max(1, Number(e.target.value) || 1))
+            setIntervalMinutes(clampInterval(Number(e.target.value)))
           }
+          step={1}
           type="number"
           value={intervalMinutes}
         />

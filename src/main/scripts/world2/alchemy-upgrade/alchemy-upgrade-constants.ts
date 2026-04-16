@@ -21,8 +21,6 @@ export const ALCHEMY_CLICKS_PER_BUBBLE = 50;
 export const ALCHEMY_PAGES_PER_COLUMN = 8;
 export const ALCHEMY_MAX_SCROLLS = ALCHEMY_PAGES_PER_COLUMN - 1;
 
-export const ALCHEMY_DEFAULT_INTERVAL_MINUTES = 5;
-
 // Delay between popup-dismiss (Escape) and the next action. Gives the game UI
 // a beat to fully close the popup before we search for the next bubble.
 export const ALCHEMY_POPUP_DISMISS_DELAY_MS = 300;

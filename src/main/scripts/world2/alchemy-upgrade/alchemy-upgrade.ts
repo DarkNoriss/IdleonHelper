@@ -184,8 +184,10 @@ const searchAndUpgrade = async (
       logger.log(
         `alchemy-upgrade - ${key} matched ${path} at ${first.x},${first.y} - bursting upgrade ${ALCHEMY_CLICKS_PER_BUBBLE}x`
       );
-      await clickBubbleAndBurstUpgrade(first, token);
-      resolved.push(key);
+      const upgraded = await clickBubbleAndBurstUpgrade(first, token);
+      if (upgraded) {
+        resolved.push(key);
+      }
     }
 
     for (const key of resolved) {
