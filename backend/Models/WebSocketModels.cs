@@ -184,3 +184,14 @@ internal class ReadRegionsResponse
 {
   public List<RegionResultDto> Results { get; set; } = new();
 }
+
+internal class CaptureHsvScreenRequest
+{
+  public HsvColorDto? HsvLower { get; set; }
+  public HsvColorDto? HsvUpper { get; set; }
+}
+
+internal class CaptureHsvScreenResponse
+{
+  public string SavedPath { get; set; } = "";
+}

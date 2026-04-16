@@ -80,6 +80,11 @@ internal static class MessageHandler
           await ReadRegionsCommandHandler.Handle(ws, message, ct);
           break;
         }
+        case "captureHsvScreen":
+        {
+          await CaptureHsvScreenCommandHandler.Handle(ws, message, ct);
+          break;
+        }
         default:
         {
           await SendError(ws, message.Id, $"Unknown command: {message.Command}", ct);

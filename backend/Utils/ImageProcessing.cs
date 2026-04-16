@@ -470,5 +470,35 @@ public static class ImageProcessing
 
     return results;
   }
+
+  public static string CaptureHsvScreen(
+    HsvColor hsvLower,
+    HsvColor hsvUpper,
+    CancellationToken ct
+  )
+  {
+    ct.ThrowIfCancellationRequested();
+
+    using var colorScreenshot = WindowCapture.CaptureScreenShotColor(ct);
+    using var hsvImage = new Mat();
+    Cv2.CvtColor(colorScreenshot, hsvImage, ColorConversionCodes.BGR2HSV);
+
+    var lowerScalar = new Scalar(hsvLower.H, hsvLower.S, hsvLower.V);
+    var upperScalar = new Scalar(hsvUpper.H, hsvUpper.S, hsvUpper.V);
+
+    using var mask = new Mat();
+    Cv2.InRange(hsvImage, lowerScalar, upperScalar, mask);
+
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "screenshots");
+    Directory.CreateDirectory(outputDir);
+
+    var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff");
+    var fileName = $"hsv-{timestamp}.png";
+    var outputPath = Path.Combine(outputDir, fileName);
+
+    Cv2.ImWrite(outputPath, mask);
+
+    return outputPath;
+  }
 }
 
