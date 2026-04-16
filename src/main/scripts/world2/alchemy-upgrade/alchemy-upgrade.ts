@@ -27,6 +27,8 @@ import {
   type CauldronUpArrows,
 } from "./alchemy-upgrade-constants";
 
+const CLICK_OPTIONS_16X = getClickOptionsFromPreset("16x");
+
 // Reset every cauldron already showing a DOWN arrow to page 1. Columns already
 // on page 1 hide their DOWN arrow, so finding only 3 (or 2, or 0) is normal —
 // the un-matched columns don't need resetting.
@@ -45,7 +47,11 @@ const resetAllColumnsToFirstPage = async (
     `alchemy-upgrade - reset - ${downs.length} column(s) not on page 1, clicking down-arrow ${clicksPerColumn}x on each`
   );
   for (const downArrow of downs) {
-    await backendCommand.click(downArrow, { times: clicksPerColumn }, token);
+    await backendCommand.click(
+      downArrow,
+      { ...CLICK_OPTIONS_16X, times: clicksPerColumn },
+      token
+    );
   }
   if (downs.length > 0) {
     await delay(ALCHEMY_PAGE_SETTLE_DELAY_MS, token);
@@ -88,7 +94,7 @@ const scrollColumnUp = async (
   upArrows: CauldronUpArrows,
   token: CancellationToken
 ): Promise<void> => {
-  await backendCommand.click(upArrows[key], undefined, token);
+  await backendCommand.click(upArrows[key], CLICK_OPTIONS_16X, token);
 };
 
 const clickBubbleAndBurstUpgrade = async (
@@ -111,10 +117,9 @@ const clickBubbleAndBurstUpgrade = async (
     return false;
   }
 
-  const clickOptions = getClickOptionsFromPreset("16x");
   await backendCommand.click(
     upgradeFound[0]!,
-    { ...clickOptions, times: ALCHEMY_CLICKS_PER_BUBBLE },
+    { ...CLICK_OPTIONS_16X, times: ALCHEMY_CLICKS_PER_BUBBLE },
     token
   );
 
@@ -138,7 +143,7 @@ const searchAndUpgrade = async (
       `alchemy-upgrade - attempt ${attempt + 1}/${ALCHEMY_MAX_SCROLLS + 1} - searching ${outstanding.size} column(s)`
     );
 
-    const matches = await backendCommand.findHSVParallel(
+    const matches = await backendCommand.isVisibleHSVParallel(
       templates,
       ALCHEMY_HSV_LOWER,
       ALCHEMY_HSV_UPPER,
