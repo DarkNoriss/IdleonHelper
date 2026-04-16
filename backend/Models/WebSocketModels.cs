@@ -205,7 +205,6 @@ internal class FindHSVRequest
   public int? IntervalMs { get; set; }
   public double? Threshold { get; set; }
   public ScreenOffsetDto? Offset { get; set; }
-  public bool? Debug { get; set; }
 }
 
 internal class FindHSVResponse
@@ -220,7 +219,6 @@ internal class FindHSVParallelRequest
   public HsvColorDto? HsvUpper { get; set; }
   public double? Threshold { get; set; }
   public ScreenOffsetDto? Offset { get; set; }
-  public bool? Debug { get; set; }
 }
 
 internal class FindHSVParallelResponse
