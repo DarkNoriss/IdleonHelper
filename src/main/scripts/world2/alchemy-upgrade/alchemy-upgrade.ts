@@ -16,6 +16,7 @@ import {
   ALCHEMY_HSV_LOWER,
   ALCHEMY_HSV_UPPER,
   ALCHEMY_MAX_SCROLLS,
+  ALCHEMY_PAGE_SETTLE_DELAY_MS,
   ALCHEMY_PAGES_PER_COLUMN,
   ALCHEMY_POPUP_DISMISS_DELAY_MS,
   ALCHEMY_UI_HSV_LOWER,
@@ -45,6 +46,9 @@ const resetAllColumnsToFirstPage = async (
   );
   for (const downArrow of downs) {
     await backendCommand.click(downArrow, { times: clicksPerColumn }, token);
+  }
+  if (downs.length > 0) {
+    await delay(ALCHEMY_PAGE_SETTLE_DELAY_MS, token);
   }
 };
 
@@ -173,6 +177,7 @@ const searchAndUpgrade = async (
       for (const key of outstanding.keys()) {
         await scrollColumnUp(key, upArrows, token);
       }
+      await delay(ALCHEMY_PAGE_SETTLE_DELAY_MS, token);
     }
   }
 

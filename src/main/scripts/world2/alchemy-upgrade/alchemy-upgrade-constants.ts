@@ -25,6 +25,11 @@ export const ALCHEMY_MAX_SCROLLS = ALCHEMY_PAGES_PER_COLUMN - 1;
 // a beat to fully close the popup before we search for the next bubble.
 export const ALCHEMY_POPUP_DISMISS_DELAY_MS = 300;
 
+// Delay after a page transition (reset or scroll-up) before matching bubbles
+// again. Bubbles animate into position on page change, and matching against an
+// in-flight animation produces wrong Points or misses entirely.
+export const ALCHEMY_PAGE_SETTLE_DELAY_MS = 500;
+
 export type CauldronKey = "power" | "quicc" | "highIq" | "kazam";
 
 export const CAULDRON_ORDER: readonly CauldronKey[] = [
