@@ -5,6 +5,8 @@ import type { CancellationToken } from "../utils/cancellation-token";
 import { sendCommand } from "./backend-client";
 import { backendConfig } from "./backend-config";
 import type {
+  CaptureHsvScreenRequest,
+  CaptureHsvScreenResponse,
   ClickRequest,
   ClickResponse,
   DragRepeatRequest,
@@ -380,6 +382,20 @@ export const backendCommand = {
       threshold: options?.threshold ?? backendConfig.find.threshold,
       debug: options?.debug ?? false,
     });
+  },
+
+  captureHsvScreen: async (
+    hsvLower: HsvColor,
+    hsvUpper: HsvColor,
+    _options: Record<string, never> | undefined,
+    token: CancellationToken
+  ): Promise<CaptureHsvScreenResponse> => {
+    token.throwIfCancelled();
+    const request: CaptureHsvScreenRequest = {
+      hsvLower,
+      hsvUpper,
+    };
+    return sendCommand("captureHsvScreen", request);
   },
 
   stop: async (): Promise<StopResponse> => {

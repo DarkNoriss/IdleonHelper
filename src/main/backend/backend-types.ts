@@ -178,6 +178,16 @@ export type ReadRegionsResponse = {
   results: RegionResult[];
 };
 
+// CaptureHsvScreen command
+export type CaptureHsvScreenRequest = {
+  hsvLower: HsvColor;
+  hsvUpper: HsvColor;
+};
+
+export type CaptureHsvScreenResponse = {
+  savedPath: string;
+};
+
 // Command type mapping for type safety
 export type CommandRequestMap = {
   find: FindRequest;
@@ -190,6 +200,7 @@ export type CommandRequestMap = {
   scroll: ScrollRequest;
   findParallel: FindParallelRequest;
   readRegions: ReadRegionsRequest;
+  captureHsvScreen: CaptureHsvScreenRequest;
 };
 
 export type CommandResponseMap = {
@@ -203,6 +214,7 @@ export type CommandResponseMap = {
   scroll: ScrollResponse;
   findParallel: FindParallelResponse;
   readRegions: ReadRegionsResponse;
+  captureHsvScreen: CaptureHsvScreenResponse;
 };
 
 // Helper type for creating type-safe WebSocket messages
