@@ -3,8 +3,6 @@ export type BubbleOption = {
   value: string;
 };
 
-// Entries added once the operator harvests HSV templates using the debug tool.
-// Each `value` is the asset path (without extension) under resources/assets/.
 export const BUBBLES_BY_CAULDRON: {
   power: BubbleOption[];
   quicc: BubbleOption[];
@@ -14,7 +12,7 @@ export const BUBBLES_BY_CAULDRON: {
   power: [],
   quicc: [],
   highIq: [],
-  kazam: [],
+  kazam: [{ label: "EXP", value: "ui/map/world-2/alchemy/kazam/bubble_exp" }],
 };
 
 export const CAULDRON_LABELS: Record<keyof typeof BUBBLES_BY_CAULDRON, string> =

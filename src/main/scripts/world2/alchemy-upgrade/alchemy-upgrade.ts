@@ -5,18 +5,25 @@ import {
   getClickOptionsFromPreset,
 } from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
-import { logger } from "../../../utils/index";
+import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
+import { pressKey } from "../../keys";
 import {
+  ALCHEMY_ARROW_DOWN,
+  ALCHEMY_ARROW_UP,
   ALCHEMY_BREWING_TAB,
   ALCHEMY_CLICKS_PER_BUBBLE,
   ALCHEMY_HSV_LOWER,
   ALCHEMY_HSV_UPPER,
   ALCHEMY_MAX_SCROLLS,
   ALCHEMY_PAGES_PER_COLUMN,
+  ALCHEMY_POPUP_DISMISS_DELAY_MS,
   ALCHEMY_TAB,
-  CAULDRON_LAYOUTS,
+  ALCHEMY_UI_HSV_LOWER,
+  ALCHEMY_UI_HSV_UPPER,
+  ALCHEMY_UPGRADE_BUTTON,
   CAULDRON_ORDER,
+  type CauldronArrows,
   type CauldronKey,
 } from "./alchemy-upgrade-constants";
 
@@ -45,8 +52,51 @@ const openAlchemyBrewing = async (
   return true;
 };
 
+const detectArrows = async (
+  token: CancellationToken
+): Promise<CauldronArrows | null> => {
+  logger.log("alchemy-upgrade - detecting arrow positions");
+  const ups = await backendCommand.findHSV(
+    ALCHEMY_ARROW_UP,
+    ALCHEMY_UI_HSV_LOWER,
+    ALCHEMY_UI_HSV_UPPER,
+    undefined,
+    token
+  );
+  const downs = await backendCommand.findHSV(
+    ALCHEMY_ARROW_DOWN,
+    ALCHEMY_UI_HSV_LOWER,
+    ALCHEMY_UI_HSV_UPPER,
+    undefined,
+    token
+  );
+
+  const expected = CAULDRON_ORDER.length;
+  if (ups.length !== expected || downs.length !== expected) {
+    logger.log(
+      `alchemy-upgrade - expected ${expected} up and ${expected} down arrows, got ${ups.length} up and ${downs.length} down - aborting`
+    );
+    return null;
+  }
+
+  const sortedUps = [...ups].sort((a, b) => a.x - b.x);
+  const sortedDowns = [...downs].sort((a, b) => a.x - b.x);
+
+  const arrows = {} as CauldronArrows;
+  for (let i = 0; i < CAULDRON_ORDER.length; i++) {
+    const key = CAULDRON_ORDER[i]!;
+    arrows[key] = { up: sortedUps[i]!, down: sortedDowns[i]! };
+  }
+
+  logger.log(
+    `alchemy-upgrade - arrows detected: ${CAULDRON_ORDER.map((k) => `${k}@up(${arrows[k].up.x},${arrows[k].up.y}) down(${arrows[k].down.x},${arrows[k].down.y})`).join(" ")}`
+  );
+  return arrows;
+};
+
 const resetColumnsToFirstPage = async (
   keys: readonly CauldronKey[],
+  arrows: CauldronArrows,
   token: CancellationToken
 ): Promise<void> => {
   const clicksPerColumn = ALCHEMY_PAGES_PER_COLUMN - 1;
@@ -54,40 +104,60 @@ const resetColumnsToFirstPage = async (
     `alchemy-upgrade - reset - clicking down-arrow ${clicksPerColumn}x on ${keys.length} column(s)`
   );
   for (const key of keys) {
-    const { downArrow } = CAULDRON_LAYOUTS[key];
-    await backendCommand.click(downArrow, { times: clicksPerColumn }, token);
+    await backendCommand.click(
+      arrows[key].down,
+      { times: clicksPerColumn },
+      token
+    );
   }
-};
-
-const clickBubble = async (
-  point: Point,
-  token: CancellationToken
-): Promise<void> => {
-  const clickOptions = getClickOptionsFromPreset("16x");
-  await backendCommand.click(
-    point,
-    { ...clickOptions, times: ALCHEMY_CLICKS_PER_BUBBLE },
-    token
-  );
 };
 
 const scrollColumnUp = async (
   key: CauldronKey,
+  arrows: CauldronArrows,
   token: CancellationToken
 ): Promise<void> => {
-  const { upArrow } = CAULDRON_LAYOUTS[key];
-  await backendCommand.click(upArrow, undefined, token);
+  await backendCommand.click(arrows[key].up, undefined, token);
+};
+
+const clickBubbleAndBurstUpgrade = async (
+  bubblePoint: Point,
+  token: CancellationToken
+): Promise<boolean> => {
+  await backendCommand.click(bubblePoint, undefined, token);
+
+  const upgradeFound = await backendCommand.findHSV(
+    ALCHEMY_UPGRADE_BUTTON,
+    ALCHEMY_UI_HSV_LOWER,
+    ALCHEMY_UI_HSV_UPPER,
+    undefined,
+    token
+  );
+  if (upgradeFound.length === 0) {
+    logger.log("alchemy-upgrade - upgrade button not found after bubble click");
+    await pressKey("ESCAPE", token);
+    await delay(ALCHEMY_POPUP_DISMISS_DELAY_MS, token);
+    return false;
+  }
+
+  const clickOptions = getClickOptionsFromPreset("16x");
+  await backendCommand.click(
+    upgradeFound[0]!,
+    { ...clickOptions, times: ALCHEMY_CLICKS_PER_BUBBLE },
+    token
+  );
+
+  await pressKey("ESCAPE", token);
+  await delay(ALCHEMY_POPUP_DISMISS_DELAY_MS, token);
+  return true;
 };
 
 const searchAndUpgrade = async (
   outstanding: Map<CauldronKey, string>,
+  arrows: CauldronArrows,
   token: CancellationToken
 ): Promise<void> => {
   for (let attempt = 0; attempt <= ALCHEMY_MAX_SCROLLS; attempt++) {
-    if (outstanding.size === 0) {
-      return;
-    }
-
     const templates: Record<string, string> = {};
     for (const [key, path] of outstanding) {
       templates[key] = path;
@@ -107,14 +177,15 @@ const searchAndUpgrade = async (
 
     const resolved: CauldronKey[] = [];
     for (const [key, path] of outstanding) {
-      const points = matches[key];
-      if (points && points.length > 0) {
-        logger.log(
-          `alchemy-upgrade - ${key} matched ${path} at ${points[0]!.x},${points[0]!.y} - clicking ${ALCHEMY_CLICKS_PER_BUBBLE}x`
-        );
-        await clickBubble(points[0]!, token);
-        resolved.push(key);
+      const first = matches[key]?.[0];
+      if (!first) {
+        continue;
       }
+      logger.log(
+        `alchemy-upgrade - ${key} matched ${path} at ${first.x},${first.y} - bursting upgrade ${ALCHEMY_CLICKS_PER_BUBBLE}x`
+      );
+      await clickBubbleAndBurstUpgrade(first, token);
+      resolved.push(key);
     }
 
     for (const key of resolved) {
@@ -131,7 +202,7 @@ const searchAndUpgrade = async (
         `alchemy-upgrade - scrolling up ${outstanding.size} unresolved column(s)`
       );
       for (const key of outstanding.keys()) {
-        await scrollColumnUp(key, token);
+        await scrollColumnUp(key, arrows, token);
       }
     }
   }
@@ -143,10 +214,13 @@ const searchAndUpgrade = async (
   }
 };
 
-export default defineScript<[Selections]>({
+export default defineScript<[Selections, number]>({
   id: "world2.alchemyUpgrade.run",
   name: "Alchemy - Upgrade Bubbles",
-  run: async ({ token, args: [selections] }) => {
+  recurring: {
+    intervalFromArgs: ([, intervalMinutes]) => intervalMinutes * 60 * 1000,
+  },
+  run: async ({ token, args: [selections, intervalMinutes] }) => {
     const outstanding = new Map<CauldronKey, string>();
     for (const key of CAULDRON_ORDER) {
       const value = selections[key];
@@ -161,7 +235,7 @@ export default defineScript<[Selections]>({
     }
 
     logger.log(
-      `alchemy-upgrade - starting with ${outstanding.size} selection(s): ${Array.from(outstanding.keys()).join(", ")}`
+      `alchemy-upgrade - starting with ${outstanding.size} selection(s): ${Array.from(outstanding.keys()).join(", ")} (every ${intervalMinutes} min)`
     );
 
     const opened = await openAlchemyBrewing(token);
@@ -169,8 +243,17 @@ export default defineScript<[Selections]>({
       return;
     }
 
-    await resetColumnsToFirstPage(Array.from(outstanding.keys()), token);
-    await searchAndUpgrade(outstanding, token);
+    const arrows = await detectArrows(token);
+    if (!arrows) {
+      return;
+    }
+
+    await resetColumnsToFirstPage(
+      Array.from(outstanding.keys()),
+      arrows,
+      token
+    );
+    await searchAndUpgrade(outstanding, arrows, token);
 
     logger.log("alchemy-upgrade - finished");
   },

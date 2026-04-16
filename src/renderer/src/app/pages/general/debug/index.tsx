@@ -14,8 +14,8 @@ const attackSkillOptions = [
   { value: "ui/attacks/attack_eagle_eye", label: "Eagle Eye" },
 ] as const;
 
-const DEFAULT_HSV_LOWER = { h: 0, s: 0, v: 120 };
-const DEFAULT_HSV_UPPER = { h: 180, s: 255, v: 255 };
+const DEFAULT_HSV_LOWER = { h: 0, s: 0, v: 128 };
+const DEFAULT_HSV_UPPER = { h: 192, s: 255, v: 255 };
 
 const Debug = () => {
   const [selectedSkill, setSelectedSkill] = useState<string>(

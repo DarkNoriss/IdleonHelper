@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ScriptPage } from "@/components/script-page.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import {
   Select,
   SelectContent,
@@ -11,6 +12,7 @@ import type { Selections } from "@/types/alchemy";
 import { BUBBLES_BY_CAULDRON, CAULDRON_LABELS } from "./bubble-registry";
 
 const NONE = "__none__";
+const DEFAULT_INTERVAL_MINUTES = 5;
 
 const INITIAL: Selections = {
   power: null,
@@ -21,6 +23,9 @@ const INITIAL: Selections = {
 
 const AlchemyUpgrade = () => {
   const [selections, setSelections] = useState<Selections>(INITIAL);
+  const [intervalMinutes, setIntervalMinutes] = useState<number>(
+    DEFAULT_INTERVAL_MINUTES
+  );
 
   const hasAny = useMemo(
     () => Object.values(selections).some((v) => v !== null && v !== ""),
@@ -41,8 +46,8 @@ const AlchemyUpgrade = () => {
           label: "Start Alchemy Upgrade",
           scriptId: "world2.alchemyUpgrade.run",
           runningLabel: "Upgrading... (Click to stop)",
-          args: () => [selections],
-          disabled: !hasAny,
+          args: () => [selections, intervalMinutes],
+          disabled: !hasAny || intervalMinutes < 1,
         },
       ]}
       title="Alchemy Upgrade"
@@ -78,6 +83,26 @@ const AlchemyUpgrade = () => {
           }
         )}
       </div>
+
+      <div className="mb-4">
+        <label
+          className="mb-1.5 block font-medium text-sm"
+          htmlFor="alchemy-interval-minutes"
+        >
+          Run every (minutes)
+        </label>
+        <Input
+          className="w-32"
+          id="alchemy-interval-minutes"
+          min={1}
+          onChange={(e) =>
+            setIntervalMinutes(Math.max(1, Number(e.target.value) || 1))
+          }
+          type="number"
+          value={intervalMinutes}
+        />
+      </div>
+
       {!hasAny && (
         <p className="text-muted-foreground text-sm">
           Select at least one bubble to enable Start.

@@ -42,7 +42,10 @@ export type ScriptMap = {
     result: undefined;
   };
   "world2.weeklyBattle.run": { args: [number[]]; result: undefined };
-  "world2.alchemyUpgrade.run": { args: [Selections]; result: undefined };
+  "world2.alchemyUpgrade.run": {
+    args: [Selections, number];
+    result: undefined;
+  };
   "general.storeItems.run": { args: []; result: undefined };
   "general.candy.run": { args: [string]; result: undefined };
   "general.cardPresets.apply": { args: [number]; result: undefined };
