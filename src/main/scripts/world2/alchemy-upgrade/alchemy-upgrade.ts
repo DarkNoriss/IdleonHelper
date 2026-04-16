@@ -22,21 +22,16 @@ import {
   ALCHEMY_UI_HSV_UPPER,
   ALCHEMY_UPGRADE_BUTTON,
   CAULDRON_ORDER,
-  type CauldronArrows,
   type CauldronKey,
+  type CauldronUpArrows,
 } from "./alchemy-upgrade-constants";
 
-const detectArrows = async (
+// Reset every cauldron already showing a DOWN arrow to page 1. Columns already
+// on page 1 hide their DOWN arrow, so finding only 3 (or 2, or 0) is normal —
+// the un-matched columns don't need resetting.
+const resetAllColumnsToFirstPage = async (
   token: CancellationToken
-): Promise<CauldronArrows | null> => {
-  logger.log("alchemy-upgrade - detecting arrow positions");
-  const ups = await backendCommand.findHSV(
-    ALCHEMY_ARROW_UP,
-    ALCHEMY_UI_HSV_LOWER,
-    ALCHEMY_UI_HSV_UPPER,
-    undefined,
-    token
-  );
+): Promise<void> => {
   const downs = await backendCommand.findHSV(
     ALCHEMY_ARROW_DOWN,
     ALCHEMY_UI_HSV_LOWER,
@@ -44,54 +39,52 @@ const detectArrows = async (
     undefined,
     token
   );
+  const clicksPerColumn = ALCHEMY_PAGES_PER_COLUMN - 1;
+  logger.log(
+    `alchemy-upgrade - reset - ${downs.length} column(s) not on page 1, clicking down-arrow ${clicksPerColumn}x on each`
+  );
+  for (const downArrow of downs) {
+    await backendCommand.click(downArrow, { times: clicksPerColumn }, token);
+  }
+};
 
+// After reset-to-page-1, all four up-arrows should be visible. Sort by x and
+// pair with CAULDRON_ORDER so we can scroll specific cauldrons up between
+// search attempts.
+const detectUpArrows = async (
+  token: CancellationToken
+): Promise<CauldronUpArrows | null> => {
+  const ups = await backendCommand.findHSV(
+    ALCHEMY_ARROW_UP,
+    ALCHEMY_UI_HSV_LOWER,
+    ALCHEMY_UI_HSV_UPPER,
+    undefined,
+    token
+  );
   const expected = CAULDRON_ORDER.length;
-  if (ups.length !== expected || downs.length !== expected) {
+  if (ups.length !== expected) {
     logger.log(
-      `alchemy-upgrade - expected ${expected} up and ${expected} down arrows, got ${ups.length} up and ${downs.length} down - aborting`
+      `alchemy-upgrade - expected ${expected} up arrows after reset, got ${ups.length} - aborting`
     );
     return null;
   }
-
-  const sortedUps = [...ups].sort((a, b) => a.x - b.x);
-  const sortedDowns = [...downs].sort((a, b) => a.x - b.x);
-
-  const arrows = {} as CauldronArrows;
+  const sorted = [...ups].sort((a, b) => a.x - b.x);
+  const result = {} as CauldronUpArrows;
   for (let i = 0; i < CAULDRON_ORDER.length; i++) {
-    const key = CAULDRON_ORDER[i]!;
-    arrows[key] = { up: sortedUps[i]!, down: sortedDowns[i]! };
+    result[CAULDRON_ORDER[i]!] = sorted[i]!;
   }
-
   logger.log(
-    `alchemy-upgrade - arrows detected: ${CAULDRON_ORDER.map((k) => `${k}@up(${arrows[k].up.x},${arrows[k].up.y}) down(${arrows[k].down.x},${arrows[k].down.y})`).join(" ")}`
+    `alchemy-upgrade - up arrows: ${CAULDRON_ORDER.map((k) => `${k}@(${result[k].x},${result[k].y})`).join(" ")}`
   );
-  return arrows;
-};
-
-const resetColumnsToFirstPage = async (
-  keys: readonly CauldronKey[],
-  arrows: CauldronArrows,
-  token: CancellationToken
-): Promise<void> => {
-  const clicksPerColumn = ALCHEMY_PAGES_PER_COLUMN - 1;
-  logger.log(
-    `alchemy-upgrade - reset - clicking down-arrow ${clicksPerColumn}x on ${keys.length} column(s)`
-  );
-  for (const key of keys) {
-    await backendCommand.click(
-      arrows[key].down,
-      { times: clicksPerColumn },
-      token
-    );
-  }
+  return result;
 };
 
 const scrollColumnUp = async (
   key: CauldronKey,
-  arrows: CauldronArrows,
+  upArrows: CauldronUpArrows,
   token: CancellationToken
 ): Promise<void> => {
-  await backendCommand.click(arrows[key].up, undefined, token);
+  await backendCommand.click(upArrows[key], undefined, token);
 };
 
 const clickBubbleAndBurstUpgrade = async (
@@ -128,7 +121,7 @@ const clickBubbleAndBurstUpgrade = async (
 
 const searchAndUpgrade = async (
   outstanding: Map<CauldronKey, string>,
-  arrows: CauldronArrows,
+  upArrows: CauldronUpArrows,
   token: CancellationToken
 ): Promise<void> => {
   for (let attempt = 0; attempt <= ALCHEMY_MAX_SCROLLS; attempt++) {
@@ -178,7 +171,7 @@ const searchAndUpgrade = async (
         `alchemy-upgrade - scrolling up ${outstanding.size} unresolved column(s)`
       );
       for (const key of outstanding.keys()) {
-        await scrollColumnUp(key, arrows, token);
+        await scrollColumnUp(key, upArrows, token);
       }
     }
   }
@@ -220,17 +213,14 @@ export default defineScript<[Selections, number]>({
       return;
     }
 
-    const arrows = await detectArrows(token);
-    if (!arrows) {
+    await resetAllColumnsToFirstPage(token);
+
+    const upArrows = await detectUpArrows(token);
+    if (!upArrows) {
       return;
     }
 
-    await resetColumnsToFirstPage(
-      Array.from(outstanding.keys()),
-      arrows,
-      token
-    );
-    await searchAndUpgrade(outstanding, arrows, token);
+    await searchAndUpgrade(outstanding, upArrows, token);
 
     logger.log("alchemy-upgrade - finished");
   },

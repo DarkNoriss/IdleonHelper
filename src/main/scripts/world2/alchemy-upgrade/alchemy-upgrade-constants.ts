@@ -34,6 +34,7 @@ export const CAULDRON_ORDER: readonly CauldronKey[] = [
   "kazam",
 ] as const;
 
-// Runtime-detected per-cauldron arrow positions. Populated at script start by
-// template-matching `arrow_up.png` / `arrow_down.png` and sorting by x.
-export type CauldronArrows = Record<CauldronKey, { up: Point; down: Point }>;
+// Runtime-detected per-cauldron up-arrow positions. Populated AFTER
+// reset-to-page-1 when every cauldron has its up-arrow visible (down-arrow is
+// hidden on page-1 columns, so up is the reliable anchor).
+export type CauldronUpArrows = Record<CauldronKey, Point>;
