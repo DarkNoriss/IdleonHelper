@@ -85,6 +85,16 @@ internal static class MessageHandler
           await CaptureHsvScreenCommandHandler.Handle(ws, message, ct);
           break;
         }
+        case "findHSV":
+        {
+          await FindHSVCommandHandler.Handle(ws, message, ct);
+          break;
+        }
+        case "findHSVParallel":
+        {
+          await FindHSVParallelCommandHandler.Handle(ws, message, ct);
+          break;
+        }
         default:
         {
           await SendError(ws, message.Id, $"Unknown command: {message.Command}", ct);
