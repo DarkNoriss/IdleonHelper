@@ -1,6 +1,12 @@
 import type { CompassUpgrade } from "./compass";
 import type { OptimalStep } from "./construction";
 
+type HsvColor = {
+  h: number;
+  s: number;
+  v: number;
+};
+
 export type WeeklyBattleStep = {
   stepName: string;
   steps: number[];
@@ -46,6 +52,10 @@ export type ScriptMap = {
   "general.cardPresets.select": { args: [number]; result: undefined };
   "general.bossFarmer.run": { args: [number]; result: undefined };
   "general.debug.findAttackSkill": { args: [string]; result: undefined };
+  "general.debug.captureHsvScreen": {
+    args: [HsvColor, HsvColor];
+    result: undefined;
+  };
   "classSpecific.compass.run": {
     args: [CompassUpgrade[]];
     result: undefined;
