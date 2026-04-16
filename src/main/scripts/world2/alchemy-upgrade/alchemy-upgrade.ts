@@ -7,18 +7,17 @@ import {
 import type { CancellationToken } from "../../../utils/cancellation-token";
 import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
+import { navigation } from "../../game-nav/index";
 import { pressKey } from "../../keys";
 import {
   ALCHEMY_ARROW_DOWN,
   ALCHEMY_ARROW_UP,
-  ALCHEMY_BREWING_TAB,
   ALCHEMY_CLICKS_PER_BUBBLE,
   ALCHEMY_HSV_LOWER,
   ALCHEMY_HSV_UPPER,
   ALCHEMY_MAX_SCROLLS,
   ALCHEMY_PAGES_PER_COLUMN,
   ALCHEMY_POPUP_DISMISS_DELAY_MS,
-  ALCHEMY_TAB,
   ALCHEMY_UI_HSV_LOWER,
   ALCHEMY_UI_HSV_UPPER,
   ALCHEMY_UPGRADE_BUTTON,
@@ -26,31 +25,6 @@ import {
   type CauldronArrows,
   type CauldronKey,
 } from "./alchemy-upgrade-constants";
-
-const openAlchemyBrewing = async (
-  token: CancellationToken
-): Promise<boolean> => {
-  logger.log("alchemy-upgrade - opening alchemy tab");
-  const alchemyFound = await backendCommand.find(ALCHEMY_TAB, undefined, token);
-  if (alchemyFound.length === 0) {
-    logger.log("alchemy-upgrade - alchemy tab not found");
-    return false;
-  }
-  await backendCommand.click(alchemyFound[0]!, undefined, token);
-
-  logger.log("alchemy-upgrade - opening brewing sub-tab");
-  const brewingFound = await backendCommand.find(
-    ALCHEMY_BREWING_TAB,
-    undefined,
-    token
-  );
-  if (brewingFound.length === 0) {
-    logger.log("alchemy-upgrade - brewing tab not found");
-    return false;
-  }
-  await backendCommand.click(brewingFound[0]!, undefined, token);
-  return true;
-};
 
 const detectArrows = async (
   token: CancellationToken
@@ -240,8 +214,9 @@ export default defineScript<[Selections, number]>({
       `alchemy-upgrade - starting with ${outstanding.size} selection(s): ${Array.from(outstanding.keys()).join(", ")} (every ${intervalMinutes} min)`
     );
 
-    const opened = await openAlchemyBrewing(token);
+    const opened = await navigation.alchemy.toBrewing(token);
     if (!opened) {
+      logger.log("alchemy-upgrade - navigation to brewing failed, exiting");
       return;
     }
 

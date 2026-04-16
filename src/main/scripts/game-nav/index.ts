@@ -1,3 +1,4 @@
+import { alchemy } from "./alchemy";
 import { findAttackSkill } from "./attack-bar";
 import { codex } from "./codex";
 import { construction } from "./construction";
@@ -12,5 +13,6 @@ export const navigation = {
   codex,
   construction,
   quickRef,
+  alchemy,
   findAttackSkill,
 } as const;
