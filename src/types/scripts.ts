@@ -1,11 +1,6 @@
 import type { CompassUpgrade } from "./compass";
 import type { OptimalStep } from "./construction";
-
-type HsvColor = {
-  h: number;
-  s: number;
-  v: number;
-};
+import type { HsvColor } from "./hsv";
 
 export type WeeklyBattleStep = {
   stepName: string;

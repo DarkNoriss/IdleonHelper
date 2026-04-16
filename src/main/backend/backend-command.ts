@@ -13,6 +13,8 @@ import type {
   DragRepeatResponse,
   DragRequest,
   DragResponse,
+  FindHSVParallelRequest,
+  FindHSVRequest,
   FindParallelRequest,
   FindRequest,
   FindWithDebugRequest,
@@ -396,6 +398,144 @@ export const backendCommand = {
       hsvUpper,
     };
     return sendCommand("captureHsvScreen", request);
+  },
+
+  findHSV: async (
+    imagePath: string,
+    hsvLower: HsvColor,
+    hsvUpper: HsvColor,
+    options:
+      | {
+          timeoutMs?: number;
+          intervalMs?: number;
+          threshold?: number;
+          offset?: ScreenOffset;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<Point[]> => {
+    token.throwIfCancelled();
+    const resolvedPath = resolveImagePath(imagePath);
+    const request: FindHSVRequest = {
+      imagePath: resolvedPath,
+      hsvLower,
+      hsvUpper,
+      timeoutMs: options?.timeoutMs ?? backendConfig.find.timeoutMs,
+      intervalMs: options?.intervalMs ?? backendConfig.find.intervalMs,
+      threshold: options?.threshold ?? backendConfig.find.threshold,
+      offset: options?.offset ?? undefined,
+    };
+    const response = await sendCommand("findHSV", request);
+    return response.matches;
+  },
+
+  isVisibleHSV: async (
+    imagePath: string,
+    hsvLower: HsvColor,
+    hsvUpper: HsvColor,
+    options:
+      | {
+          offset?: ScreenOffset;
+          threshold?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<Point[]> => {
+    token.throwIfCancelled();
+    const resolvedPath = resolveImagePath(imagePath);
+    const request: FindHSVRequest = {
+      imagePath: resolvedPath,
+      hsvLower,
+      hsvUpper,
+      timeoutMs: backendConfig.isVisible.timeoutMs,
+      intervalMs: backendConfig.isVisible.intervalMs,
+      threshold: options?.threshold ?? backendConfig.find.threshold,
+      offset: options?.offset ?? undefined,
+    };
+    const response = await sendCommand("findHSV", request);
+    return response.matches;
+  },
+
+  findHSVParallel: async (
+    images: Record<string, string>,
+    hsvLower: HsvColor,
+    hsvUpper: HsvColor,
+    options:
+      | {
+          timeoutMs?: number;
+          intervalMs?: number;
+          threshold?: number;
+          offset?: ScreenOffset;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<Record<string, Point[]>> => {
+    token.throwIfCancelled();
+    const entries = Object.entries(images);
+    const resolvedPaths = entries.map(([, path]) => resolveImagePath(path));
+    const timeoutMs = options?.timeoutMs ?? backendConfig.find.timeoutMs;
+    const intervalMs = options?.intervalMs ?? backendConfig.find.intervalMs;
+    const threshold = options?.threshold ?? backendConfig.find.threshold;
+    const start = Date.now();
+
+    while (Date.now() - start < timeoutMs) {
+      token.throwIfCancelled();
+      const request: FindHSVParallelRequest = {
+        imagePaths: resolvedPaths,
+        hsvLower,
+        hsvUpper,
+        threshold,
+        offset: options?.offset ?? undefined,
+      };
+      const response = await sendCommand("findHSVParallel", request);
+      const responseValues = Object.values(response.results);
+      const hasMatch = responseValues.some((m) => m.length > 0);
+      if (hasMatch) {
+        const result: Record<string, Point[]> = {};
+        for (let i = 0; i < entries.length; i++) {
+          result[entries[i]![0]] = responseValues[i] ?? [];
+        }
+        return result;
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+
+    const emptyResult: Record<string, Point[]> = {};
+    for (const [key] of entries) {
+      emptyResult[key] = [];
+    }
+    return emptyResult;
+  },
+
+  isVisibleHSVParallel: async (
+    images: Record<string, string>,
+    hsvLower: HsvColor,
+    hsvUpper: HsvColor,
+    options:
+      | {
+          offset?: ScreenOffset;
+          threshold?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<Record<string, Point[]>> => {
+    token.throwIfCancelled();
+    const entries = Object.entries(images);
+    const resolvedPaths = entries.map(([, path]) => resolveImagePath(path));
+    const request: FindHSVParallelRequest = {
+      imagePaths: resolvedPaths,
+      hsvLower,
+      hsvUpper,
+      threshold: options?.threshold ?? backendConfig.find.threshold,
+      offset: options?.offset ?? undefined,
+    };
+    const response = await sendCommand("findHSVParallel", request);
+    const responseValues = Object.values(response.results);
+    const result: Record<string, Point[]> = {};
+    for (let i = 0; i < entries.length; i++) {
+      result[entries[i]![0]] = responseValues[i] ?? [];
+    }
+    return result;
   },
 
   stop: async (): Promise<StopResponse> => {

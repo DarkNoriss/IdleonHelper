@@ -1,3 +1,7 @@
+import type { HsvColor } from "@/types/hsv";
+
+export type { HsvColor } from "@/types/hsv";
+
 // Base types
 export type Point = {
   x: number;
@@ -151,12 +155,6 @@ export type Rect = {
   height: number;
 };
 
-export type HsvColor = {
-  h: number;
-  s: number;
-  v: number;
-};
-
 export type RegionResult = {
   regionIndex: number;
   match: string | null;
@@ -188,6 +186,34 @@ export type CaptureHsvScreenResponse = {
   savedPath: string;
 };
 
+// FindHSV command
+export type FindHSVRequest = {
+  imagePath: string;
+  hsvLower: HsvColor;
+  hsvUpper: HsvColor;
+  timeoutMs?: number;
+  intervalMs?: number;
+  threshold?: number;
+  offset?: ScreenOffset;
+};
+
+export type FindHSVResponse = {
+  matches: Point[];
+};
+
+// FindHSVParallel command
+export type FindHSVParallelRequest = {
+  imagePaths: string[];
+  hsvLower: HsvColor;
+  hsvUpper: HsvColor;
+  threshold: number;
+  offset?: ScreenOffset;
+};
+
+export type FindHSVParallelResponse = {
+  results: Record<string, Point[]>;
+};
+
 // Command type mapping for type safety
 export type CommandRequestMap = {
   find: FindRequest;
@@ -201,6 +227,8 @@ export type CommandRequestMap = {
   findParallel: FindParallelRequest;
   readRegions: ReadRegionsRequest;
   captureHsvScreen: CaptureHsvScreenRequest;
+  findHSV: FindHSVRequest;
+  findHSVParallel: FindHSVParallelRequest;
 };
 
 export type CommandResponseMap = {
@@ -215,6 +243,8 @@ export type CommandResponseMap = {
   findParallel: FindParallelResponse;
   readRegions: ReadRegionsResponse;
   captureHsvScreen: CaptureHsvScreenResponse;
+  findHSV: FindHSVResponse;
+  findHSVParallel: FindHSVParallelResponse;
 };
 
 // Helper type for creating type-safe WebSocket messages
