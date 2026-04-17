@@ -13,6 +13,7 @@ import {
   GAME_BOARD,
   INFINITY_ICON,
   INIT_CONFIRM_TIMEOUT_MS,
+  SUMMONING_ICON,
   UI_HSV_LOWER,
   UI_HSV_UPPER,
 } from "./summoning-constants";
@@ -136,6 +137,29 @@ const dragUntilChestVisible = async (
   }
 };
 
+const reopenSummoningUi = async (
+  summoningIconPoint: Point,
+  token: CancellationToken
+): Promise<void> => {
+  logger.log(
+    `summoning - chest: summoning icon visible at ${summoningIconPoint.x},${summoningIconPoint.y} - UI was closed, reopening`
+  );
+  await backendCommand.click(summoningIconPoint, undefined, token);
+  const confirm = await backendCommand.findHSV(
+    INFINITY_ICON,
+    UI_HSV_LOWER,
+    UI_HSV_UPPER,
+    { timeoutMs: INIT_CONFIRM_TIMEOUT_MS },
+    token
+  );
+  if (confirm.length === 0) {
+    throw new Error(
+      "summoning - chest: clicked summoning icon but infinity did not reappear"
+    );
+  }
+  logger.log("summoning - chest: infinity confirmed after reopen");
+};
+
 const collectChest = async (
   chestPoint: Point,
   token: CancellationToken
@@ -151,17 +175,26 @@ const collectChest = async (
         `summoning - chest: collection timed out after ${CHEST_COLLECTION_TIMEOUT_MS}ms`
       );
     }
-    const menuBack = await backendCommand.isVisibleHSV(
-      INFINITY_ICON,
+    const visibility = await backendCommand.isVisibleHSVParallel(
+      { infinity: INFINITY_ICON, summoning: SUMMONING_ICON },
       UI_HSV_LOWER,
       UI_HSV_UPPER,
       undefined,
       token
     );
-    if (menuBack.length > 0) {
+    const infinity = visibility.infinity ?? [];
+    const summoning = visibility.summoning ?? [];
+
+    if (infinity.length > 0) {
       logger.log("summoning - chest: infinity visible - back at menu");
       return;
     }
+
+    if (summoning.length > 0) {
+      await reopenSummoningUi(summoning[0]!, token);
+      return;
+    }
+
     await backendCommand.click(chestPoint, undefined, token);
     await delay(CHEST_CLICK_DELAY_MS, token);
   }

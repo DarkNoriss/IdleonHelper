@@ -6,6 +6,7 @@ export const GAME_BOARD = `${SUMMONING_PATH}/game_board`;
 export const BEGIN_MATCH = `${SUMMONING_PATH}/begin_match`;
 export const INFINITY_ICON = `${SUMMONING_PATH}/infinity`;
 export const CHEST = `${SUMMONING_PATH}/chest`;
+export const SUMMONING_ICON = `${SUMMONING_PATH}/summoning`;
 
 // Board template HSV range (near-white tile interiors)
 export const BOARD_HSV_LOWER: HsvColor = { h: 0, s: 0, v: 120 };
