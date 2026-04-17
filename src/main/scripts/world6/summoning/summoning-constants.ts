@@ -22,6 +22,12 @@ export const BOARD_CENTER_X = 0;
 export const MIN_BOARD_MATCHES = 3;
 export const MIN_RADIUS_PX = 20;
 
+// Outlier filter - drop matches whose Y deviation from the median exceeds
+// OUTLIER_MAD_MULTIPLIER * MAD (median absolute deviation). The min-spread
+// floor prevents the filter from rejecting a tight cluster when MAD is near 0.
+export const OUTLIER_MAD_MULTIPLIER = 3;
+export const OUTLIER_MIN_SPREAD_PX = 10;
+
 // Circle drag
 export const CIRCLE_WAYPOINTS = 36;
 

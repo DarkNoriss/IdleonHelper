@@ -6,6 +6,7 @@ import {
   BOARD_HSV_UPPER,
   GAME_BOARD,
 } from "./summoning-constants";
+import { filterBoardOutliers } from "./summoning-helpers";
 
 export const debugBoardRange = defineScript({
   id: "world6.summoning.debugBoardRange",
@@ -20,9 +21,9 @@ export const debugBoardRange = defineScript({
       token
     );
 
-    logger.log(`summoning-debug - found ${matches.length} board tile(s)`);
+    logger.log(`summoning-debug - raw: ${matches.length} board tile(s)`);
     for (const m of matches) {
-      logger.log(`summoning-debug - tile at ${m.x},${m.y}`);
+      logger.log(`summoning-debug - raw tile at ${m.x},${m.y}`);
     }
 
     if (matches.length === 0) {
@@ -32,11 +33,23 @@ export const debugBoardRange = defineScript({
       return;
     }
 
-    let xMin = matches[0]!.x;
-    let xMax = matches[0]!.x;
-    let yMin = matches[0]!.y;
-    let yMax = matches[0]!.y;
-    for (const m of matches) {
+    const filtered = filterBoardOutliers(matches);
+    logger.log(
+      `summoning-debug - after outlier filter: ${filtered.length} tile(s) kept`
+    );
+
+    if (filtered.length === 0) {
+      logger.log(
+        "summoning-debug - filter rejected everything - dense cluster not found"
+      );
+      return;
+    }
+
+    let xMin = filtered[0]!.x;
+    let xMax = filtered[0]!.x;
+    let yMin = filtered[0]!.y;
+    let yMax = filtered[0]!.y;
+    for (const m of filtered) {
       if (m.x < xMin) {
         xMin = m.x;
       }
@@ -53,8 +66,8 @@ export const debugBoardRange = defineScript({
     const cxSuggest = Math.round((xMin + xMax) / 2);
 
     logger.log(
-      `summoning-debug - x range: ${xMin} - ${xMax} (suggested BOARD_CENTER_X: ${cxSuggest})`
+      `summoning-debug - filtered x range: ${xMin} - ${xMax} (suggested BOARD_CENTER_X: ${cxSuggest})`
     );
-    logger.log(`summoning-debug - y range: ${yMin} - ${yMax}`);
+    logger.log(`summoning-debug - filtered y range: ${yMin} - ${yMax}`);
   },
 });
