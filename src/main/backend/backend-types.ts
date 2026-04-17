@@ -195,6 +195,7 @@ export type FindHSVRequest = {
   intervalMs?: number;
   threshold?: number;
   offset?: ScreenOffset;
+  debug?: boolean;
 };
 
 export type FindHSVResponse = {
@@ -214,6 +215,18 @@ export type FindHSVParallelResponse = {
   results: Record<string, Point[]>;
 };
 
+// DragPath command
+export type DragPathRequest = {
+  points: Point[];
+  stepSize?: number;
+  stepDelay?: number;
+  holdTime?: number;
+};
+
+export type DragPathResponse = {
+  success: boolean;
+};
+
 // Command type mapping for type safety
 export type CommandRequestMap = {
   find: FindRequest;
@@ -221,6 +234,7 @@ export type CommandRequestMap = {
   click: ClickRequest;
   drag: DragRequest;
   dragRepeat: DragRepeatRequest;
+  dragPath: DragPathRequest;
   stop: StopRequest;
   keyPress: KeyPressRequest;
   scroll: ScrollRequest;
@@ -237,6 +251,7 @@ export type CommandResponseMap = {
   click: ClickResponse;
   drag: DragResponse;
   dragRepeat: DragRepeatResponse;
+  dragPath: DragPathResponse;
   stop: StopResponse;
   keyPress: KeyPressResponse;
   scroll: ScrollResponse;

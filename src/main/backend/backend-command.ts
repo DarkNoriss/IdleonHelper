@@ -9,6 +9,8 @@ import type {
   CaptureHsvScreenResponse,
   ClickRequest,
   ClickResponse,
+  DragPathRequest,
+  DragPathResponse,
   DragRepeatRequest,
   DragRepeatResponse,
   DragRequest,
@@ -244,6 +246,27 @@ export const backendCommand = {
     return sendCommand("dragRepeat", request);
   },
 
+  dragPath: async (
+    points: Point[],
+    options:
+      | {
+          stepSize?: number;
+          stepDelay?: number;
+          holdTime?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<DragPathResponse> => {
+    token.throwIfCancelled();
+    const request: DragPathRequest = {
+      points,
+      stepSize: options?.stepSize ?? backendConfig.dragPath.stepSize,
+      stepDelay: options?.stepDelay ?? backendConfig.dragPath.stepDelay,
+      holdTime: options?.holdTime ?? backendConfig.dragPath.holdTime,
+    };
+    return sendCommand("dragPath", request);
+  },
+
   keyPress: async (
     key: number,
     options:
@@ -410,6 +433,7 @@ export const backendCommand = {
           intervalMs?: number;
           threshold?: number;
           offset?: ScreenOffset;
+          debug?: boolean;
         }
       | undefined,
     token: CancellationToken
@@ -424,6 +448,7 @@ export const backendCommand = {
       intervalMs: options?.intervalMs ?? backendConfig.find.intervalMs,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
+      debug: options?.debug ?? false,
     };
     const response = await sendCommand("findHSV", request);
     return response.matches;

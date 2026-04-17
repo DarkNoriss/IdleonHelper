@@ -4,7 +4,11 @@ import {
   farmingCollectCrops,
   farmingCollectCropsDebug,
 } from "./farming";
-import { summoningStartAutobattler, summoningStartEndless } from "./summoning";
+import {
+  debugBoardRange,
+  summoningStartAutobattler,
+  summoningStartEndless,
+} from "./summoning";
 
 export const world6Scripts = [
   beanTradingGetTickets,
@@ -13,4 +17,5 @@ export const world6Scripts = [
   farmingCollectCropsDebug,
   summoningStartEndless,
   summoningStartAutobattler,
+  debugBoardRange,
 ];
