@@ -50,6 +50,16 @@ const PRESET_CARDS: Record<number, string[]> = {
     "coralcave-guardian-card",
     "demon-genie-card",
   ],
+  4: [
+    "chaotic-emperor-card",
+    "blitzkrieg-troll-card",
+    "dr-defecaus-card",
+    "sprout-spirit-card",
+    "citringe-card",
+    "snowman-card",
+    "bloodbone-card",
+    "doodlefish-card",
+  ],
 };
 
 const findCardCategory = (cardName: string) => {
