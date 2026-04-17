@@ -5,7 +5,6 @@ import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   BEGIN_MATCH,
-  BOARD_CENTER_X,
   BOARD_HSV_LOWER,
   BOARD_HSV_UPPER,
   CHEST,
@@ -14,11 +13,14 @@ import {
   GAME_BOARD,
   INFINITY_ICON,
   INIT_CONFIRM_TIMEOUT_MS,
-  MIN_RADIUS_PX,
   UI_HSV_LOWER,
   UI_HSV_UPPER,
 } from "./summoning-constants";
-import { computeBoardYRange, generateCirclePoints } from "./summoning-helpers";
+import {
+  type BoardGeometry,
+  computeBoardGeometry,
+  generateEllipsePoints,
+} from "./summoning-helpers";
 
 const ensureBeginMatchScreen = async (
   token: CancellationToken
@@ -65,9 +67,9 @@ const ensureBeginMatchScreen = async (
   logger.log("summoning - init: begin_match confirmed after endless select");
 };
 
-const detectBoardCircle = async (
+const detectBoardEllipse = async (
   token: CancellationToken
-): Promise<{ cy: number; radius: number; tiles: number }> => {
+): Promise<BoardGeometry & { tiles: number }> => {
   const tiles = await backendCommand.isVisibleHSV(
     GAME_BOARD,
     BOARD_HSV_LOWER,
@@ -75,21 +77,16 @@ const detectBoardCircle = async (
     undefined,
     token
   );
-  const geometry = computeBoardYRange(tiles);
+  const geometry = computeBoardGeometry(tiles);
   if (!geometry) {
     throw new Error(
-      `summoning - board: only ${tiles.length} tile(s) matched - template broken or not on board`
-    );
-  }
-  if (geometry.radius < MIN_RADIUS_PX) {
-    throw new Error(
-      `summoning - board: radius ${geometry.radius}px below MIN_RADIUS_PX (${MIN_RADIUS_PX}) - degenerate circle`
+      `summoning - board: only ${tiles.length} tile(s) matched or radii below minimum - not on board`
     );
   }
   logger.log(
-    `summoning - board: y=[${geometry.yMin},${geometry.yMax}] radius=${geometry.radius} tiles=${tiles.length}`
+    `summoning - board: x=[${geometry.xMin},${geometry.xMax}] y=[${geometry.yMin},${geometry.yMax}] rx=${geometry.rx} ry=${geometry.ry} tiles=${tiles.length}`
   );
-  return { cy: geometry.cy, radius: geometry.radius, tiles: tiles.length };
+  return { ...geometry, tiles: tiles.length };
 };
 
 const startMatch = async (token: CancellationToken): Promise<void> => {
@@ -108,16 +105,20 @@ const startMatch = async (token: CancellationToken): Promise<void> => {
 };
 
 const dragUntilChestVisible = async (
-  cy: number,
-  radius: number,
+  geometry: BoardGeometry,
   token: CancellationToken
 ): Promise<Point> => {
-  const circle = generateCirclePoints(BOARD_CENTER_X, cy, radius);
+  const ellipse = generateEllipsePoints(
+    geometry.cx,
+    geometry.cy,
+    geometry.rx,
+    geometry.ry
+  );
   let iteration = 0;
   while (true) {
     token.throwIfCancelled();
     iteration++;
-    await backendCommand.dragPath(circle, undefined, token);
+    await backendCommand.dragPath(ellipse, undefined, token);
     const chest = await backendCommand.isVisibleHSV(
       CHEST,
       UI_HSV_LOWER,
@@ -178,9 +179,9 @@ export const summoningStartEndless = defineScript({
       logger.log(`summoning - round ${round}: init`);
 
       await ensureBeginMatchScreen(token);
-      const { cy, radius } = await detectBoardCircle(token);
+      const geometry = await detectBoardEllipse(token);
       await startMatch(token);
-      const chestPoint = await dragUntilChestVisible(cy, radius, token);
+      const chestPoint = await dragUntilChestVisible(geometry, token);
       await collectChest(chestPoint, token);
 
       logger.log(`summoning - round ${round}: complete`);

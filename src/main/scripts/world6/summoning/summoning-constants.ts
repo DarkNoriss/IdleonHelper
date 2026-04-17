@@ -15,9 +15,6 @@ export const BOARD_HSV_UPPER: HsvColor = { h: 180, s: 255, v: 255 };
 export const UI_HSV_LOWER: HsvColor = { h: 0, s: 0, v: 128 };
 export const UI_HSV_UPPER: HsvColor = { h: 192, s: 255, v: 255 };
 
-// Calibrated from Debug - Board Range output (filtered cluster mid-x).
-export const BOARD_CENTER_X = 461;
-
 // Board detection guards
 export const MIN_BOARD_MATCHES = 3;
 export const MIN_RADIUS_PX = 20;
