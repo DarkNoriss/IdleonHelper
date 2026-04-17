@@ -55,6 +55,11 @@ internal static class MessageHandler
           await DragRepeatCommandHandler.Handle(ws, message, ct);
           break;
         }
+        case "dragPath":
+        {
+          await DragPathCommandHandler.Handle(ws, message, ct);
+          break;
+        }
         case "stop":
         {
           await StopCommandHandler.Handle(ws, message, ct);
