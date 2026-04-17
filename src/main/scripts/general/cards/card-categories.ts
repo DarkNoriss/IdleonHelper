@@ -45,7 +45,16 @@ export const CARD_CATEGORIES: CardCategory[] = [
   {
     categoryName: "Frostbite Tundra",
     categoryImage: "ui/codex/cards/cards_frostbite_tundra",
-    cards: [],
+    cards: [
+      {
+        cardName: "snowman-card",
+        cardImage: "ui/codex/cards/game/snowman_card",
+      },
+      {
+        cardName: "bloodbone-card",
+        cardImage: "ui/codex/cards/game/bloodbone_card",
+      },
+    ],
   },
   {
     categoryName: "Hard Resources",
@@ -85,6 +94,10 @@ export const CARD_CATEGORIES: CardCategory[] = [
         cardName: "tremor-wurm-card",
         cardImage: "ui/codex/cards/game/tremor_wurm_card",
       },
+      {
+        cardName: "citringe-card",
+        cardImage: "ui/codex/cards/game/citringe_card",
+      },
     ],
   },
   {
@@ -107,6 +120,10 @@ export const CARD_CATEGORIES: CardCategory[] = [
         cardName: "river-spirit-card",
         cardImage: "ui/codex/cards/game/river_spirit_card",
       },
+      {
+        cardName: "sprout-spirit-card",
+        cardImage: "ui/codex/cards/game/sprout_spirit_card",
+      },
     ],
   },
   {
@@ -120,6 +137,10 @@ export const CARD_CATEGORIES: CardCategory[] = [
       {
         cardName: "mantaray-card",
         cardImage: "ui/codex/cards/game/mantaray_card",
+      },
+      {
+        cardName: "doodlefish-card",
+        cardImage: "ui/codex/cards/game/doodlefish_card",
       },
     ],
   },
@@ -168,6 +189,15 @@ export const CARD_CATEGORIES: CardCategory[] = [
         cardName: "chaotic-troll-card",
         cardImage: "ui/codex/cards/game/chaotic_troll_card",
         expectedX: 480,
+      },
+      {
+        cardName: "blitzkrieg-troll-card",
+        cardImage: "ui/codex/cards/game/blitzkrieg_troll_card",
+        expectedX: 511,
+      },
+      {
+        cardName: "dr-defecaus-card",
+        cardImage: "ui/codex/cards/game/dr_defecaus_card",
       },
     ],
   },
