@@ -1,5 +1,7 @@
+import type { Selections } from "./alchemy";
 import type { CompassUpgrade } from "./compass";
 import type { OptimalStep } from "./construction";
+import type { HsvColor } from "./hsv";
 
 export type WeeklyBattleStep = {
   stepName: string;
@@ -40,12 +42,20 @@ export type ScriptMap = {
     result: undefined;
   };
   "world2.weeklyBattle.run": { args: [number[]]; result: undefined };
+  "world2.alchemyUpgrade.run": {
+    args: [Selections, number];
+    result: undefined;
+  };
   "general.storeItems.run": { args: []; result: undefined };
   "general.candy.run": { args: [string]; result: undefined };
   "general.cardPresets.apply": { args: [number]; result: undefined };
   "general.cardPresets.select": { args: [number]; result: undefined };
   "general.bossFarmer.run": { args: [number]; result: undefined };
   "general.debug.findAttackSkill": { args: [string]; result: undefined };
+  "general.debug.captureHsvScreen": {
+    args: [HsvColor, HsvColor];
+    result: undefined;
+  };
   "classSpecific.compass.run": {
     args: [CompassUpgrade[]];
     result: undefined;

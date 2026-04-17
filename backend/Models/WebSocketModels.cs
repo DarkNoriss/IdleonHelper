@@ -184,3 +184,44 @@ internal class ReadRegionsResponse
 {
   public List<RegionResultDto> Results { get; set; } = new();
 }
+
+internal class CaptureHsvScreenRequest
+{
+  public HsvColorDto? HsvLower { get; set; }
+  public HsvColorDto? HsvUpper { get; set; }
+}
+
+internal class CaptureHsvScreenResponse
+{
+  public string SavedPath { get; set; } = "";
+}
+
+internal class FindHSVRequest
+{
+  public string ImagePath { get; set; } = "";
+  public HsvColorDto? HsvLower { get; set; }
+  public HsvColorDto? HsvUpper { get; set; }
+  public int? TimeoutMs { get; set; }
+  public int? IntervalMs { get; set; }
+  public double? Threshold { get; set; }
+  public ScreenOffsetDto? Offset { get; set; }
+}
+
+internal class FindHSVResponse
+{
+  public List<Point> Matches { get; set; } = new();
+}
+
+internal class FindHSVParallelRequest
+{
+  public List<string>? ImagePaths { get; set; }
+  public HsvColorDto? HsvLower { get; set; }
+  public HsvColorDto? HsvUpper { get; set; }
+  public double? Threshold { get; set; }
+  public ScreenOffsetDto? Offset { get; set; }
+}
+
+internal class FindHSVParallelResponse
+{
+  public Dictionary<string, List<Point>> Results { get; set; } = new();
+}

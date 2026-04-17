@@ -1,6 +1,13 @@
+import type { HsvColor } from "../../backend/backend-types";
 import { backendCommand } from "../../backend/index";
 import type { CancellationToken } from "../../utils/cancellation-token";
 import { logger } from "../../utils/index";
+
+export type HsvTemplate = {
+  image: string;
+  hsvLower: HsvColor;
+  hsvUpper: HsvColor;
+};
 
 export const navigateTo = async (
   confirmationImage: string,
@@ -81,6 +88,91 @@ export const navigateTo = async (
 
   logger.error(
     `Failed to navigate to ${screenName} - ${confirmationImage} not visible after clicking`
+  );
+  return false;
+};
+
+export const navigateToHSV = async (
+  confirmation: HsvTemplate,
+  button: HsvTemplate,
+  fallback: ((token: CancellationToken) => Promise<boolean>) | undefined,
+  token: CancellationToken,
+  screenName = "target screen"
+): Promise<boolean> => {
+  logger.log(`Navigating to ${screenName}...`);
+
+  const initialCheck = await backendCommand.isVisibleHSV(
+    confirmation.image,
+    confirmation.hsvLower,
+    confirmation.hsvUpper,
+    undefined,
+    token
+  );
+  if (initialCheck.length > 0) {
+    logger.log(`${screenName} already opened`);
+    return true;
+  }
+
+  const isButtonVisible = await backendCommand.isVisibleHSV(
+    button.image,
+    button.hsvLower,
+    button.hsvUpper,
+    undefined,
+    token
+  );
+
+  if (isButtonVisible.length === 0) {
+    if (!fallback) {
+      logger.error(`${screenName} button not found and no fallback available`);
+      return false;
+    }
+
+    logger.log(`${screenName} button not found, falling back...`);
+    const fallbackResult = await fallback(token);
+    if (!fallbackResult) {
+      return false;
+    }
+
+    const postFallbackCheck = await backendCommand.isVisibleHSV(
+      confirmation.image,
+      confirmation.hsvLower,
+      confirmation.hsvUpper,
+      undefined,
+      token
+    );
+    if (postFallbackCheck.length > 0) {
+      logger.log(`${screenName} already opened after fallback`);
+      return true;
+    }
+  }
+
+  const clickTargets = await backendCommand.findHSV(
+    button.image,
+    button.hsvLower,
+    button.hsvUpper,
+    undefined,
+    token
+  );
+  if (clickTargets.length === 0) {
+    logger.error(`${screenName} button not found, navigation failed`);
+    return false;
+  }
+  await backendCommand.click(clickTargets[0]!, undefined, token);
+
+  const confirmationResult = await backendCommand.findHSV(
+    confirmation.image,
+    confirmation.hsvLower,
+    confirmation.hsvUpper,
+    undefined,
+    token
+  );
+  if (confirmationResult.length > 0) {
+    logger.log(`${screenName} opened successfully`);
+    return true;
+  }
+
+  logger.error(
+    `Failed to navigate to ${screenName} - ${confirmation.image} not visible after clicking`
   );
   return false;
 };

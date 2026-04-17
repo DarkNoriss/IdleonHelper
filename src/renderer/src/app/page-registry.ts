@@ -10,6 +10,8 @@ export const pageRegistry = {
   "general/card-presets": () => import("./pages/general/cards/index"),
   "general/debug": () => import("./pages/general/debug/index"),
   "world2/weekly-battle": () => import("./pages/world-2/weekly-battle/index"),
+  "world2/alchemy-upgrade": () =>
+    import("./pages/world-2/alchemy-upgrade/index"),
   "world3/construction": () => import("./pages/world-3/construction/index"),
   "world3/trapping": () => import("./pages/world-3/trapping/index"),
   "classSpecific/compass": () => import("./pages/class-specific/compass"),

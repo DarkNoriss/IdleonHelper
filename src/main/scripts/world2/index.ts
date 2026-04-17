@@ -1,3 +1,4 @@
+import { alchemyUpgrade } from "./alchemy-upgrade/index";
 import weeklyBattleRun from "./weekly-battle";
 
 export {
@@ -6,4 +7,4 @@ export {
   weeklyBattleOnChange,
 } from "./weekly-battle";
 
-export const world2Scripts = [weeklyBattleRun];
+export const world2Scripts = [weeklyBattleRun, alchemyUpgrade];

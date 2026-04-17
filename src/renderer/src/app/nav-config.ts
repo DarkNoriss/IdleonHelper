@@ -34,7 +34,10 @@ export const navConfig: NavEntry[] = [
   },
   {
     title: "World 2",
-    items: [{ title: "Weekly Battle", page: "world2/weekly-battle" }],
+    items: [
+      { title: "Weekly Battle", page: "world2/weekly-battle" },
+      { title: "Alchemy Upgrade", page: "world2/alchemy-upgrade" },
+    ],
   },
   {
     title: "World 3",

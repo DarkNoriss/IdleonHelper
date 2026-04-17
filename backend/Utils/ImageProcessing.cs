@@ -470,5 +470,141 @@ public static class ImageProcessing
 
     return results;
   }
+
+  public static string CaptureHsvScreen(
+    HsvColor hsvLower,
+    HsvColor hsvUpper,
+    CancellationToken ct
+  )
+  {
+    ct.ThrowIfCancellationRequested();
+
+    using var colorScreenshot = WindowCapture.CaptureScreenShotColor(ct);
+    using var hsvImage = new Mat();
+    Cv2.CvtColor(colorScreenshot, hsvImage, ColorConversionCodes.BGR2HSV);
+
+    var lowerScalar = new Scalar(hsvLower.H, hsvLower.S, hsvLower.V);
+    var upperScalar = new Scalar(hsvUpper.H, hsvUpper.S, hsvUpper.V);
+
+    using var mask = new Mat();
+    Cv2.InRange(hsvImage, lowerScalar, upperScalar, mask);
+
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "screenshots");
+    Directory.CreateDirectory(outputDir);
+
+    var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff");
+    var fileName = $"hsv-{timestamp}.png";
+    var outputPath = Path.Combine(outputDir, fileName);
+
+    Cv2.ImWrite(outputPath, mask);
+
+    return outputPath;
+  }
+
+  public static async Task<List<Match>> FindHSV(
+    string imagePath,
+    HsvColor hsvLower,
+    HsvColor hsvUpper,
+    CancellationToken ct,
+    int timeoutMs,
+    int intervalMs,
+    double threshold,
+    ScreenOffset? offset
+  )
+  {
+    ct.ThrowIfCancellationRequested();
+
+    if (string.IsNullOrWhiteSpace(imagePath))
+    {
+      throw new ArgumentException("Image path cannot be null or empty", nameof(imagePath));
+    }
+
+    using var templateImage = LoadImage(imagePath);
+    if (templateImage.Empty())
+    {
+      throw new ArgumentException("Template image cannot be null or empty", nameof(imagePath));
+    }
+
+    if (threshold is < 0.0 or > 1.0)
+    {
+      throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0.0 and 1.0");
+    }
+
+    offset ??= new ScreenOffset();
+    List<Match> matches = [];
+    var stopwatch = Stopwatch.StartNew();
+    var timeoutSeconds = timeoutMs / 1000.0;
+
+    while (stopwatch.Elapsed.TotalSeconds < timeoutSeconds)
+    {
+      ct.ThrowIfCancellationRequested();
+
+      using var colorScreenshot = WindowCapture.CaptureScreenShotColor(ct);
+      using var mask = BuildHsvMask(colorScreenshot, hsvLower, hsvUpper);
+
+      var foundMatches = MatchTemplate(mask, templateImage, threshold, false, ct);
+      var filteredMatches = FilterMatchesByOffset(foundMatches, offset);
+      matches.AddRange(filteredMatches);
+
+      if (matches.Count > 0)
+      {
+        break;
+      }
+
+      var delayMs = timeoutMs < intervalMs ? timeoutMs : intervalMs;
+      await Task.Delay(delayMs, ct);
+    }
+
+    return matches;
+  }
+
+  public static Dictionary<string, List<Match>> FindHSVParallel(
+    Mat binaryMask,
+    List<string> imagePaths,
+    double threshold,
+    ScreenOffset? offset,
+    CancellationToken ct
+  )
+  {
+    ct.ThrowIfCancellationRequested();
+
+    offset ??= new ScreenOffset();
+    var results = new Dictionary<string, List<Match>>();
+
+    foreach (var imagePath in imagePaths)
+    {
+      ct.ThrowIfCancellationRequested();
+
+      using var templateImage = LoadImage(imagePath);
+      if (templateImage.Empty())
+      {
+        results[imagePath] = [];
+        continue;
+      }
+
+      var foundMatches = MatchTemplate(binaryMask, templateImage, threshold, false, ct);
+      results[imagePath] = FilterMatchesByOffset(foundMatches, offset);
+    }
+
+    return results;
+  }
+
+  internal static Mat BuildHsvMask(Mat colorScreenshot, HsvColor hsvLower, HsvColor hsvUpper)
+  {
+    var hsvImage = new Mat();
+    try
+    {
+      Cv2.CvtColor(colorScreenshot, hsvImage, ColorConversionCodes.BGR2HSV);
+      var lowerScalar = new Scalar(hsvLower.H, hsvLower.S, hsvLower.V);
+      var upperScalar = new Scalar(hsvUpper.H, hsvUpper.S, hsvUpper.V);
+      var mask = new Mat();
+      Cv2.InRange(hsvImage, lowerScalar, upperScalar, mask);
+      return mask;
+    }
+    finally
+    {
+      hsvImage.Dispose();
+    }
+  }
 }
 
