@@ -228,10 +228,29 @@ export const summoningStartAutobattler = defineScript({
   id: "world6.summoning.startAutobattler",
   name: "Autobattler",
   run: async ({ token }) => {
-    while (!token.isCancelled()) {
-      token.throwIfCancelled();
-      logger.log("Autobattler iteration...");
-      await delay(60_000, token);
+    logger.log("summoning - autobattler: starting single-match run");
+
+    const beginMatch = await backendCommand.findHSV(
+      BEGIN_MATCH,
+      UI_HSV_LOWER,
+      UI_HSV_UPPER,
+      undefined,
+      token
+    );
+    if (beginMatch.length === 0) {
+      throw new Error(
+        "summoning - autobattler: begin_match not visible - open the pre-battle screen first"
+      );
     }
+
+    const geometry = await detectBoardEllipse(token);
+
+    logger.log("summoning - autobattler: clicking begin_match");
+    await backendCommand.click(beginMatch[0]!, undefined, token);
+
+    const chest = await dragUntilChestVisible(geometry, token);
+    logger.log(
+      `summoning - autobattler: chest visible at ${chest.x},${chest.y} - leaving collection to user`
+    );
   },
 });
