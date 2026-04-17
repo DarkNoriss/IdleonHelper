@@ -94,7 +94,7 @@ export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
               <div key={action.scriptId}>
                 <Button
                   className="w-full"
-                  disabled={action.disabled}
+                  disabled={!(myRunning || myQueued) && action.disabled}
                   onClick={makeHandler(action)}
                   size="sm"
                 >
