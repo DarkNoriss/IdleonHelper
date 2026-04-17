@@ -12,6 +12,7 @@ import {
   CHEST_COLLECTION_TIMEOUT_MS,
   GAME_BOARD,
   INFINITY_ICON,
+  INFINITY_POST_CLICK_DELAY_MS,
   INIT_CONFIRM_TIMEOUT_MS,
   SUMMONING_ICON,
   UI_HSV_LOWER,
@@ -52,6 +53,7 @@ const ensureBeginMatchScreen = async (
     "summoning - init: infinity visible, double-clicking to enter endless"
   );
   await backendCommand.click(infinityMatches[0]!, { times: 2 }, token);
+  await delay(INFINITY_POST_CLICK_DELAY_MS, token);
 
   const confirm = await backendCommand.findHSV(
     BEGIN_MATCH,

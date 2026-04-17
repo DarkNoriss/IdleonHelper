@@ -31,5 +31,6 @@ export const CIRCLE_WAYPOINTS = 36;
 
 // Timings (ms)
 export const INIT_CONFIRM_TIMEOUT_MS = 3000;
+export const INFINITY_POST_CLICK_DELAY_MS = 1000;
 export const CHEST_CLICK_DELAY_MS = 150;
 export const CHEST_COLLECTION_TIMEOUT_MS = 15_000;
