@@ -17,6 +17,11 @@ export const backendConfig = {
     stepSize: 6,
     stepDelay: 2,
   },
+  dragPath: {
+    stepSize: 2,
+    stepDelay: 5,
+    holdTime: 50,
+  },
 } as const;
 
 export type ClickPreset = "0.5x" | "1x" | "2x" | "4x" | "8x" | "16x";
