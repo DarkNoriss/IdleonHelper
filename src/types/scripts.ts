@@ -28,6 +28,7 @@ export type ScriptMap = {
   "world6.farming.farmingCollectCropsDebug": { args: []; result: undefined };
   "world6.summoning.startAutobattler": { args: []; result: undefined };
   "world6.summoning.startEndlessAutobattler": { args: []; result: undefined };
+  "world6.summoning.debugBoardRange": { args: []; result: undefined };
   "world7.sushiStation.sushiStationMerge": {
     args: [boolean];
     result: undefined;

@@ -433,6 +433,7 @@ export const backendCommand = {
           intervalMs?: number;
           threshold?: number;
           offset?: ScreenOffset;
+          debug?: boolean;
         }
       | undefined,
     token: CancellationToken
@@ -447,6 +448,7 @@ export const backendCommand = {
       intervalMs: options?.intervalMs ?? backendConfig.find.intervalMs,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
+      debug: options?.debug ?? false,
     };
     const response = await sendCommand("findHSV", request);
     return response.matches;

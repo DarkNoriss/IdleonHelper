@@ -195,6 +195,7 @@ export type FindHSVRequest = {
   intervalMs?: number;
   threshold?: number;
   offset?: ScreenOffset;
+  debug?: boolean;
 };
 
 export type FindHSVResponse = {
