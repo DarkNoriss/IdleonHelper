@@ -18,7 +18,7 @@ export const backendConfig = {
     stepDelay: 2,
   },
   dragPath: {
-    stepSize: 6,
+    stepSize: 12,
     stepDelay: 2,
     holdTime: 30,
   },
