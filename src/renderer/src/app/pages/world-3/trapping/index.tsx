@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select.tsx";
 import { useMainState } from "@/hooks/use-main-state.ts";
 import { critters, trapConfigs } from "@/parsers/trapping";
+import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 
 const formatCountdown = (ms: number): string => {
   if (ms <= 0) {
@@ -100,15 +101,45 @@ const TrapTimerSelects = ({
   );
 };
 
+const sanitizeTrapTimer = (
+  trap: string,
+  timer: string
+): { trap: string; timer: string } => {
+  if (trap === "") {
+    return { trap: "", timer: "" };
+  }
+  const selected = trapConfigs.find((t) => t.value === trap);
+  if (!selected) {
+    return { trap: "", timer: "" };
+  }
+  if (timer !== "" && !selected.timers.includes(timer)) {
+    return { trap, timer: "" };
+  }
+  return { trap, timer };
+};
+
 const TrapPlacingSection = () => {
-  const [critter, setCritter] = useState<string>("");
-  const [trap, setTrap] = useState<string>("");
-  const [timer, setTimer] = useState<string>("");
+  const critter = useUiPrefsStore((s) => s.trapping.place.critter);
+  const trap = useUiPrefsStore((s) => s.trapping.place.trap);
+  const timer = useUiPrefsStore((s) => s.trapping.place.timer);
+  const setTrappingPlace = useUiPrefsStore((s) => s.setTrappingPlace);
   const placeTraps = useMainState("placeTraps");
 
+  useEffect(() => {
+    if (critter !== "" && !critters.some((c) => c.value === critter)) {
+      setTrappingPlace({ critter: "" });
+    }
+  }, [critter, setTrappingPlace]);
+
+  useEffect(() => {
+    const sanitized = sanitizeTrapTimer(trap, timer);
+    if (sanitized.trap !== trap || sanitized.timer !== timer) {
+      setTrappingPlace(sanitized);
+    }
+  }, [trap, timer, setTrappingPlace]);
+
   const handleTrapChange = (value: string) => {
-    setTrap(value);
-    setTimer("");
+    setTrappingPlace({ trap: value, timer: "" });
   };
 
   return (
@@ -131,7 +162,10 @@ const TrapPlacingSection = () => {
           >
             Critter
           </label>
-          <Select onValueChange={setCritter} value={critter}>
+          <Select
+            onValueChange={(v) => setTrappingPlace({ critter: v })}
+            value={critter}
+          >
             <SelectTrigger id="place-critter">
               <SelectValue placeholder="Select critter" />
             </SelectTrigger>
@@ -147,7 +181,7 @@ const TrapPlacingSection = () => {
 
         <TrapTimerSelects
           idPrefix="place"
-          onTimerChange={setTimer}
+          onTimerChange={(v) => setTrappingPlace({ timer: v })}
           onTrapChange={handleTrapChange}
           timer={timer}
           trap={trap}
@@ -164,8 +198,9 @@ const TrapPlacingSection = () => {
 };
 
 const TrapCollectingSection = () => {
-  const [trap, setTrap] = useState<string>("");
-  const [timer, setTimer] = useState<string>("");
+  const trap = useUiPrefsStore((s) => s.trapping.collect.trap);
+  const timer = useUiPrefsStore((s) => s.trapping.collect.timer);
+  const setTrappingCollect = useUiPrefsStore((s) => s.setTrappingCollect);
   const [remaining, setRemaining] = useState<string | null>(null);
   const collectTraps = useMainState("collectTraps");
   const queue = useMainState("queue");
@@ -173,9 +208,15 @@ const TrapCollectingSection = () => {
     queue?.queue.some((i) => i.scriptId === "world3.trapping.collectTraps") ??
     false;
 
+  useEffect(() => {
+    const sanitized = sanitizeTrapTimer(trap, timer);
+    if (sanitized.trap !== trap || sanitized.timer !== timer) {
+      setTrappingCollect(sanitized);
+    }
+  }, [trap, timer, setTrappingCollect]);
+
   const handleTrapChange = (value: string) => {
-    setTrap(value);
-    setTimer("");
+    setTrappingCollect({ trap: value, timer: "" });
   };
 
   useEffect(() => {
@@ -214,7 +255,7 @@ const TrapCollectingSection = () => {
       <div className="mb-4 grid grid-cols-2 gap-4">
         <TrapTimerSelects
           idPrefix="collect"
-          onTimerChange={setTimer}
+          onTimerChange={(v) => setTrappingCollect({ timer: v })}
           onTrapChange={handleTrapChange}
           timer={timer}
           trap={trap}

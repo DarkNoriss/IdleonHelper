@@ -8,15 +8,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.tsx";
+import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 
 const overgrowthOptions = Array.from({ length: 19 }, (_, i) => ({
   value: String(i),
   label: `>= ${i === 0 ? 0 : 2 ** i}x`,
 }));
 
+const DEFAULT_OVERGROWTH = "0";
+
 const Farming = () => {
-  const [selectedOvergrowth, setSelectedOvergrowth] = useState("0");
+  const overgrowth = useUiPrefsStore((s) => s.farming.overgrowth);
+  const setFarming = useUiPrefsStore((s) => s.setFarming);
   const [isDev, setIsDev] = useState(false);
+
+  useEffect(() => {
+    if (!overgrowthOptions.some((o) => o.value === overgrowth)) {
+      setFarming({ overgrowth: DEFAULT_OVERGROWTH });
+    }
+  }, [overgrowth, setFarming]);
 
   useEffect(() => {
     window.api.app
@@ -30,7 +40,7 @@ const Farming = () => {
       label: "Collect Crops",
       scriptId: "world6.farming.farmingCollectCrops",
       runningLabel: "Stop",
-      args: () => [Number(selectedOvergrowth)],
+      args: () => [Number(overgrowth)],
     },
     ...(isDev
       ? [
@@ -54,8 +64,8 @@ const Farming = () => {
     <ScriptPage actions={actions} title="Farming">
       <div className="mb-4">
         <Select
-          onValueChange={setSelectedOvergrowth}
-          value={selectedOvergrowth}
+          onValueChange={(v) => setFarming({ overgrowth: v })}
+          value={overgrowth}
         >
           <SelectTrigger className="w-[140px]">
             <SelectValue />
