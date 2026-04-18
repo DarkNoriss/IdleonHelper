@@ -3,7 +3,10 @@ import type { HsvColor, Point } from "../../../backend/backend-types";
 export const ALCHEMY_PATH = "ui/map/world-2/alchemy";
 
 export const ALCHEMY_TAB = `${ALCHEMY_PATH}/alchemy_tab`;
+export const ALCHEMY_EXIT = `${ALCHEMY_PATH}/exit`;
 export const ALCHEMY_BREWING_TAB = `${ALCHEMY_PATH}/brewing`;
+export const ALCHEMY_BREWING_OFF = `${ALCHEMY_PATH}/brewing_off`;
+export const ALCHEMY_BREWING_BG = `${ALCHEMY_PATH}/brewing_bg`;
 export const ALCHEMY_ARROW_UP = `${ALCHEMY_PATH}/arrow_up`;
 export const ALCHEMY_ARROW_DOWN = `${ALCHEMY_PATH}/arrow_down`;
 export const ALCHEMY_UPGRADE_BUTTON = `${ALCHEMY_PATH}/upgrade`;
