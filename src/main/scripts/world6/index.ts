@@ -5,6 +5,7 @@ import {
   farmingCollectCropsDebug,
 } from "./farming";
 import {
+  debugBoardImage,
   debugBoardRange,
   summoningStartAutobattler,
   summoningStartEndless,
@@ -18,4 +19,5 @@ export const world6Scripts = [
   summoningStartEndless,
   summoningStartAutobattler,
   debugBoardRange,
+  debugBoardImage,
 ];

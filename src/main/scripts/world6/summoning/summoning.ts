@@ -5,24 +5,21 @@ import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   BEGIN_MATCH,
-  BOARD_HSV_LOWER,
-  BOARD_HSV_UPPER,
+  BOARD,
   CHEST,
   CHEST_CLICK_DELAY_MS,
   CHEST_COLLECTION_TIMEOUT_MS,
-  GAME_BOARD,
+  DRAG_OPTIONS,
+  DRAG_REPEAT_DURATION_S,
+  DRAG_X,
+  DRAG_Y_MAX_PADDING,
   INFINITY_ICON,
-  INFINITY_POST_CLICK_DELAY_MS,
   INIT_CONFIRM_TIMEOUT_MS,
+  POST_CHEST_DELAY_MS,
   SUMMONING_ICON,
   UI_HSV_LOWER,
   UI_HSV_UPPER,
 } from "./summoning-constants";
-import {
-  type BoardGeometry,
-  computeBoardGeometry,
-  generateEllipsePoints,
-} from "./summoning-helpers";
 
 const ensureBeginMatchScreen = async (
   token: CancellationToken
@@ -53,7 +50,6 @@ const ensureBeginMatchScreen = async (
     "summoning - init: infinity visible, double-clicking to enter endless"
   );
   await backendCommand.click(infinityMatches[0]!, { times: 2 }, token);
-  await delay(INFINITY_POST_CLICK_DELAY_MS, token);
 
   const confirm = await backendCommand.findHSV(
     BEGIN_MATCH,
@@ -70,26 +66,32 @@ const ensureBeginMatchScreen = async (
   logger.log("summoning - init: begin_match confirmed after endless select");
 };
 
-const detectBoardEllipse = async (
+type BoardYRange = { yMin: number; yMax: number };
+
+const detectBoardYRange = async (
   token: CancellationToken
-): Promise<BoardGeometry & { tiles: number }> => {
-  const tiles = await backendCommand.isVisibleHSV(
-    GAME_BOARD,
-    BOARD_HSV_LOWER,
-    BOARD_HSV_UPPER,
-    undefined,
-    token
-  );
-  const geometry = computeBoardGeometry(tiles);
-  if (!geometry) {
+): Promise<BoardYRange> => {
+  const matches = await backendCommand.isVisible(BOARD, undefined, token);
+  if (matches.length === 0) {
     throw new Error(
-      `summoning - board: only ${tiles.length} tile(s) matched or radii below minimum - not on board`
+      "summoning - board: board.png not visible - not on summoning board"
     );
   }
+  let yMin = matches[0]!.y;
+  let yMax = matches[0]!.y;
+  for (const m of matches) {
+    if (m.y < yMin) {
+      yMin = m.y;
+    }
+    if (m.y > yMax) {
+      yMax = m.y;
+    }
+  }
+  const paddedMax = yMax + DRAG_Y_MAX_PADDING;
   logger.log(
-    `summoning - board: x=[${geometry.xMin},${geometry.xMax}] y=[${geometry.yMin},${geometry.yMax}] rx=${geometry.rx} ry=${geometry.ry} tiles=${tiles.length}`
+    `summoning - board: y raw=[${yMin},${yMax}] padded=[${yMin},${paddedMax}] matches=${matches.length}`
   );
-  return { ...geometry, tiles: tiles.length };
+  return { yMin, yMax: paddedMax };
 };
 
 const startMatch = async (token: CancellationToken): Promise<void> => {
@@ -108,20 +110,22 @@ const startMatch = async (token: CancellationToken): Promise<void> => {
 };
 
 const dragUntilChestVisible = async (
-  geometry: BoardGeometry,
+  range: BoardYRange,
   token: CancellationToken
 ): Promise<Point> => {
-  const ellipse = generateEllipsePoints(
-    geometry.cx,
-    geometry.cy,
-    geometry.rx,
-    geometry.ry
-  );
+  const top: Point = { x: DRAG_X, y: range.yMin };
+  const bottom: Point = { x: DRAG_X, y: range.yMax };
   let iteration = 0;
   while (true) {
     token.throwIfCancelled();
     iteration++;
-    await backendCommand.dragPath(ellipse, undefined, token);
+    await backendCommand.dragRepeat(
+      top,
+      bottom,
+      DRAG_REPEAT_DURATION_S,
+      DRAG_OPTIONS,
+      token
+    );
     const chest = await backendCommand.isVisibleHSV(
       CHEST,
       UI_HSV_LOWER,
@@ -214,10 +218,11 @@ export const summoningStartEndless = defineScript({
       logger.log(`summoning - round ${round}: init`);
 
       await ensureBeginMatchScreen(token);
-      const geometry = await detectBoardEllipse(token);
+      const range = await detectBoardYRange(token);
       await startMatch(token);
-      const chestPoint = await dragUntilChestVisible(geometry, token);
+      const chestPoint = await dragUntilChestVisible(range, token);
       await collectChest(chestPoint, token);
+      await delay(POST_CHEST_DELAY_MS, token);
 
       logger.log(`summoning - round ${round}: complete`);
     }
@@ -243,12 +248,12 @@ export const summoningStartAutobattler = defineScript({
       );
     }
 
-    const geometry = await detectBoardEllipse(token);
+    const range = await detectBoardYRange(token);
 
     logger.log("summoning - autobattler: clicking begin_match");
     await backendCommand.click(beginMatch[0]!, undefined, token);
 
-    const chest = await dragUntilChestVisible(geometry, token);
+    const chest = await dragUntilChestVisible(range, token);
     logger.log(
       `summoning - autobattler: chest visible at ${chest.x},${chest.y} - leaving collection to user`
     );

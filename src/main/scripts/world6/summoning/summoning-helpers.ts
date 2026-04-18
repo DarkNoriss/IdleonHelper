@@ -1,6 +1,5 @@
 import type { Point } from "../../../backend/backend-types";
 import {
-  CIRCLE_WAYPOINTS,
   MIN_BOARD_MATCHES,
   MIN_RADIUS_PX,
   OUTLIER_MAD_MULTIPLIER,
@@ -74,22 +73,4 @@ export const computeBoardGeometry = (
     return null;
   }
   return { xMin, xMax, yMin, yMax, cx, cy, rx, ry };
-};
-
-export const generateEllipsePoints = (
-  cx: number,
-  cy: number,
-  rx: number,
-  ry: number,
-  samples: number = CIRCLE_WAYPOINTS
-): Point[] => {
-  const points: Point[] = [];
-  for (let i = 0; i <= samples; i++) {
-    const t = (2 * Math.PI * i) / samples;
-    points.push({
-      x: Math.round(cx + rx * Math.cos(t)),
-      y: Math.round(cy + ry * Math.sin(t)),
-    });
-  }
-  return points;
 };

@@ -226,15 +226,3 @@ internal class FindHSVParallelResponse
   public Dictionary<string, List<Point>> Results { get; set; } = new();
 }
 
-internal class DragPathRequest
-{
-  public List<Point>? Points { get; set; }
-  public int? StepSize { get; set; }
-  public int? StepDelay { get; set; }
-  public int? HoldTime { get; set; }
-}
-
-internal class DragPathResponse
-{
-  public bool Success { get; set; }
-}

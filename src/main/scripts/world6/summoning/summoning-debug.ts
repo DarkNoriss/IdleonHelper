@@ -2,6 +2,7 @@ import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
+  BOARD,
   BOARD_HSV_LOWER,
   BOARD_HSV_UPPER,
   GAME_BOARD,
@@ -69,5 +70,22 @@ export const debugBoardRange = defineScript({
       `summoning-debug - filtered x range: ${xMin} - ${xMax} (suggested BOARD_CENTER_X: ${cxSuggest})`
     );
     logger.log(`summoning-debug - filtered y range: ${yMin} - ${yMax}`);
+  },
+});
+
+export const debugBoardImage = defineScript({
+  id: "world6.summoning.debugBoardImage",
+  name: "Debug - Summoning Board Image",
+  run: async ({ token }) => {
+    logger.log("summoning-debug - isVisible board.png with debug screenshot");
+    const matches = await backendCommand.isVisible(
+      BOARD,
+      { debug: true },
+      token
+    );
+    logger.log(`summoning-debug - board.png matched ${matches.length} time(s)`);
+    for (const m of matches) {
+      logger.log(`summoning-debug - board match at ${m.x},${m.y}`);
+    }
   },
 });
