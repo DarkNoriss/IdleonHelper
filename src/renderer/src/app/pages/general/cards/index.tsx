@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { ScriptPage } from "@/components/script-page.tsx";
 import {
   Select,
@@ -8,9 +8,19 @@ import {
   SelectValue,
 } from "@/components/ui/select.tsx";
 import { PRESET_CONFIGS } from "@/parsers/card-presets";
+import { useUiPrefsStore } from "@/store/ui-prefs.ts";
+
+const DEFAULT_SLOT = "1";
 
 const CardPresets = () => {
-  const [slot, setSlot] = useState("1");
+  const slot = useUiPrefsStore((s) => s.cards.slot);
+  const setCards = useUiPrefsStore((s) => s.setCards);
+
+  useEffect(() => {
+    if (!PRESET_CONFIGS.some((p) => String(p.slot) === slot)) {
+      setCards({ slot: DEFAULT_SLOT });
+    }
+  }, [slot, setCards]);
 
   return (
     <ScriptPage
@@ -29,7 +39,7 @@ const CardPresets = () => {
       title="Card Presets"
     >
       <div className="mb-4">
-        <Select onValueChange={setSlot} value={slot}>
+        <Select onValueChange={(v) => setCards({ slot: v })} value={slot}>
           <SelectTrigger className="w-[120px]">
             <SelectValue />
           </SelectTrigger>
