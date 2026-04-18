@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { ScriptPage } from "@/components/script-page.tsx";
 import {
   Select,
@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.tsx";
+import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 
 const candyOptions = [
   { value: "1h", label: "1H" },
@@ -16,8 +17,17 @@ const candyOptions = [
   { value: "24h", label: "24H" },
 ] as const;
 
+const DEFAULT_DURATION = "1h";
+
 const Candy = () => {
-  const [selectedCandy, setSelectedCandy] = useState("1h");
+  const duration = useUiPrefsStore((s) => s.candy.duration);
+  const setCandy = useUiPrefsStore((s) => s.setCandy);
+
+  useEffect(() => {
+    if (!candyOptions.some((o) => o.value === duration)) {
+      setCandy({ duration: DEFAULT_DURATION });
+    }
+  }, [duration, setCandy]);
 
   return (
     <ScriptPage
@@ -26,13 +36,16 @@ const Candy = () => {
           label: "Start",
           scriptId: "general.candy.run",
           runningLabel: "Stop",
-          args: () => [selectedCandy],
+          args: () => [duration],
         },
       ]}
       title="Candy"
     >
       <div className="mb-4">
-        <Select onValueChange={setSelectedCandy} value={selectedCandy}>
+        <Select
+          onValueChange={(v) => setCandy({ duration: v })}
+          value={duration}
+        >
           <SelectTrigger className="w-[120px]">
             <SelectValue />
           </SelectTrigger>
