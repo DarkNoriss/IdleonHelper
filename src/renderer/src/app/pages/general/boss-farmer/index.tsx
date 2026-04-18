@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { ScriptPage } from "@/components/script-page.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { useMainState } from "@/hooks/use-main-state.ts";
+import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 
 const formatDuration = (ms: number, precise = false): string => {
   const totalSeconds = ms / 1000;
@@ -16,13 +16,14 @@ const formatDuration = (ms: number, precise = false): string => {
 };
 
 const BossFarmer = () => {
-  const [iterations, setIterations] = useState("150");
+  const iterations = useUiPrefsStore((s) => s.bossFarmer.iterations);
+  const setBossFarmer = useUiPrefsStore((s) => s.setBossFarmer);
   const bossFarmer = useMainState("bossFarmer");
   const isRunning = bossFarmer?.running ?? false;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const filtered = e.target.value.replace(/\D/g, "");
-    setIterations(filtered);
+    setBossFarmer({ iterations: filtered });
   };
 
   const parsed = Number.parseInt(iterations, 10);
