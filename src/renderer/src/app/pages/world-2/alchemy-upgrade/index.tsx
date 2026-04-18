@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { ScriptPage } from "@/components/script-page.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import {
@@ -8,11 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.tsx";
+import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 import type { Selections } from "@/types/alchemy";
 import { BUBBLES_BY_CAULDRON, CAULDRON_LABELS } from "./bubble-registry";
 
 const NONE = "__none__";
-const DEFAULT_INTERVAL_MINUTES = 5;
 const MIN_INTERVAL_MINUTES = 1;
 const MAX_INTERVAL_MINUTES = 1440;
 
@@ -26,18 +26,45 @@ const clampInterval = (raw: number): number => {
   );
 };
 
-const INITIAL: Selections = {
-  power: null,
-  quicc: null,
-  highIq: null,
-  kazam: null,
+const sanitizeSelections = (selections: Selections): Selections => {
+  const next: Selections = { ...selections };
+  for (const key of Object.keys(BUBBLES_BY_CAULDRON) as (keyof Selections)[]) {
+    const value = next[key];
+    if (value === null || value === "") {
+      continue;
+    }
+    const valid = BUBBLES_BY_CAULDRON[key].some((o) => o.value === value);
+    if (!valid) {
+      next[key] = null;
+    }
+  }
+  return next;
+};
+
+const selectionsEqual = (a: Selections, b: Selections): boolean => {
+  for (const key of Object.keys(a) as (keyof Selections)[]) {
+    if (a[key] !== b[key]) {
+      return false;
+    }
+  }
+  return true;
 };
 
 const AlchemyUpgrade = () => {
-  const [selections, setSelections] = useState<Selections>(INITIAL);
-  const [intervalMinutes, setIntervalMinutes] = useState<number>(
-    DEFAULT_INTERVAL_MINUTES
-  );
+  const selections = useUiPrefsStore((s) => s.alchemy.selections);
+  const intervalMinutes = useUiPrefsStore((s) => s.alchemy.intervalMinutes);
+  const setAlchemy = useUiPrefsStore((s) => s.setAlchemy);
+
+  useEffect(() => {
+    const sanitized = sanitizeSelections(selections);
+    if (!selectionsEqual(sanitized, selections)) {
+      setAlchemy({ selections: sanitized });
+    }
+    const clamped = clampInterval(intervalMinutes);
+    if (clamped !== intervalMinutes) {
+      setAlchemy({ intervalMinutes: clamped });
+    }
+  }, [selections, intervalMinutes, setAlchemy]);
 
   const hasAny = useMemo(
     () => Object.values(selections).some((v) => v !== null && v !== ""),
@@ -45,10 +72,12 @@ const AlchemyUpgrade = () => {
   );
 
   const setFor = (key: keyof Selections) => (raw: string) => {
-    setSelections((prev) => ({
-      ...prev,
-      [key]: raw === NONE ? null : raw,
-    }));
+    setAlchemy({
+      selections: {
+        ...selections,
+        [key]: raw === NONE ? null : raw,
+      },
+    });
   };
 
   return (
@@ -109,7 +138,9 @@ const AlchemyUpgrade = () => {
           max={MAX_INTERVAL_MINUTES}
           min={MIN_INTERVAL_MINUTES}
           onChange={(e) =>
-            setIntervalMinutes(clampInterval(Number(e.target.value)))
+            setAlchemy({
+              intervalMinutes: clampInterval(Number(e.target.value)),
+            })
           }
           step={1}
           type="number"
