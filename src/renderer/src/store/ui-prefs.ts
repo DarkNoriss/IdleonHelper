@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type { Selections } from "@/types/alchemy";
-import type { SolverFocus } from "@/types/construction.ts";
+import type { SolverFocus } from "@/types/construction";
 
 type CandyPrefs = { duration: string };
 type BossFarmerPrefs = { iterations: string };

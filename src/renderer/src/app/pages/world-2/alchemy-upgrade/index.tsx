@@ -26,8 +26,15 @@ const clampInterval = (raw: number): number => {
   );
 };
 
+const INITIAL_SELECTIONS: Selections = {
+  power: null,
+  quicc: null,
+  highIq: null,
+  kazam: null,
+};
+
 const sanitizeSelections = (selections: Selections): Selections => {
-  const next: Selections = { ...selections };
+  const next: Selections = { ...INITIAL_SELECTIONS, ...selections };
   for (const key of Object.keys(BUBBLES_BY_CAULDRON) as (keyof Selections)[]) {
     const value = next[key];
     if (value === null || value === "") {
@@ -57,12 +64,19 @@ const AlchemyUpgrade = () => {
 
   useEffect(() => {
     const sanitized = sanitizeSelections(selections);
-    if (!selectionsEqual(sanitized, selections)) {
-      setAlchemy({ selections: sanitized });
-    }
     const clamped = clampInterval(intervalMinutes);
+    const patch: Partial<{
+      selections: Selections;
+      intervalMinutes: number;
+    }> = {};
+    if (!selectionsEqual(sanitized, selections)) {
+      patch.selections = sanitized;
+    }
     if (clamped !== intervalMinutes) {
-      setAlchemy({ intervalMinutes: clamped });
+      patch.intervalMinutes = clamped;
+    }
+    if (Object.keys(patch).length > 0) {
+      setAlchemy(patch);
     }
   }, [selections, intervalMinutes, setAlchemy]);
 
