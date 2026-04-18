@@ -9,8 +9,6 @@ import type {
   CaptureHsvScreenResponse,
   ClickRequest,
   ClickResponse,
-  DragPathRequest,
-  DragPathResponse,
   DragRepeatRequest,
   DragRepeatResponse,
   DragRequest,
@@ -244,27 +242,6 @@ export const backendCommand = {
       holdTime: options?.holdTime ?? backendConfig.click.holdTime,
     };
     return sendCommand("dragRepeat", request);
-  },
-
-  dragPath: async (
-    points: Point[],
-    options:
-      | {
-          stepSize?: number;
-          stepDelay?: number;
-          holdTime?: number;
-        }
-      | undefined,
-    token: CancellationToken
-  ): Promise<DragPathResponse> => {
-    token.throwIfCancelled();
-    const request: DragPathRequest = {
-      points,
-      stepSize: options?.stepSize ?? backendConfig.dragPath.stepSize,
-      stepDelay: options?.stepDelay ?? backendConfig.dragPath.stepDelay,
-      holdTime: options?.holdTime ?? backendConfig.dragPath.holdTime,
-    };
-    return sendCommand("dragPath", request);
   },
 
   keyPress: async (

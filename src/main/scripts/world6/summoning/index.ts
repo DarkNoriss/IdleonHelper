@@ -1,2 +1,2 @@
 export { summoningStartAutobattler, summoningStartEndless } from "./summoning";
-export { debugBoardRange } from "./summoning-debug";
+export { debugBoardImage, debugBoardRange } from "./summoning-debug";

@@ -15,6 +15,10 @@ const Summoning = () => (
         label: "Debug - Board Range",
         scriptId: "world6.summoning.debugBoardRange",
       },
+      {
+        label: "Debug - Board Image",
+        scriptId: "world6.summoning.debugBoardImage",
+      },
     ]}
     title="Summoning"
   />
