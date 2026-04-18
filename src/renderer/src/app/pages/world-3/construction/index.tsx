@@ -1,11 +1,5 @@
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import type {
-  OptimalStep,
-  SolverFocus,
-  SolverResult,
-  SolverWeights,
-} from "@/../../types/construction.ts";
 import { ScriptPage } from "@/components/script-page.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import {
@@ -25,9 +19,18 @@ import {
 import { notateNumber } from "@/lib/notateNumber.ts";
 import { useGameData } from "@/providers/game-data-provider.tsx";
 import { useRawJsonStore } from "@/store/raw-json.ts";
+import { useUiPrefsStore } from "@/store/ui-prefs.ts";
+import type {
+  OptimalStep,
+  SolverFocus,
+  SolverResult,
+  SolverWeights,
+} from "@/types/construction.ts";
 
 const SPARE_ROWS = 5;
 const DEFAULT_SOLVE_TIME_SECONDS = 600;
+const DEFAULT_FOCUS: SolverFocus = "exp";
+const VALID_FOCUS: readonly SolverFocus[] = ["exp", "buildRate", "flaggy"];
 
 const getSparePage = (y: number): number => {
   return Math.floor(y / SPARE_ROWS) + 1;
@@ -50,7 +53,8 @@ const formatLocation = (
 const Construction = () => {
   const parsedJson = useRawJsonStore((state) => state.parsedJson);
   const { construction: constructionData } = useGameData();
-  const [focus, setFocus] = useState<SolverFocus>("exp");
+  const focus = useUiPrefsStore((s) => s.construction.focus);
+  const setConstruction = useUiPrefsStore((s) => s.setConstruction);
   const [isSolving, setIsSolving] = useState(false);
   const [solverResult, setSolverResult] = useState<SolverResult | null>(null);
   const [solverError, setSolverError] = useState<string | null>(null);
@@ -64,10 +68,16 @@ const Construction = () => {
           constructionData.flagPose.length;
 
   useEffect(() => {
-    if (allSlotsUnlocked && focus === "flaggy") {
-      setFocus("exp");
+    if (!VALID_FOCUS.includes(focus)) {
+      setConstruction({ focus: DEFAULT_FOCUS });
     }
-  }, [allSlotsUnlocked, focus]);
+  }, [focus, setConstruction]);
+
+  useEffect(() => {
+    if (allSlotsUnlocked && focus === "flaggy") {
+      setConstruction({ focus: DEFAULT_FOCUS });
+    }
+  }, [allSlotsUnlocked, focus, setConstruction]);
 
   useEffect(() => {
     setSolverResult(null);
@@ -248,7 +258,9 @@ const Construction = () => {
               Focus
             </label>
             <Select
-              onValueChange={(value) => setFocus(value as SolverFocus)}
+              onValueChange={(value) =>
+                setConstruction({ focus: value as SolverFocus })
+              }
               value={focus}
             >
               <SelectTrigger id="focus-select">
