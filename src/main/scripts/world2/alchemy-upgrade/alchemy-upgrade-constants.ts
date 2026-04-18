@@ -20,7 +20,7 @@ export const ALCHEMY_HSV_UPPER: HsvColor = { h: 192, s: 255, v: 255 };
 export const ALCHEMY_UI_HSV_LOWER: HsvColor = { h: 0, s: 0, v: 1 };
 export const ALCHEMY_UI_HSV_UPPER: HsvColor = { h: 192, s: 255, v: 255 };
 
-export const ALCHEMY_CLICKS_PER_BUBBLE = 50;
+export const ALCHEMY_CLICKS_PER_BUBBLE = 100;
 export const ALCHEMY_PAGES_PER_COLUMN = 8;
 export const ALCHEMY_MAX_SCROLLS = ALCHEMY_PAGES_PER_COLUMN - 1;
 
