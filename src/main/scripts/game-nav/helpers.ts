@@ -3,12 +3,6 @@ import { backendCommand } from "../../backend/index";
 import type { CancellationToken } from "../../utils/cancellation-token";
 import { logger } from "../../utils/index";
 
-export type HsvTemplate = {
-  image: string;
-  hsvLower: HsvColor;
-  hsvUpper: HsvColor;
-};
-
 export const navigateTo = async (
   confirmationImage: string,
   buttonImage: string,
@@ -18,26 +12,18 @@ export const navigateTo = async (
 ): Promise<boolean> => {
   logger.log(`Navigating to ${screenName}...`);
 
-  // Step 1: Quick check if already open
-  const initialCheck = await backendCommand.isVisible(
-    confirmationImage,
+  const initial = await backendCommand.isVisibleParallel(
+    { confirmation: confirmationImage, button: buttonImage },
     undefined,
     token
   );
-  if (initialCheck.length > 0) {
+
+  if ((initial.confirmation?.length ?? 0) > 0) {
     logger.log(`${screenName} already opened`);
     return true;
   }
 
-  // Step 2: Check if button is visible
-  const isButtonVisible = await backendCommand.isVisible(
-    buttonImage,
-    undefined,
-    token
-  );
-
-  // Step 3: If button not visible and fallback provided, call fallback
-  if (isButtonVisible.length === 0) {
+  if ((initial.button?.length ?? 0) === 0) {
     if (!fallback) {
       logger.error(`${screenName} button not found and no fallback available`);
       return false;
@@ -49,9 +35,6 @@ export const navigateTo = async (
       return false;
     }
 
-    // Step 4: Re-check confirmation after fallback
-    // Handles case where target is already open after parent navigation
-    // (e.g. Quick Ref saves last-opened tab, so opening Codex may reveal it)
     const postFallbackCheck = await backendCommand.isVisible(
       confirmationImage,
       undefined,
@@ -63,7 +46,6 @@ export const navigateTo = async (
     }
   }
 
-  // Step 5: Find and click the button
   const clicked = await backendCommand.findAndClick(
     buttonImage,
     undefined,
@@ -74,8 +56,6 @@ export const navigateTo = async (
     return false;
   }
 
-  // Step 6: Wait for confirmation using find (5s retry) instead of isVisible (50ms)
-  // This gives the UI time to transition after clicking
   const confirmationResult = await backendCommand.find(
     confirmationImage,
     undefined,
@@ -93,35 +73,29 @@ export const navigateTo = async (
 };
 
 export const navigateToHSV = async (
-  confirmation: HsvTemplate,
-  button: HsvTemplate,
+  confirmationImage: string,
+  buttonImage: string,
+  hsvBounds: { hsvLower: HsvColor; hsvUpper: HsvColor },
   fallback: ((token: CancellationToken) => Promise<boolean>) | undefined,
   token: CancellationToken,
   screenName = "target screen"
 ): Promise<boolean> => {
   logger.log(`Navigating to ${screenName}...`);
 
-  const initialCheck = await backendCommand.isVisibleHSV(
-    confirmation.image,
-    confirmation.hsvLower,
-    confirmation.hsvUpper,
+  const initial = await backendCommand.isVisibleHSVParallel(
+    { confirmation: confirmationImage, button: buttonImage },
+    hsvBounds.hsvLower,
+    hsvBounds.hsvUpper,
     undefined,
     token
   );
-  if (initialCheck.length > 0) {
+
+  if ((initial.confirmation?.length ?? 0) > 0) {
     logger.log(`${screenName} already opened`);
     return true;
   }
 
-  const isButtonVisible = await backendCommand.isVisibleHSV(
-    button.image,
-    button.hsvLower,
-    button.hsvUpper,
-    undefined,
-    token
-  );
-
-  if (isButtonVisible.length === 0) {
+  if ((initial.button?.length ?? 0) === 0) {
     if (!fallback) {
       logger.error(`${screenName} button not found and no fallback available`);
       return false;
@@ -134,9 +108,9 @@ export const navigateToHSV = async (
     }
 
     const postFallbackCheck = await backendCommand.isVisibleHSV(
-      confirmation.image,
-      confirmation.hsvLower,
-      confirmation.hsvUpper,
+      confirmationImage,
+      hsvBounds.hsvLower,
+      hsvBounds.hsvUpper,
       undefined,
       token
     );
@@ -147,9 +121,9 @@ export const navigateToHSV = async (
   }
 
   const clickTargets = await backendCommand.findHSV(
-    button.image,
-    button.hsvLower,
-    button.hsvUpper,
+    buttonImage,
+    hsvBounds.hsvLower,
+    hsvBounds.hsvUpper,
     undefined,
     token
   );
@@ -160,9 +134,9 @@ export const navigateToHSV = async (
   await backendCommand.click(clickTargets[0]!, undefined, token);
 
   const confirmationResult = await backendCommand.findHSV(
-    confirmation.image,
-    confirmation.hsvLower,
-    confirmation.hsvUpper,
+    confirmationImage,
+    hsvBounds.hsvLower,
+    hsvBounds.hsvUpper,
     undefined,
     token
   );
@@ -172,7 +146,7 @@ export const navigateToHSV = async (
   }
 
   logger.error(
-    `Failed to navigate to ${screenName} - ${confirmation.image} not visible after clicking`
+    `Failed to navigate to ${screenName} - ${confirmationImage} not visible after clicking`
   );
   return false;
 };
