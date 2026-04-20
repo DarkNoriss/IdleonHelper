@@ -32,13 +32,13 @@ export default defineScript<[string]>({
       }
 
       const candyPoint = result[0]!;
-      logger.log(`Found candy_${candyType}, holding for 1s...`);
+      logger.log(`Found candy_${candyType}, holding for 205ms...`);
 
       token.throwIfCancelled();
-      await backendCommand.click(candyPoint, { holdTime: 1000 }, token);
+      await backendCommand.click(candyPoint, { holdTime: 205 }, token);
 
       logger.log("Candy used. Waiting for Items to close...");
-      await delay(500, token);
+      await delay(100, token);
     }
   },
 });
