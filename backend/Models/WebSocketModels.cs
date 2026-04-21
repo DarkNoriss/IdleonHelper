@@ -67,6 +67,18 @@ internal class ClickResponse
   public bool Success { get; set; }
 }
 
+internal class ClickManyRequest
+{
+  public List<Point> Points { get; set; } = new();
+  public int? Interval { get; set; }
+  public int? HoldTime { get; set; }
+}
+
+internal class ClickManyResponse
+{
+  public bool Success { get; set; }
+}
+
 internal class DragRequest
 {
   public Point Start { get; set; }

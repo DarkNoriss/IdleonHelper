@@ -89,6 +89,17 @@ export type ClickResponse = {
   success: boolean;
 };
 
+// ClickMany command
+export type ClickManyRequest = {
+  points: Point[];
+  interval: number;
+  holdTime: number;
+};
+
+export type ClickManyResponse = {
+  success: boolean;
+};
+
 // Drag command
 export type DragRequest = {
   start: Point;
@@ -220,6 +231,7 @@ export type CommandRequestMap = {
   find: FindRequest;
   findWithDebug: FindWithDebugRequest;
   click: ClickRequest;
+  clickMany: ClickManyRequest;
   drag: DragRequest;
   dragRepeat: DragRepeatRequest;
   stop: StopRequest;
@@ -236,6 +248,7 @@ export type CommandResponseMap = {
   find: FindResponse;
   findWithDebug: FindWithDebugResponse;
   click: ClickResponse;
+  clickMany: ClickManyResponse;
   drag: DragResponse;
   dragRepeat: DragRepeatResponse;
   stop: StopResponse;

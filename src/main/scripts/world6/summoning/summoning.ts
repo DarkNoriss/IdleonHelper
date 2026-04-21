@@ -1,3 +1,4 @@
+import { getClickOptionsFromPreset } from "../../../backend/backend-config";
 import type { Point } from "../../../backend/backend-types";
 import { backendCommand } from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
@@ -9,17 +10,18 @@ import {
   CHEST,
   CHEST_CLICK_DELAY_MS,
   CHEST_COLLECTION_TIMEOUT_MS,
-  DRAG_OPTIONS,
-  DRAG_REPEAT_DURATION_S,
-  DRAG_X,
-  DRAG_Y_MAX_PADDING,
+  CLICK_BATCH_SIZE,
+  CLICK_SPEED_PRESET,
+  CLICK_X,
   INFINITY_ICON,
   INIT_CONFIRM_TIMEOUT_MS,
+  MIN_Y_SPACING,
   POST_CHEST_DELAY_MS,
   SUMMONING_ICON,
   UI_HSV_LOWER,
   UI_HSV_UPPER,
 } from "./summoning-constants";
+import { jitteredYs } from "./summoning-helpers";
 
 const ensureBeginMatchScreen = async (
   token: CancellationToken
@@ -87,11 +89,10 @@ const detectBoardYRange = async (
       yMax = m.y;
     }
   }
-  const paddedMax = yMax + DRAG_Y_MAX_PADDING;
   logger.log(
-    `summoning - board: y raw=[${yMin},${yMax}] padded=[${yMin},${paddedMax}] matches=${matches.length}`
+    `summoning - board: y=[${yMin},${yMax}] matches=${matches.length}`
   );
-  return { yMin, yMax: paddedMax };
+  return { yMin, yMax };
 };
 
 const startMatch = async (token: CancellationToken): Promise<void> => {
@@ -109,23 +110,23 @@ const startMatch = async (token: CancellationToken): Promise<void> => {
   await backendCommand.click(beginMatch[0]!, undefined, token);
 };
 
-const dragUntilChestVisible = async (
+const clickUntilChestVisible = async (
   range: BoardYRange,
   token: CancellationToken
 ): Promise<Point> => {
-  const top: Point = { x: DRAG_X, y: range.yMin };
-  const bottom: Point = { x: DRAG_X, y: range.yMax };
+  const clickOptions = getClickOptionsFromPreset(CLICK_SPEED_PRESET);
   let iteration = 0;
   while (true) {
     token.throwIfCancelled();
     iteration++;
-    await backendCommand.dragRepeat(
-      top,
-      bottom,
-      DRAG_REPEAT_DURATION_S,
-      DRAG_OPTIONS,
-      token
+    const ys = jitteredYs(
+      range.yMin,
+      range.yMax,
+      CLICK_BATCH_SIZE,
+      MIN_Y_SPACING
     );
+    const points: Point[] = ys.map((y) => ({ x: CLICK_X, y }));
+    await backendCommand.clickMany(points, clickOptions, token);
     const chest = await backendCommand.isVisibleHSV(
       CHEST,
       UI_HSV_LOWER,
@@ -135,11 +136,13 @@ const dragUntilChestVisible = async (
     );
     if (chest.length > 0) {
       logger.log(
-        `summoning - drag: chest visible after iteration ${iteration} at ${chest[0]!.x},${chest[0]!.y}`
+        `summoning - click: chest visible after batch ${iteration} at ${chest[0]!.x},${chest[0]!.y}`
       );
       return chest[0]!;
     }
-    logger.log(`summoning - drag: iteration ${iteration} - chest not visible`);
+    logger.log(
+      `summoning - click: batch ${iteration} complete - chest not visible`
+    );
   }
 };
 
@@ -220,7 +223,7 @@ export const summoningStartEndless = defineScript({
       await ensureBeginMatchScreen(token);
       const range = await detectBoardYRange(token);
       await startMatch(token);
-      const chestPoint = await dragUntilChestVisible(range, token);
+      const chestPoint = await clickUntilChestVisible(range, token);
       await collectChest(chestPoint, token);
       await delay(POST_CHEST_DELAY_MS, token);
 
@@ -253,7 +256,7 @@ export const summoningStartAutobattler = defineScript({
     logger.log("summoning - autobattler: clicking begin_match");
     await backendCommand.click(beginMatch[0]!, undefined, token);
 
-    const chest = await dragUntilChestVisible(range, token);
+    const chest = await clickUntilChestVisible(range, token);
     logger.log(
       `summoning - autobattler: chest visible at ${chest.x},${chest.y} - leaving collection to user`
     );

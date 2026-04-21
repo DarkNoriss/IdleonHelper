@@ -45,6 +45,11 @@ internal static class MessageHandler
           await ClickCommandHandler.Handle(ws, message, ct);
           break;
         }
+        case "clickMany":
+        {
+          await ClickManyCommandHandler.Handle(ws, message, ct);
+          break;
+        }
         case "drag":
         {
           await DragCommandHandler.Handle(ws, message, ct);

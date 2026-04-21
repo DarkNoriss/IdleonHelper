@@ -1,3 +1,4 @@
+import type { ClickPreset } from "../../../backend/backend-config";
 import type { HsvColor } from "../../../backend/backend-types";
 
 export const SUMMONING_PATH = "ui/map/world-6/summoning";
@@ -21,14 +22,15 @@ export const UI_HSV_UPPER: HsvColor = { h: 192, s: 255, v: 255 };
 export const MIN_BOARD_MATCHES = 3;
 export const MIN_RADIUS_PX = 20;
 
-// Vertical drag x-coordinate (static)
-export const DRAG_X = 740;
-// Extra downward padding applied to board.png max Y - units spawn slightly above the click
-export const DRAG_Y_MAX_PADDING = 20;
-// Custom drag tuning for summoning - slower sweep to ensure unit pickup
-export const DRAG_OPTIONS = { stepSize: 1, stepDelay: 5 } as const;
-// Duration of a single dragRepeat sweep cycle before re-checking chest
-export const DRAG_REPEAT_DURATION_S = 3;
+// X coordinate for every spawn click. Static, near enemy spawn so each click
+// also damages enemies (spawn-camp) while spawning our unit from the left.
+export const CLICK_X = 740;
+// Clicks per batch before re-checking for the chest.
+export const CLICK_BATCH_SIZE = 50;
+// Minimum Y gap between any two clicks in a batch - prevents clumping.
+export const MIN_Y_SPACING = 10;
+// Speed preset applied to every click in the batch.
+export const CLICK_SPEED_PRESET: ClickPreset = "16x";
 
 // Outlier filter - drop matches whose Y deviation from the median exceeds
 // OUTLIER_MAD_MULTIPLIER * MAD (median absolute deviation). The min-spread
