@@ -51,7 +51,7 @@ const RawData = () => {
           </Button>
         </div>
       </div>
-      <ScrollArea className="min-h-0 flex-1 rounded-lg border">
+      <ScrollArea className="min-h-0 flex-1 overflow-hidden rounded-lg border">
         <Textarea
           className="w-full resize-none border-0 font-mono text-xs focus-visible:ring-0"
           onChange={(e) => setLocalJson(e.target.value)}
