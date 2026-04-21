@@ -259,6 +259,7 @@ const Construction = () => {
             </label>
             <Select
               onValueChange={(value) =>
+                value !== null &&
                 setConstruction({ focus: value as SolverFocus })
               }
               value={focus}
