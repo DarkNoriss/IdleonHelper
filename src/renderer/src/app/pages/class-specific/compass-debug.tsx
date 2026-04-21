@@ -94,7 +94,10 @@ const CompassDebug = () => {
         >
           Node to Center
         </label>
-        <Select onValueChange={setSelectedNode} value={selectedNode}>
+        <Select
+          onValueChange={(v) => v !== null && setSelectedNode(v)}
+          value={selectedNode}
+        >
           <SelectTrigger id="node-select">
             <SelectValue placeholder="Select a node..." />
           </SelectTrigger>

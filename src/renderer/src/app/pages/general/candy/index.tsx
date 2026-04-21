@@ -43,7 +43,7 @@ const Candy = () => {
     >
       <div className="mb-4">
         <Select
-          onValueChange={(v) => setCandy({ duration: v })}
+          onValueChange={(v) => v !== null && setCandy({ duration: v })}
           value={duration}
         >
           <SelectTrigger className="w-[120px]">

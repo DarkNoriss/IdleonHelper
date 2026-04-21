@@ -64,7 +64,7 @@ const Farming = () => {
     <ScriptPage actions={actions} title="Farming">
       <div className="mb-4">
         <Select
-          onValueChange={(v) => setFarming({ overgrowth: v })}
+          onValueChange={(v) => v !== null && setFarming({ overgrowth: v })}
           value={overgrowth}
         >
           <SelectTrigger className="w-[140px]">

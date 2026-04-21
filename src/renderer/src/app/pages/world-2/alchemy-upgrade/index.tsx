@@ -85,7 +85,10 @@ const AlchemyUpgrade = () => {
     [selections]
   );
 
-  const setFor = (key: keyof Selections) => (raw: string) => {
+  const setFor = (key: keyof Selections) => (raw: string | null) => {
+    if (raw === null) {
+      return;
+    }
     setAlchemy({
       selections: {
         ...selections,

@@ -76,13 +76,11 @@ export const AppSidebar = ({
               >
                 <SidebarGroup>
                   <SidebarGroupLabel
-                    asChild
                     className="group/label text-sidebar-foreground text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    render={<CollapsibleTrigger />}
                   >
-                    <CollapsibleTrigger>
-                      {entry.title}
-                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                    </CollapsibleTrigger>
+                    {entry.title}
+                    <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarGroupLabel>
                   <CollapsibleContent>
                     <SidebarGroupContent>
