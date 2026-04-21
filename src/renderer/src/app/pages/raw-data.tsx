@@ -35,7 +35,7 @@ const RawData = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex h-full min-h-0 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="font-bold text-2xl">Raw Data</h1>
         <div className="flex gap-2">
@@ -51,7 +51,7 @@ const RawData = () => {
         </div>
       </div>
       <Textarea
-        className="flex-1 resize-none font-mono text-xs [field-sizing:fixed]"
+        className="field-sizing-fixed min-h-0 flex-1 resize-none font-mono text-xs"
         onChange={(e) => setLocalJson(e.target.value)}
         placeholder="Paste game data JSON here..."
         value={localJson}
