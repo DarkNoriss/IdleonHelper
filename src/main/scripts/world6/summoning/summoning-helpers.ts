@@ -74,3 +74,32 @@ export const computeBoardGeometry = (
   }
   return { xMin, xMax, yMin, yMax, cx, cy, rx, ry };
 };
+
+// Jittered stratified sampling over [yMin, yMax].
+// - Each of N bands gets exactly one sample - no clumping, full coverage.
+// - Inset of minSpacing/2 each side guarantees >= minSpacing between any pair.
+// - Band count is reduced if the range is too small to fit count samples.
+// - Shuffled before returning so click order is not monotonic top-to-bottom.
+export const jitteredYs = (
+  yMin: number,
+  yMax: number,
+  count: number,
+  minSpacing: number
+): number[] => {
+  const range = yMax - yMin;
+  const maxByRange = Math.floor(range / minSpacing);
+  const n = Math.max(1, Math.min(count, maxByRange));
+  const bandSize = range / n;
+  const inset = minSpacing / 2;
+  const ys: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const start = yMin + i * bandSize;
+    const jitter = inset + Math.random() * (bandSize - 2 * inset);
+    ys.push(Math.round(start + jitter));
+  }
+  for (let i = ys.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [ys[i], ys[j]] = [ys[j]!, ys[i]!];
+  }
+  return ys;
+};
