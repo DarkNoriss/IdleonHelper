@@ -47,7 +47,9 @@ const Candy = () => {
           value={duration}
         >
           <SelectTrigger className="w-[120px]">
-            <SelectValue />
+            <SelectValue>
+              {(v) => candyOptions.find((o) => o.value === v)?.label ?? v}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {candyOptions.map((option) => (

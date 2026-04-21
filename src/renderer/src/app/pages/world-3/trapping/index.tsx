@@ -61,7 +61,9 @@ const TrapTimerSelects = ({
         </label>
         <Select onValueChange={onTrapChange} value={trap}>
           <SelectTrigger id={`${idPrefix}-trap`}>
-            <SelectValue placeholder="Select trap" />
+            <SelectValue placeholder="Select trap">
+              {(v) => trapConfigs.find((t) => t.value === v)?.label ?? v}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {trapConfigs.map((t) => (
@@ -172,7 +174,9 @@ const TrapPlacingSection = () => {
             value={critter}
           >
             <SelectTrigger id="place-critter">
-              <SelectValue placeholder="Select critter" />
+              <SelectValue placeholder="Select critter">
+                {(v) => critters.find((c) => c.value === v)?.label ?? v}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {critters.map((c) => (

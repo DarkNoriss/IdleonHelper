@@ -70,7 +70,7 @@ const Logs = () => {
       </h1>
 
       <ScrollArea
-        className="h-[calc(100vh-8px*13)] rounded-md border"
+        className="min-h-0 flex-1 rounded-md border"
         ref={scrollAreaRef}
       >
         <div className="bg-muted/50 p-4 font-mono text-sm">

@@ -68,7 +68,9 @@ const Farming = () => {
           value={overgrowth}
         >
           <SelectTrigger className="w-[140px]">
-            <SelectValue />
+            <SelectValue>
+              {(v) => overgrowthOptions.find((o) => o.value === v)?.label ?? v}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {overgrowthOptions.map((option) => (

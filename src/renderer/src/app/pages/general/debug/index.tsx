@@ -59,7 +59,9 @@ const Debug = () => {
           value={selectedSkill}
         >
           <SelectTrigger className="w-[240px]" id="skill-select">
-            <SelectValue />
+            <SelectValue>
+              {(v) => attackSkillOptions.find((o) => o.value === v)?.label ?? v}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {attackSkillOptions.map((option) => (

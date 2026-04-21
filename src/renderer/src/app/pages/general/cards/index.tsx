@@ -44,7 +44,11 @@ const CardPresets = () => {
           value={slot}
         >
           <SelectTrigger className="w-[120px]">
-            <SelectValue />
+            <SelectValue>
+              {(v) =>
+                PRESET_CONFIGS.find((p) => String(p.slot) === v)?.name ?? v
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {PRESET_CONFIGS.map((p) => (
