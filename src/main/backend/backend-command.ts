@@ -7,6 +7,8 @@ import { backendConfig } from "./backend-config";
 import type {
   CaptureHsvScreenRequest,
   CaptureHsvScreenResponse,
+  ClickManyRequest,
+  ClickManyResponse,
   ClickRequest,
   ClickResponse,
   DragRepeatRequest,
@@ -70,6 +72,25 @@ export const backendCommand = {
       holdTime: options?.holdTime ?? backendConfig.click.holdTime,
     };
     return sendCommand("click", request);
+  },
+
+  clickMany: async (
+    points: Point[],
+    options:
+      | {
+          interval?: number;
+          holdTime?: number;
+        }
+      | undefined,
+    token: CancellationToken
+  ): Promise<ClickManyResponse> => {
+    token.throwIfCancelled();
+    const request: ClickManyRequest = {
+      points,
+      interval: options?.interval ?? backendConfig.click.interval,
+      holdTime: options?.holdTime ?? backendConfig.click.holdTime,
+    };
+    return sendCommand("clickMany", request);
   },
 
   find: async (
