@@ -36,7 +36,7 @@ const RawData = () => {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 p-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="font-bold text-2xl">Raw Data</h1>
         <div className="flex gap-2">
@@ -51,7 +51,7 @@ const RawData = () => {
           </Button>
         </div>
       </div>
-      <ScrollArea className="min-h-0 flex-1 overflow-hidden rounded-lg border">
+      <ScrollArea className="max-h-full min-h-0 w-full min-w-0 flex-1 overflow-hidden rounded-lg border">
         <Textarea
           className="w-full resize-none border-0 font-mono text-xs focus-visible:ring-0"
           onChange={(e) => setLocalJson(e.target.value)}
