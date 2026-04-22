@@ -29,19 +29,6 @@ const Logs = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new logs arrive
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      // Find the viewport element inside ScrollArea
-      const viewport = scrollAreaRef.current.querySelector(
-        '[data-slot="scroll-area-viewport"]'
-      ) as HTMLElement;
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
-    }
-  }, []);
-
   useEffect(() => {
     // Fetch all logs on mount
     const loadLogs = async () => {
@@ -63,14 +50,24 @@ const Logs = () => {
     return cleanup;
   }, []);
 
+  useEffect(() => {
+    if (logs.length === 0) {
+      return;
+    }
+    const viewport = scrollAreaRef.current?.querySelector(
+      '[data-slot="scroll-area-viewport"]'
+    ) as HTMLElement | null;
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight;
+    }
+  }, [logs]);
+
   return (
-    <div className="flex h-full flex-col gap-4">
-      <h1 className="shrink-0 text-center font-bold text-2xl">
-        Application Logs
-      </h1>
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4 p-4">
+      <h1 className="font-bold text-2xl">Application Logs</h1>
 
       <ScrollArea
-        className="h-[calc(100vh-8px*13)] rounded-md border"
+        className="min-h-0 flex-1 rounded-md border"
         ref={scrollAreaRef}
       >
         <div className="bg-muted/50 p-4 font-mono text-sm">

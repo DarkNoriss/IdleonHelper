@@ -28,6 +28,11 @@ import type {
 } from "@/types/construction.ts";
 
 const SPARE_ROWS = 5;
+const FOCUS_LABELS: Record<string, string> = {
+  exp: "Exp",
+  buildRate: "Build Rate",
+  flaggy: "Flaggy",
+};
 const DEFAULT_SOLVE_TIME_SECONDS = 600;
 const DEFAULT_FOCUS: SolverFocus = "exp";
 const VALID_FOCUS: readonly SolverFocus[] = ["exp", "buildRate", "flaggy"];
@@ -259,12 +264,15 @@ const Construction = () => {
             </label>
             <Select
               onValueChange={(value) =>
+                value !== null &&
                 setConstruction({ focus: value as SolverFocus })
               }
               value={focus}
             >
               <SelectTrigger id="focus-select">
-                <SelectValue placeholder="Select focus" />
+                <SelectValue placeholder="Select focus">
+                  {(v) => FOCUS_LABELS[v] ?? v}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="exp">Exp</SelectItem>

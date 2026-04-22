@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { useRawJsonStore } from "@/store/raw-json.ts";
 
@@ -35,7 +36,7 @@ const RawData = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="font-bold text-2xl">Raw Data</h1>
         <div className="flex gap-2">
@@ -50,13 +51,14 @@ const RawData = () => {
           </Button>
         </div>
       </div>
-      <Textarea
-        className="flex-1 resize-none font-mono text-xs"
-        onChange={(e) => setLocalJson(e.target.value)}
-        placeholder="Paste game data JSON here..."
-        rows={23}
-        value={localJson}
-      />
+      <ScrollArea className="max-h-full min-h-0 w-full min-w-0 flex-1 overflow-hidden rounded-lg border">
+        <Textarea
+          className="w-full resize-none border-0 font-mono text-xs focus-visible:ring-0"
+          onChange={(e) => setLocalJson(e.target.value)}
+          placeholder="Paste game data JSON here..."
+          value={localJson}
+        />
+      </ScrollArea>
     </div>
   );
 };

@@ -85,7 +85,10 @@ const AlchemyUpgrade = () => {
     [selections]
   );
 
-  const setFor = (key: keyof Selections) => (raw: string) => {
+  const setFor = (key: keyof Selections) => (raw: string | null) => {
+    if (raw === null) {
+      return;
+    }
     setAlchemy({
       selections: {
         ...selections,
@@ -122,7 +125,13 @@ const AlchemyUpgrade = () => {
                 </label>
                 <Select onValueChange={setFor(key)} value={value}>
                   <SelectTrigger className="w-full" id={`cauldron-${key}`}>
-                    <SelectValue placeholder="None" />
+                    <SelectValue placeholder="None">
+                      {(v) =>
+                        v === NONE
+                          ? "None"
+                          : (options.find((o) => o.value === v)?.label ?? v)
+                      }
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={NONE}>None</SelectItem>

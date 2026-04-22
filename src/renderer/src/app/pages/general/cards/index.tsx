@@ -39,9 +39,16 @@ const CardPresets = () => {
       title="Card Presets"
     >
       <div className="mb-4">
-        <Select onValueChange={(v) => setCards({ slot: v })} value={slot}>
+        <Select
+          onValueChange={(v) => v !== null && setCards({ slot: v })}
+          value={slot}
+        >
           <SelectTrigger className="w-[120px]">
-            <SelectValue />
+            <SelectValue>
+              {(v) =>
+                PRESET_CONFIGS.find((p) => String(p.slot) === v)?.name ?? v
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {PRESET_CONFIGS.map((p) => (

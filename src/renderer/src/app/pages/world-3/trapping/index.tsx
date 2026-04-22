@@ -35,9 +35,9 @@ const formatCountdown = (ms: number): string => {
 
 type TrapTimerSelectsProps = {
   trap: string;
-  onTrapChange: (value: string) => void;
+  onTrapChange: (value: string | null) => void;
   timer: string;
-  onTimerChange: (value: string) => void;
+  onTimerChange: (value: string | null) => void;
   idPrefix: string;
 };
 
@@ -61,7 +61,9 @@ const TrapTimerSelects = ({
         </label>
         <Select onValueChange={onTrapChange} value={trap}>
           <SelectTrigger id={`${idPrefix}-trap`}>
-            <SelectValue placeholder="Select trap" />
+            <SelectValue placeholder="Select trap">
+              {(v) => trapConfigs.find((t) => t.value === v)?.label ?? v}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {trapConfigs.map((t) => (
@@ -138,7 +140,10 @@ const TrapPlacingSection = () => {
     }
   }, [trap, timer, setTrappingPlace]);
 
-  const handleTrapChange = (value: string) => {
+  const handleTrapChange = (value: string | null) => {
+    if (value === null) {
+      return;
+    }
     setTrappingPlace({ trap: value, timer: "" });
   };
 
@@ -163,11 +168,15 @@ const TrapPlacingSection = () => {
             Critter
           </label>
           <Select
-            onValueChange={(v) => setTrappingPlace({ critter: v })}
+            onValueChange={(v) =>
+              v !== null && setTrappingPlace({ critter: v })
+            }
             value={critter}
           >
             <SelectTrigger id="place-critter">
-              <SelectValue placeholder="Select critter" />
+              <SelectValue placeholder="Select critter">
+                {(v) => critters.find((c) => c.value === v)?.label ?? v}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {critters.map((c) => (
@@ -181,7 +190,7 @@ const TrapPlacingSection = () => {
 
         <TrapTimerSelects
           idPrefix="place"
-          onTimerChange={(v) => setTrappingPlace({ timer: v })}
+          onTimerChange={(v) => v !== null && setTrappingPlace({ timer: v })}
           onTrapChange={handleTrapChange}
           timer={timer}
           trap={trap}
@@ -215,7 +224,10 @@ const TrapCollectingSection = () => {
     }
   }, [trap, timer, setTrappingCollect]);
 
-  const handleTrapChange = (value: string) => {
+  const handleTrapChange = (value: string | null) => {
+    if (value === null) {
+      return;
+    }
     setTrappingCollect({ trap: value, timer: "" });
   };
 
@@ -255,7 +267,7 @@ const TrapCollectingSection = () => {
       <div className="mb-4 grid grid-cols-2 gap-4">
         <TrapTimerSelects
           idPrefix="collect"
-          onTimerChange={(v) => setTrappingCollect({ timer: v })}
+          onTimerChange={(v) => v !== null && setTrappingCollect({ timer: v })}
           onTrapChange={handleTrapChange}
           timer={timer}
           trap={trap}

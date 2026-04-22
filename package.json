@@ -18,6 +18,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@base-ui/react": "^1.4.1",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "electron-updater": "^6.6.2",
@@ -40,7 +41,6 @@
     "electron-vite": "^5.0.0",
     "husky": "^9.1.7",
     "lucide-react": "^0.561.0",
-    "radix-ui": "^1.4.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "tailwind-merge": "^3.4.0",
