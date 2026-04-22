@@ -47,6 +47,8 @@ declare global {
     api: {
       window: {
         close: () => void;
+        minimize: () => void;
+        maximize: () => void;
       };
       backend: Record<string, never>;
       script: {

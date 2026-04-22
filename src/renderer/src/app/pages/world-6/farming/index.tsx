@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import type { ScriptAction } from "@/components/script-page.tsx";
-import { ScriptPage } from "@/components/script-page.tsx";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select.tsx";
+  Block,
+  BlockActions,
+  Field,
+  PageHead,
+  RunBtn,
+  TermSelect,
+} from "@/components/terminal";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 
 const overgrowthOptions = Array.from({ length: 19 }, (_, i) => ({
@@ -35,53 +34,70 @@ const Farming = () => {
       .catch(() => setIsDev(false));
   }, []);
 
-  const actions: ScriptAction[] = [
-    {
-      label: "Collect Crops",
-      scriptId: "world6.farming.farmingCollectCrops",
-      runningLabel: "Stop",
-      args: () => [Number(overgrowth)],
-    },
-    ...(isDev
-      ? [
-          {
-            label: "Collect Crops Debug",
-            scriptId: "world6.farming.farmingCollectCropsDebug",
-          } satisfies ScriptAction,
-        ]
-      : []),
-    {
-      label: "Bean Trading - Get Tickets",
-      scriptId: "world6.farming.beanTradingGetTickets",
-    },
-    {
-      label: "Bean Trading - Trade Crops",
-      scriptId: "world6.farming.beanTradingTradeCrops",
-    },
-  ];
-
   return (
-    <ScriptPage actions={actions} title="Farming">
-      <div className="mb-4">
-        <Select
-          onValueChange={(v) => v !== null && setFarming({ overgrowth: v })}
-          value={overgrowth}
+    <>
+      <PageHead
+        description="Collect crops with an overgrowth threshold, and run bean-trading cycles for tickets and crop trades."
+        path="world-6 / farming"
+        title="farming"
+      />
+      <Block
+        compact
+        note="only harvests plots that reached the selected overgrowth multiplier. set to >=0x to collect everything."
+        tag="script"
+        title="farming.collect-crops"
+      >
+        <div className="flex items-end gap-2.5">
+          <Field label="overgrowth" width="w-[140px]">
+            <TermSelect
+              onChange={(v) => setFarming({ overgrowth: v })}
+              options={overgrowthOptions}
+              value={overgrowth}
+            />
+          </Field>
+          <RunBtn
+            getArgs={() => [Number(overgrowth)]}
+            label="collect crops"
+            scriptId="world6.farming.farmingCollectCrops"
+          />
+          {isDev && (
+            <RunBtn
+              label="debug"
+              scriptId="world6.farming.farmingCollectCropsDebug"
+              small
+            />
+          )}
+        </div>
+      </Block>
+      <div className="grid grid-cols-2 gap-2">
+        <Block
+          compact
+          note="buys tickets from the bean vendor."
+          title="bean-trading.tickets"
         >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue>
-              {(v) => overgrowthOptions.find((o) => o.value === v)?.label ?? v}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {overgrowthOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <BlockActions>
+            <RunBtn
+              label="get tickets"
+              scriptId="world6.farming.beanTradingGetTickets"
+              small
+            />
+          </BlockActions>
+        </Block>
+        <Block
+          compact
+          note="trades crops at the vendor for goods and reroll currency."
+          title="bean-trading.trade"
+        >
+          <BlockActions>
+            <RunBtn
+              label="trade crops"
+              scriptId="world6.farming.beanTradingTradeCrops"
+              small
+            />
+          </BlockActions>
+        </Block>
       </div>
-    </ScriptPage>
+    </>
   );
 };
 

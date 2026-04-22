@@ -1,12 +1,12 @@
 import { useEffect } from "react";
-import { ScriptPage } from "@/components/script-page.tsx";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select.tsx";
+  Block,
+  BlockActions,
+  Field,
+  PageHead,
+  RunBtn,
+  TermSelect,
+} from "@/components/terminal";
 import { PRESET_CONFIGS } from "@/parsers/card-presets";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 
@@ -22,44 +22,59 @@ const CardPresets = () => {
     }
   }, [slot, setCards]);
 
+  const options = PRESET_CONFIGS.map((p) => ({
+    value: String(p.slot),
+    label: `slot ${p.slot} · ${p.name}`,
+  }));
+  const slotNumber = Number(slot);
+
   return (
-    <ScriptPage
-      actions={[
-        {
-          label: "Apply Preset",
-          scriptId: "general.cardPresets.apply",
-          args: () => [Number(slot)],
-        },
-        {
-          label: "Select Preset",
-          scriptId: "general.cardPresets.select",
-          args: () => [Number(slot)],
-        },
-      ]}
-      title="Card Presets"
-    >
-      <div className="mb-4">
-        <Select
-          onValueChange={(v) => v !== null && setCards({ slot: v })}
-          value={slot}
+    <>
+      <PageHead
+        description="Apply or select saved card presets by slot. Useful for switching card layouts between farming setups."
+        path="general / card-presets"
+        title="card-presets"
+      />
+      <Block title="cards.config">
+        <Field label="preset-slot" width="w-[220px]">
+          <TermSelect
+            onChange={(v) => setCards({ slot: v })}
+            options={options}
+            value={slot}
+          />
+        </Field>
+      </Block>
+      <div className="grid grid-cols-2 gap-2">
+        <Block
+          compact
+          note="applies the preset to the active character in-game."
+          tag="script"
+          title="cards.apply"
         >
-          <SelectTrigger className="w-[120px]">
-            <SelectValue>
-              {(v) =>
-                PRESET_CONFIGS.find((p) => String(p.slot) === v)?.name ?? v
-              }
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {PRESET_CONFIGS.map((p) => (
-              <SelectItem key={p.slot} value={String(p.slot)}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <BlockActions>
+            <RunBtn
+              getArgs={() => [slotNumber]}
+              label="apply preset"
+              scriptId="general.cardPresets.apply"
+            />
+          </BlockActions>
+        </Block>
+        <Block
+          compact
+          note="selects (highlights) the preset without applying, so you can inspect before committing."
+          tag="script"
+          title="cards.select"
+        >
+          <BlockActions>
+            <RunBtn
+              getArgs={() => [slotNumber]}
+              label="select preset"
+              scriptId="general.cardPresets.select"
+            />
+          </BlockActions>
+        </Block>
       </div>
-    </ScriptPage>
+    </>
   );
 };
 

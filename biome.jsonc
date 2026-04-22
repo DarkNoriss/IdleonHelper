@@ -5,6 +5,9 @@
     "ultracite/biome/react",
     "ultracite/biome/type-aware"
   ],
+  "files": {
+    "includes": ["!**/.design-ref", "!**/docs/tickets"]
+  },
   "linter": {
     "rules": {
       "performance": {

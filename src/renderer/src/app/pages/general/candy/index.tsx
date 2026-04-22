@@ -1,12 +1,11 @@
 import { useEffect } from "react";
-import { ScriptPage } from "@/components/script-page.tsx";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select.tsx";
+  Block,
+  Field,
+  PageHead,
+  RunBtn,
+  TermSelect,
+} from "@/components/terminal";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 
 const candyOptions = [
@@ -15,7 +14,7 @@ const candyOptions = [
   { value: "4h", label: "4H" },
   { value: "12h", label: "12H" },
   { value: "24h", label: "24H" },
-] as const;
+];
 
 const DEFAULT_DURATION = "1h";
 
@@ -30,37 +29,33 @@ const Candy = () => {
   }, [duration, setCandy]);
 
   return (
-    <ScriptPage
-      actions={[
-        {
-          label: "Start",
-          scriptId: "general.candy.run",
-          runningLabel: "Stop",
-          args: () => [duration],
-        },
-      ]}
-      title="Candy"
-    >
-      <div className="mb-4">
-        <Select
-          onValueChange={(v) => v !== null && setCandy({ duration: v })}
-          value={duration}
-        >
-          <SelectTrigger className="w-[120px]">
-            <SelectValue>
-              {(v) => candyOptions.find((o) => o.value === v)?.label ?? v}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {candyOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    </ScriptPage>
+    <>
+      <PageHead
+        description="Batch-consumes Time Candy from the active character's inventory. Matches the selected tier exactly — auto-exits when none remain."
+        path="general / candy"
+        title="candy"
+      />
+      <Block
+        note="switch in-game to the target character before starting. script auto-stops when no matching candies are left."
+        tag="script"
+        title="candy.run"
+      >
+        <div className="flex items-end gap-2.5">
+          <Field label="duration" width="w-[140px]">
+            <TermSelect
+              onChange={(v) => setCandy({ duration: v })}
+              options={candyOptions}
+              value={duration}
+            />
+          </Field>
+          <RunBtn
+            getArgs={() => [duration]}
+            label="start candy"
+            scriptId="general.candy.run"
+          />
+        </div>
+      </Block>
+    </>
   );
 };
 

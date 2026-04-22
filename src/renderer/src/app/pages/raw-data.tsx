@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button.tsx";
-import { ScrollArea } from "@/components/ui/scroll-area.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
+import { Alert, PageHead, SmBtn } from "@/components/terminal";
 import { useRawJsonStore } from "@/store/raw-json.ts";
 
 const RawData = () => {
@@ -10,7 +8,6 @@ const RawData = () => {
   const clearRawJson = useRawJsonStore((state) => state.clearRawJson);
   const [localJson, setLocalJson] = useState(rawJson);
 
-  // Sync local state with store when store changes externally
   useEffect(() => {
     setLocalJson(rawJson);
   }, [rawJson]);
@@ -30,36 +27,43 @@ const RawData = () => {
     try {
       const text = await navigator.clipboard.readText();
       setLocalJson(text);
-    } catch (error) {
-      console.error("Failed to paste from clipboard:", error);
+    } catch {
+      // ignore clipboard access failures
     }
   };
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="font-bold text-2xl">Raw Data</h1>
-        <div className="flex gap-2">
-          <Button onClick={handlePaste} variant="outline">
-            Paste
-          </Button>
-          <Button onClick={handleSave} variant="default">
-            Save
-          </Button>
-          <Button onClick={handleClear} variant="outline">
-            Clear
-          </Button>
+    <>
+      <PageHead
+        actions={
+          <div className="flex gap-1">
+            <SmBtn onClick={handlePaste}>paste</SmBtn>
+            <SmBtn onClick={handleSave} primary>
+              save
+            </SmBtn>
+            <SmBtn onClick={handleClear}>clear</SmBtn>
+          </div>
+        }
+        description="Paste the raw JSON from idleontoolbox.com. Most scripts read this snapshot — keep it fresh after big in-game changes."
+        path="raw-data"
+        title="raw-data"
+      />
+      <Alert tone="info">
+        in idleontoolbox → tools → raw-data → copy all. paste here, then save.
+      </Alert>
+      <div className="overflow-hidden rounded-[4px] border border-border bg-panel">
+        <div className="flex justify-between border-border-soft border-b bg-panel-2 px-2.5 py-1 font-mono text-[10px] text-text-muted">
+          <span>raw.json</span>
+          <span>{localJson.length} chars</span>
         </div>
-      </div>
-      <ScrollArea className="max-h-full min-h-0 w-full min-w-0 flex-1 overflow-hidden rounded-lg border">
-        <Textarea
-          className="w-full resize-none border-0 font-mono text-xs focus-visible:ring-0"
+        <textarea
+          className="h-[280px] w-full resize-none border-0 bg-background p-2.5 font-mono text-[10.5px] text-text-dim leading-[1.5] outline-none"
           onChange={(e) => setLocalJson(e.target.value)}
-          placeholder="Paste game data JSON here..."
+          placeholder="paste game data JSON here..."
           value={localJson}
         />
-      </ScrollArea>
-    </div>
+      </div>
+    </>
   );
 };
 

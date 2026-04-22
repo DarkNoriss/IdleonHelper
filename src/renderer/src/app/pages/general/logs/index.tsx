@@ -1,98 +1,106 @@
 import { useEffect, useRef, useState } from "react";
+import { PageHead, TermSelect } from "@/components/terminal";
 
-import { ScrollArea } from "@/components/ui/scroll-area.tsx";
-
+type LogLevel = "log" | "error" | "warn" | "info";
 type LogEntry = {
   timestamp: number;
-  level: "log" | "error" | "warn" | "info";
+  level: LogLevel;
   message: string;
 };
 
-const getLevelColor = (level: LogEntry["level"]): string => {
+const levelColor = (level: LogLevel): string => {
   switch (level) {
     case "error":
       return "text-destructive";
     case "warn":
-      return "text-yellow-500";
+      return "text-warn";
     case "info":
-      return "text-blue-500";
+      return "text-info";
     default:
-      return "text-foreground";
+      return "text-text-dim";
   }
 };
 
-const formatTimestamp = (timestamp: number): string => {
-  return new Date(timestamp).toLocaleTimeString();
-};
+const formatTimestamp = (timestamp: number): string =>
+  new Date(timestamp).toLocaleTimeString();
+
+const filterOptions = [
+  { value: "all", label: "all levels" },
+  { value: "log", label: "log" },
+  { value: "info", label: "info" },
+  { value: "warn", label: "warn" },
+  { value: "error", label: "error" },
+];
 
 const Logs = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [filter, setFilter] = useState("all");
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Fetch all logs on mount
-    const loadLogs = async () => {
-      try {
-        const allLogs = await window.api.logs.get();
-        setLogs(allLogs);
-      } catch (error) {
-        console.error("Failed to load logs:", error);
-      }
-    };
-
-    loadLogs();
-
-    // Set up real-time listener
-    const cleanup = window.api.logs.onChange((newLogs) => {
-      setLogs(newLogs);
-    });
-
-    return cleanup;
+    window.api.logs
+      .get()
+      .then(setLogs)
+      .catch(() => {
+        // ignore
+      });
+    return window.api.logs.onChange(setLogs);
   }, []);
 
   useEffect(() => {
     if (logs.length === 0) {
       return;
     }
-    const viewport = scrollAreaRef.current?.querySelector(
-      '[data-slot="scroll-area-viewport"]'
-    ) as HTMLElement | null;
-    if (viewport) {
-      viewport.scrollTop = viewport.scrollHeight;
+    const el = viewportRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
     }
-  }, [logs]);
+  }, [logs.length]);
+
+  const filtered =
+    filter === "all" ? logs : logs.filter((l) => l.level === filter);
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4 p-4">
-      <h1 className="font-bold text-2xl">Application Logs</h1>
-
-      <ScrollArea
-        className="min-h-0 flex-1 rounded-md border"
-        ref={scrollAreaRef}
+    <>
+      <PageHead
+        actions={
+          <div className="flex items-center gap-1.5">
+            <TermSelect
+              onChange={setFilter}
+              options={filterOptions}
+              value={filter}
+            />
+          </div>
+        }
+        description="Live application logs. Tail updates in real-time as scripts run."
+        path="general / logs"
+        title="logs"
+      />
+      <div
+        className="h-[360px] overflow-auto rounded-[4px] border border-border bg-background p-2 font-mono text-[10.5px] leading-[1.7]"
+        ref={viewportRef}
       >
-        <div className="bg-muted/50 p-4 font-mono text-sm">
-          {logs.length === 0 ? (
-            <div className="text-muted-foreground">No logs available</div>
-          ) : (
-            <div className="space-y-1">
-              {logs.map((log, index) => (
-                <div className="flex gap-2" key={index}>
-                  <span className="shrink-0 text-muted-foreground">
-                    [{formatTimestamp(log.timestamp)}]
-                  </span>
-                  <span
-                    className={`shrink-0 font-semibold ${getLevelColor(log.level)}`}
-                  >
-                    [{log.level.toUpperCase()}]
-                  </span>
-                  <span className="wrap-break-word min-w-0">{log.message}</span>
-                </div>
-              ))}
+        {filtered.length === 0 ? (
+          <div className="text-text-muted">no logs available</div>
+        ) : (
+          filtered.map((log, index) => (
+            <div className="flex gap-2" key={`${log.timestamp}-${index}`}>
+              <span className="shrink-0 text-text-muted">
+                [{formatTimestamp(log.timestamp)}]
+              </span>
+              <span
+                className={`w-11 shrink-0 font-medium ${levelColor(log.level)}`}
+              >
+                [{log.level.toUpperCase()}]
+              </span>
+              <span className="min-w-0 break-words text-foreground">
+                {log.message}
+              </span>
             </div>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
+          ))
+        )}
+      </div>
+    </>
   );
 };
 

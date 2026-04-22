@@ -1,13 +1,12 @@
 import { useEffect, useMemo } from "react";
-import { ScriptPage } from "@/components/script-page.tsx";
-import { Input } from "@/components/ui/input.tsx";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select.tsx";
+  Block,
+  Field,
+  PageHead,
+  RunBtn,
+  TermInput,
+  TermSelect,
+} from "@/components/terminal";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 import type { Selections } from "@/types/alchemy";
 import { BUBBLES_BY_CAULDRON, CAULDRON_LABELS } from "./bubble-registry";
@@ -85,10 +84,7 @@ const AlchemyUpgrade = () => {
     [selections]
   );
 
-  const setFor = (key: keyof Selections) => (raw: string | null) => {
-    if (raw === null) {
-      return;
-    }
+  const setFor = (key: keyof Selections) => (raw: string) => {
     setAlchemy({
       selections: {
         ...selections,
@@ -98,85 +94,67 @@ const AlchemyUpgrade = () => {
   };
 
   return (
-    <ScriptPage
-      actions={[
-        {
-          label: "Start Alchemy Upgrade",
-          scriptId: "world2.alchemyUpgrade.run",
-          runningLabel: "Upgrading... (Click to stop)",
-          args: () => [selections, intervalMinutes],
-          disabled: !hasAny || intervalMinutes < MIN_INTERVAL_MINUTES,
-        },
-      ]}
-      title="Alchemy Upgrade"
-    >
-      <div className="mb-4 grid grid-cols-2 gap-4">
-        {(Object.keys(BUBBLES_BY_CAULDRON) as (keyof Selections)[]).map(
-          (key) => {
-            const options = BUBBLES_BY_CAULDRON[key];
-            const value = selections[key] ?? NONE;
-            return (
-              <div key={key}>
-                <label
-                  className="mb-1.5 block font-medium text-sm"
-                  htmlFor={`cauldron-${key}`}
-                >
-                  {CAULDRON_LABELS[key]}
-                </label>
-                <Select onValueChange={setFor(key)} value={value}>
-                  <SelectTrigger className="w-full" id={`cauldron-${key}`}>
-                    <SelectValue placeholder="None">
-                      {(v) =>
-                        v === NONE
-                          ? "None"
-                          : (options.find((o) => o.value === v)?.label ?? v)
-                      }
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>None</SelectItem>
-                    {options.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            );
-          }
+    <>
+      <PageHead
+        description="Auto-upgrades selected bubbles across all four cauldrons on a recurring interval. Pick a bubble per cauldron — blanks are skipped."
+        path="world-2 / alchemy-upgrade"
+        title="alchemy-upgrade"
+      />
+      <Block
+        note="select the target bubble for each cauldron. leave a cauldron unset to skip it."
+        tag="config"
+        title="alchemy.targets"
+      >
+        <div className="mb-2.5 grid grid-cols-2 gap-2">
+          {(Object.keys(BUBBLES_BY_CAULDRON) as (keyof Selections)[]).map(
+            (key) => {
+              const options = [
+                { value: NONE, label: "none" },
+                ...BUBBLES_BY_CAULDRON[key].map((o) => ({
+                  value: o.value,
+                  label: o.label,
+                })),
+              ];
+              const value = selections[key] ?? NONE;
+              return (
+                <Field key={key} label={CAULDRON_LABELS[key].toLowerCase()}>
+                  <TermSelect
+                    onChange={setFor(key)}
+                    options={options}
+                    value={value}
+                  />
+                </Field>
+              );
+            }
+          )}
+        </div>
+        <div className="flex items-end gap-2.5">
+          <Field label="run every (minutes)" width="w-[160px]">
+            <TermInput
+              max={MAX_INTERVAL_MINUTES}
+              min={MIN_INTERVAL_MINUTES}
+              onChange={(v) =>
+                setAlchemy({ intervalMinutes: clampInterval(Number(v)) })
+              }
+              step={1}
+              type="number"
+              value={String(intervalMinutes)}
+            />
+          </Field>
+          <RunBtn
+            disabled={!hasAny || intervalMinutes < MIN_INTERVAL_MINUTES}
+            getArgs={() => [selections, intervalMinutes]}
+            label="start alchemy"
+            scriptId="world2.alchemyUpgrade.run"
+          />
+        </div>
+        {!hasAny && (
+          <div className="mt-2 font-mono text-[10px] text-text-muted">
+            select at least one bubble to enable start.
+          </div>
         )}
-      </div>
-
-      <div className="mb-4">
-        <label
-          className="mb-1.5 block font-medium text-sm"
-          htmlFor="alchemy-interval-minutes"
-        >
-          Run every (minutes)
-        </label>
-        <Input
-          className="w-32"
-          id="alchemy-interval-minutes"
-          max={MAX_INTERVAL_MINUTES}
-          min={MIN_INTERVAL_MINUTES}
-          onChange={(e) =>
-            setAlchemy({
-              intervalMinutes: clampInterval(Number(e.target.value)),
-            })
-          }
-          step={1}
-          type="number"
-          value={intervalMinutes}
-        />
-      </div>
-
-      {!hasAny && (
-        <p className="text-muted-foreground text-sm">
-          Select at least one bubble to enable Start.
-        </p>
-      )}
-    </ScriptPage>
+      </Block>
+    </>
   );
 };
 

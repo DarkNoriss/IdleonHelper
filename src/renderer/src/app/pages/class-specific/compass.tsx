@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ScriptPage } from "@/components/script-page.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
+import {
+  Alert,
+  Block,
+  Field,
+  PageHead,
+  RunBtn,
+  TermTextarea,
+} from "@/components/terminal";
 import { useMainState } from "@/hooks/use-main-state.ts";
 import {
   COMPASS_MINOR_NODE_DEFS,
@@ -60,48 +66,55 @@ const Compass = () => {
   const hasMissing = validation !== null && validation.missing.length > 0;
 
   return (
-    <ScriptPage
-      actions={[
-        {
-          label: "Start",
-          scriptId: "classSpecific.compass.run",
-          runningLabel: "Running... (Click to stop)",
-          disabled: !validation || hasMissing,
-          args: () => [validation!.parsed],
-        },
-      ]}
-      title="Compass"
-    >
-      <div className="mb-4">
-        <label
-          className="mb-1.5 block font-medium text-sm"
-          htmlFor="compass-data"
-        >
-          Compass Data
-        </label>
-        <Textarea
-          id="compass-data"
-          onChange={(e) => setRawData(e.target.value)}
-          placeholder="Paste compass data here..."
-          rows={8}
-          value={rawData}
-        />
-      </div>
-
-      {hasMissing && (
-        <div className="mb-4">
-          <h3 className="mb-1 font-medium text-red-400 text-sm">
-            Missing nodes ({validation.missing.length}) — add these before
-            running
-          </h3>
-          <ul className="list-inside list-disc text-red-300 text-sm">
-            {validation.missing.map((name) => (
-              <li key={name}>{name}</li>
-            ))}
-          </ul>
+    <>
+      <PageHead
+        description="Drives the Divinity Compass automatically based on an upgrade plan you paste in."
+        path="class-specific / compass"
+        title="compass"
+      />
+      <Block
+        note="paste the upgrade list from your planner. format: one node-name per line. script walks the path and picks each upgrade in order."
+        tag="script"
+        title="compass.run"
+      >
+        <Field label="compass-data">
+          <TermTextarea
+            className="h-[140px]"
+            onChange={setRawData}
+            placeholder="paste compass data here..."
+            value={rawData}
+          />
+        </Field>
+        {hasMissing && (
+          <div className="mt-2.5">
+            <Alert tone="danger">
+              <div className="mb-1 font-semibold">
+                missing nodes ({validation.missing.length}) — add these before
+                running:
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {validation.missing.map((name) => (
+                  <span
+                    className="rounded-sm border border-destructive/40 bg-destructive/[0.08] px-1.5 py-px"
+                    key={name}
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </Alert>
+          </div>
+        )}
+        <div className="mt-2.5">
+          <RunBtn
+            disabled={!validation || hasMissing}
+            getArgs={() => [validation?.parsed ?? []]}
+            label="start compass"
+            scriptId="classSpecific.compass.run"
+          />
         </div>
-      )}
-    </ScriptPage>
+      </Block>
+    </>
   );
 };
 

@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
-import { ScriptPage } from "@/components/script-page.tsx";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select.tsx";
+  Block,
+  Field,
+  PageHead,
+  RunBtn,
+  TermSelect,
+} from "@/components/terminal";
 import { useMainState } from "@/hooks/use-main-state.ts";
 import { critters, trapConfigs } from "@/parsers/trapping";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
@@ -20,7 +19,6 @@ const formatCountdown = (ms: number): string => {
   const hours = Math.floor((totalSeconds % 86_400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-
   if (days > 0) {
     return `${days}d ${hours}h`;
   }
@@ -33,80 +31,24 @@ const formatCountdown = (ms: number): string => {
   return `${seconds}s`;
 };
 
-type TrapTimerSelectsProps = {
-  trap: string;
-  onTrapChange: (value: string | null) => void;
-  timer: string;
-  onTimerChange: (value: string | null) => void;
-  idPrefix: string;
+const critterOptions = [{ value: "", label: "select critter…" }, ...critters];
+const trapOptions = [
+  { value: "", label: "select trap…" },
+  ...trapConfigs.map((t) => ({ value: t.value, label: t.label })),
+];
+
+const timerOptionsFor = (trap: string): { value: string; label: string }[] => {
+  const selected = trapConfigs.find((t) => t.value === trap);
+  if (!selected) {
+    return [{ value: "", label: "—" }];
+  }
+  return [
+    { value: "", label: "—" },
+    ...selected.timers.map((t) => ({ value: t, label: t })),
+  ];
 };
 
-const TrapTimerSelects = ({
-  trap,
-  onTrapChange,
-  timer,
-  onTimerChange,
-  idPrefix,
-}: TrapTimerSelectsProps) => {
-  const selectedTrap = trapConfigs.find((t) => t.value === trap);
-
-  return (
-    <>
-      <div>
-        <label
-          className="mb-1.5 block font-medium text-sm"
-          htmlFor={`${idPrefix}-trap`}
-        >
-          Trap Type
-        </label>
-        <Select onValueChange={onTrapChange} value={trap}>
-          <SelectTrigger id={`${idPrefix}-trap`}>
-            <SelectValue placeholder="Select trap">
-              {(v) => trapConfigs.find((t) => t.value === v)?.label ?? v}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {trapConfigs.map((t) => (
-              <SelectItem key={t.value} value={t.value}>
-                {t.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <label
-          className="mb-1.5 block font-medium text-sm"
-          htmlFor={`${idPrefix}-timer`}
-        >
-          Timer
-        </label>
-        <Select
-          disabled={!selectedTrap}
-          onValueChange={onTimerChange}
-          value={timer}
-        >
-          <SelectTrigger id={`${idPrefix}-timer`}>
-            <SelectValue placeholder="Select timer" />
-          </SelectTrigger>
-          <SelectContent>
-            {selectedTrap?.timers.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    </>
-  );
-};
-
-const sanitizeTrapTimer = (
-  trap: string,
-  timer: string
-): { trap: string; timer: string } => {
+const sanitizeTrapTimer = (trap: string, timer: string) => {
   if (trap === "") {
     return { trap: "", timer: "" };
   }
@@ -120,12 +62,13 @@ const sanitizeTrapTimer = (
   return { trap, timer };
 };
 
-const TrapPlacingSection = () => {
+const PlaceBlock = () => {
   const critter = useUiPrefsStore((s) => s.trapping.place.critter);
   const trap = useUiPrefsStore((s) => s.trapping.place.trap);
   const timer = useUiPrefsStore((s) => s.trapping.place.timer);
   const setTrappingPlace = useUiPrefsStore((s) => s.setTrappingPlace);
   const placeTraps = useMainState("placeTraps");
+  const timerOptions = useMemo(() => timerOptionsFor(trap), [trap]);
 
   useEffect(() => {
     if (critter !== "" && !critters.some((c) => c.value === critter)) {
@@ -140,73 +83,55 @@ const TrapPlacingSection = () => {
     }
   }, [trap, timer, setTrappingPlace]);
 
-  const handleTrapChange = (value: string | null) => {
-    if (value === null) {
-      return;
-    }
-    setTrappingPlace({ trap: value, timer: "" });
-  };
-
   return (
-    <ScriptPage
-      actions={[
-        {
-          label: "Place Traps",
-          scriptId: "world3.trapping.placeTraps",
-          runningLabel: "Placing... (Click to stop)",
-          args: () => [critter, trap, timer],
-        },
-      ]}
-      title="Trap Placing"
+    <Block
+      compact
+      note="open the trapping menu in-game on any character. pick critter + trap tier + duration."
+      tag="script"
+      title="traps.place"
     >
-      <div className="mb-4 grid grid-cols-3 gap-4">
-        <div>
-          <label
-            className="mb-1.5 block font-medium text-sm"
-            htmlFor="place-critter"
-          >
-            Critter
-          </label>
-          <Select
-            onValueChange={(v) =>
-              v !== null && setTrappingPlace({ critter: v })
-            }
+      <div className="grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-2">
+        <Field label="critter">
+          <TermSelect
+            onChange={(v) => setTrappingPlace({ critter: v })}
+            options={critterOptions}
             value={critter}
-          >
-            <SelectTrigger id="place-critter">
-              <SelectValue placeholder="Select critter">
-                {(v) => critters.find((c) => c.value === v)?.label ?? v}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {critters.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <TrapTimerSelects
-          idPrefix="place"
-          onTimerChange={(v) => v !== null && setTrappingPlace({ timer: v })}
-          onTrapChange={handleTrapChange}
-          timer={timer}
-          trap={trap}
+          />
+        </Field>
+        <Field label="trap-type">
+          <TermSelect
+            onChange={(v) => setTrappingPlace({ trap: v, timer: "" })}
+            options={trapOptions}
+            value={trap}
+          />
+        </Field>
+        <Field label="timer">
+          <TermSelect
+            disabled={!trap}
+            onChange={(v) => setTrappingPlace({ timer: v })}
+            options={timerOptions}
+            value={timer}
+          />
+        </Field>
+        <RunBtn
+          disabled={!(critter && trap && timer)}
+          getArgs={() => [critter, trap, timer]}
+          label="place"
+          scriptId="world3.trapping.placeTraps"
+          small
         />
       </div>
-
       {placeTraps?.current && (
-        <p className="mb-4 font-medium text-sm">
-          Placing for character {placeTraps.current}...
-        </p>
+        <div className="mt-2 font-mono text-[10px] text-text-dim">
+          placing for character{" "}
+          <span className="text-foreground">{placeTraps.current}</span>…
+        </div>
       )}
-    </ScriptPage>
+    </Block>
   );
 };
 
-const TrapCollectingSection = () => {
+const CollectBlock = () => {
   const trap = useUiPrefsStore((s) => s.trapping.collect.trap);
   const timer = useUiPrefsStore((s) => s.trapping.collect.timer);
   const setTrappingCollect = useUiPrefsStore((s) => s.setTrappingCollect);
@@ -216,6 +141,7 @@ const TrapCollectingSection = () => {
   const hasCollectTrapsItem =
     queue?.queue.some((i) => i.scriptId === "world3.trapping.collectTraps") ??
     false;
+  const timerOptions = useMemo(() => timerOptionsFor(trap), [trap]);
 
   useEffect(() => {
     const sanitized = sanitizeTrapTimer(trap, timer);
@@ -224,20 +150,12 @@ const TrapCollectingSection = () => {
     }
   }, [trap, timer, setTrappingCollect]);
 
-  const handleTrapChange = (value: string | null) => {
-    if (value === null) {
-      return;
-    }
-    setTrappingCollect({ trap: value, timer: "" });
-  };
-
   useEffect(() => {
     const endsAt = collectTraps?.endsAt;
     if (!(endsAt && hasCollectTrapsItem)) {
       setRemaining(null);
       return;
     }
-
     const update = () => {
       const diff = endsAt - Date.now();
       if (diff <= 0) {
@@ -246,50 +164,62 @@ const TrapCollectingSection = () => {
         setRemaining(formatCountdown(diff));
       }
     };
-
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [collectTraps?.endsAt, hasCollectTrapsItem]);
 
   return (
-    <ScriptPage
-      actions={[
-        {
-          label: "Collect Traps",
-          scriptId: "world3.trapping.collectTraps",
-          runningLabel: "Collecting... (Click to stop)",
-          args: () => [timer],
-        },
-      ]}
-      title="Trap Collecting"
+    <Block
+      compact
+      note="collects traps of chosen tier. leave timer empty to skip re-arming."
+      tag="script"
+      title="traps.collect"
     >
-      <div className="mb-4 grid grid-cols-2 gap-4">
-        <TrapTimerSelects
-          idPrefix="collect"
-          onTimerChange={(v) => v !== null && setTrappingCollect({ timer: v })}
-          onTrapChange={handleTrapChange}
-          timer={timer}
-          trap={trap}
+      <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+        <Field label="trap-type">
+          <TermSelect
+            onChange={(v) => setTrappingCollect({ trap: v, timer: "" })}
+            options={trapOptions}
+            value={trap}
+          />
+        </Field>
+        <Field label="timer (optional)">
+          <TermSelect
+            disabled={!trap}
+            onChange={(v) => setTrappingCollect({ timer: v })}
+            options={timerOptions}
+            value={timer}
+          />
+        </Field>
+        <RunBtn
+          disabled={!trap}
+          getArgs={() => [timer]}
+          label="collect"
+          scriptId="world3.trapping.collectTraps"
+          small
         />
       </div>
-
       {remaining && (
-        <p className="mb-4 font-medium text-sm">
-          Next collection in: {remaining}
-        </p>
+        <div className="mt-2 font-mono text-[10px] text-text-dim">
+          next collection in{" "}
+          <span className="text-foreground">{remaining}</span>
+        </div>
       )}
-    </ScriptPage>
+    </Block>
   );
 };
 
-const Trapping = () => {
-  return (
-    <div className="space-y-6">
-      <TrapPlacingSection />
-      <TrapCollectingSection />
-    </div>
-  );
-};
+const Trapping = () => (
+  <>
+    <PageHead
+      description="Places and collects traps across all characters with trapping unlocked. Script rotates through each automatically."
+      path="world-3 / trapping"
+      title="trapping"
+    />
+    <PlaceBlock />
+    <CollectBlock />
+  </>
+);
 
 export default Trapping;
