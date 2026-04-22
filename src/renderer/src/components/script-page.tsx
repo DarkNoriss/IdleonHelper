@@ -96,7 +96,6 @@ export const ScriptPage = ({ title, actions, children }: ScriptPageProps) => {
                   className="w-full"
                   disabled={!(myRunning || myQueued) && action.disabled}
                   onClick={makeHandler(action)}
-                  size="sm"
                 >
                   {myRunning ? (
                     <>
