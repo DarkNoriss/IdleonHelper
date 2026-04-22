@@ -84,13 +84,15 @@ export const AppSidebar = () => {
 
   const entries = useMemo(
     () =>
-      navConfig.map((entry) => {
-        if (!("items" in entry)) {
-          return entry;
-        }
-        const visible = entry.items.filter((i) => !i.devOnly || isDev);
-        return { ...entry, items: visible };
-      }),
+      navConfig
+        .filter((entry) => "items" in entry || !entry.devOnly || isDev)
+        .map((entry) => {
+          if (!("items" in entry)) {
+            return entry;
+          }
+          const visible = entry.items.filter((i) => !i.devOnly || isDev);
+          return { ...entry, items: visible };
+        }),
     [isDev]
   );
 
