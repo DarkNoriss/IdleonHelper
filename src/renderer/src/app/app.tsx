@@ -29,9 +29,9 @@ export const App = () => {
           <AppHeader />
           <SidebarProvider className="min-h-0 flex-1">
             <AppSidebar />
-            <SidebarInset>
+            <SidebarInset className="min-w-0">
               <ScrollArea className="h-full max-h-full">
-                <div className="block h-full max-h-full min-h-0 flex-1 p-2">
+                <div className="block h-full max-h-full min-h-0 min-w-0 flex-1 p-2">
                   <Suspense fallback={null}>
                     <ActivePage />
                   </Suspense>
