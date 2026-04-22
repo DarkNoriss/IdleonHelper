@@ -1,27 +1,58 @@
-import { ScriptPage } from "@/components/script-page.tsx";
+import { useEffect, useState } from "react";
+import { Block, PageHead, RunBtn } from "@/components/terminal";
 
-const Summoning = () => (
-  <ScriptPage
-    actions={[
-      {
-        label: "Start Endless Autobattler",
-        scriptId: "world6.summoning.startEndlessAutobattler",
-      },
-      {
-        label: "Start Autobattler",
-        scriptId: "world6.summoning.startAutobattler",
-      },
-      {
-        label: "Debug - Board Range",
-        scriptId: "world6.summoning.debugBoardRange",
-      },
-      {
-        label: "Debug - Board Image",
-        scriptId: "world6.summoning.debugBoardImage",
-      },
-    ]}
-    title="Summoning"
-  />
-);
+const Summoning = () => {
+  const [isDev, setIsDev] = useState(false);
+  useEffect(() => {
+    window.api.app
+      .isDev()
+      .then(setIsDev)
+      .catch(() => setIsDev(false));
+  }, []);
+
+  return (
+    <>
+      <PageHead
+        description="Runs the summoning autobattler — pick endless mode for grinding or normal for progression."
+        path="world-6 / summoning"
+        title="summoning"
+      />
+      <Block
+        note="open the summoning arena in-game first. the script controls mouse and reads the board each turn."
+        tag="scripts"
+        title="summoning.scripts"
+      >
+        <div className="grid grid-cols-2 gap-2">
+          <RunBtn
+            label="start endless autobattler"
+            scriptId="world6.summoning.startEndlessAutobattler"
+          />
+          <RunBtn
+            label="start autobattler"
+            scriptId="world6.summoning.startAutobattler"
+          />
+        </div>
+      </Block>
+      {isDev && (
+        <Block
+          note="visual probes for the board reader. dev-only."
+          tag="debug"
+          title="summoning.debug"
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <RunBtn
+              label="debug - board range"
+              scriptId="world6.summoning.debugBoardRange"
+            />
+            <RunBtn
+              label="debug - board image"
+              scriptId="world6.summoning.debugBoardImage"
+            />
+          </div>
+        </Block>
+      )}
+    </>
+  );
+};
 
 export default Summoning;

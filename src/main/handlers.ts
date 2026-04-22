@@ -39,6 +39,25 @@ export const setupHandlers = (): void => {
     }
   });
 
+  ipcMain.on("window-minimize", () => {
+    const window = BrowserWindow.getFocusedWindow();
+    if (window) {
+      window.minimize();
+    }
+  });
+
+  ipcMain.on("window-maximize", () => {
+    const window = BrowserWindow.getFocusedWindow();
+    if (!window) {
+      return;
+    }
+    if (window.isMaximized()) {
+      window.unmaximize();
+    } else {
+      window.maximize();
+    }
+  });
+
   // Weekly battle data (not scripts — data operations)
   ipcMain.handle("script:world-2.weekly-battle.fetch", async () => {
     logger.log("IPC: script:world-2.weekly-battle.fetch");

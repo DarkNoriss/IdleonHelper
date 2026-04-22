@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import type { NavigationPage } from "@/app/page-registry.ts";
+import type { NavigationPage } from "@/app/page-ids.ts";
 
-export type { NavigationPage } from "@/app/page-registry.ts";
+export type { NavigationPage } from "@/app/page-ids.ts";
 
 type NavigationState = {
   currentPage: NavigationPage;

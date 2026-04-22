@@ -1,60 +1,66 @@
-import type { NavigationPage } from "./page-registry";
+import type { NavigationPage } from "./page-ids";
+
+type NavItem = {
+  title: string;
+  page: NavigationPage;
+  devOnly?: boolean;
+};
 
 type NavGroup = {
   title: string;
-  items: { title: string; page: NavigationPage; devOnly?: boolean }[];
+  items: NavItem[];
 };
 
-type NavEntry = { title: string; page: NavigationPage } | NavGroup;
+type NavEntry = NavItem | NavGroup;
 
 export const navConfig: NavEntry[] = [
-  { title: "Dashboard", page: "dashboard" },
-  { title: "Raw Data", page: "rawData" },
+  { title: "dashboard", page: "dashboard" },
+  { title: "raw-data", page: "rawData" },
+  { title: "debug", page: "debug", devOnly: true },
   {
-    title: "General",
+    title: "general",
     items: [
-      { title: "Logs", page: "logs" },
-      { title: "Store Items", page: "general/store-items" },
-      { title: "Candy", page: "general/candy" },
-      { title: "Boss Farmer", page: "general/boss-farmer" },
-      { title: "Card Presets", page: "general/card-presets" },
-      { title: "Debug", page: "general/debug", devOnly: true },
+      { title: "logs", page: "logs" },
+      { title: "store-items", page: "general/store-items" },
+      { title: "candy", page: "general/candy" },
+      { title: "boss-farmer", page: "general/boss-farmer" },
+      { title: "card-presets", page: "general/card-presets" },
     ],
   },
   {
-    title: "Class Specific",
+    title: "class-specific",
     items: [
-      { title: "Compass", page: "classSpecific/compass" },
+      { title: "compass", page: "classSpecific/compass" },
       {
-        title: "Compass Debug",
+        title: "compass-debug",
         page: "classSpecific/compass-debug",
         devOnly: true,
       },
     ],
   },
   {
-    title: "World 2",
+    title: "world-2",
     items: [
-      { title: "Weekly Battle", page: "world2/weekly-battle" },
-      { title: "Alchemy Upgrade", page: "world2/alchemy-upgrade" },
+      { title: "weekly-battle", page: "world2/weekly-battle" },
+      { title: "alchemy-upgrade", page: "world2/alchemy-upgrade" },
     ],
   },
   {
-    title: "World 3",
+    title: "world-3",
     items: [
-      { title: "Construction", page: "world3/construction" },
-      { title: "Trapping", page: "world3/trapping" },
+      { title: "construction", page: "world3/construction" },
+      { title: "trapping", page: "world3/trapping" },
     ],
   },
   {
-    title: "World 6",
+    title: "world-6",
     items: [
-      { title: "Summoning", page: "world6/summoning" },
-      { title: "Farming", page: "world6/farming" },
+      { title: "summoning", page: "world6/summoning" },
+      { title: "farming", page: "world6/farming" },
     ],
   },
   {
-    title: "World 7",
-    items: [{ title: "Sushi Station", page: "world7/sushi-station" }],
+    title: "world-7",
+    items: [{ title: "sushi-station", page: "world7/sushi-station" }],
   },
 ];

@@ -1,131 +1,105 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-:root {
-  --background: oklch(0.9818 0.0054 95.0986);
-  --foreground: oklch(0.3438 0.0269 95.7226);
-  --card: oklch(0.9818 0.0054 95.0986);
-  --card-foreground: oklch(0.1908 0.002 106.5859);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2671 0.0196 98.939);
-  --primary: oklch(0.6171 0.1375 39.0427);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.9245 0.0138 92.9892);
-  --secondary-foreground: oklch(0.4334 0.0177 98.6048);
-  --muted: oklch(0.9341 0.0153 90.239);
-  --muted-foreground: oklch(0.6059 0.0075 97.4233);
-  --accent: oklch(0.9245 0.0138 92.9892);
-  --accent-foreground: oklch(0.2671 0.0196 98.939);
-  --destructive: oklch(0.1908 0.002 106.5859);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.8847 0.0069 97.3627);
-  --input: oklch(0.7621 0.0156 98.3528);
-  --ring: oklch(0.6171 0.1375 39.0427);
-  --chart-1: oklch(0.5583 0.1276 42.9956);
-  --chart-2: oklch(0.6898 0.1581 290.4107);
-  --chart-3: oklch(0.8816 0.0276 93.128);
-  --chart-4: oklch(0.8822 0.0403 298.1792);
-  --chart-5: oklch(0.5608 0.1348 42.0584);
-  --sidebar: oklch(0.9663 0.008 98.8792);
-  --sidebar-foreground: oklch(0.359 0.0051 106.6524);
-  --sidebar-primary: oklch(0.6171 0.1375 39.0427);
-  --sidebar-primary-foreground: oklch(0.9881 0 0);
-  --sidebar-accent: oklch(0.9245 0.0138 92.9892);
-  --sidebar-accent-foreground: oklch(0.325 0 0);
-  --sidebar-border: oklch(0.9401 0 0);
-  --sidebar-ring: oklch(0.7731 0 0);
+/*
+  Command Center design tokens.
+  Source of truth: .design-ref/v3-app.jsx `v` object.
+  The app is dark-only; :root and .dark carry identical values so the
+  ThemeProvider toggle is a safe no-op.
+*/
+
+:root,
+.dark {
+  /* Structural surfaces */
+  --panel: #141210;
+  --panel-2: #1a1714;
+  --surface: #1f1b17;
+  --surface-hi: #26211c;
+  --border-soft: #201c17;
+
+  /* Text tones */
+  --text-dim: #8c8270;
+  --text-muted: #5c5448;
+
+  /* Brand + semantic accents */
+  --primary-hover: #ef8f6a;
+  --primary-dim: #a85c3d;
+  --primary-ink: #1a0e08;
+  --amber: #efbf7a;
+  --success: #85c77a;
+  --warn: #e0c05a;
+  --info: #6fa8d6;
+
+  /* Shadcn-compatible tokens repainted to match the design */
+  --background: #0b0a09;
+  --foreground: #eadfc9;
+  --card: var(--panel);
+  --card-foreground: #eadfc9;
+  --popover: var(--panel);
+  --popover-foreground: #eadfc9;
+  --primary: #e8815a;
+  --primary-foreground: var(--primary-ink);
+  --secondary: var(--surface);
+  --secondary-foreground: #eadfc9;
+  --muted: var(--panel-2);
+  --muted-foreground: var(--text-dim);
+  --accent: var(--surface);
+  --accent-foreground: #eadfc9;
+  --destructive: #d76a5f;
+  --destructive-foreground: #eadfc9;
+  --border: #2a241e;
+  --input: #2a241e;
+  --ring: #e8815a;
+  --sidebar: var(--panel);
+  --sidebar-foreground: #eadfc9;
+  --sidebar-primary: #e8815a;
+  --sidebar-primary-foreground: var(--primary-ink);
+  --sidebar-accent: var(--surface);
+  --sidebar-accent-foreground: #eadfc9;
+  --sidebar-border: var(--border-soft);
+  --sidebar-ring: #e8815a;
+
+  /* Fonts */
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    "Inter Variable", Inter, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  --radius: 0.5rem;
-  --shadow-x: 0;
-  --shadow-y: 1px;
-  --shadow-blur: 3px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.1;
+    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular,
+    Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* Radii — tighter than the previous 0.5rem to match terminal crispness */
+  --radius: 0.1875rem; /* 3px */
+
+  /* Chart tokens (kept from shadcn template in case any chart shows later) */
+  --chart-1: #e8815a;
+  --chart-2: #efbf7a;
+  --chart-3: #85c77a;
+  --chart-4: #6fa8d6;
+  --chart-5: #d76a5f;
+
+  /* Shadows (subtle, warm-charcoal depth) */
   --shadow-color: oklch(0 0 0);
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
+  --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.35);
+  --shadow-sm: 0 2px 4px -1px hsl(0 0% 0% / 0.4);
+  --shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.4);
+  --shadow-md: 0 6px 10px -2px hsl(0 0% 0% / 0.45);
+  --shadow-lg: 0 10px 20px -4px hsl(0 0% 0% / 0.5);
+  --shadow-xl: 0 16px 32px -8px hsl(0 0% 0% / 0.55);
+  --shadow-2xl: 0 20px 60px 0 hsl(0 0% 0% / 0.6);
+
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 }
 
-.dark {
-  --background: oklch(0.2679 0.0036 106.6427);
-  --foreground: oklch(0.8074 0.0142 93.0137);
-  --card: oklch(0.2679 0.0036 106.6427);
-  --card-foreground: oklch(0.9818 0.0054 95.0986);
-  --popover: oklch(0.3085 0.0035 106.6039);
-  --popover-foreground: oklch(0.9211 0.004 106.4781);
-  --primary: oklch(0.6724 0.1308 38.7559);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.9818 0.0054 95.0986);
-  --secondary-foreground: oklch(0.3085 0.0035 106.6039);
-  --muted: oklch(0.2213 0.0038 106.707);
-  --muted-foreground: oklch(0.7713 0.0169 99.0657);
-  --accent: oklch(0.213 0.0078 95.4245);
-  --accent-foreground: oklch(0.9663 0.008 98.8792);
-  --destructive: oklch(0.6368 0.2078 25.3313);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.3618 0.0101 106.8928);
-  --input: oklch(0.4336 0.0113 100.2195);
-  --ring: oklch(0.6724 0.1308 38.7559);
-  --chart-1: oklch(0.5583 0.1276 42.9956);
-  --chart-2: oklch(0.6898 0.1581 290.4107);
-  --chart-3: oklch(0.213 0.0078 95.4245);
-  --chart-4: oklch(0.3074 0.0516 289.323);
-  --chart-5: oklch(0.5608 0.1348 42.0584);
-  --sidebar: oklch(0.2357 0.0024 67.7077);
-  --sidebar-foreground: oklch(0.8074 0.0142 93.0137);
-  --sidebar-primary: oklch(0.325 0 0);
-  --sidebar-primary-foreground: oklch(0.9881 0 0);
-  --sidebar-accent: oklch(0.168 0.002 106.6177);
-  --sidebar-accent-foreground: oklch(0.8074 0.0142 93.0137);
-  --sidebar-border: oklch(0.9401 0 0);
-  --sidebar-ring: oklch(0.7731 0 0);
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  --radius: 0.5rem;
-  --shadow-x: 0;
-  --shadow-y: 1px;
-  --shadow-blur: 3px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.1;
-  --shadow-color: oklch(0 0 0);
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-}
-
 @theme inline {
+  /* Shadcn-aligned colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -159,14 +133,30 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Command Center extensions — usable as bg-panel, text-dim, border-soft, etc. */
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-surface: var(--surface);
+  --color-surface-hi: var(--surface-hi);
+  --color-border-soft: var(--border-soft);
+  --color-text-dim: var(--text-dim);
+  --color-text-muted: var(--text-muted);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-dim: var(--primary-dim);
+  --color-primary-ink: var(--primary-ink);
+  --color-amber: var(--amber);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-info: var(--info);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: calc(var(--radius) - 1px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 5px);
 
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
@@ -182,7 +172,67 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
+  html,
+  body,
+  #root {
+    padding: 0;
+    margin: 0;
+    @apply h-full bg-background text-foreground;
   }
+  body {
+    font-size: 12px;
+    @apply font-sans;
+  }
+}
+
+/* Keyframes referenced by the design's spinner + pulse affordances */
+@keyframes v3spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes v3pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes v3indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+/* Utility shortcuts for the design's animations */
+.animate-v3spin {
+  animation: v3spin 0.8s linear infinite;
+}
+.animate-v3pulse {
+  animation: v3pulse 1.4s ease-in-out infinite;
+}
+.animate-v3indeterminate {
+  animation: v3indeterminate 1.8s ease-in-out infinite;
+}
+
+/* Scrollbar — thin warm-charcoal track + thumb */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3128;
 }

@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ScriptAction } from "@/components/script-page.tsx";
-import { ScriptPage } from "@/components/script-page.tsx";
-import { Checkbox } from "@/components/ui/checkbox.tsx";
+import { Block, PageHead, RunBtn, TermCheckbox } from "@/components/terminal";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 
 const SushiStation = () => {
@@ -16,36 +14,44 @@ const SushiStation = () => {
       .catch(() => setIsDev(false));
   }, []);
 
-  const actions: ScriptAction[] = [
-    {
-      label: "Merge Sushi",
-      scriptId: "world7.sushiStation.sushiStationMerge",
-      runningLabel: "Stop",
-      args: () => [shouldCook],
-    },
-    ...(isDev
-      ? [
-          {
-            label: "Debug",
-            scriptId: "world7.sushiStation.sushiStationMergeDebug",
-          } satisfies ScriptAction,
-        ]
-      : []),
-  ];
-
   return (
-    <ScriptPage actions={actions} title="Sushi Station">
-      <div className="mb-4">
-        <label className="flex items-center gap-2 text-sm" htmlFor="cook">
-          <Checkbox
+    <>
+      <PageHead
+        description="Merges matching sushi pieces on the board, optionally spawning new ones when no pairs remain."
+        path="world-7 / sushi-station"
+        title="sushi-station"
+      />
+      <Block
+        note="open the sushi station in-game. the script reads the board visually and merges pairs it finds."
+        tag="script"
+        title="sushi.merge"
+      >
+        <div className="mb-3">
+          <TermCheckbox
             checked={shouldCook}
-            id="cook"
-            onCheckedChange={(v) => setSushi({ shouldCook: v === true })}
+            label="spawn new sushi when no pairs found"
+            onChange={(v) => setSushi({ shouldCook: v })}
           />
-          Spawn new sushi when no pairs found
-        </label>
-      </div>
-    </ScriptPage>
+        </div>
+        <RunBtn
+          getArgs={() => [shouldCook]}
+          label="start merge"
+          scriptId="world7.sushiStation.sushiStationMerge"
+        />
+      </Block>
+      {isDev && (
+        <Block
+          note="visualizes the board the merge script sees. dev-only."
+          tag="script"
+          title="sushi.merge-debug"
+        >
+          <RunBtn
+            label="debug merge"
+            scriptId="world7.sushiStation.sushiStationMergeDebug"
+          />
+        </Block>
+      )}
+    </>
   );
 };
 

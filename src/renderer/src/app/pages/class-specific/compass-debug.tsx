@@ -1,18 +1,23 @@
 import { useMemo, useState } from "react";
-import { ScriptPage } from "@/components/script-page.tsx";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
+  Alert,
+  Block,
+  Field,
+  PageHead,
+  RunBtn,
+  TermSelect,
+  TermTextarea,
+} from "@/components/terminal";
 import {
   COMPASS_MINOR_NODE_DEFS,
   COMPASS_NODE_DEFS,
 } from "@/shared/compass-config";
 import { parseCompassData } from "./compass-parser";
+
+const nodeOptions = [
+  { value: "", label: "select a node…" },
+  ...COMPASS_NODE_DEFS.map((n) => ({ value: n.id, label: n.label })),
+];
 
 const CompassDebug = () => {
   const [selectedNode, setSelectedNode] = useState("");
@@ -33,7 +38,6 @@ const CompassDebug = () => {
     const parsed = parseCompassData(rawData);
     const found: string[] = [];
     const missing: string[] = [];
-
     const findMatch = (name: string): string | undefined => {
       if (knownIds.has(name)) {
         return name;
@@ -45,7 +49,6 @@ const CompassDebug = () => {
       }
       return undefined;
     };
-
     for (const upgrade of parsed) {
       const match = findMatch(upgrade.name);
       if (match) {
@@ -58,111 +61,112 @@ const CompassDebug = () => {
   }, [rawData, knownIds]);
 
   return (
-    <ScriptPage
-      actions={[
-        {
-          label: "Discover Neighbors",
-          scriptId: "classSpecific.compass.discover",
-          runningLabel: "Discovering... (Click to stop)",
-          disabled: !selectedNode,
-          args: () => [selectedNode],
-        },
-        {
-          label: "Discover All",
-          scriptId: "classSpecific.compass.discoverAll",
-          runningLabel: "Discovering All... (Click to stop)",
-        },
-        {
-          label: "Debug Minor Nodes",
-          scriptId: "classSpecific.compass.minorDebug",
-          runningLabel: "Scanning... (Click to stop)",
-          disabled: !selectedNode,
-          args: () => [selectedNode],
-        },
-        {
-          label: "Calibrate Center",
-          scriptId: "classSpecific.compass.calibrate",
-          runningLabel: "Calibrating... (Click to stop)",
-        },
-      ]}
-      title="Compass Debug"
-    >
-      <div className="mb-4">
-        <label
-          className="mb-1.5 block font-medium text-sm"
-          htmlFor="node-select"
-        >
-          Node to Center
-        </label>
-        <Select
-          onValueChange={(v) => v !== null && setSelectedNode(v)}
-          value={selectedNode}
-        >
-          <SelectTrigger id="node-select">
-            <SelectValue placeholder="Select a node...">
-              {(v) => COMPASS_NODE_DEFS.find((n) => n.id === v)?.label ?? v}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {COMPASS_NODE_DEFS.map((node) => (
-              <SelectItem key={node.id} value={node.id}>
-                {node.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <>
+      <PageHead
+        description="Debug probes for compass navigation and image templates. Intended for development."
+        path="class-specific / compass-debug"
+        title="compass-debug"
+      />
+      <Alert tone="warn">dev-only. results land in logs.</Alert>
 
-      <div className="mb-4">
-        <label
-          className="mb-1.5 block font-medium text-sm"
-          htmlFor="audit-data"
-        >
-          Image Audit — Paste compass data to check for missing images
-        </label>
-        <Textarea
-          id="audit-data"
-          onChange={(e) => setRawData(e.target.value)}
-          placeholder="Paste compass data here..."
-          rows={6}
-          value={rawData}
-        />
-      </div>
-
-      {auditResult && (
-        <div className="space-y-3">
-          {auditResult.missing.length > 0 && (
-            <div>
-              <h3 className="mb-1 font-medium text-red-400 text-sm">
-                Missing ({auditResult.missing.length})
-              </h3>
-              <ul className="list-inside list-disc text-red-300 text-sm">
-                {auditResult.missing.map((name) => (
-                  <li key={name}>{name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {auditResult.found.length > 0 && (
-            <div>
-              <h3 className="mb-1 font-medium text-green-400 text-sm">
-                Found ({auditResult.found.length})
-              </h3>
-              <ul className="list-inside list-disc text-green-300 text-sm">
-                {auditResult.found.map((name) => (
-                  <li key={name}>{name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {auditResult.missing.length === 0 && (
-            <p className="font-medium text-green-400 text-sm">
-              All nodes have images!
-            </p>
-          )}
+      <Block
+        note="pick a node and run 'discover' to probe its neighbors, or 'minor-debug' to inspect minor nodes around it."
+        tag="script"
+        title="compass.node-tools"
+      >
+        <Field label="node-to-center">
+          <TermSelect
+            onChange={setSelectedNode}
+            options={nodeOptions}
+            value={selectedNode}
+          />
+        </Field>
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
+          <RunBtn
+            disabled={!selectedNode}
+            getArgs={() => [selectedNode]}
+            label="discover neighbors"
+            scriptId="classSpecific.compass.discover"
+            small
+          />
+          <RunBtn
+            label="discover all"
+            scriptId="classSpecific.compass.discoverAll"
+            small
+          />
+          <RunBtn
+            disabled={!selectedNode}
+            getArgs={() => [selectedNode]}
+            label="debug minor nodes"
+            scriptId="classSpecific.compass.minorDebug"
+            small
+          />
+          <RunBtn
+            label="calibrate center"
+            scriptId="classSpecific.compass.calibrate"
+            small
+          />
         </div>
-      )}
-    </ScriptPage>
+      </Block>
+
+      <Block
+        note="paste compass data to audit which nodes have images configured and which are missing."
+        tag="audit"
+        title="compass.image-audit"
+      >
+        <Field label="compass-data">
+          <TermTextarea
+            className="h-[120px]"
+            onChange={setRawData}
+            placeholder="paste compass data here..."
+            value={rawData}
+          />
+        </Field>
+        {auditResult && (
+          <div className="mt-2.5 space-y-2">
+            {auditResult.missing.length > 0 && (
+              <div>
+                <div className="mb-1 font-mono text-[10px] text-destructive">
+                  missing ({auditResult.missing.length})
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {auditResult.missing.map((name) => (
+                    <span
+                      className="rounded-sm border border-destructive/40 bg-destructive/[0.08] px-1.5 py-px font-mono text-[10px] text-destructive"
+                      key={name}
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {auditResult.found.length > 0 && (
+              <div>
+                <div className="mb-1 font-mono text-[10px] text-success">
+                  found ({auditResult.found.length})
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {auditResult.found.map((name) => (
+                    <span
+                      className="rounded-sm border border-success/40 bg-success/[0.08] px-1.5 py-px font-mono text-[10px] text-success"
+                      key={name}
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {auditResult.missing.length === 0 && (
+              <div className="font-mono text-[10px] text-success">
+                ✓ all nodes have images
+              </div>
+            )}
+          </div>
+        )}
+      </Block>
+    </>
   );
 };
 
