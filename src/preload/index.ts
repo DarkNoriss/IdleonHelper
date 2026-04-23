@@ -146,6 +146,11 @@ const api = {
       };
     },
   },
+  scriptConfigs: {
+    publish: (scriptId: string, args: unknown[]) => {
+      return ipcRenderer.invoke("scriptConfigs:publish", scriptId, args);
+    },
+  },
 };
 
 if (process.contextIsolated) {

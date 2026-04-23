@@ -11,7 +11,7 @@ import path from "node:path";
 import { app } from "electron";
 import type { ScriptMap } from "../../types/scripts";
 import { queueEngine } from "../queue/index";
-import { setState } from "../state-hub";
+import { getState, setState } from "../state-hub";
 import { logger, restrictFilePerms, transcriptPathFor } from "../utils/index";
 import { panicExit } from "./panic-exit";
 
@@ -111,9 +111,10 @@ const handle = async (
       scriptId: string;
       args?: unknown[];
     };
+    const fallback = getState("scriptConfigs")[body.scriptId] ?? [];
     const { itemId } = queueEngine.enqueue(
       body.scriptId as keyof ScriptMap,
-      body.args ?? []
+      body.args ?? fallback
     );
     json(res, 200, { itemId, transcriptPath: transcriptPathFor(itemId) });
     return;

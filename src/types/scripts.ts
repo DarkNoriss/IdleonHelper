@@ -134,4 +134,5 @@ export type AppState = {
     port: number | null;
     armed: boolean;
   };
+  scriptConfigs: Record<string, unknown[]>;
 };

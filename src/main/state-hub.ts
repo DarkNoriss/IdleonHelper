@@ -34,6 +34,7 @@ const state: AppState = {
     port: null,
     armed: false,
   },
+  scriptConfigs: {},
 };
 
 export function setState<K extends keyof AppState>(

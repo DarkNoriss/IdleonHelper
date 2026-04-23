@@ -140,6 +140,9 @@ declare global {
           callback: (value: AppState[K]) => void
         ) => () => void;
       };
+      scriptConfigs: {
+        publish: (scriptId: string, args: unknown[]) => Promise<void>;
+      };
     };
     electron: ElectronAPI;
     logs: {
