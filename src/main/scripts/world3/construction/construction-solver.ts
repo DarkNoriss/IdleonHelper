@@ -292,14 +292,13 @@ const simulatedAnnealingRun = async (
     }
   }
 
-  // Log detailed stats for this annealing run
   if (bestState.score) {
-    const expValue = bestState.score.playerExpRate || 0;
+    const expValue = bestState.score.expBonus;
     const improvementRate =
       iterations > 0 ? ((improvements / iterations) * 100).toFixed(2) : "0.00";
     const finalTemp = temperature > 0 ? temperature.toFixed(2) : "0.00";
     logger.log(
-      `Annealing run complete: iterations=${iterations}, improvements=${improvements} (${improvementRate}%), final_temp=${finalTemp}, exp=${expValue.toFixed(2)}`
+      `Annealing run complete: iterations=${iterations}, improvements=${improvements} (${improvementRate}%), final_temp=${finalTemp}, expBonus=${expValue.toFixed(2)}`
     );
   }
 
