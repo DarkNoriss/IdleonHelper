@@ -12,7 +12,13 @@ import {
   type CancellationToken,
   createCancellationToken,
 } from "../utils/cancellation-token";
-import { logger } from "../utils/index";
+import {
+  beginRun,
+  endRun,
+  logger,
+  type RunContextStore,
+  runContext,
+} from "../utils/index";
 
 type ScriptResolver = {
   resolve: (scriptId: keyof ScriptMap) =>
@@ -118,8 +124,32 @@ const tick = async (): Promise<void> => {
   emit();
   logger.log(`queue: running ${item.scriptName}`);
 
+  const startedAt = Date.now();
+  const ctxStore: RunContextStore = {
+    runId: item.itemId,
+    scriptId: item.scriptId as string,
+    scriptName: item.scriptName,
+    startedAt,
+  };
+
   try {
-    await descriptor.run({ token, args: item.args });
+    await runContext.run(ctxStore, async () => {
+      beginRun(ctxStore, item.args);
+      try {
+        await descriptor.run({ token, args: item.args });
+        endRun(ctxStore, "completed");
+      } catch (err) {
+        const isCancellation =
+          err instanceof Error && err.message === "Operation was cancelled";
+        const message = err instanceof Error ? err.message : String(err);
+        endRun(
+          ctxStore,
+          isCancellation ? "cancelled" : "failed",
+          isCancellation ? undefined : message
+        );
+        throw err;
+      }
+    });
     logger.log(`queue: completed ${item.scriptName}`);
     finalizeItem(item, readyIndex, { cancelled: false, errorMessage: null });
   } catch (error) {
