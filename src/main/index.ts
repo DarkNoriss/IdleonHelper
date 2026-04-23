@@ -81,3 +81,16 @@ app.on("before-quit", () => {
   closeConnection();
   stopBackend();
 });
+
+app.on("will-quit", async () => {
+  if (!app.isPackaged) {
+    try {
+      const { stopDevServer } = await import("./dev/command-server");
+      const { unregisterPanicHotkey } = await import("./dev/panic-exit");
+      stopDevServer();
+      unregisterPanicHotkey();
+    } catch {
+      // Modules may not have loaded; ignore.
+    }
+  }
+});
