@@ -2,12 +2,16 @@ import type {
   ParsedCog,
   ParsedConstructionData,
   Score,
+  SmallCogBonuses,
 } from "../types/construction";
 import type { RawJson } from "../types/raw-json";
 
 export const INV_ROWS = 8;
 export const INV_COLUMNS = 12;
 export const SPARE_START = 108;
+export const SMALL_COG_LEFT_INDEX = 228;
+export const SMALL_COG_COLUMN_HEIGHT = 12;
+export const SMALL_COG_TOTAL = SMALL_COG_COLUMN_HEIGHT * 2;
 
 export type Position = {
   location: "board" | "build" | "spare";
@@ -51,6 +55,21 @@ type CogRaw = {
   k?: unknown;
 };
 
+// Raw JSON may be wrapped (`{ data: {...} }`) or flat (`{ CogM, CogO, ... }`).
+type GameData = RawJson["data"];
+
+const getData = (jsonData: RawJson): GameData => {
+  const candidate = jsonData as unknown as { data?: GameData };
+  if (
+    candidate.data &&
+    typeof candidate.data === "object" &&
+    !Array.isArray(candidate.data)
+  ) {
+    return candidate.data;
+  }
+  return jsonData as unknown as GameData;
+};
+
 export const parseConstruction = (
   jsonData: RawJson
 ): ParsedConstructionData => {
@@ -58,8 +77,9 @@ export const parseConstruction = (
   const flaggyShopUpgrades = extractFlaggyShopUpgrades(jsonData);
   const flagPose = extractFlagPose(jsonData);
   const flagSlots = extractFlagSlots(jsonData, flagPose);
+  const cogOrder = extractCogOrder(jsonData);
+  const smallCogBonuses = computeSmallCogBonuses(cogOrder);
 
-  // Map slots to a key -> obj map
   const slots: Record<number, ParsedCog> = {};
   const availableSlotKeys: number[] = [];
   for (const slot of flagSlots) {
@@ -69,22 +89,17 @@ export const parseConstruction = (
     }
   }
 
-  // Map cogs to a key -> obj map
   const cogs: Record<number, ParsedCog> = {};
-  console.log("Cogs:", cogsArray);
   if (cogsArray !== null) {
     for (const cog of cogsArray) {
       cogs[cog.key] = cog;
-      if (cog.isPlayer) {
-        console.log("Player cog:", cog);
-      }
     }
   }
 
-  // Calculate score
   const score = calculateScore({
     cogs,
     flaggyShopUpgrades,
+    smallCogBonuses,
     flagPose,
     slots,
     availableSlotKeys,
@@ -95,13 +110,14 @@ export const parseConstruction = (
     slots,
     flagPose,
     flaggyShopUpgrades,
+    smallCogBonuses,
     availableSlotKeys,
     score,
   };
 };
 
 const extractCogs = (jsonData: RawJson): ParsedCog[] | null => {
-  const cogM = jsonData.data.CogM;
+  const cogM = getData(jsonData).CogM;
   if (!cogM) {
     return null;
   }
@@ -154,8 +170,91 @@ const extractCogs = (jsonData: RawJson): ParsedCog[] | null => {
   return null;
 };
 
+const extractCogOrder = (jsonData: RawJson): string[] => {
+  const cogO = getData(jsonData).CogO;
+  if (!cogO) {
+    return [];
+  }
+
+  let parsed: unknown;
+  try {
+    if (typeof cogO === "string") {
+      parsed = JSON.parse(cogO);
+    } else if (Array.isArray(cogO)) {
+      parsed = cogO as unknown[];
+    } else {
+      return [];
+    }
+    if (Array.isArray(parsed)) {
+      return parsed.map((v) => (typeof v === "string" ? v : ""));
+    }
+  } catch {
+    return [];
+  }
+
+  return [];
+};
+
+// number2letter from toolbox: index 0 = '_', 1 = 'a', 2 = 'b', 3 = 'c', ...
+// Small cog name format: CogSm{type}{level} where type is one of '_', 'a', 'b'.
+// typeIndex 0 (_) — base x2, applies as multiplier on flaggy
+// typeIndex 1 (a) — base x4, applies as multiplier on buildRate
+// typeIndex 2 (b) — base x1, applies as multiplier on expBonus
+const SMALL_COG_PREFIX = "CogSm";
+
+const getSmallCogBonus = (
+  cogName: string | undefined
+): { typeIndex: number; bonus: number } | null => {
+  if (!cogName?.startsWith(SMALL_COG_PREFIX)) {
+    return null;
+  }
+  const typeChar = cogName.charAt(SMALL_COG_PREFIX.length);
+  const level = Number.parseInt(cogName.slice(SMALL_COG_PREFIX.length + 1), 10);
+  if (Number.isNaN(level)) {
+    return null;
+  }
+  let typeIndex: number;
+  if (typeChar === "_") {
+    typeIndex = 0;
+  } else if (typeChar === "a") {
+    typeIndex = 1;
+  } else if (typeChar === "b") {
+    typeIndex = 2;
+  } else {
+    return null;
+  }
+  const base = (25 + 25 * level * level) * (1 + level / 5);
+  let bonus: number;
+  if (typeIndex === 0) {
+    bonus = Math.round(2 * base);
+  } else if (typeIndex === 1) {
+    bonus = Math.round(4 * base);
+  } else {
+    bonus = Math.round(base);
+  }
+  return { typeIndex, bonus };
+};
+
+const computeSmallCogBonuses = (cogOrder: string[]): SmallCogBonuses => {
+  const totals: SmallCogBonuses = { build: 0, flaggy: 0, exp: 0 };
+  for (let i = 0; i < SMALL_COG_TOTAL; i++) {
+    const result = getSmallCogBonus(cogOrder[SMALL_COG_LEFT_INDEX + i]);
+    if (!result) {
+      continue;
+    }
+    if (result.typeIndex === 0) {
+      totals.flaggy += result.bonus;
+    } else if (result.typeIndex === 1) {
+      totals.build += result.bonus;
+    } else if (result.typeIndex === 2) {
+      totals.exp += result.bonus;
+    }
+  }
+  return totals;
+};
+
 const extractFlaggyShopUpgrades = (jsonData: RawJson): number => {
-  const gemItemsPurchased = jsonData.data.GemItemsPurchased;
+  const gemItemsPurchased = getData(jsonData).GemItemsPurchased;
   if (!gemItemsPurchased) {
     return 0;
   }
@@ -182,7 +281,7 @@ const extractFlaggyShopUpgrades = (jsonData: RawJson): number => {
 };
 
 const extractFlagPose = (jsonData: RawJson): number[] => {
-  const flagP = jsonData.data.FlagP;
+  const flagP = getData(jsonData).FlagP;
   if (!flagP) {
     return [];
   }
@@ -211,7 +310,7 @@ const extractFlagSlots = (
   jsonData: RawJson,
   flagPose: number[]
 ): ParsedCog[] => {
-  const flagU = jsonData.data.FlagU;
+  const flagU = getData(jsonData).FlagU;
   if (!flagU) {
     return [];
   }
@@ -312,27 +411,135 @@ const getEntry = (
   return cogs[key] ?? slots[key];
 };
 
+type RadiusBonus = { build: number; flaggy: number };
+
+const getBoostedCoords = (
+  pattern: string,
+  i: number,
+  j: number
+): number[][] => {
+  switch (pattern) {
+    case "diagonal":
+      return [
+        [i - 1, j - 1],
+        [i - 1, j + 1],
+        [i + 1, j - 1],
+        [i + 1, j + 1],
+      ];
+    case "adjacent":
+      return [
+        [i - 1, j],
+        [i, j + 1],
+        [i + 1, j],
+        [i, j - 1],
+      ];
+    case "up":
+      return [
+        [i - 2, j - 1],
+        [i - 2, j],
+        [i - 2, j + 1],
+        [i - 1, j - 1],
+        [i - 1, j],
+        [i - 1, j + 1],
+      ];
+    case "right":
+      return [
+        [i - 1, j + 2],
+        [i, j + 2],
+        [i + 1, j + 2],
+        [i - 1, j + 1],
+        [i, j + 1],
+        [i + 1, j + 1],
+      ];
+    case "down":
+      return [
+        [i + 2, j - 1],
+        [i + 2, j],
+        [i + 2, j + 1],
+        [i + 1, j - 1],
+        [i + 1, j],
+        [i + 1, j + 1],
+      ];
+    case "left":
+      return [
+        [i - 1, j - 2],
+        [i, j - 2],
+        [i + 1, j - 2],
+        [i - 1, j - 1],
+        [i, j - 1],
+        [i + 1, j - 1],
+      ];
+    case "row": {
+      const out: number[][] = [];
+      for (let k = 0; k < INV_COLUMNS; k++) {
+        if (j === k) {
+          continue;
+        }
+        out.push([i, k]);
+      }
+      return out;
+    }
+    case "column": {
+      const out: number[][] = [];
+      for (let k = 0; k < INV_ROWS; k++) {
+        if (i === k) {
+          continue;
+        }
+        out.push([k, j]);
+      }
+      return out;
+    }
+    case "corners":
+      return [
+        [i - 2, j - 2],
+        [i - 2, j + 2],
+        [i + 2, j - 2],
+        [i + 2, j + 2],
+      ];
+    case "around":
+      return [
+        [i - 2, j],
+        [i - 1, j - 1],
+        [i - 1, j],
+        [i - 1, j + 1],
+        [i, j - 2],
+        [i, j - 1],
+        [i, j + 1],
+        [i, j + 2],
+        [i + 1, j - 1],
+        [i + 1, j],
+        [i + 1, j + 1],
+        [i + 2, j],
+      ];
+    case "everything": {
+      const out: number[][] = [];
+      for (let k = 0; k < INV_ROWS; k++) {
+        for (let l = 0; l < INV_COLUMNS; l++) {
+          if (i === k && j === l) {
+            continue;
+          }
+          out.push([k, l]);
+        }
+      }
+      return out;
+    }
+    default:
+      return [];
+  }
+};
+
+const BOARD_SIZE = INV_ROWS * INV_COLUMNS;
+
 export const calculateScore = (
   data: Omit<ParsedConstructionData, "score">
 ): Score | null => {
-  const result: Score = {
-    buildRate: 0,
-    expBonus: 0,
-    flaggy: 0,
-    expBoost: 0,
-    flagBoost: 0,
-    playerExpRate: 0,
-  };
+  const bonusGrid: RadiusBonus[][] = new Array(INV_ROWS)
+    .fill(0)
+    .map(() =>
+      new Array(INV_COLUMNS).fill(0).map(() => ({ build: 0, flaggy: 0 }))
+    );
 
-  // Create bonus grid
-  const bonusGrid = new Array(INV_ROWS).fill(0).map(() => {
-    return new Array(INV_COLUMNS).fill(0).map(() => {
-      return { ...result };
-    });
-  });
-
-  // First pass: Calculate bonuses from boostRadius
-  for (const key of data.availableSlotKeys) {
+  for (let key = 0; key < BOARD_SIZE; key++) {
     const entry = getEntry(key, data.cogs, data.slots);
     if (!entry) {
       continue;
@@ -341,216 +548,64 @@ export const calculateScore = (
       continue;
     }
 
-    const position = getPosition(key);
-    if (position.location !== "board") {
+    const { x: j, y: i } = getPosition(key);
+    const buildBoost =
+      typeof entry.buildRadiusBoost === "number" ? entry.buildRadiusBoost : 0;
+    const flaggyBoost =
+      typeof entry.flaggyRadiusBoost === "number" ? entry.flaggyRadiusBoost : 0;
+    if (buildBoost === 0 && flaggyBoost === 0) {
       continue;
     }
 
-    const { x: j, y: i } = position;
-    const boosted: number[][] = [];
-
-    switch (entry.boostRadius) {
-      case "diagonal":
-        boosted.push(
-          [i - 1, j - 1],
-          [i - 1, j + 1],
-          [i + 1, j - 1],
-          [i + 1, j + 1]
-        );
-        break;
-      case "adjacent":
-        boosted.push([i - 1, j], [i, j + 1], [i + 1, j], [i, j - 1]);
-        break;
-      case "up":
-        boosted.push(
-          [i - 2, j - 1],
-          [i - 2, j],
-          [i - 2, j + 1],
-          [i - 1, j - 1],
-          [i - 1, j],
-          [i - 1, j + 1]
-        );
-        break;
-      case "right":
-        boosted.push(
-          [i - 1, j + 2],
-          [i, j + 2],
-          [i + 1, j + 2],
-          [i - 1, j + 1],
-          [i, j + 1],
-          [i + 1, j + 1]
-        );
-        break;
-      case "down":
-        boosted.push(
-          [i + 2, j - 1],
-          [i + 2, j],
-          [i + 2, j + 1],
-          [i + 1, j - 1],
-          [i + 1, j],
-          [i + 1, j + 1]
-        );
-        break;
-      case "left":
-        boosted.push(
-          [i - 1, j - 2],
-          [i, j - 2],
-          [i + 1, j - 2],
-          [i - 1, j - 1],
-          [i, j - 1],
-          [i + 1, j - 1]
-        );
-        break;
-      case "row":
-        for (let k = 0; k < INV_COLUMNS; k++) {
-          if (j === k) {
-            continue;
-          }
-          boosted.push([i, k]);
-        }
-        break;
-      case "column":
-        for (let k = 0; k < INV_ROWS; k++) {
-          if (i === k) {
-            continue;
-          }
-          boosted.push([k, j]);
-        }
-        break;
-      case "corner":
-        boosted.push(
-          [i - 2, j - 2],
-          [i - 2, j + 2],
-          [i + 2, j - 2],
-          [i + 2, j + 2]
-        );
-        break;
-      case "around":
-        boosted.push(
-          [i - 2, j],
-          [i - 1, j - 1],
-          [i - 1, j],
-          [i - 1, j + 1],
-          [i, j - 2],
-          [i, j - 1],
-          [i, j + 1],
-          [i, j + 2],
-          [i + 1, j - 1],
-          [i + 1, j],
-          [i + 1, j + 1],
-          [i + 2, j]
-        );
-        break;
-      case "everything":
-        for (let k = 0; k < INV_ROWS; k++) {
-          for (let l = 0; l < INV_COLUMNS; l++) {
-            if (i === k && j === l) {
-              continue;
-            }
-            boosted.push([k, l]);
-          }
-        }
-        break;
-      default:
-        break;
-    }
-
-    for (const boostCoord of boosted) {
-      const bonus = safeGet<Score>(bonusGrid, ...boostCoord);
-      if (!bonus) {
+    for (const coord of getBoostedCoords(entry.boostRadius, i, j)) {
+      const bi = coord[0];
+      const bj = coord[1];
+      if (bi === undefined || bj === undefined) {
         continue;
       }
-      bonus.buildRate +=
-        (typeof entry.buildRadiusBoost === "number"
-          ? entry.buildRadiusBoost
-          : 0) || 0;
-      bonus.flaggy +=
-        (typeof entry.flaggyRadiusBoost === "number"
-          ? entry.flaggyRadiusBoost
-          : 0) || 0;
-      bonus.expBoost +=
-        (typeof entry.expRadiusBoost === "number" ? entry.expRadiusBoost : 0) ||
-        0;
-      bonus.flagBoost +=
-        (typeof entry.flagBoost === "number" ? entry.flagBoost : 0) || 0;
+      const cell = safeGet<RadiusBonus>(bonusGrid, bi, bj);
+      if (!cell) {
+        continue;
+      }
+      cell.build += buildBoost;
+      cell.flaggy += flaggyBoost;
     }
   }
 
-  // Second pass: Sum up base stats and apply bonuses
-  let totalPlayerExpRate = 0;
+  let totalBuildRate = 0;
+  let totalFlaggy = 0;
   let totalExpBonus = 0;
 
-  for (const key of data.availableSlotKeys) {
+  for (let key = 0; key < BOARD_SIZE; key++) {
     const entry = getEntry(key, data.cogs, data.slots);
     if (!entry) {
       continue;
     }
 
-    const buildRate = typeof entry.buildRate === "number" ? entry.buildRate : 0;
-    const expBonus = typeof entry.expBonus === "number" ? entry.expBonus : 0;
-    const flaggy = typeof entry.flaggy === "number" ? entry.flaggy : 0;
+    const baseBuild = typeof entry.buildRate === "number" ? entry.buildRate : 0;
+    const baseFlaggy = typeof entry.flaggy === "number" ? entry.flaggy : 0;
+    const baseExpBonus =
+      typeof entry.expBonus === "number" ? entry.expBonus : 0;
 
-    result.buildRate += buildRate;
-    result.expBonus += expBonus;
-    result.flaggy += flaggy;
+    const { x: j, y: i } = getPosition(key);
+    const cell = safeGet<RadiusBonus>(bonusGrid, i, j);
+    const buildBoost = cell ? cell.build : 0;
+    const flaggyBoost = cell ? cell.flaggy : 0;
 
-    const pos = getPosition(key);
-    if (pos.location !== "board") {
-      continue;
-    }
-
-    // Collect global exp bonus (stat d) from all cogs on board
-    totalExpBonus += expBonus;
-
-    const bonus = safeGet<Score>(bonusGrid, pos.y, pos.x);
-    if (bonus) {
-      const buildRateBonus = (bonus.buildRate || 0) / 100;
-      result.buildRate += Math.ceil(buildRate * buildRateBonus);
-
-      if (entry.isPlayer) {
-        result.expBoost += bonus.expBoost || 0;
-        // Calculate player exp rate: expGain * (1 + expRadiusBoost / 100)
-        const expGain = typeof entry.expGain === "number" ? entry.expGain : 0;
-        const expRadiusBoost = bonus.expBoost || 0;
-        const playerExp = expGain * (1 + expRadiusBoost / 100);
-        totalPlayerExpRate += playerExp;
-      }
-
-      const flaggyBonus = (bonus.flaggy || 0) / 100;
-      result.flaggy += Math.ceil(flaggy * flaggyBonus);
-    } else if (entry.isPlayer) {
-      // Player cog on board but no bonus grid entry (shouldn't happen, but handle it)
-      const expGain = typeof entry.expGain === "number" ? entry.expGain : 0;
-      totalPlayerExpRate += expGain;
-    }
+    totalBuildRate += Math.max(baseBuild * (1 + buildBoost / 100), 0);
+    totalFlaggy += Math.max(baseFlaggy * (1 + flaggyBoost / 100), 0);
+    totalExpBonus += baseExpBonus;
   }
 
-  // Apply global exp bonus to total player exp rate
-  const finalExp = totalPlayerExpRate * (1 + totalExpBonus / 100);
-  result.playerExpRate = finalExp;
+  // Mirror toolbox: only the exp small-cog multiplier is reflected in the
+  // displayed score. Build/flaggy small cogs affect the actual game rate
+  // through a separate mechanism that does not appear in the totals.
+  const finalExpBonus = totalExpBonus * (1 + data.smallCogBonuses.exp / 100);
+  const finalFlaggy = totalFlaggy * (1 + data.flaggyShopUpgrades * 0.5);
 
-  // Third pass: Sum flag bonuses
-  for (const key of data.flagPose) {
-    const entry = getEntry(key, data.cogs, data.slots);
-    if (!entry) {
-      continue;
-    }
-
-    const pos = getPosition(key);
-    if (pos.location !== "board") {
-      continue;
-    }
-
-    const bonus = safeGet<Score>(bonusGrid, pos.y, pos.x);
-    if (bonus) {
-      result.flagBoost += bonus.flagBoost || 0;
-    }
-  }
-
-  // Apply flaggy shop upgrades
-  result.flaggy = Math.floor(
-    result.flaggy * (1 + data.flaggyShopUpgrades * 0.5)
-  );
-
-  return result;
+  return {
+    buildRate: totalBuildRate,
+    expBonus: finalExpBonus,
+    flaggy: finalFlaggy,
+  };
 };

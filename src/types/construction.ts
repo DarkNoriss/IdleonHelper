@@ -15,11 +15,18 @@ export type ParsedCog = {
   blocked: boolean;
 };
 
+export type SmallCogBonuses = {
+  build: number;
+  flaggy: number;
+  exp: number;
+};
+
 export type ParsedConstructionData = {
   cogs: Record<number, ParsedCog>;
   slots: Record<number, ParsedCog>;
   flagPose: number[];
   flaggyShopUpgrades: number;
+  smallCogBonuses: SmallCogBonuses;
   availableSlotKeys: number[];
   score: Score | null;
 };
@@ -28,9 +35,6 @@ export type Score = {
   buildRate: number;
   expBonus: number;
   flaggy: number;
-  expBoost: number;
-  flagBoost: number;
-  playerExpRate: number;
 };
 
 export type OptimalStep = {

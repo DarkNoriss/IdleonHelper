@@ -26,49 +26,28 @@ export const getKeyFromPosition = (
 };
 
 export const getScoreSum = (score: Score, weights: SolverWeights): number => {
-  // Use playerExpRate for exp optimization (actual exp gain)
-  // Fall back to old calculation for other focuses
-  const expValue = score.playerExpRate || 0;
-  const buildRateValue = score.buildRate;
-  const flaggyValue = (score.flaggy * (score.flagBoost + 4)) / 4;
-
-  // Huge multiplier for primary priority (ensures it dominates)
   const PRIMARY_MULTIPLIER = 1e15;
-  // Small multiplier for secondary priority (tiebreaker)
   const SECONDARY_MULTIPLIER = 1;
 
-  let res = 0;
-
   switch (weights.focus) {
-    case "exp": {
-      // Exp is primary, buildRate is secondary
-      // Use playerExpRate which includes actual expGain values
-      res += expValue * PRIMARY_MULTIPLIER;
-      res += buildRateValue * SECONDARY_MULTIPLIER;
-      // Flaggy is optional (weight can be 0)
-      res += flaggyValue * weights.flaggy;
-      break;
-    }
-    case "buildRate": {
-      // BuildRate is primary, exp is secondary
-      res += buildRateValue * PRIMARY_MULTIPLIER;
-      res += expValue * SECONDARY_MULTIPLIER;
-      // Flaggy is optional (weight can be 0)
-      res += flaggyValue * weights.flaggy;
-      break;
-    }
-    case "flaggy": {
-      // Flaggy is primary, exp is secondary
-      res += flaggyValue * PRIMARY_MULTIPLIER;
-      res += expValue * SECONDARY_MULTIPLIER;
-      // BuildRate is not considered when focusing flaggy
-      break;
-    }
+    case "exp":
+      return (
+        score.expBonus * PRIMARY_MULTIPLIER +
+        score.buildRate * SECONDARY_MULTIPLIER
+      );
+    case "buildRate":
+      return (
+        score.buildRate * PRIMARY_MULTIPLIER +
+        score.expBonus * SECONDARY_MULTIPLIER
+      );
+    case "flaggy":
+      return (
+        score.flaggy * PRIMARY_MULTIPLIER +
+        score.expBonus * SECONDARY_MULTIPLIER
+      );
     default:
-      break;
+      return 0;
   }
-
-  return res;
 };
 
 export const cloneInventory = (
@@ -89,6 +68,7 @@ export const cloneInventory = (
     slots: clonedSlots,
     flagPose: [...inventory.flagPose],
     flaggyShopUpgrades: inventory.flaggyShopUpgrades,
+    smallCogBonuses: { ...inventory.smallCogBonuses },
     availableSlotKeys: [...inventory.availableSlotKeys],
     score: null,
   };
@@ -151,6 +131,7 @@ export const calculateStateScore = (
     slots: state.slots,
     flagPose: state.flagPose,
     flaggyShopUpgrades: state.flaggyShopUpgrades,
+    smallCogBonuses: state.smallCogBonuses,
     availableSlotKeys: state.availableSlotKeys,
   });
 };
