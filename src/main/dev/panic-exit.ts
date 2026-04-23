@@ -2,7 +2,7 @@ import { globalShortcut } from "electron";
 import { queueEngine } from "../queue/index";
 import { logger } from "../utils/index";
 
-const HOTKEY = "Control+Escape";
+const HOTKEY = "Control+Shift+Q";
 
 export type PanicResult = {
   cancelledItemIds: string[];

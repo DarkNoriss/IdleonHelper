@@ -16,7 +16,7 @@ export const DevBanner = (): React.JSX.Element | null => {
       </span>
       <span className="flex items-center gap-1.5">
         <span className="inline-block h-2 w-2 rounded-full bg-red-400" />
-        Panic armed (Ctrl+Esc)
+        Panic armed (Ctrl+Shift+Q)
       </span>
     </div>
   );
