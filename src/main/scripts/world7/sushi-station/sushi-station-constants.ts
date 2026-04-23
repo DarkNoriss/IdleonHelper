@@ -66,3 +66,18 @@ export const pointToCellIndex = (point: Point): number | null => {
 
   return row * SUSHI_GRID.COLUMNS + col;
 };
+
+export const getPriorityCells = (
+  availableCells: ReadonlySet<number>
+): number[] => {
+  const result: number[] = [];
+  for (let row = SUSHI_GRID.ROWS - 1; row >= 0; row--) {
+    for (let col = SUSHI_GRID.COLUMNS - 1; col >= 0; col--) {
+      const cell = row * SUSHI_GRID.COLUMNS + col;
+      if (availableCells.has(cell)) {
+        result.push(cell);
+      }
+    }
+  }
+  return result;
+};
