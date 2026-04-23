@@ -7,6 +7,10 @@ import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   buildSushiRegions,
+  GRID_SLOT,
+  GRID_SLOT_RED,
+  getPriorityCells,
+  pointToCellIndex,
   SUSHI_COOK,
   SUSHI_GRID,
   SUSHI_HSV_LOWER,
@@ -54,9 +58,59 @@ export default defineScript<[boolean]>({
       logger.log("sushi-station-merge - tiers enabled");
     }
 
-    logger.log("sushi-station-merge - starting continuous merge loop");
-
     const regions = buildSushiRegions();
+
+    logger.log("sushi-station-merge - calibrating available cells");
+
+    const slotMatches = await backendCommand.isVisibleParallel(
+      { normal: GRID_SLOT, red: GRID_SLOT_RED },
+      undefined,
+      token
+    );
+
+    const calibrationScan = await backendCommand.readRegions(
+      regions,
+      { ...SUSHI_HSV_LOWER },
+      { ...SUSHI_HSV_UPPER },
+      SUSHI_TEMPLATES,
+      undefined,
+      token
+    );
+
+    const availableCells = new Set<number>();
+
+    for (const point of slotMatches.normal ?? []) {
+      const cell = pointToCellIndex(point);
+      if (cell !== null) {
+        availableCells.add(cell);
+      }
+    }
+    for (const point of slotMatches.red ?? []) {
+      const cell = pointToCellIndex(point);
+      if (cell !== null) {
+        availableCells.add(cell);
+      }
+    }
+    for (const result of calibrationScan.results) {
+      if (result.match !== null) {
+        availableCells.add(result.regionIndex);
+      }
+    }
+
+    const priorityCells = getPriorityCells(availableCells);
+    // biome-ignore lint/complexity/noVoid: temporary until task 6 consumes priorityCells
+    void priorityCells;
+
+    logger.log(
+      `sushi-station-merge - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
+    );
+
+    if (availableCells.size === 0) {
+      logger.log("sushi-station-merge - no available cells, aborting");
+      return;
+    }
+
+    logger.log("sushi-station-merge - starting continuous merge loop");
 
     while (true) {
       token.throwIfCancelled();
