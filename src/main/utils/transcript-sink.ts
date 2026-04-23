@@ -51,6 +51,7 @@ export const beginRun = (ctx: RunContextStore, args: unknown[]): void => {
   writeLine(ctx.runId, {
     t: ctx.startedAt,
     phase: "start",
+    version: 1,
     runId: ctx.runId,
     scriptId: ctx.scriptId,
     scriptName: ctx.scriptName,

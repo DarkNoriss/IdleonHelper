@@ -192,6 +192,8 @@ export const stopDevServer = (): void => {
     clearInterval(deadManTimer);
     deadManTimer = null;
   }
+  server?.close();
+  server = null;
   try {
     unlinkSync(tokenFile());
   } catch {
@@ -202,8 +204,6 @@ export const stopDevServer = (): void => {
   } catch {
     // May not exist.
   }
-  server?.close();
-  server = null;
   token = null;
   port = null;
   setState("devServer", { port: null, armed: false });
