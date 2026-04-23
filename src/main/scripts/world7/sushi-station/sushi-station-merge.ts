@@ -2,6 +2,8 @@ import {
   backendCommand,
   getClickOptionsFromPreset,
   getDragOptionsFromPreset,
+  type Point,
+  type RegionResult,
 } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
@@ -27,6 +29,82 @@ const cellToPoint = (cellIndex: number) => {
     x: SUSHI_GRID.FIRST_POSITION.x + col * SUSHI_GRID.X_STEP,
     y: SUSHI_GRID.FIRST_POSITION.y + row * SUSHI_GRID.Y_STEP,
   };
+};
+
+// match is the template filename stem from the backend (e.g. sushi_t12), not a path
+const TIER_REGEX = /sushi_t(\d+)/;
+
+const parseTierNumber = (match: string): number | null => {
+  const m = TIER_REGEX.exec(match);
+  if (!m) {
+    return null;
+  }
+  const parsed = Number.parseInt(m[1]!, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+type SortMove = {
+  from: Point;
+  to: Point;
+  tier: string;
+  fromRow: number;
+  fromCol: number;
+  toRow: number;
+  toCol: number;
+};
+
+const pickSortMove = (
+  results: RegionResult[],
+  priorityCells: number[]
+): SortMove | null => {
+  const sushiOnBoard: { cell: number; tier: string; tierNumber: number }[] = [];
+  for (const result of results) {
+    if (result.match === null) {
+      continue;
+    }
+    const tierNumber = parseTierNumber(result.match);
+    if (tierNumber === null) {
+      continue;
+    }
+    sushiOnBoard.push({
+      cell: result.regionIndex,
+      tier: result.match,
+      tierNumber,
+    });
+  }
+
+  sushiOnBoard.sort((a, b) => b.tierNumber - a.tierNumber);
+
+  for (let i = 0; i < sushiOnBoard.length; i++) {
+    const target = priorityCells[i];
+    if (target === undefined) {
+      logger.log(
+        "sushi-station-merge - more sushi than available cells, skipping sort"
+      );
+      return null;
+    }
+    const expected = sushiOnBoard[i]!;
+    if (expected.cell === target) {
+      continue;
+    }
+
+    const fromCol = expected.cell % SUSHI_GRID.COLUMNS;
+    const fromRow = Math.floor(expected.cell / SUSHI_GRID.COLUMNS);
+    const toCol = target % SUSHI_GRID.COLUMNS;
+    const toRow = Math.floor(target / SUSHI_GRID.COLUMNS);
+
+    return {
+      from: cellToPoint(expected.cell),
+      to: cellToPoint(target),
+      tier: expected.tier,
+      fromRow,
+      fromCol,
+      toRow,
+      toCol,
+    };
+  }
+
+  return null;
 };
 
 export default defineScript<[boolean]>({
@@ -100,6 +178,8 @@ export default defineScript<[boolean]>({
     const priorityCells = getPriorityCells(availableCells);
     // biome-ignore lint/complexity/noVoid: temporary until task 6 consumes priorityCells
     void priorityCells;
+    // biome-ignore lint/complexity/noVoid: temporary until task 6 consumes pickSortMove
+    void pickSortMove;
 
     logger.log(
       `sushi-station-merge - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
