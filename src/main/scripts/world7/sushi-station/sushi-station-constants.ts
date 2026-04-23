@@ -1,4 +1,4 @@
-import type { Rect } from "../../../backend/backend-types";
+import type { Point, Rect } from "../../../backend/backend-types";
 
 export const SUSHI_GRID = {
   ROWS: 8,
@@ -21,6 +21,8 @@ const SUSHI_PATH = "ui/map/world-7/sushi-station";
 export const SUSHI_TIERS_ON = `${SUSHI_PATH}/sushi_tiers`;
 export const SUSHI_TIERS_OFF = `${SUSHI_PATH}/sushi_tiers_off`;
 export const SUSHI_COOK = `${SUSHI_PATH}/sushi_cook`;
+export const GRID_SLOT = `${SUSHI_PATH}/grid_slot`;
+export const GRID_SLOT_RED = `${SUSHI_PATH}/grid_slot_red`;
 
 const SUSHI_TIERS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
@@ -46,4 +48,36 @@ export const buildSushiRegions = (): Rect[] => {
     }
   }
   return regions;
+};
+
+export const pointToCellIndex = (point: Point): number | null => {
+  const relX = point.x - SUSHI_GRID.FIRST_POSITION.x;
+  const relY = point.y - SUSHI_GRID.FIRST_POSITION.y;
+
+  const col = Math.round(relX / SUSHI_GRID.X_STEP);
+  const row = Math.round(relY / SUSHI_GRID.Y_STEP);
+
+  if (col < 0 || col >= SUSHI_GRID.COLUMNS) {
+    return null;
+  }
+  if (row < 0 || row >= SUSHI_GRID.ROWS) {
+    return null;
+  }
+
+  return row * SUSHI_GRID.COLUMNS + col;
+};
+
+export const getPriorityCells = (
+  availableCells: ReadonlySet<number>
+): number[] => {
+  const result: number[] = [];
+  for (let row = SUSHI_GRID.ROWS - 1; row >= 0; row--) {
+    for (let col = SUSHI_GRID.COLUMNS - 1; col >= 0; col--) {
+      const cell = row * SUSHI_GRID.COLUMNS + col;
+      if (availableCells.has(cell)) {
+        result.push(cell);
+      }
+    }
+  }
+  return result;
 };
