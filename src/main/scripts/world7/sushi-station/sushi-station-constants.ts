@@ -1,4 +1,4 @@
-import type { Rect } from "../../../backend/backend-types";
+import type { Point, Rect } from "../../../backend/backend-types";
 
 export const SUSHI_GRID = {
   ROWS: 8,
@@ -48,4 +48,21 @@ export const buildSushiRegions = (): Rect[] => {
     }
   }
   return regions;
+};
+
+export const pointToCellIndex = (point: Point): number | null => {
+  const relX = point.x - SUSHI_GRID.FIRST_POSITION.x;
+  const relY = point.y - SUSHI_GRID.FIRST_POSITION.y;
+
+  const col = Math.round(relX / SUSHI_GRID.X_STEP);
+  const row = Math.round(relY / SUSHI_GRID.Y_STEP);
+
+  if (col < 0 || col >= SUSHI_GRID.COLUMNS) {
+    return null;
+  }
+  if (row < 0 || row >= SUSHI_GRID.ROWS) {
+    return null;
+  }
+
+  return row * SUSHI_GRID.COLUMNS + col;
 };
