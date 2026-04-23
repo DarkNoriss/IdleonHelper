@@ -39,6 +39,8 @@ type LogEntry = {
   timestamp: number;
   level: LogLevel;
   message: string;
+  runId?: string;
+  scriptId?: string;
 };
 
 declare global {
