@@ -31,6 +31,11 @@ const getStream = (runId: string): WriteStream => {
   }
   const filePath = path.join(getRunsDir(), `${runId}.jsonl`);
   const stream = createWriteStream(filePath, { flags: "a" });
+  stream.on("error", () => {
+    // Drop the dead stream so the next writeLine can retry with a fresh one.
+    // Transcript writes are best-effort in dev-only diagnostics.
+    streams.delete(runId);
+  });
   streams.set(runId, stream);
   return stream;
 };
