@@ -10,6 +10,7 @@ export {
   logger,
   setLogsChangeNotifier,
 } from "./logger";
+export { type RunContextStore, runContext } from "./run-context";
 export {
   checkForUpdates,
   downloadUpdate,
