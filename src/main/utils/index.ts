@@ -13,6 +13,14 @@ export {
 } from "./logger";
 export { type RunContextStore, runContext } from "./run-context";
 export {
+  beginRun,
+  endRun,
+  initTranscriptSink,
+  pruneOldTranscripts,
+  restrictFilePerms,
+  transcriptPathFor,
+} from "./transcript-sink";
+export {
   checkForUpdates,
   downloadUpdate,
   getCurrentVersion,
