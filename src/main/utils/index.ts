@@ -9,6 +9,7 @@ export {
   type LogLevel,
   logger,
   setLogsChangeNotifier,
+  subscribeToEntries,
 } from "./logger";
 export { type RunContextStore, runContext } from "./run-context";
 export {

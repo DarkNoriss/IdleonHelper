@@ -3,18 +3,35 @@
  * Stores logs in memory array and maintains console output
  */
 
+import { runContext } from "./run-context";
+
 export type LogLevel = "log" | "error" | "warn" | "info";
 
 export type LogEntry = {
   timestamp: number;
   level: LogLevel;
   message: string;
+  runId?: string;
+  scriptId?: string;
 };
 
 const logs: LogEntry[] = [];
 
 // Callback to notify when logs change (set by main process after window is created)
 let notifyLogsChanged: ((logs: LogEntry[]) => void) | null = null;
+
+type EntryListener = (entry: LogEntry) => void;
+const entryListeners: EntryListener[] = [];
+
+export const subscribeToEntries = (listener: EntryListener): (() => void) => {
+  entryListeners.push(listener);
+  return () => {
+    const index = entryListeners.indexOf(listener);
+    if (index >= 0) {
+      entryListeners.splice(index, 1);
+    }
+  };
+};
 
 /**
  * Set the callback function to notify when logs change
@@ -67,10 +84,13 @@ const addLog = (level: LogLevel, ...args: unknown[]): void => {
     })
     .join(" ");
 
+  const ctx = runContext.getStore();
   const entry: LogEntry = {
     timestamp,
     level,
     message,
+    runId: ctx?.runId,
+    scriptId: ctx?.scriptId,
   };
 
   logs.push(entry);
@@ -78,6 +98,14 @@ const addLog = (level: LogLevel, ...args: unknown[]): void => {
   // Notify listeners about log changes
   if (notifyLogsChanged) {
     notifyLogsChanged(getLogs());
+  }
+
+  for (const listener of entryListeners) {
+    try {
+      listener(entry);
+    } catch {
+      // Isolate listener failures so one bad sink does not break logging.
+    }
   }
 };
 
