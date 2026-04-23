@@ -47,6 +47,14 @@ export const RunBtn = <T extends keyof ScriptMap>({
     }
   }, [state]);
 
+  const rawArgs = getArgs?.() ?? [];
+  const argsKey = JSON.stringify(rawArgs);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rawArgs is tracked via argsKey (stable JSON key), not reference equality
+  useEffect(() => {
+    window.api.scriptConfigs.publish(scriptId, rawArgs as unknown[]);
+  }, [scriptId, argsKey]);
+
   const handleClick = async () => {
     setError(null);
     try {

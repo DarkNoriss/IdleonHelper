@@ -3,7 +3,7 @@ import { QueueDock } from "@/components/queue-dock";
 import { GameDataProvider } from "@/providers/game-data-provider.tsx";
 import { ThemeProvider } from "@/providers/theme-provider.tsx";
 import { type NavigationPage, useNavigationStore } from "@/store/navigation.ts";
-
+import { DevBanner } from "./dev-banner";
 import { pageRegistry } from "./page-registry";
 import { AppSidebar } from "./sidebar/app-sidebar";
 import { TitleBar } from "./title-bar";
@@ -24,6 +24,7 @@ export const App = () => {
       <GameDataProvider>
         <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
           <TitleBar />
+          <DevBanner />
           <div className="flex min-h-0 flex-1">
             <AppSidebar />
             <div className="flex min-w-0 flex-1 flex-col">

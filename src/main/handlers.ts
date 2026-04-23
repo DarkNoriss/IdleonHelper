@@ -13,7 +13,7 @@ import {
   weeklyBattleGet,
 } from "./scripts/index";
 import { registerAllScripts } from "./scripts/registry";
-import { registerStateHandlers } from "./state-hub";
+import { getState, registerStateHandlers, setState } from "./state-hub";
 import {
   checkForUpdates,
   downloadUpdate,
@@ -125,6 +125,15 @@ export const setupHandlers = (): void => {
     logger.log("IPC: logs:get");
     return getLogs();
   });
+
+  // Script configs
+  ipcMain.handle(
+    "scriptConfigs:publish",
+    (_event, scriptId: string, args: unknown[]) => {
+      const current = getState("scriptConfigs");
+      setState("scriptConfigs", { ...current, [scriptId]: args });
+    }
+  );
 
   // App
   ipcMain.handle("app:isDev", () => {

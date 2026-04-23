@@ -30,6 +30,11 @@ const state: AppState = {
   placeTraps: {
     current: null,
   },
+  devServer: {
+    port: null,
+    armed: false,
+  },
+  scriptConfigs: {},
 };
 
 export function setState<K extends keyof AppState>(

@@ -130,4 +130,9 @@ export type AppState = {
   bossFarmer: BossFarmerState;
   collectTraps: { endsAt: number | null };
   placeTraps: { current: number | null };
+  devServer: {
+    port: number | null;
+    armed: boolean;
+  };
+  scriptConfigs: Record<string, unknown[]>;
 };

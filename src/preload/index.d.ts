@@ -39,6 +39,8 @@ type LogEntry = {
   timestamp: number;
   level: LogLevel;
   message: string;
+  runId?: string;
+  scriptId?: string;
 };
 
 declare global {
@@ -137,6 +139,9 @@ declare global {
           key: K,
           callback: (value: AppState[K]) => void
         ) => () => void;
+      };
+      scriptConfigs: {
+        publish: (scriptId: string, args: unknown[]) => Promise<void>;
       };
     };
     electron: ElectronAPI;
