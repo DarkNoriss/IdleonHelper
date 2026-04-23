@@ -176,10 +176,6 @@ export default defineScript<[boolean]>({
     }
 
     const priorityCells = getPriorityCells(availableCells);
-    // biome-ignore lint/complexity/noVoid: temporary until task 6 consumes priorityCells
-    void priorityCells;
-    // biome-ignore lint/complexity/noVoid: temporary until task 6 consumes pickSortMove
-    void pickSortMove;
 
     logger.log(
       `sushi-station-merge - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
@@ -217,7 +213,7 @@ export default defineScript<[boolean]>({
         }
       }
 
-      let merged = false;
+      let actedThisIteration = false;
       for (const [tier, indices] of grouped) {
         if (indices.length < 2) {
           continue;
@@ -237,11 +233,24 @@ export default defineScript<[boolean]>({
         token.throwIfCancelled();
         const dragOptions = getDragOptionsFromPreset("16x", true);
         await backendCommand.drag(from, to, dragOptions, token);
-        merged = true;
+        actedThisIteration = true;
         break;
       }
 
-      if (!merged && shouldCook) {
+      if (!actedThisIteration) {
+        const move = pickSortMove(response.results, priorityCells);
+        if (move) {
+          logger.log(
+            `sushi-station-merge - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
+          );
+          token.throwIfCancelled();
+          const dragOptions = getDragOptionsFromPreset("16x", true);
+          await backendCommand.drag(move.from, move.to, dragOptions, token);
+          actedThisIteration = true;
+        }
+      }
+
+      if (!actedThisIteration && shouldCook) {
         logger.log("sushi-station-merge - no pairs, cooking more sushi");
         const cookButton = await backendCommand.isVisible(
           SUSHI_COOK,
