@@ -2,6 +2,7 @@ import { getPosition } from "../../../../parsers/construction";
 import type {
   ParsedCog,
   ParsedConstructionData,
+  Score,
   SolverResult,
   SolverWeights,
 } from "../../../../types/construction";
@@ -26,6 +27,19 @@ const RESTART_TIME_MS = 10_000; // 10 seconds per restart - allows proper explor
 const YIELD_INTERVAL_MS = 100;
 const COOLING_INTERVAL = 50;
 const EARLY_TERMINATION_THRESHOLD = 0.35; // Stop if no improvement for 35% of time (~3.5s per restart)
+
+export type SolverCallbacks = {
+  shouldCancel?: () => boolean;
+  onProgress?: (progress: {
+    bestScore: Score;
+    currentScore: Score;
+    iter: number;
+    iterPerSec: number;
+    elapsedMs: number;
+    restarts: number;
+    improvementPct: number;
+  }) => void;
+};
 
 type ValidMove = {
   cogKey: number;
@@ -178,12 +192,23 @@ const calculateInitialTemperature = (
   return Math.max(minTemp, Math.min(maxTemp, initialTemp));
 };
 
+type ProgressCtx = {
+  totalIterStart: number;
+  restartsCompleted: number;
+  globalBest: { score: number; state: ParsedConstructionData | null };
+  initialScore: number;
+  startWallTime: number;
+  lastProgressAt: number;
+};
+
 const simulatedAnnealingRun = async (
   inventory: ParsedConstructionData,
   weights: SolverWeights,
   timeAllocationMs: number,
   initialTemperature: number,
-  startFromShuffle: boolean
+  startFromShuffle: boolean,
+  callbacks: SolverCallbacks,
+  progressCtx: ProgressCtx
 ): Promise<{
   bestState: ParsedConstructionData;
   bestScore: number;
@@ -238,6 +263,52 @@ const simulatedAnnealingRun = async (
     if (Date.now() - lastYield > YIELD_INTERVAL_MS) {
       await new Promise((resolve) => setImmediate(resolve));
       lastYield = Date.now();
+    }
+
+    // Cancel check — break cleanly so the caller keeps the current best state.
+    if (callbacks.shouldCancel?.()) {
+      break;
+    }
+
+    // Progress emit (~every 500 ms).
+    if (callbacks.onProgress) {
+      const nowMs = Date.now();
+      if (nowMs - progressCtx.lastProgressAt > 500) {
+        const totalIter = progressCtx.totalIterStart + iterations;
+        const elapsed = nowMs - progressCtx.startWallTime;
+        const iterPerSec =
+          elapsed > 0 ? Math.round((totalIter * 1000) / elapsed) : 0;
+
+        // Prefer the global best seen across all restarts if it beats this run's best.
+        const bestScoreValue =
+          bestScore > progressCtx.globalBest.score
+            ? bestScore
+            : progressCtx.globalBest.score;
+        const bestStateForReport =
+          bestScore > progressCtx.globalBest.score
+            ? bestState
+            : (progressCtx.globalBest.state ?? bestState);
+
+        const improvementPct =
+          progressCtx.initialScore > 0
+            ? ((bestScoreValue - progressCtx.initialScore) /
+                progressCtx.initialScore) *
+              100
+            : 0;
+
+        if (bestStateForReport.score && state.score) {
+          callbacks.onProgress({
+            bestScore: bestStateForReport.score,
+            currentScore: state.score,
+            iter: totalIter,
+            iterPerSec,
+            elapsedMs: elapsed,
+            restarts: progressCtx.restartsCompleted,
+            improvementPct,
+          });
+          progressCtx.lastProgressAt = nowMs;
+        }
+      }
     }
 
     if (iterations % COOLING_INTERVAL === 0) {
@@ -522,7 +593,8 @@ const removeUselessMoves = (
 export const solver = async (
   inventory: ParsedConstructionData,
   weights: SolverWeights,
-  solveTime = 1000
+  solveTime = 1000,
+  callbacks: SolverCallbacks = {}
 ): Promise<SolverResult | null> => {
   if (inventory.flagPose.length === 0) {
     weights = { ...weights, flaggy: 0 };
@@ -598,9 +670,26 @@ export const solver = async (
     Math.min(10, Math.floor(numRestarts * 0.15))
   );
 
+  const progressCtx: ProgressCtx = {
+    totalIterStart: 0,
+    restartsCompleted: 0,
+    globalBest: {
+      score: initialScore,
+      state: initialState,
+    },
+    initialScore,
+    startWallTime: startTime,
+    lastProgressAt: 0,
+  };
+
   for (let restart = 0; restart < numRestarts; restart++) {
     if (Date.now() - startTime >= solveTime) {
       solverLogger.warn(`Time limit reached after ${restart} restarts`);
+      break;
+    }
+
+    if (callbacks.shouldCancel?.()) {
+      solverLogger.info(`Cancelled after ${restart} restarts`);
       break;
     }
 
@@ -658,7 +747,9 @@ export const solver = async (
       weights,
       thisRestartTime,
       restartTemp,
-      startFromShuffle
+      startFromShuffle,
+      callbacks,
+      progressCtx
     );
 
     totalIterations += result.iterations;
@@ -670,6 +761,13 @@ export const solver = async (
       iterations: result.iterations,
       improvements: result.improvements,
     });
+
+    progressCtx.totalIterStart += result.iterations;
+    progressCtx.restartsCompleted += 1;
+    if (result.bestScore > progressCtx.globalBest.score) {
+      progressCtx.globalBest.score = result.bestScore;
+      progressCtx.globalBest.state = result.bestState;
+    }
 
     // Track if best solution improved
     if (result.bestScore > bestScoreSoFar) {
