@@ -232,6 +232,7 @@ const simulatedAnnealingRun = async (
 
   let currentScore = getScoreSum(state.score, weights);
   let bestState = cloneInventory(state);
+  bestState.score = state.score;
   let bestScore = currentScore;
 
   // Pre-compute valid moves once for efficiency
@@ -353,6 +354,7 @@ const simulatedAnnealingRun = async (
       if (currentScore > bestScore) {
         bestScore = currentScore;
         bestState = cloneInventory(state);
+        bestState.score = state.score;
         lastImprovementTime = Date.now();
       }
     } else {
