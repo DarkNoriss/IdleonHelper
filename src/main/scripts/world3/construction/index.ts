@@ -4,7 +4,6 @@ import trashCogs from "./trash-cogs";
 
 export {
   cancelSolver,
-  isSolverRunning,
   solve,
 } from "./construction-solver-orchestrator";
 

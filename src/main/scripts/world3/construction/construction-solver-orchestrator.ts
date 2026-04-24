@@ -18,8 +18,6 @@ let activeRun: {
   cancel: () => void;
 } | null = null;
 
-export const isSolverRunning = (): boolean => activeRun !== null;
-
 export const cancelSolver = (): void => {
   activeRun?.cancel();
 };
