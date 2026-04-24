@@ -9,6 +9,7 @@ import {
   ScoreCol,
   TermSelect,
 } from "@/components/terminal";
+import { useMainState } from "@/hooks/use-main-state";
 import { notateNumber } from "@/lib/notateNumber.ts";
 import { useGameData } from "@/providers/game-data-provider.tsx";
 import { useRawJsonStore } from "@/store/raw-json.ts";
@@ -53,6 +54,23 @@ const formatDiff = (current: number, optimized: number): string => {
   return `${sign}${notateNumber(diff)}`;
 };
 
+const formatElapsed = (ms: number): string => {
+  const totalSec = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSec / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  if (hours > 0) {
+    return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+  }
+  return `${pad(mins)}:${pad(secs)}`;
+};
+
+const formatImprovement = (pct: number): string => {
+  const sign = pct > 0 ? "+" : "";
+  return `${sign}${pct.toFixed(1)}%`;
+};
+
 const Construction = () => {
   const parsedJson = useRawJsonStore((state) => state.parsedJson);
   const { construction: constructionData } = useGameData();
@@ -61,6 +79,9 @@ const Construction = () => {
   const [isSolving, setIsSolving] = useState(false);
   const [solverResult, setSolverResult] = useState<SolverResult | null>(null);
   const [solverError, setSolverError] = useState<string | null>(null);
+  const solverState = useMainState("constructionSolver");
+  const progress = solverState?.progress ?? null;
+  const [isCancelling, setIsCancelling] = useState(false);
   const score = constructionData?.score;
 
   const allSlotsUnlocked =
@@ -111,6 +132,21 @@ const Construction = () => {
       );
     } finally {
       setIsSolving(false);
+      setIsCancelling(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!isSolving || isCancelling) {
+      return;
+    }
+    setIsCancelling(true);
+    try {
+      await window.api.script.world3.construction.solverCancel();
+    } catch (err) {
+      setSolverError(
+        err instanceof Error ? err.message : "Failed to cancel solver"
+      );
     }
   };
 
@@ -185,6 +221,16 @@ const Construction = () => {
           >
             {isSolving ? "↻ solving…" : "↻ solve"}
           </button>
+          {isSolving && (
+            <button
+              className="cursor-pointer rounded-[3px] border border-amber bg-surface px-3.5 py-1.5 font-mono font-semibold text-[11px] text-amber hover:bg-surface-hi disabled:cursor-default disabled:opacity-60"
+              disabled={isCancelling}
+              onClick={handleCancel}
+              type="button"
+            >
+              {isCancelling ? "↻ cancelling…" : "↻ cancel"}
+            </button>
+          )}
           <RunBtn
             disabled={!solverResult}
             getArgs={() => [solverResult?.steps ?? []]}
@@ -193,6 +239,25 @@ const Construction = () => {
             small
           />
         </div>
+        {isSolving && progress && (
+          <div className="mt-2.5 rounded-[3px] border border-border-soft bg-panel-2 p-2 font-mono text-[10px] text-text-dim leading-[1.7]">
+            <div className="flex items-center gap-4">
+              <span
+                className={
+                  progress.improvementPct > 0 ? "text-amber" : "text-text-dim"
+                }
+              >
+                best {formatImprovement(progress.improvementPct)}
+              </span>
+              <span>{notateNumber(progress.iter)} iter</span>
+              <span>{notateNumber(progress.iterPerSec)}/s</span>
+              <span>{formatElapsed(progress.elapsedMs)}</span>
+              <span>
+                {progress.restarts} restart{progress.restarts === 1 ? "" : "s"}
+              </span>
+            </div>
+          </div>
+        )}
         {solverResult && solverResult.steps.length > 0 && (
           <div className="mt-2.5 max-h-20 overflow-auto rounded-[3px] border border-border-soft bg-panel-2 p-2 font-mono text-[10px] text-text-dim leading-[1.7]">
             {solverResult.steps.map((step, index) => {
