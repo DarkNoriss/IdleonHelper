@@ -54,12 +54,13 @@ const formatDiff = (current: number, optimized: number): string => {
   return `${sign}${notateNumber(diff)}`;
 };
 
+const pad = (n: number) => n.toString().padStart(2, "0");
+
 const formatElapsed = (ms: number): string => {
   const totalSec = Math.floor(ms / 1000);
   const hours = Math.floor(totalSec / 3600);
   const mins = Math.floor((totalSec % 3600) / 60);
   const secs = totalSec % 60;
-  const pad = (n: number) => n.toString().padStart(2, "0");
   if (hours > 0) {
     return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
   }
@@ -82,6 +83,7 @@ const Construction = () => {
   const solverState = useMainState("constructionSolver");
   const progress = solverState?.progress ?? null;
   const [isCancelling, setIsCancelling] = useState(false);
+  const isSolverActive = isSolving || progress !== null;
   const score = constructionData?.score;
 
   const allSlotsUnlocked =
@@ -137,7 +139,7 @@ const Construction = () => {
   };
 
   const handleCancel = async () => {
-    if (!isSolving || isCancelling) {
+    if (!isSolverActive || isCancelling) {
       return;
     }
     setIsCancelling(true);
@@ -147,6 +149,7 @@ const Construction = () => {
       setSolverError(
         err instanceof Error ? err.message : "Failed to cancel solver"
       );
+      setIsCancelling(false);
     }
   };
 
@@ -215,13 +218,13 @@ const Construction = () => {
           </Field>
           <button
             className="cursor-pointer rounded-[3px] border border-amber bg-surface px-3.5 py-1.5 font-mono font-semibold text-[11px] text-amber hover:bg-surface-hi disabled:cursor-default disabled:opacity-60"
-            disabled={!constructionData || isSolving}
+            disabled={!constructionData || isSolverActive}
             onClick={handleSolve}
             type="button"
           >
-            {isSolving ? "↻ solving…" : "↻ solve"}
+            {isSolverActive ? "↻ solving…" : "↻ solve"}
           </button>
-          {isSolving && (
+          {isSolverActive && (
             <button
               className="cursor-pointer rounded-[3px] border border-amber bg-surface px-3.5 py-1.5 font-mono font-semibold text-[11px] text-amber hover:bg-surface-hi disabled:cursor-default disabled:opacity-60"
               disabled={isCancelling}
@@ -239,7 +242,7 @@ const Construction = () => {
             small
           />
         </div>
-        {isSolving && progress && (
+        {isSolverActive && progress && (
           <div className="mt-2.5 rounded-[3px] border border-border-soft bg-panel-2 p-2 font-mono text-[10px] text-text-dim leading-[1.7]">
             <div className="flex items-center gap-4">
               <span
