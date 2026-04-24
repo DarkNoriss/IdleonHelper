@@ -19,6 +19,13 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
+        input: {
+          index: path.resolve(import.meta.dirname, "./src/main/index.ts"),
+          "workers/construction-solver.worker": path.resolve(
+            import.meta.dirname,
+            "./src/main/workers/construction-solver.worker.ts"
+          ),
+        },
         external: ["ws", "bufferutil", "utf-8-validate"],
       },
     },
