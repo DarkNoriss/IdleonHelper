@@ -23,4 +23,4 @@ export {
   weeklyBattleGet,
   weeklyBattleOnChange,
 } from "./world2/index";
-export { solver } from "./world3/index";
+export { cancelSolver, isSolverRunning, solve } from "./world3/index";
