@@ -280,14 +280,13 @@ const simulatedAnnealingRun = async (
           elapsed > 0 ? Math.round((totalIter * 1000) / elapsed) : 0;
 
         // Prefer the global best seen across all restarts if it beats this run's best.
-        const bestScoreValue =
-          bestScore > progressCtx.globalBest.score
-            ? bestScore
-            : progressCtx.globalBest.score;
-        const bestStateForReport =
-          bestScore > progressCtx.globalBest.score
-            ? bestState
-            : (progressCtx.globalBest.state ?? bestState);
+        const useLocalBest = bestScore > progressCtx.globalBest.score;
+        const bestScoreValue = useLocalBest
+          ? bestScore
+          : progressCtx.globalBest.score;
+        const bestStateForReport = useLocalBest
+          ? bestState
+          : (progressCtx.globalBest.state ?? bestState);
 
         const improvementPct =
           progressCtx.initialScore > 0
@@ -679,7 +678,7 @@ export const solver = async (
     },
     initialScore,
     startWallTime: startTime,
-    lastProgressAt: 0,
+    lastProgressAt: startTime,
   };
 
   for (let restart = 0; restart < numRestarts; restart++) {
