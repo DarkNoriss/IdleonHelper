@@ -8,7 +8,8 @@ import type {
 import { getConnectionStatus, getLastError } from "./backend/index";
 import {
   allScripts,
-  solver,
+  cancelSolver,
+  solve,
   weeklyBattleFetch,
   weeklyBattleGet,
 } from "./scripts/index";
@@ -81,9 +82,14 @@ export const setupHandlers = (): void => {
       logger.log(
         `IPC: script:world-3.construction.solver (solveTime: ${solveTime ?? 1000})`
       );
-      return await solver(inventory, weights, solveTime);
+      return await solve(inventory, weights, solveTime ?? 1000);
     }
   );
+
+  ipcMain.handle("script:world-3.construction.solver.cancel", () => {
+    logger.log("IPC: script:world-3.construction.solver.cancel");
+    cancelSolver();
+  });
 
   // Backend
   ipcMain.handle("backend:getStatus", async () => {
