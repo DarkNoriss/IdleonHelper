@@ -1,6 +1,6 @@
 import type { Selections } from "./alchemy";
 import type { CompassUpgrade } from "./compass";
-import type { OptimalStep } from "./construction";
+import type { OptimalStep, SolverProgress } from "./construction";
 import type { HsvColor } from "./hsv";
 
 export type WeeklyBattleStep = {
@@ -130,6 +130,9 @@ export type AppState = {
   bossFarmer: BossFarmerState;
   collectTraps: { endsAt: number | null };
   placeTraps: { current: number | null };
+  constructionSolver: {
+    progress: SolverProgress | null;
+  };
   devServer: {
     port: number | null;
     armed: boolean;
