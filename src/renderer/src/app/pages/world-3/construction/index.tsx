@@ -149,6 +149,7 @@ const Construction = () => {
       setSolverError(
         err instanceof Error ? err.message : "Failed to cancel solver"
       );
+    } finally {
       setIsCancelling(false);
     }
   };
