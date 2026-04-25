@@ -9,10 +9,12 @@ import {
   ScoreCol,
   TermSelect,
 } from "@/components/terminal";
+import { DisabledHint } from "@/components/terminal/disabled-hint";
 import { useMainState } from "@/hooks/use-main-state";
 import { notateNumber } from "@/lib/notateNumber.ts";
+import { signInWithGoogle } from "@/providers/auth-provider";
 import { useGameData } from "@/providers/game-data-provider.tsx";
-import { useRawJsonStore } from "@/store/raw-json.ts";
+import { useIsSignedIn } from "@/store/connection";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 import type {
   OptimalStep,
@@ -73,8 +75,8 @@ const formatImprovement = (pct: number): string => {
 };
 
 const Construction = () => {
-  const parsedJson = useRawJsonStore((state) => state.parsedJson);
   const { construction: constructionData } = useGameData();
+  const isSignedIn = useIsSignedIn();
   const focus = useUiPrefsStore((s) => s.construction.focus);
   const setConstruction = useUiPrefsStore((s) => s.setConstruction);
   const [isSolving, setIsSolving] = useState(false);
@@ -159,6 +161,24 @@ const Construction = () => {
   const expBonus = solverResult?.score.expBonus ?? score?.expBonus ?? 0;
   const flaggy = solverResult?.score.flaggy ?? score?.flaggy ?? 0;
 
+  const solverHint = (
+    <>
+      solver needs synced cog data from firebase.{" "}
+      <button
+        className="cursor-pointer border-none bg-transparent p-0 font-[inherit] text-[inherit] text-amber underline"
+        onClick={() => {
+          signInWithGoogle().catch(() => {
+            // errors surface via the connection store
+          });
+        }}
+        type="button"
+      >
+        sign in with google
+      </button>{" "}
+      to enable.
+    </>
+  );
+
   return (
     <>
       <PageHead
@@ -166,42 +186,35 @@ const Construction = () => {
         path="world-3 / construction"
         title="construction"
       />
-      <Alert tone="warn">
-        navigate to the construction screen in-game. save raw-data first or the
-        solver won't have a board to work with.
-      </Alert>
-      {!parsedJson && (
-        <Alert tone="info">
-          no raw-data yet — open the raw-data page and paste your JSON.
+      {!isSignedIn && (
+        <Alert tone="warn">
+          solver is locked — sign in with google from the title bar to sync your
+          cog data from firebase. collect/trash will still work.
         </Alert>
       )}
       {solverError && <Alert tone="danger">{solverError}</Alert>}
 
-      {score && (
-        <Block compact tag={solved ? "optimized" : "current"} title="score">
-          <div className="grid grid-cols-3 gap-2.5 text-center">
-            <ScoreCol
-              current={notateNumber(buildRate)}
-              diff={
-                solved && score ? formatDiff(score.buildRate, buildRate) : null
-              }
-              label="build-rate"
-            />
-            <ScoreCol
-              current={`${notateNumber(expBonus)}%`}
-              diff={
-                solved && score ? formatDiff(score.expBonus, expBonus) : null
-              }
-              label="exp-bonus"
-            />
-            <ScoreCol
-              current={notateNumber(flaggy)}
-              diff={solved && score ? formatDiff(score.flaggy, flaggy) : null}
-              label="flaggy"
-            />
-          </div>
-        </Block>
-      )}
+      <Block compact tag={solved ? "optimized" : "current"} title="score">
+        <div className="grid grid-cols-3 gap-2.5 text-center">
+          <ScoreCol
+            current={notateNumber(buildRate)}
+            diff={
+              solved && score ? formatDiff(score.buildRate, buildRate) : null
+            }
+            label="build-rate"
+          />
+          <ScoreCol
+            current={`${notateNumber(expBonus)}%`}
+            diff={solved && score ? formatDiff(score.expBonus, expBonus) : null}
+            label="exp-bonus"
+          />
+          <ScoreCol
+            current={notateNumber(flaggy)}
+            diff={solved && score ? formatDiff(score.flaggy, flaggy) : null}
+            label="flaggy"
+          />
+        </div>
+      </Block>
 
       <Block
         compact
@@ -217,14 +230,16 @@ const Construction = () => {
               value={focus}
             />
           </Field>
-          <button
-            className="cursor-pointer rounded-[3px] border border-amber bg-surface px-3.5 py-1.5 font-mono font-semibold text-[11px] text-amber hover:bg-surface-hi disabled:cursor-default disabled:opacity-60"
-            disabled={!constructionData || isSolverActive}
-            onClick={handleSolve}
-            type="button"
-          >
-            {isSolverActive ? "↻ solving…" : "↻ solve"}
-          </button>
+          <DisabledHint disabled={!isSignedIn} popover={solverHint}>
+            <button
+              className="cursor-pointer rounded-[3px] border border-amber bg-surface px-3.5 py-1.5 font-mono font-semibold text-[11px] text-amber hover:bg-surface-hi disabled:cursor-default disabled:opacity-60"
+              disabled={!(isSignedIn && constructionData) || isSolverActive}
+              onClick={handleSolve}
+              type="button"
+            >
+              {isSolverActive ? "↻ solving…" : "↻ solve"}
+            </button>
+          </DisabledHint>
           {isSolverActive && (
             <button
               className="cursor-pointer rounded-[3px] border border-amber bg-surface px-3.5 py-1.5 font-mono font-semibold text-[11px] text-amber hover:bg-surface-hi disabled:cursor-default disabled:opacity-60"
@@ -235,13 +250,15 @@ const Construction = () => {
               {isCancelling ? "↻ cancelling…" : "↻ cancel"}
             </button>
           )}
-          <RunBtn
-            disabled={!solverResult}
-            getArgs={() => [solverResult?.steps ?? []]}
-            label="apply board"
-            scriptId="world3.construction.apply"
-            small
-          />
+          <DisabledHint disabled={!isSignedIn} popover={solverHint}>
+            <RunBtn
+              disabled={!(isSignedIn && solverResult)}
+              getArgs={() => [solverResult?.steps ?? []]}
+              label="apply board"
+              scriptId="world3.construction.apply"
+              small
+            />
+          </DisabledHint>
         </div>
         {isSolverActive && progress && (
           <div className="mt-2.5 rounded-[3px] border border-border-soft bg-panel-2 p-2 font-mono text-[10px] text-text-dim leading-[1.7]">
