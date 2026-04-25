@@ -100,6 +100,7 @@ export const UpdateFooter = () => {
 
   let left: React.ReactNode = null;
   let right: React.ReactNode = null;
+  let bottom: React.ReactNode = null;
 
   if (
     status === "idle" ||
@@ -122,15 +123,15 @@ export const UpdateFooter = () => {
     );
   } else if (status === "update-available") {
     left = (
-      <div className="flex min-w-0 items-center gap-1.5">
+      <div className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
         {VerCurrent}
         <span className="text-text-muted">→</span>
         <span className="font-medium text-amber">v{latest}</span>
       </div>
     );
-    right = (
-      <FootBtn onClick={download} primary>
-        ↓ update
+    bottom = (
+      <FootBtn className="w-full" onClick={download} primary>
+        ↓ update now
       </FootBtn>
     );
   } else if (status === "downloading") {
@@ -172,9 +173,12 @@ export const UpdateFooter = () => {
   }
 
   return (
-    <div className="flex min-h-[26px] items-center justify-between gap-2 border-border-soft border-t px-2.5 py-1.5 font-mono text-[9.5px] text-text-muted">
-      <div className="flex min-w-0 flex-1 items-center">{left}</div>
-      {right}
+    <div className="flex flex-col gap-1.5 border-border-soft border-t px-2.5 py-1.5 font-mono text-[9.5px] text-text-muted">
+      <div className="flex min-h-[18px] items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center">{left}</div>
+        {right}
+      </div>
+      {bottom}
     </div>
   );
 };
