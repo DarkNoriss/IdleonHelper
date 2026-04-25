@@ -169,7 +169,7 @@ export const installUpdate = (): void => {
     }
 
     logger.log("Preparing to install update...");
-    notifyRenderer("installing");
+    notifyRenderer("installing", updateInfo?.version);
 
     // quitAndInstall will trigger the app's before-quit handler
     // which will automatically stop the backend and close connections
