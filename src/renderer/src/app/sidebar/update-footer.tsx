@@ -31,6 +31,7 @@ export const UpdateFooter = () => {
     status: "idle",
   });
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
+  const [showUpToDate, setShowUpToDate] = useState(false);
 
   useEffect(() => {
     window.api.update
@@ -59,6 +60,16 @@ export const UpdateFooter = () => {
       cleanupProgress();
     };
   }, []);
+
+  useEffect(() => {
+    if (updateInfo.status !== "update-not-available") {
+      setShowUpToDate(false);
+      return;
+    }
+    setShowUpToDate(true);
+    const timeout = setTimeout(() => setShowUpToDate(false), 3000);
+    return () => clearTimeout(timeout);
+  }, [updateInfo.status]);
 
   const check = () => {
     window.api.update.checkForUpdates().catch(() => {
@@ -90,7 +101,10 @@ export const UpdateFooter = () => {
   let left: React.ReactNode = null;
   let right: React.ReactNode = null;
 
-  if (status === "idle") {
+  if (
+    status === "idle" ||
+    (status === "update-not-available" && !showUpToDate)
+  ) {
     left = VerCurrent;
     right = <FootBtn onClick={check}>↻ check</FootBtn>;
   } else if (status === "checking") {
