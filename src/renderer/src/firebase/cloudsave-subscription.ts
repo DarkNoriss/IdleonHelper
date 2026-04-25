@@ -1,9 +1,22 @@
-import { doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { useConnectionStore } from "@/store/connection";
 import { useRawJsonStore } from "@/store/raw-json";
 import { firestore } from "./client";
 
 const MAX_CONSECUTIVE_ERRORS = 3;
+
+type CloudsaveDoc = { data?: unknown; lastUpdated?: number };
+
+const applyCloudsaveDoc = (data: CloudsaveDoc): void => {
+  if (data.data !== undefined) {
+    useRawJsonStore.getState().setRawJson(JSON.stringify({ data: data.data }));
+  }
+  useConnectionStore
+    .getState()
+    .setLastUpdated(
+      typeof data.lastUpdated === "number" ? data.lastUpdated : Date.now()
+    );
+};
 
 export const subscribeToCloudsave = (uid: string): Unsubscribe => {
   const ref = doc(firestore, "_data", uid);
@@ -19,15 +32,7 @@ export const subscribeToCloudsave = (uid: string): Unsubscribe => {
         conn.setLastUpdated(null);
         return;
       }
-      const data = snap.data() as { data?: unknown; lastUpdated?: number };
-      if (data.data !== undefined) {
-        useRawJsonStore
-          .getState()
-          .setRawJson(JSON.stringify({ data: data.data }));
-      }
-      conn.setLastUpdated(
-        typeof data.lastUpdated === "number" ? data.lastUpdated : Date.now()
-      );
+      applyCloudsaveDoc(snap.data() as CloudsaveDoc);
     },
     (err) => {
       const conn = useConnectionStore.getState();
@@ -41,4 +46,17 @@ export const subscribeToCloudsave = (uid: string): Unsubscribe => {
       }
     }
   );
+};
+
+// One-shot fetch of the current cloudsave doc. Used to repopulate after the
+// user manually clears local state -- onSnapshot won't re-fire unless the doc
+// changes, so we explicitly read once.
+export const refreshCloudsave = async (uid: string): Promise<void> => {
+  const ref = doc(firestore, "_data", uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    useConnectionStore.getState().setLastUpdated(null);
+    return;
+  }
+  applyCloudsaveDoc(snap.data() as CloudsaveDoc);
 };

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Alert, PageHead, SmBtn } from "@/components/terminal";
+import { refreshCloudsave } from "@/providers/auth-provider";
+import { useIsSignedIn } from "@/store/connection";
 import { useRawJsonStore } from "@/store/raw-json.ts";
 
 const RawData = () => {
   const rawJson = useRawJsonStore((state) => state.rawJson);
   const setRawJson = useRawJsonStore((state) => state.setRawJson);
   const clearRawJson = useRawJsonStore((state) => state.clearRawJson);
+  const isSignedIn = useIsSignedIn();
   const [localJson, setLocalJson] = useState(rawJson);
 
   useEffect(() => {
@@ -21,6 +24,11 @@ const RawData = () => {
   const handleClear = () => {
     setLocalJson("");
     clearRawJson();
+    if (isSignedIn) {
+      refreshCloudsave().catch(() => {
+        // errors surface via the connection store
+      });
+    }
   };
 
   const handlePaste = async () => {

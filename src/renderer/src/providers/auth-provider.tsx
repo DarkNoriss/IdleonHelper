@@ -7,7 +7,10 @@ import {
 } from "firebase/auth";
 import { useEffect } from "react";
 import { auth } from "@/firebase/client";
-import { subscribeToCloudsave } from "@/firebase/cloudsave-subscription";
+import {
+  refreshCloudsave as refreshCloudsaveDoc,
+  subscribeToCloudsave,
+} from "@/firebase/cloudsave-subscription";
 import { useConnectionStore } from "@/store/connection";
 import { useRawJsonStore } from "@/store/raw-json";
 
@@ -101,4 +104,12 @@ export const cancelSignIn = async (): Promise<void> => {
   const conn = useConnectionStore.getState();
   conn.setStatus("idle");
   conn.clearConsent();
+};
+
+export const refreshCloudsave = async (): Promise<void> => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    return;
+  }
+  await refreshCloudsaveDoc(uid);
 };
