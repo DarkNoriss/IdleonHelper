@@ -1,4 +1,5 @@
 import { type ComponentType, lazy, Suspense } from "react";
+import { ConsentDialog } from "@/components/profile/consent-dialog";
 import { QueueDock } from "@/components/queue-dock";
 import { AuthProvider } from "@/providers/auth-provider";
 import { GameDataProvider } from "@/providers/game-data-provider.tsx";
@@ -24,6 +25,7 @@ export const App = () => {
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
       <AuthProvider>
         <GameDataProvider>
+          <ConsentDialog />
           <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
             <TitleBar />
             <DevBanner />
