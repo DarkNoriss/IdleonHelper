@@ -144,6 +144,16 @@ declare global {
       scriptConfigs: {
         publish: (scriptId: string, args: unknown[]) => Promise<void>;
       };
+      auth: {
+        signIn: () => Promise<
+          | { ok: true; idToken: string }
+          | { ok: false; code: string; message: string }
+        >;
+        cancel: () => Promise<{ ok: true }>;
+        onAwaitingConsent: (
+          cb: (payload: { userCode: string; verificationUrl: string }) => void
+        ) => () => void;
+      };
     };
     electron: ElectronAPI;
     logs: {
