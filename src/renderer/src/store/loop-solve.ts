@@ -34,8 +34,11 @@ const MAX_ITERATIONS = 10;
 const SOLVE_TIME_MS = 600_000; // 10 min — matches existing solo-solve default
 const FRESH_DATA_TIMEOUT_MS = 60_000;
 
+// Track the field the solver actually optimizes for in `getScoreSum`. Loop
+// improvement % must reflect the same field, otherwise the loop reads zero
+// improvement on a state the solver considers strictly better.
 export const SCORE_FIELD: Record<SolverFocus, keyof Score> = {
-  exp: "expBonus",
+  exp: "playerExpRate",
   buildRate: "buildRate",
   flaggy: "flaggy",
 };
@@ -214,7 +217,6 @@ const runLoop = async (
   const isCancelRequested = () => get().cancelRequested;
 
   let startScore: Score | null = null;
-  let lastResult: SolverResult | null = null;
   let prevLastUpdated = useConnectionStore.getState().lastUpdated;
   let completedIterations = 0;
 
@@ -286,13 +288,12 @@ const runLoop = async (
           totalGainPct: improvementPctFor(
             focus,
             startScore,
-            lastResult?.score ?? startScore
+            construction.score
           ),
         },
       });
       return;
     }
-    lastResult = result;
     set({
       lastImprovementPct: improvementPctFor(
         focus,
@@ -407,17 +408,17 @@ const runLoop = async (
     return;
   }
 
+  const finalParsed = useRawJsonStore.getState().parsedJson;
+  const finalConstruction = finalParsed ? parseConstruction(finalParsed) : null;
+  const finalScore = finalConstruction?.score ?? startScore;
+
   set({
     status: "idle",
     cancelRequested: false,
     lastOutcome: {
       kind: "completed-cap",
       iterations: completedIterations,
-      totalGainPct: improvementPctFor(
-        focus,
-        startScore,
-        lastResult?.score ?? startScore
-      ),
+      totalGainPct: improvementPctFor(focus, startScore, finalScore),
     },
   });
 };
