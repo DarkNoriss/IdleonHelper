@@ -163,11 +163,19 @@ const api = {
     > => ipcRenderer.invoke("auth:signIn"),
     cancel: (): Promise<{ ok: true }> => ipcRenderer.invoke("auth:cancel"),
     onAwaitingConsent: (
-      cb: (payload: { userCode: string; verificationUrl: string }) => void
+      cb: (payload: {
+        userCode: string;
+        verificationUrl: string;
+        expiresAt: number;
+      }) => void
     ) => {
       const handler = (
         _event: IpcRendererEvent,
-        payload: { userCode: string; verificationUrl: string }
+        payload: {
+          userCode: string;
+          verificationUrl: string;
+          expiresAt: number;
+        }
       ) => {
         cb(payload);
       };

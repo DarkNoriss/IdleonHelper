@@ -52,8 +52,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Listen for "awaiting-consent" pings from main during sign-in.
   useEffect(() => {
     const unsub = window.api.auth.onAwaitingConsent(
-      ({ userCode, verificationUrl }) => {
-        useConnectionStore.getState().setConsent({ userCode, verificationUrl });
+      ({ userCode, verificationUrl, expiresAt }) => {
+        useConnectionStore
+          .getState()
+          .setConsent({ userCode, verificationUrl, expiresAt });
       }
     );
     return unsub;

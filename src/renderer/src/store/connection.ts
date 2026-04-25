@@ -14,6 +14,7 @@ type ConnectionState = {
   displayName: string | null;
   userCode: string | null;
   verificationUrl: string | null;
+  expiresAt: number | null;
   lastUpdated: number | null;
   lastError: string | null;
   isStale: boolean;
@@ -24,7 +25,11 @@ type ConnectionState = {
     email: string | null;
     displayName: string | null;
   }) => void;
-  setConsent: (c: { userCode: string; verificationUrl: string }) => void;
+  setConsent: (c: {
+    userCode: string;
+    verificationUrl: string;
+    expiresAt: number;
+  }) => void;
   clearConsent: () => void;
   setLastUpdated: (ms: number | null) => void;
   setStale: (s: boolean) => void;
@@ -40,6 +45,7 @@ const initialState = {
   displayName: null,
   userCode: null,
   verificationUrl: null,
+  expiresAt: null,
   lastUpdated: null,
   lastError: null,
   isStale: false,
@@ -50,9 +56,10 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   ...initialState,
   setStatus: (status) => set({ status }),
   setIdentity: ({ email, displayName }) => set({ email, displayName }),
-  setConsent: ({ userCode, verificationUrl }) =>
-    set({ userCode, verificationUrl, status: "awaiting-consent" }),
-  clearConsent: () => set({ userCode: null, verificationUrl: null }),
+  setConsent: ({ userCode, verificationUrl, expiresAt }) =>
+    set({ userCode, verificationUrl, expiresAt, status: "awaiting-consent" }),
+  clearConsent: () =>
+    set({ userCode: null, verificationUrl: null, expiresAt: null }),
   setLastUpdated: (lastUpdated) => set({ lastUpdated }),
   setStale: (isStale) => set({ isStale }),
   setError: (lastError) => set({ lastError }),
