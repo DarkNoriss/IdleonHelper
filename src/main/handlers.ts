@@ -5,6 +5,7 @@ import type {
   ParsedConstructionData,
   SolverWeights,
 } from "../types/construction";
+import { registerAuthHandlers } from "./auth/auth-ipc";
 import { getConnectionStatus, getLastError } from "./backend/index";
 import {
   allScripts,
@@ -31,6 +32,7 @@ export const setupHandlers = (): void => {
   // Register all script handlers automatically
   registerAllScripts(allScripts);
   registerStateHandlers();
+  registerAuthHandlers();
 
   // Window
   ipcMain.on("window-close", () => {

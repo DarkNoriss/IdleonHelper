@@ -156,6 +156,27 @@ const api = {
       return ipcRenderer.invoke("scriptConfigs:publish", scriptId, args);
     },
   },
+  auth: {
+    signIn: (): Promise<
+      | { ok: true; idToken: string }
+      | { ok: false; code: string; message: string }
+    > => ipcRenderer.invoke("auth:signIn"),
+    cancel: (): Promise<{ ok: true }> => ipcRenderer.invoke("auth:cancel"),
+    onAwaitingConsent: (
+      cb: (payload: { userCode: string; verificationUrl: string }) => void
+    ) => {
+      const handler = (
+        _event: IpcRendererEvent,
+        payload: { userCode: string; verificationUrl: string }
+      ) => {
+        cb(payload);
+      };
+      ipcRenderer.on("auth:awaiting-consent", handler);
+      return () => {
+        ipcRenderer.off("auth:awaiting-consent", handler);
+      };
+    },
+  },
 };
 
 if (process.contextIsolated) {

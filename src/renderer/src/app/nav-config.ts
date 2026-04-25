@@ -15,7 +15,7 @@ type NavEntry = NavItem | NavGroup;
 
 export const navConfig: NavEntry[] = [
   { title: "dashboard", page: "dashboard" },
-  { title: "raw-data", page: "rawData" },
+  { title: "raw-data", page: "rawData", devOnly: true },
   { title: "debug", page: "debug", devOnly: true },
   {
     title: "general",
