@@ -2,6 +2,7 @@ import { isAbsolute, join } from "node:path";
 import { is } from "@electron-toolkit/utils";
 
 import type { CancellationToken } from "../utils/cancellation-token";
+import { logger } from "../utils/logger";
 import { sendCommand } from "./backend-client";
 import { backendConfig } from "./backend-config";
 import type {
@@ -33,6 +34,23 @@ import type {
   StopRequest,
   StopResponse,
 } from "./backend-types";
+
+const logDebugSimilarities = (
+  command: string,
+  imagePath: string,
+  matches: Point[],
+  similarities: number[] | undefined
+): void => {
+  if (similarities === undefined) {
+    return;
+  }
+  const pairs = matches.map(
+    (point, i) => `(${point.x},${point.y})=${(similarities[i] ?? 0).toFixed(4)}`
+  );
+  logger.log(
+    `${command} debug - ${imagePath} matches=${matches.length} ${pairs.join(" ")}`
+  );
+};
 
 const resolveImagePath = (imagePath: string): string => {
   if (isAbsolute(imagePath)) {
@@ -108,15 +126,24 @@ export const backendCommand = {
   ): Promise<Point[]> => {
     token.throwIfCancelled();
     const resolvedPath = resolveImagePath(imagePath);
+    const debug = options?.debug ?? false;
     const request: FindRequest = {
       imagePath: resolvedPath,
       timeoutMs: options?.timeoutMs ?? backendConfig.find.timeoutMs,
       intervalMs: options?.intervalMs ?? backendConfig.find.intervalMs,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
-      debug: options?.debug ?? false,
+      debug,
     };
     const response = await sendCommand("find", request);
+    if (debug) {
+      logDebugSimilarities(
+        "find",
+        imagePath,
+        response.matches,
+        response.similarities
+      );
+    }
     return response.matches;
   },
 
@@ -142,7 +169,14 @@ export const backendCommand = {
         offset: options?.offset ?? undefined,
       };
       const response = await sendCommand("findWithDebug", request);
-      return response.matches.map((m) => m.point);
+      const points = response.matches.map((m) => m.point);
+      logDebugSimilarities(
+        "isVisible",
+        imagePath,
+        points,
+        response.matches.map((m) => m.similarity)
+      );
+      return points;
     }
     const request: FindRequest = {
       imagePath: resolvedPath,
@@ -438,6 +472,7 @@ export const backendCommand = {
   ): Promise<Point[]> => {
     token.throwIfCancelled();
     const resolvedPath = resolveImagePath(imagePath);
+    const debug = options?.debug ?? false;
     const request: FindHSVRequest = {
       imagePath: resolvedPath,
       hsvLower,
@@ -446,9 +481,17 @@ export const backendCommand = {
       intervalMs: options?.intervalMs ?? backendConfig.find.intervalMs,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
-      debug: options?.debug ?? false,
+      debug,
     };
     const response = await sendCommand("findHSV", request);
+    if (debug) {
+      logDebugSimilarities(
+        "findHSV",
+        imagePath,
+        response.matches,
+        response.similarities
+      );
+    }
     return response.matches;
   },
 
@@ -460,12 +503,14 @@ export const backendCommand = {
       | {
           offset?: ScreenOffset;
           threshold?: number;
+          debug?: boolean;
         }
       | undefined,
     token: CancellationToken
   ): Promise<Point[]> => {
     token.throwIfCancelled();
     const resolvedPath = resolveImagePath(imagePath);
+    const debug = options?.debug ?? false;
     const request: FindHSVRequest = {
       imagePath: resolvedPath,
       hsvLower,
@@ -474,8 +519,17 @@ export const backendCommand = {
       intervalMs: backendConfig.isVisible.intervalMs,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
+      debug,
     };
     const response = await sendCommand("findHSV", request);
+    if (debug) {
+      logDebugSimilarities(
+        "isVisibleHSV",
+        imagePath,
+        response.matches,
+        response.similarities
+      );
+    }
     return response.matches;
   },
 

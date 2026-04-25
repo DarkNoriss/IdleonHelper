@@ -1,4 +1,5 @@
 export type ParsedCog = {
+  cogId: string;
   key: number;
   buildRate: unknown;
   isPlayer: boolean;
@@ -35,6 +36,7 @@ export type Score = {
   buildRate: number;
   expBonus: number;
   flaggy: number;
+  playerExpRate: number;
 };
 
 export type OptimalStep = {

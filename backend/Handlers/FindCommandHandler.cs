@@ -55,9 +55,11 @@ internal static class FindCommandHandler
         findRequest.Debug ?? false
       );
 
+      var debug = findRequest.Debug ?? false;
       var response = new FindResponse
       {
-        Matches = matches.Select(m => m.Point).ToList()
+        Matches = matches.Select(m => m.Point).ToList(),
+        Similarities = debug ? matches.Select(m => m.Similarity).ToList() : null
       };
 
       await MessageHandler.SendResponse(ws, message.Id, response, ct);

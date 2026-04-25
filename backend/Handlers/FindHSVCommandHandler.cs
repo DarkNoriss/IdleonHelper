@@ -65,9 +65,11 @@ internal static class FindHSVCommandHandler
         offset
       );
 
+      var debug = request.Debug ?? false;
       var response = new FindHSVResponse
       {
-        Matches = matches.Select(m => m.Point).ToList()
+        Matches = matches.Select(m => m.Point).ToList(),
+        Similarities = debug ? matches.Select(m => m.Similarity).ToList() : null
       };
 
       await MessageHandler.SendResponse(ws, message.Id, response, ct);

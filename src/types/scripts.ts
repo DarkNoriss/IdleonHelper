@@ -54,12 +54,14 @@ export type ScriptMap = {
   "general.cardPresets.select": { args: [number]; result: undefined };
   "general.bossFarmer.run": { args: [number]; result: undefined };
   "general.cloudsave.run": { args: []; result: undefined };
+  "general.closeAndCloudsave": { args: []; result: undefined };
   "general.debug.findAttackSkill": { args: [string]; result: undefined };
   "general.debug.captureHsvScreen": {
     args: [HsvColor, HsvColor];
     result: undefined;
   };
   "general.debug.findCloudsaveCoords": { args: []; result: undefined };
+  "general.debug.constructionNavStress": { args: []; result: undefined };
   "classSpecific.compass.run": {
     args: [CompassUpgrade[]];
     result: undefined;

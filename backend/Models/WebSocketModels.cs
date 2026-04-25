@@ -31,6 +31,7 @@ internal class ScreenOffsetDto
 internal class FindResponse
 {
   public List<Point> Matches { get; set; } = new();
+  public List<double>? Similarities { get; set; }
 }
 
 internal class MatchDto
@@ -217,11 +218,13 @@ internal class FindHSVRequest
   public int? IntervalMs { get; set; }
   public double? Threshold { get; set; }
   public ScreenOffsetDto? Offset { get; set; }
+  public bool? Debug { get; set; }
 }
 
 internal class FindHSVResponse
 {
   public List<Point> Matches { get; set; } = new();
+  public List<double>? Similarities { get; set; }
 }
 
 internal class FindHSVParallelRequest

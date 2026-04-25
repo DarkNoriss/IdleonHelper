@@ -4,6 +4,21 @@ import { delay, logger } from "../../utils/index";
 import { codex } from "./codex";
 import { navigateTo } from "./helpers";
 
+const PAGE_HSV_LOWER = { h: 0, s: 0, v: 128 } as const;
+const PAGE_HSV_UPPER = { h: 192, s: 255, v: 255 } as const;
+const PAGE_DETECT_THRESHOLD = 0.99;
+// Restrict page detection to the left side of the screen (cogs panel).
+// The right side has a "characters" UI element that false-matches on page-1.
+const PAGE_DETECT_OFFSET = {
+  left: 0,
+  top: 0,
+  right: 500,
+  bottom: 600,
+} as const;
+const TOTAL_PAGES = 8;
+const pagePath = (page: number): string =>
+  `ui/codex/quik-ref/construction/page-${page}`;
+
 export const construction = {
   toConstruction: async (token: CancellationToken): Promise<boolean> => {
     return await navigateTo(
@@ -81,82 +96,60 @@ export const construction = {
     targetPage: number,
     token: CancellationToken
   ): Promise<number> => {
-    const isOnTargetPage = await backendCommand.isVisible(
-      `ui/codex/quik-ref/construction/page-${targetPage}`,
-      { threshold: 0.975 },
-      token
-    );
-    if (isOnTargetPage.length > 0) {
-      logger.log(`Already on page ${targetPage}`);
-      return targetPage;
+    if (targetPage < 1 || targetPage > TOTAL_PAGES) {
+      throw new Error(
+        `Invalid target page ${targetPage} (valid range: 1-${TOTAL_PAGES})`
+      );
     }
 
-    let attempts = 0;
-    const maxAttempts = 5;
+    // Single-click-then-detect loop: a double-click overshoot is corrected on
+    // the next iteration instead of compounding inside a multi-click burst.
+    const MAX_CLICK_ITERATIONS = 30;
+    let clicks = 0;
+    let lastDetected: number | null = null;
 
-    while (attempts < maxAttempts) {
-      attempts++;
+    while (clicks < MAX_CLICK_ITERATIONS) {
+      token.throwIfCancelled();
 
-      const detectedPage = await detectCurrentPage(token);
-      if (detectedPage === null) {
+      const detected = await detectCurrentPage(token);
+      if (detected === null) {
         throw new Error(
-          `Cannot detect current page after navigation attempt ${attempts}`
+          `navigateToPage - cannot detect current page (target ${targetPage}, after ${clicks} clicks)`
         );
       }
 
-      if (detectedPage === targetPage) {
-        logger.log(`Successfully navigated to page ${targetPage}`);
+      if (detected === targetPage) {
+        logger.log(
+          `navigateToPage - reached page ${targetPage} (${clicks} click${clicks === 1 ? "" : "s"})`
+        );
         return targetPage;
       }
 
-      const pageDiff = targetPage - detectedPage;
+      const direction = targetPage > detected ? "next" : "prev";
       const buttonImage =
-        pageDiff > 0
+        direction === "next"
           ? "ui/codex/quik-ref/construction/cogs-page-next"
           : "ui/codex/quik-ref/construction/cogs-page-prev";
 
       const result = await backendCommand.find(buttonImage, undefined, token);
       if (result.length === 0) {
         throw new Error(
-          `Page navigation button not found. Target: ${targetPage}, Detected: ${detectedPage}, Attempt: ${attempts}`
+          `navigateToPage - ${direction} button not found (target ${targetPage}, detected ${detected})`
         );
       }
 
-      const buttonPoint = result[0]!;
-      const clicksNeeded = Math.abs(pageDiff);
-
       logger.log(
-        `Attempt ${attempts}: Navigating from page ${detectedPage} to page ${targetPage} (${clicksNeeded} clicks)`
+        `navigateToPage - on page ${detected}, target ${targetPage}, clicking ${direction}`
       );
-
-      await backendCommand.click(
-        buttonPoint,
-        { times: clicksNeeded, interval: 25, holdTime: 10 },
-        token
-      );
-
+      await backendCommand.click(result[0]!, undefined, token);
       await delay(100, token);
 
-      const verifyPage = await backendCommand.isVisible(
-        `ui/codex/quik-ref/construction/page-${targetPage}`,
-        { threshold: 0.975 },
-        token
-      );
-      if (verifyPage.length > 0) {
-        logger.log(
-          `Successfully navigated to page ${targetPage} on attempt ${attempts}`
-        );
-        return targetPage;
-      }
-
-      logger.log(
-        `Attempt ${attempts} failed: Still not on page ${targetPage} after navigation`
-      );
+      lastDetected = detected;
+      clicks++;
     }
 
-    const finalDetectedPage = await detectCurrentPage(token);
     throw new Error(
-      `Failed to navigate to page ${targetPage} after ${maxAttempts} attempts. Final detected page: ${finalDetectedPage ?? "unknown"}`
+      `navigateToPage - safety cap reached (${MAX_CLICK_ITERATIONS} clicks), target ${targetPage}, last detected ${lastDetected ?? "unknown"}`
     );
   },
 } as const;
@@ -164,17 +157,33 @@ export const construction = {
 const detectCurrentPage = async (
   token: CancellationToken
 ): Promise<number | null> => {
-  for (let page = 1; page <= 7; page++) {
-    const isVisible = await backendCommand.isVisible(
-      `ui/codex/quik-ref/construction/page-${page}`,
-      { threshold: 0.975 },
-      token
-    );
-    if (isVisible.length > 0) {
-      return page;
+  const images: Record<string, string> = {};
+  for (let page = 1; page <= TOTAL_PAGES; page++) {
+    images[String(page)] = pagePath(page);
+  }
+
+  const results = await backendCommand.isVisibleHSVParallel(
+    images,
+    PAGE_HSV_LOWER,
+    PAGE_HSV_UPPER,
+    { threshold: PAGE_DETECT_THRESHOLD, offset: PAGE_DETECT_OFFSET },
+    token
+  );
+
+  const matched: number[] = [];
+  for (let page = 1; page <= TOTAL_PAGES; page++) {
+    if ((results[String(page)]?.length ?? 0) > 0) {
+      matched.push(page);
     }
   }
-  return null;
+
+  if (matched.length > 1) {
+    logger.log(
+      `detectCurrentPage - WARNING: multiple pages matched [${matched.join(",")}], returning first`
+    );
+  }
+
+  return matched[0] ?? null;
 };
 
 const ensurePage = async (

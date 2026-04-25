@@ -23,12 +23,7 @@ const cogsMatch = (
   if (!(a && b)) {
     return false;
   }
-  return (
-    a.buildRate === b.buildRate &&
-    a.expBonus === b.expBonus &&
-    a.flaggy === b.flaggy &&
-    a.isPlayer === b.isPlayer
-  );
+  return a.cogId === b.cogId;
 };
 
 const hasValidCogValues = (cog: ParsedCog | undefined): boolean => {
@@ -84,16 +79,27 @@ const createStep = (fromKey: number, toKey: number): OptimalStep => {
 const findCogInState = (
   state: ParsedConstructionData,
   targetCog: ParsedCog,
-  excludeKey?: number
+  excludeKey: number | undefined,
+  finalState: ParsedConstructionData
 ): number | null => {
   for (const [keyStr, cog] of Object.entries(state.cogs)) {
     const key = Number.parseInt(keyStr, 10);
     if (excludeKey !== undefined && key === excludeKey) {
       continue;
     }
-    if (cogsMatch(cog, targetCog)) {
-      return key;
+    if (!cogsMatch(cog, targetCog)) {
+      continue;
     }
+    // Don't steal a cog that's already at a position where it's wanted.
+    // With cogId-based identity each ID is unique, so this is defensive — but
+    // it also catches any future regression that reintroduces structural
+    // matching (which previously caused infinite step oscillation between
+    // adjacent same-fingerprint cogs).
+    const finalAtKey = finalState.cogs[key];
+    if (finalAtKey && cogsMatch(cog, finalAtKey)) {
+      continue;
+    }
+    return key;
   }
   return null;
 };
@@ -138,10 +144,10 @@ const verifySteps = (
     const verifyCog = verifyState.cogs[boardKey];
     const finalCog = final.cogs[boardKey];
     const verifyStr = verifyCog
-      ? `${verifyCog.buildRate}-${verifyCog.expBonus}-${verifyCog.flaggy}-${verifyCog.isPlayer}`
+      ? `${verifyCog.cogId}|${verifyCog.buildRate}-${verifyCog.expBonus}-${verifyCog.flaggy}-${verifyCog.isPlayer}`
       : "empty";
     const finalStr = finalCog
-      ? `${finalCog.buildRate}-${finalCog.expBonus}-${finalCog.flaggy}-${finalCog.isPlayer}`
+      ? `${finalCog.cogId}|${finalCog.buildRate}-${finalCog.expBonus}-${finalCog.flaggy}-${finalCog.isPlayer}`
       : "empty";
     if (verifyStr !== finalStr) {
       boardMatches = false;
@@ -208,15 +214,23 @@ export const getOptimalSteps = (
 
         // Search spare slots
         for (let spareKey = SPARE_START; spareKey < maxSpareKey; spareKey++) {
-          if (cogsMatch(currentState.cogs[spareKey], finalCog)) {
-            sourceKey = spareKey;
-            break;
+          const spareCog = currentState.cogs[spareKey];
+          if (!cogsMatch(spareCog, finalCog)) {
+            continue;
           }
+          // Skip spare slots that already hold the cog the final state wants
+          // there — only relevant if cogIds ever collide; defensive.
+          const finalAtSpare = final.cogs[spareKey];
+          if (finalAtSpare && cogsMatch(spareCog, finalAtSpare)) {
+            continue;
+          }
+          sourceKey = spareKey;
+          break;
         }
 
         // Search board if not found in spare
         if (sourceKey === null) {
-          sourceKey = findCogInState(currentState, finalCog!, boardKey);
+          sourceKey = findCogInState(currentState, finalCog!, boardKey, final);
         }
 
         // Move cog to target position
@@ -242,23 +256,28 @@ export const getOptimalSteps = (
     );
   }
 
-  // Verify steps produce correct final state
+  // Verify steps produce correct final state. If the board doesn't match,
+  // applying the steps would corrupt the in-game board (and in the worst case
+  // produce useless oscillating drags). Abort with empty steps so the caller
+  // treats this as "no improvement" rather than executing broken work.
   const verification = verifySteps(initial, final, steps, weights);
 
-  if (!(verification.scoreMatches && verification.boardMatches)) {
-    solverLogger.log(
-      `Warning: Steps produce score ${verification.verifyScore?.toFixed(2)} but expected ${verification.finalScore?.toFixed(2)}`
+  if (!verification.boardMatches) {
+    solverLogger.error(
+      `Step generator produced ${steps.length} steps but verification failed - aborting apply. Verify score=${verification.verifyScore?.toFixed(2)} expected=${verification.finalScore?.toFixed(2)}, ${verification.mismatches.length} board mismatches`
     );
-    if (verification.mismatches.length > 0) {
-      solverLogger.log(
-        `Found ${verification.mismatches.length} board position mismatches (showing first 10):`
+    for (const mismatch of verification.mismatches.slice(0, 10)) {
+      solverLogger.error(
+        `  Key ${mismatch.key}: verify=[${mismatch.verify}], final=[${mismatch.final}]`
       );
-      for (const mismatch of verification.mismatches.slice(0, 10)) {
-        solverLogger.log(
-          `  Key ${mismatch.key}: verify=[${mismatch.verify}], final=[${mismatch.final}]`
-        );
-      }
     }
+    return [];
+  }
+
+  if (!verification.scoreMatches) {
+    solverLogger.warn(
+      `Steps produce score ${verification.verifyScore?.toFixed(2)} but expected ${verification.finalScore?.toFixed(2)} (board matches, score differs by floating point - applying anyway)`
+    );
   }
 
   return steps;
