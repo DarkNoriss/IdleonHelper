@@ -73,6 +73,25 @@ const Debug = () => {
       </Block>
 
       <Block
+        note="locates page_back, page_next, play, and 6x player_feet on the main menu via HSV. one-shot probe used to bake static cloudsave coords."
+        tag="script"
+        title="debug.findCloudsaveCoords"
+      >
+        <RunBtn
+          label="find cloudsave coords"
+          scriptId="general.debug.findCloudsaveCoords"
+        />
+      </Block>
+
+      <Block
+        note="runs the full cloudsave flow: opens player select, identifies the active character, returns through the menu, and re-enters play on the same slot."
+        tag="script"
+        title="cloudsave.run"
+      >
+        <RunBtn label="run cloudsave" scriptId="general.cloudsave.run" />
+      </Block>
+
+      <Block
         note="captures the screen and masks it to the configured HSV range. use to tune thresholds when a template match is drifting."
         tag="script"
         title="debug.captureHsv"
