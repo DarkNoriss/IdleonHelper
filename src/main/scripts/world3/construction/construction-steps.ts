@@ -5,7 +5,6 @@ import type {
   ParsedConstructionData,
   SolverWeights,
 } from "../../../../types/construction";
-import { logger } from "../../../utils/index";
 import {
   calculateStateScore,
   cloneInventory,
@@ -13,6 +12,7 @@ import {
   getScoreSum,
   moveCog,
 } from "./construction-utils";
+import { solverLogger } from "./solver-logger";
 
 const BOARD_SIZE = 96;
 
@@ -237,22 +237,24 @@ export const getOptimalSteps = (
   }
 
   if (iterations >= maxIterations) {
-    logger.log("Warning: Reached max iterations while matching board state");
+    solverLogger.log(
+      "Warning: Reached max iterations while matching board state"
+    );
   }
 
   // Verify steps produce correct final state
   const verification = verifySteps(initial, final, steps, weights);
 
   if (!(verification.scoreMatches && verification.boardMatches)) {
-    logger.log(
+    solverLogger.log(
       `Warning: Steps produce score ${verification.verifyScore?.toFixed(2)} but expected ${verification.finalScore?.toFixed(2)}`
     );
     if (verification.mismatches.length > 0) {
-      logger.log(
+      solverLogger.log(
         `Found ${verification.mismatches.length} board position mismatches (showing first 10):`
       );
       for (const mismatch of verification.mismatches.slice(0, 10)) {
-        logger.log(
+        solverLogger.log(
           `  Key ${mismatch.key}: verify=[${mismatch.verify}], final=[${mismatch.final}]`
         );
       }
