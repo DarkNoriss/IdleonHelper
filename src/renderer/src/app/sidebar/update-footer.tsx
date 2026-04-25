@@ -112,7 +112,6 @@ export const UpdateFooter = () => {
         {VerCurrent}
         <span className="text-text-muted">→</span>
         <span className="font-medium text-amber">v{latest}</span>
-        <span className="truncate text-[9px] text-text-muted">available</span>
       </div>
     );
     right = (
