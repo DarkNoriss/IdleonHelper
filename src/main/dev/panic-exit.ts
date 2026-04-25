@@ -16,6 +16,7 @@ export const panicExit = (): PanicResult => {
   ];
   queueEngine.pause();
   queueEngine.clear();
+  queueEngine.resume();
   logger.log(
     `dev: panic triggered - cancelled ${cancelledItemIds.length} item(s)`
   );
