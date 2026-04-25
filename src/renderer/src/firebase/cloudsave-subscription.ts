@@ -5,16 +5,18 @@ import { firestore } from "./client";
 
 const MAX_CONSECUTIVE_ERRORS = 3;
 
-type CloudsaveDoc = { data?: unknown; lastUpdated?: number };
+// The Firestore `_data/{uid}` document IS the game state — top-level keys are
+// flat (e.g. `GemItemsPurchased`, `CogM`, `Guild`). Our existing parsers expect
+// the idleontoolbox.com export shape `{ data: {...} }`, so we wrap the full
+// document under a `data` key before persisting.
+type CloudsaveDoc = Record<string, unknown> & { lastUpdated?: number };
 
-const applyCloudsaveDoc = (data: CloudsaveDoc): void => {
-  if (data.data !== undefined) {
-    useRawJsonStore.getState().setRawJson(JSON.stringify({ data: data.data }));
-  }
+const applyCloudsaveDoc = (docData: CloudsaveDoc): void => {
+  useRawJsonStore.getState().setRawJson(JSON.stringify({ data: docData }));
   useConnectionStore
     .getState()
     .setLastUpdated(
-      typeof data.lastUpdated === "number" ? data.lastUpdated : Date.now()
+      typeof docData.lastUpdated === "number" ? docData.lastUpdated : Date.now()
     );
 };
 
