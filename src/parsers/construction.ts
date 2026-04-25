@@ -145,6 +145,7 @@ const extractCogs = (jsonData: RawJson): ParsedCog[] | null => {
       const mappedCogs = Object.entries(cogsMap).map(([key, c]) => {
         const keyNum = Number.parseInt(key, 10);
         return {
+          cogId: `m-${keyNum}`,
           key: keyNum,
           buildRate: c.a,
           isPlayer: (c.b as number) > 0,
@@ -329,6 +330,7 @@ const extractFlagSlots = (
       return parsed.map((n, i) => {
         if (n > 0 && flagPose.includes(i)) {
           return {
+            cogId: `s-${i}`,
             key: i,
             buildRate: null,
             isPlayer: false,
@@ -347,6 +349,7 @@ const extractFlagSlots = (
         }
         if (n !== -11) {
           return {
+            cogId: `s-${i}`,
             key: i,
             buildRate: null,
             isPlayer: false,
@@ -364,6 +367,7 @@ const extractFlagSlots = (
           };
         }
         return {
+          cogId: `s-${i}`,
           key: i,
           buildRate: null,
           isPlayer: false,

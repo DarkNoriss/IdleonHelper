@@ -1,4 +1,5 @@
 export type ParsedCog = {
+  cogId: string;
   key: number;
   buildRate: unknown;
   isPlayer: boolean;

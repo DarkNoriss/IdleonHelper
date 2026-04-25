@@ -390,12 +390,7 @@ const cogsMatch = (
   if (!(a && b)) {
     return false;
   }
-  return (
-    a.buildRate === b.buildRate &&
-    a.expBonus === b.expBonus &&
-    a.flaggy === b.flaggy &&
-    a.isPlayer === b.isPlayer
-  );
+  return a.cogId === b.cogId;
 };
 
 const removeUselessMoves = (
@@ -445,18 +440,9 @@ const removeUselessMoves = (
     }
 
     const finalCogAtKey = final.cogs[key];
-
-    let cogMoved = false;
-    if (finalCogAtKey) {
-      cogMoved =
-        initialCog.key !== finalCogAtKey.key ||
-        initialCog.buildRate !== finalCogAtKey.buildRate ||
-        initialCog.expBonus !== finalCogAtKey.expBonus ||
-        initialCog.flaggy !== finalCogAtKey.flaggy ||
-        initialCog.isPlayer !== finalCogAtKey.isPlayer;
-    } else {
-      cogMoved = true;
-    }
+    const cogMoved = finalCogAtKey
+      ? initialCog.cogId !== finalCogAtKey.cogId
+      : true;
 
     if (cogMoved) {
       for (const [finalKey, finalCog] of Object.entries(final.cogs)) {
@@ -464,12 +450,7 @@ const removeUselessMoves = (
           continue;
         }
 
-        if (
-          initialCog.buildRate === finalCog.buildRate &&
-          initialCog.expBonus === finalCog.expBonus &&
-          initialCog.flaggy === finalCog.flaggy &&
-          initialCog.isPlayer === finalCog.isPlayer
-        ) {
+        if (initialCog.cogId === finalCog.cogId) {
           const finalKeyNum = Number.parseInt(finalKey, 10);
           if (key !== finalKeyNum) {
             moves.push({ fromKey: key, toKey: finalKeyNum });
@@ -504,12 +485,8 @@ const removeUselessMoves = (
         const finalCog = final.cogs[key];
         if (!cogsMatch(testCog, finalCog)) {
           stateMatches = false;
-          const testStr = testCog
-            ? `${testCog.buildRate}-${testCog.expBonus}-${testCog.flaggy}`
-            : "null";
-          const finalStr = finalCog
-            ? `${finalCog.buildRate}-${finalCog.expBonus}-${finalCog.flaggy}`
-            : "null";
+          const testStr = testCog ? testCog.cogId : "null";
+          const finalStr = finalCog ? finalCog.cogId : "null";
           mismatches.push(`key ${key}: test=[${testStr}], final=[${finalStr}]`);
           if (mismatches.length >= 10) {
             break;
