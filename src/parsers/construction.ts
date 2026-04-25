@@ -8,6 +8,7 @@ import type { RawJson } from "../types/raw-json";
 
 export const INV_ROWS = 8;
 export const INV_COLUMNS = 12;
+export const BOARD_SIZE = INV_ROWS * INV_COLUMNS;
 export const SPARE_START = 108;
 export const SMALL_COG_LEFT_INDEX = 228;
 export const SMALL_COG_COLUMN_HEIGHT = 12;
@@ -84,7 +85,12 @@ export const parseConstruction = (
   const availableSlotKeys: number[] = [];
   for (const slot of flagSlots) {
     slots[slot.key] = slot;
-    if (!slot.fixed) {
+    // Flag-pose slots only apply on the board (0..95). FlagU may carry -11
+    // markers at build/spare indices, but treating those as movable slots
+    // lets SA swap board cogs into build positions where they score 0 and
+    // become unreachable (getValidMoves skips build cogs), producing final
+    // states the step generator cannot reproduce.
+    if (!slot.fixed && slot.key < BOARD_SIZE) {
       availableSlotKeys.push(slot.key);
     }
   }
@@ -531,8 +537,6 @@ const getBoostedCoords = (
       return [];
   }
 };
-
-const BOARD_SIZE = INV_ROWS * INV_COLUMNS;
 
 export const calculateScore = (
   data: Omit<ParsedConstructionData, "score">
