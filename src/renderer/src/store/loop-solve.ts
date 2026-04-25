@@ -34,7 +34,7 @@ const MAX_ITERATIONS = 10;
 const SOLVE_TIME_MS = 600_000; // 10 min — matches existing solo-solve default
 const FRESH_DATA_TIMEOUT_MS = 60_000;
 
-const SCORE_FIELD: Record<SolverFocus, keyof Score> = {
+export const SCORE_FIELD: Record<SolverFocus, keyof Score> = {
   exp: "expBonus",
   buildRate: "buildRate",
   flaggy: "flaggy",
