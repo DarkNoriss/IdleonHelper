@@ -1,7 +1,6 @@
-import { getPosition, SPARE_START } from "../../../../parsers/construction";
+import { getPosition } from "../../../../parsers/construction";
 import type {
   OptimalStep,
-  ParsedCog,
   ParsedConstructionData,
   SolverWeights,
 } from "../../../../types/construction";
@@ -14,102 +13,131 @@ import {
 } from "./construction-utils";
 import { solverLogger } from "./solver-logger";
 
-const BOARD_SIZE = 96;
-
-const cogsMatch = (
-  a: ParsedCog | undefined,
-  b: ParsedCog | undefined
-): boolean => {
-  if (!(a && b)) {
-    return false;
-  }
-  return a.cogId === b.cogId;
+const identityAt = (
+  state: ParsedConstructionData,
+  key: number
+): string | null => {
+  return state.cogs[key]?.cogId ?? state.slots[key]?.cogId ?? null;
 };
 
-const hasValidCogValues = (cog: ParsedCog | undefined): boolean => {
-  if (!cog) {
-    return false;
+const collectAllKeys = (...sources: Record<number, unknown>[]): Set<number> => {
+  const keys = new Set<number>();
+  for (const src of sources) {
+    for (const k of Object.keys(src)) {
+      keys.add(Number.parseInt(k, 10));
+    }
   }
+  return keys;
+};
 
-  return (
-    cog.buildRate !== undefined ||
-    cog.expBonus !== undefined ||
-    cog.flaggy !== undefined ||
-    cog.isPlayer === true ||
-    cog.buildRadiusBoost !== undefined ||
-    cog.expRadiusBoost !== undefined ||
-    cog.flaggyRadiusBoost !== undefined ||
-    cog.boostRadius !== undefined
+const buildMoveSet = (
+  initial: ParsedConstructionData,
+  final: ParsedConstructionData
+): Set<number> => {
+  const moveSet = new Set<number>();
+  const allKeys = collectAllKeys(
+    initial.cogs,
+    initial.slots,
+    final.cogs,
+    final.slots
   );
-};
-
-const getMaxSpareKey = (state: ParsedConstructionData): number => {
-  let maxKey = SPARE_START - 1;
-  for (const keyStr of Object.keys(state.cogs)) {
-    const key = Number.parseInt(keyStr, 10);
-    const pos = getPosition(key);
-    if (pos.location === "spare" && key > maxKey) {
-      maxKey = key;
+  for (const key of allKeys) {
+    if (identityAt(initial, key) !== identityAt(final, key)) {
+      moveSet.add(key);
     }
   }
-  return maxKey >= SPARE_START ? maxKey : SPARE_START;
+  return moveSet;
 };
 
-const findEmptySpareSlot = (
-  state: ParsedConstructionData,
-  maxSpareKey: number
-): number | null => {
-  for (let spareKey = SPARE_START; spareKey < maxSpareKey; spareKey++) {
-    if (!state.cogs[spareKey]) {
-      return spareKey;
+const buildPermutation = (
+  initial: ParsedConstructionData,
+  final: ParsedConstructionData,
+  moveSet: Set<number>
+): Map<number, number> => {
+  const currentByCogId = new Map<string, number>();
+  const nullSources: number[] = [];
+  for (const p of moveSet) {
+    const id = identityAt(initial, p);
+    if (id === null) {
+      nullSources.push(p);
+    } else {
+      currentByCogId.set(id, p);
     }
   }
-  return null;
-};
 
-const createStep = (fromKey: number, toKey: number): OptimalStep => {
-  const fromPos = getPosition(fromKey);
-  const toPos = getPosition(toKey);
-  return {
-    from: { location: fromPos.location, x: fromPos.x, y: fromPos.y },
-    to: { location: toPos.location, x: toPos.x, y: toPos.y },
-  };
-};
-
-const findCogInState = (
-  state: ParsedConstructionData,
-  targetCog: ParsedCog,
-  excludeKey: number | undefined,
-  finalState: ParsedConstructionData
-): number | null => {
-  for (const [keyStr, cog] of Object.entries(state.cogs)) {
-    const key = Number.parseInt(keyStr, 10);
-    if (excludeKey !== undefined && key === excludeKey) {
-      continue;
+  const perm = new Map<number, number>();
+  const claimedNullSources = new Set<number>();
+  for (const p of moveSet) {
+    const targetId = identityAt(final, p);
+    let q: number | undefined;
+    if (targetId === null) {
+      for (const candidate of nullSources) {
+        if (!claimedNullSources.has(candidate)) {
+          q = candidate;
+          claimedNullSources.add(candidate);
+          break;
+        }
+      }
+    } else {
+      q = currentByCogId.get(targetId);
     }
-    if (!cogsMatch(cog, targetCog)) {
-      continue;
+    if (q === undefined) {
+      solverLogger.error(
+        `Permutation build failed at position ${p} (targetId=${targetId ?? "null"})`
+      );
+      return new Map();
     }
-    // Don't steal a cog that's already at a position where it's wanted.
-    // With cogId-based identity each ID is unique, so this is defensive — but
-    // it also catches any future regression that reintroduces structural
-    // matching (which previously caused infinite step oscillation between
-    // adjacent same-fingerprint cogs).
-    const finalAtKey = finalState.cogs[key];
-    if (finalAtKey && cogsMatch(cog, finalAtKey)) {
-      continue;
-    }
-    return key;
+    perm.set(q, p);
   }
-  return null;
+  return perm;
 };
 
-type VerificationResult = {
-  boardMatches: boolean;
-  finalScore: number | null;
-  mismatches: Array<{ key: number; verify: string; final: string }>;
-  scoreMatches: boolean;
-  verifyScore: number | null;
+const decomposeCycles = (perm: Map<number, number>): number[][] => {
+  const cycles: number[][] = [];
+  const visited = new Set<number>();
+  for (const start of perm.keys()) {
+    if (visited.has(start)) {
+      continue;
+    }
+    const cycle: number[] = [];
+    let cursor = start;
+    while (!visited.has(cursor)) {
+      visited.add(cursor);
+      cycle.push(cursor);
+      const next = perm.get(cursor);
+      if (next === undefined) {
+        break;
+      }
+      cursor = next;
+    }
+    if (cycle.length > 1) {
+      cycles.push(cycle);
+    }
+  }
+  return cycles;
+};
+
+const cyclesToSteps = (cycles: number[][]): OptimalStep[] => {
+  const steps: OptimalStep[] = [];
+  for (const cycle of cycles) {
+    const anchor = cycle[0];
+    if (anchor === undefined) {
+      continue;
+    }
+    for (let i = 1; i < cycle.length; i++) {
+      const toKey = cycle[i];
+      if (toKey === undefined) {
+        continue;
+      }
+      const fromPos = getPosition(anchor);
+      const toPos = getPosition(toKey);
+      steps.push({
+        from: { location: fromPos.location, x: fromPos.x, y: fromPos.y },
+        to: { location: toPos.location, x: toPos.x, y: toPos.y },
+      });
+    }
+  }
+  return steps;
 };
 
 const verifySteps = (
@@ -117,9 +145,8 @@ const verifySteps = (
   final: ParsedConstructionData,
   steps: OptimalStep[],
   weights: SolverWeights
-): VerificationResult => {
-  // Apply steps to initial state
-  const verifyState = cloneInventory(initial);
+): boolean => {
+  const verify = cloneInventory(initial);
   for (const step of steps) {
     const fromKey = getKeyFromPosition(
       step.from.location,
@@ -127,44 +154,53 @@ const verifySteps = (
       step.from.y
     );
     const toKey = getKeyFromPosition(step.to.location, step.to.x, step.to.y);
-    moveCog(verifyState, fromKey, toKey);
+    moveCog(verify, fromKey, toKey);
   }
 
-  // Calculate scores
-  verifyState.score = calculateStateScore(verifyState);
-  const verifyScore = verifyState.score
-    ? getScoreSum(verifyState.score, weights)
-    : null;
-  const finalScore = final.score ? getScoreSum(final.score, weights) : null;
+  const allKeys = collectAllKeys(
+    verify.cogs,
+    verify.slots,
+    final.cogs,
+    final.slots
+  );
 
-  // Check board matches
-  let boardMatches = true;
-  const mismatches: Array<{ key: number; verify: string; final: string }> = [];
-  for (let boardKey = 0; boardKey < BOARD_SIZE; boardKey++) {
-    const verifyCog = verifyState.cogs[boardKey];
-    const finalCog = final.cogs[boardKey];
-    const verifyStr = verifyCog
-      ? `${verifyCog.cogId}|${verifyCog.buildRate}-${verifyCog.expBonus}-${verifyCog.flaggy}-${verifyCog.isPlayer}`
-      : "empty";
-    const finalStr = finalCog
-      ? `${finalCog.cogId}|${finalCog.buildRate}-${finalCog.expBonus}-${finalCog.flaggy}-${finalCog.isPlayer}`
-      : "empty";
-    if (verifyStr !== finalStr) {
-      boardMatches = false;
-      mismatches.push({ key: boardKey, verify: verifyStr, final: finalStr });
+  const mismatches: { key: number; verify: string; final: string }[] = [];
+  for (const key of allKeys) {
+    const verifyId = identityAt(verify, key);
+    const finalId = identityAt(final, key);
+    if (verifyId !== finalId) {
+      mismatches.push({
+        key,
+        verify: verifyId ?? "empty",
+        final: finalId ?? "empty",
+      });
     }
   }
 
-  const scoreMatches =
-    verifyScore !== null && finalScore !== null && verifyScore === finalScore;
+  if (mismatches.length > 0) {
+    solverLogger.error(
+      `Step verification failed - ${mismatches.length} mismatches`
+    );
+    for (const m of mismatches.slice(0, 10)) {
+      solverLogger.error(
+        `  Key ${m.key}: verify=[${m.verify}], final=[${m.final}]`
+      );
+    }
+    return false;
+  }
 
-  return {
-    scoreMatches,
-    boardMatches,
-    verifyScore,
-    finalScore,
-    mismatches,
-  };
+  verify.score = calculateStateScore(verify);
+  if (verify.score && final.score) {
+    const verifyScore = getScoreSum(verify.score, weights);
+    const finalScore = getScoreSum(final.score, weights);
+    if (verifyScore !== finalScore) {
+      solverLogger.warn(
+        `Verified board matches but score differs - verify=${verifyScore.toFixed(2)} final=${finalScore.toFixed(2)} (treating as float drift)`
+      );
+    }
+  }
+
+  return true;
 };
 
 export const getOptimalSteps = (
@@ -172,112 +208,24 @@ export const getOptimalSteps = (
   final: ParsedConstructionData,
   weights: SolverWeights
 ): OptimalStep[] => {
-  const steps: OptimalStep[] = [];
-  const currentState = cloneInventory(initial);
-  const maxSpareKey = Math.max(getMaxSpareKey(initial), getMaxSpareKey(final));
-
-  // Iterate until board matches final state
-  const maxIterations = BOARD_SIZE * 2; // Safety limit
-  let iterations = 0;
-
-  while (iterations < maxIterations) {
-    let boardChanged = false;
-
-    // Process each board position
-    for (let boardKey = 0; boardKey < BOARD_SIZE; boardKey++) {
-      const finalCog = final.cogs[boardKey];
-      const currentCog = currentState.cogs[boardKey];
-      const shouldHaveCog = hasValidCogValues(finalCog);
-      const hasCog = hasValidCogValues(currentCog);
-
-      // Position should be empty but has a cog
-      if (!shouldHaveCog && hasCog) {
-        const emptySpareKey = findEmptySpareSlot(currentState, maxSpareKey);
-        if (emptySpareKey !== null) {
-          steps.push(createStep(boardKey, emptySpareKey));
-          moveCog(currentState, boardKey, emptySpareKey);
-          boardChanged = true;
-          continue;
-        }
-        continue;
-      }
-
-      // Position should have a cog
-      if (shouldHaveCog) {
-        // Already correct
-        if (cogsMatch(currentCog, finalCog)) {
-          continue;
-        }
-
-        // Find the correct cog (search spare first, then board)
-        let sourceKey: number | null = null;
-
-        // Search spare slots
-        for (let spareKey = SPARE_START; spareKey < maxSpareKey; spareKey++) {
-          const spareCog = currentState.cogs[spareKey];
-          if (!cogsMatch(spareCog, finalCog)) {
-            continue;
-          }
-          // Skip spare slots that already hold the cog the final state wants
-          // there — only relevant if cogIds ever collide; defensive.
-          const finalAtSpare = final.cogs[spareKey];
-          if (finalAtSpare && cogsMatch(spareCog, finalAtSpare)) {
-            continue;
-          }
-          sourceKey = spareKey;
-          break;
-        }
-
-        // Search board if not found in spare
-        if (sourceKey === null) {
-          sourceKey = findCogInState(currentState, finalCog!, boardKey, final);
-        }
-
-        // Move cog to target position
-        if (sourceKey !== null) {
-          steps.push(createStep(sourceKey, boardKey));
-          moveCog(currentState, sourceKey, boardKey);
-          boardChanged = true;
-        }
-      }
-    }
-
-    // If board didn't change, we're done
-    if (!boardChanged) {
-      break;
-    }
-
-    iterations++;
-  }
-
-  if (iterations >= maxIterations) {
-    solverLogger.log(
-      "Warning: Reached max iterations while matching board state"
-    );
-  }
-
-  // Verify steps produce correct final state. If the board doesn't match,
-  // applying the steps would corrupt the in-game board (and in the worst case
-  // produce useless oscillating drags). Abort with empty steps so the caller
-  // treats this as "no improvement" rather than executing broken work.
-  const verification = verifySteps(initial, final, steps, weights);
-
-  if (!verification.boardMatches) {
-    solverLogger.error(
-      `Step generator produced ${steps.length} steps but verification failed - aborting apply. Verify score=${verification.verifyScore?.toFixed(2)} expected=${verification.finalScore?.toFixed(2)}, ${verification.mismatches.length} board mismatches`
-    );
-    for (const mismatch of verification.mismatches.slice(0, 10)) {
-      solverLogger.error(
-        `  Key ${mismatch.key}: verify=[${mismatch.verify}], final=[${mismatch.final}]`
-      );
-    }
+  const moveSet = buildMoveSet(initial, final);
+  if (moveSet.size === 0) {
     return [];
   }
 
-  if (!verification.scoreMatches) {
-    solverLogger.warn(
-      `Steps produce score ${verification.verifyScore?.toFixed(2)} but expected ${verification.finalScore?.toFixed(2)} (board matches, score differs by floating point - applying anyway)`
+  const perm = buildPermutation(initial, final, moveSet);
+  if (perm.size === 0) {
+    return [];
+  }
+
+  const cycles = decomposeCycles(perm);
+  const steps = cyclesToSteps(cycles);
+
+  if (!verifySteps(initial, final, steps, weights)) {
+    solverLogger.error(
+      "Aborting - generated steps do not reproduce optimized board"
     );
+    return [];
   }
 
   return steps;
