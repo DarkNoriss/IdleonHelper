@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, shell } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 import { logger } from "../utils/index";
 import {
   DeviceFlowError,
@@ -29,12 +29,11 @@ export const registerAuthHandlers = (): void => {
 
     try {
       const dc = await requestDeviceCode(GOOGLE_OAUTH_CLIENT_ID);
-      const consentUrl = dc.verification_url_complete ?? dc.verification_url;
       broadcast("auth:awaiting-consent", {
         userCode: dc.user_code,
-        verificationUrl: consentUrl,
+        verificationUrl: dc.verification_url,
+        expiresAt: Date.now() + dc.expires_in * 1000,
       });
-      await shell.openExternal(consentUrl);
       const token = await pollForToken({
         clientId: GOOGLE_OAUTH_CLIENT_ID,
         clientSecret: GOOGLE_OAUTH_CLIENT_SECRET,
