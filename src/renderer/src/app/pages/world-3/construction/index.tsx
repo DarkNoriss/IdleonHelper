@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Block,
@@ -136,6 +136,22 @@ const Construction = () => {
   const isLoopRunning = loopStatus !== "idle";
   const queueHasOtherWork =
     Boolean(queue?.runningItem) || (queue?.queue.length ?? 0) > 0;
+
+  // Clear the solver plan once an apply (or any cancel of one) finishes — once
+  // the steps run, the source positions no longer hold the cogs the plan
+  // expects, so applying the same plan twice would corrupt the board.
+  const isApplyActive =
+    queue?.runningItem?.scriptId === "world3.construction.apply" ||
+    (queue?.queue.some((i) => i.scriptId === "world3.construction.apply") ??
+      false);
+  const wasApplyActiveRef = useRef(false);
+  useEffect(() => {
+    if (wasApplyActiveRef.current && !isApplyActive) {
+      setSolverResult(null);
+      setSolverError(null);
+    }
+    wasApplyActiveRef.current = isApplyActive;
+  }, [isApplyActive]);
 
   const allSlotsUnlocked =
     constructionData === null
@@ -348,15 +364,17 @@ const Construction = () => {
                   : "↻ loop solve"}
             </button>
           </DisabledHint>
-          <DisabledHint disabled={!isSignedIn} popover={solverHint}>
-            <RunBtn
-              disabled={!(isSignedIn && solverResult) || isLoopRunning}
-              getArgs={() => [solverResult?.steps ?? []]}
-              label="apply board"
-              scriptId="world3.construction.apply"
-              small
-            />
-          </DisabledHint>
+          {solverResult && solverResult.steps.length > 0 && (
+            <DisabledHint disabled={!isSignedIn} popover={solverHint}>
+              <RunBtn
+                disabled={!isSignedIn || isLoopRunning}
+                getArgs={() => [solverResult.steps]}
+                label="apply board"
+                scriptId="world3.construction.apply"
+                small
+              />
+            </DisabledHint>
+          )}
         </div>
         {isSolverActive && progress && (
           <div className="mt-2.5 rounded-[3px] border border-border-soft bg-panel-2 p-2 font-mono text-[10px] text-text-dim leading-[1.7]">
