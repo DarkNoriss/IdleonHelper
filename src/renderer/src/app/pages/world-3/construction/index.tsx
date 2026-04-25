@@ -87,7 +87,7 @@ const formatTotalGain = (pct: number): string => {
 };
 
 const SCORE_FIELD_LABEL: Record<SolverFocus, string> = {
-  exp: "exp-bonus",
+  exp: "exp-rate",
   buildRate: "build-rate",
   flaggy: "flaggy",
 };
@@ -223,8 +223,9 @@ const Construction = () => {
 
   const solved = solverResult !== null;
   const buildRate = solverResult?.score.buildRate ?? score?.buildRate ?? 0;
-  const expBonus = solverResult?.score.expBonus ?? score?.expBonus ?? 0;
   const flaggy = solverResult?.score.flaggy ?? score?.flaggy ?? 0;
+  const playerExpRate =
+    solverResult?.score.playerExpRate ?? score?.playerExpRate ?? 0;
 
   const solverHint = (
     <>
@@ -287,9 +288,13 @@ const Construction = () => {
             label="build-rate"
           />
           <ScoreCol
-            current={`${notateNumber(expBonus)}%`}
-            diff={solved && score ? formatDiff(score.expBonus, expBonus) : null}
-            label="exp-bonus"
+            current={notateNumber(playerExpRate)}
+            diff={
+              solved && score
+                ? formatDiff(score.playerExpRate, playerExpRate)
+                : null
+            }
+            label="exp-rate/hr"
           />
           <ScoreCol
             current={notateNumber(flaggy)}
