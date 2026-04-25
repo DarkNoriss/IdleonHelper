@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Alert, PageHead, SmBtn } from "@/components/terminal";
 import { refreshCloudsave } from "@/providers/auth-provider";
 import { useIsSignedIn } from "@/store/connection";
@@ -6,38 +5,15 @@ import { useRawJsonStore } from "@/store/raw-json.ts";
 
 const RawData = () => {
   const rawJson = useRawJsonStore((state) => state.rawJson);
-  const setRawJson = useRawJsonStore((state) => state.setRawJson);
-  const clearRawJson = useRawJsonStore((state) => state.clearRawJson);
   const isSignedIn = useIsSignedIn();
-  const [localJson, setLocalJson] = useState(rawJson);
-
-  useEffect(() => {
-    setLocalJson(rawJson);
-  }, [rawJson]);
 
   const handleSave = () => {
-    if (localJson.trim()) {
-      setRawJson(localJson);
+    if (!isSignedIn) {
+      return;
     }
-  };
-
-  const handleClear = () => {
-    setLocalJson("");
-    clearRawJson();
-    if (isSignedIn) {
-      refreshCloudsave().catch(() => {
-        // errors surface via the connection store
-      });
-    }
-  };
-
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      setLocalJson(text);
-    } catch {
-      // ignore clipboard access failures
-    }
+    refreshCloudsave().catch(() => {
+      // errors surface via the connection store
+    });
   };
 
   return (
@@ -45,30 +21,28 @@ const RawData = () => {
       <PageHead
         actions={
           <div className="flex gap-1">
-            <SmBtn onClick={handlePaste}>paste</SmBtn>
-            <SmBtn onClick={handleSave} primary>
+            <SmBtn disabled={!isSignedIn} onClick={handleSave} primary>
               save
             </SmBtn>
-            <SmBtn onClick={handleClear}>clear</SmBtn>
           </div>
         }
-        description="Paste the raw JSON from idleontoolbox.com. Most scripts read this snapshot — keep it fresh after big in-game changes."
+        description="Read-only view of the live raw JSON synced from firebase. Click save to force a fresh fetch from the cloud."
         path="raw-data"
         title="raw-data"
       />
       <Alert tone="info">
-        in idleontoolbox → tools → raw-data → copy all. paste here, then save.
+        dev-only debug view. data auto-syncs from firebase via the snapshot
+        listener — this page just shows what zustand currently holds.
       </Alert>
       <div className="overflow-hidden rounded-[4px] border border-border bg-panel">
         <div className="flex justify-between border-border-soft border-b bg-panel-2 px-2.5 py-1 font-mono text-[10px] text-text-muted">
           <span>raw.json</span>
-          <span>{localJson.length} chars</span>
+          <span>{rawJson.length} chars</span>
         </div>
         <textarea
           className="h-[280px] w-full resize-none border-0 bg-background p-2.5 font-mono text-[10.5px] text-text-dim leading-[1.5] outline-none"
-          onChange={(e) => setLocalJson(e.target.value)}
-          placeholder="paste game data JSON here..."
-          value={localJson}
+          readOnly
+          value={rawJson}
         />
       </div>
     </>
