@@ -76,11 +76,19 @@ const computeScoreSum = (
 const findBestImprovingSwap = (
   state: ParsedConstructionData,
   weights: SolverWeights,
-  baseScore: number
+  baseScore: number,
+  callbacks: SolverCallbacks
 ): { pair: Pair; delta: number } | null => {
   const pairs = enumerateNeighborhood(state);
   let best: { pair: Pair; delta: number } | null = null;
-  for (const pair of pairs) {
+  for (let i = 0; i < pairs.length; i++) {
+    if (i % 512 === 0 && callbacks.shouldCancel?.()) {
+      return null;
+    }
+    const pair = pairs[i];
+    if (!pair) {
+      continue;
+    }
     moveCog(state, pair.cogKey, pair.slotKey);
     const newScore = computeScoreSum(state, weights);
     const delta = newScore - baseScore;
@@ -138,7 +146,6 @@ const maybeReportProgress = (
 };
 
 type RunOutcome = {
-  bestState: ParsedConstructionData;
   bestScore: number;
   iterations: number;
 };
@@ -167,7 +174,7 @@ const steepestAscentRun = async (
       lastYieldAt = Date.now();
     }
 
-    const best = findBestImprovingSwap(state, weights, currentScore);
+    const best = findBestImprovingSwap(state, weights, currentScore, callbacks);
     if (!best) {
       break;
     }
@@ -186,8 +193,7 @@ const steepestAscentRun = async (
     maybeReportProgress(state, callbacks, ctx);
   }
 
-  state.score = calculateStateScore(state);
-  return { bestState: state, bestScore: currentScore, iterations };
+  return { bestScore: currentScore, iterations };
 };
 
 export const solver = async (
