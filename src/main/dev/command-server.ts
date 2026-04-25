@@ -17,14 +17,9 @@ import { panicExit } from "./panic-exit";
 
 type RegisteredScript = { id: string; name: string; recurring: boolean };
 
-const DEAD_MAN_MS = 10 * 60 * 1000;
-const DEAD_MAN_CHECK_MS = 60 * 1000;
-
 let server: Server | null = null;
 let token: string | null = null;
 let port: number | null = null;
-let lastActivityAt = Date.now();
-let deadManTimer: NodeJS.Timeout | null = null;
 let registeredScripts: RegisteredScript[] = [];
 
 const tokenFile = (): string => path.join(app.getPath("userData"), "dev-token");
@@ -57,26 +52,6 @@ const authorized = (req: IncomingMessage): boolean => {
   return timingSafeEqual(a, b);
 };
 
-const touchActivity = (): void => {
-  lastActivityAt = Date.now();
-};
-
-const startDeadManTimer = (): void => {
-  if (deadManTimer) {
-    clearInterval(deadManTimer);
-  }
-  deadManTimer = setInterval(() => {
-    const idleMs = Date.now() - lastActivityAt;
-    if (idleMs > DEAD_MAN_MS) {
-      logger.warn(
-        `dev: dead-man triggered after ${Math.floor(idleMs / 1000)}s of inactivity`
-      );
-      panicExit();
-      lastActivityAt = Date.now();
-    }
-  }, DEAD_MAN_CHECK_MS);
-};
-
 const handle = async (
   req: IncomingMessage,
   res: ServerResponse
@@ -86,7 +61,6 @@ const handle = async (
   const method = req.method ?? "GET";
 
   if (p === "/health" && method === "GET") {
-    touchActivity();
     json(res, 200, {
       ok: true,
       port,
@@ -99,7 +73,6 @@ const handle = async (
     json(res, 401, {});
     return;
   }
-  touchActivity();
 
   if (p === "/scripts" && method === "GET") {
     json(res, 200, registeredScripts);
@@ -182,16 +155,11 @@ export const startDevServer = (scripts: RegisteredScript[]): void => {
       writeFileSync(portFile(), String(port));
       setState("devServer", { port, armed: true });
       logger.log(`dev: command server listening on 127.0.0.1:${port}`);
-      startDeadManTimer();
     }
   });
 };
 
 export const stopDevServer = (): void => {
-  if (deadManTimer) {
-    clearInterval(deadManTimer);
-    deadManTimer = null;
-  }
   server?.close();
   server = null;
   try {
