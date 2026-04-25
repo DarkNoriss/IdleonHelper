@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Block, PageHead, QuickTile, Stat, Step } from "@/components/terminal";
+import { Alert, Block, PageHead, QuickTile, Stat } from "@/components/terminal";
 import { useMainState } from "@/hooks/use-main-state.ts";
+import { useIsSignedIn } from "@/store/connection";
 import { useNavigationStore } from "@/store/navigation.ts";
 
 const formatSession = (ms: number): string => {
@@ -43,6 +44,8 @@ const Dashboard = () => {
     return () => clearInterval(t);
   }, []);
 
+  const isSignedIn = useIsSignedIn();
+
   const goto = (page: Parameters<typeof setPage>[0]) => () => setPage(page);
 
   return (
@@ -52,6 +55,13 @@ const Dashboard = () => {
         path="dashboard"
         title="dashboard"
       />
+      {!isSignedIn && (
+        <Alert tone="warn">
+          not signed in — game data won't sync from firebase. open the profile
+          menu in the title bar to sign in with google. scripts that need synced
+          data will be locked until then.
+        </Alert>
+      )}
       <div className="mb-2.5 grid grid-cols-4 gap-2">
         <Stat
           label="engine"
@@ -65,21 +75,6 @@ const Dashboard = () => {
         <Stat label="session" value={session} />
         <Stat label="last-run" value={lastRun ?? "—"} />
       </div>
-      <Block
-        note="run these in order. scripts read game state from the raw-data snapshot."
-        title="first-time setup"
-      >
-        <div className="flex flex-col gap-1.5 font-mono text-[10.5px]">
-          <Step
-            label="paste game data → raw-data"
-            num="01"
-            onJump={goto("rawData")}
-          />
-          <Step label="open target character in-game" num="02" />
-          <Step label="pick a script from the sidebar, press start" num="03" />
-          <Step label="watch the queue dock (bottom) for progress" num="04" />
-        </div>
-      </Block>
       <Block tag="scripts" title="quick-launch">
         <div className="grid grid-cols-3 gap-1.5">
           <QuickTile
