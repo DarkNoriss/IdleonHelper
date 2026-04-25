@@ -151,7 +151,11 @@ declare global {
         >;
         cancel: () => Promise<{ ok: true }>;
         onAwaitingConsent: (
-          cb: (payload: { userCode: string; verificationUrl: string }) => void
+          cb: (payload: {
+            userCode: string;
+            verificationUrl: string;
+            expiresAt: number;
+          }) => void
         ) => () => void;
       };
     };
