@@ -92,6 +92,17 @@ const Debug = () => {
       </Block>
 
       <Block
+        note="opens cogs tab (cog shelf off, trash off) and runs 20 random navigateToPage calls against the HSV-baked page-1..8 templates. logs pass/fail per iteration."
+        tag="script"
+        title="debug.constructionNavStress"
+      >
+        <RunBtn
+          label="construction nav stress (20x random)"
+          scriptId="general.debug.constructionNavStress"
+        />
+      </Block>
+
+      <Block
         note="captures the screen and masks it to the configured HSV range. use to tune thresholds when a template match is drifting."
         tag="script"
         title="debug.captureHsv"

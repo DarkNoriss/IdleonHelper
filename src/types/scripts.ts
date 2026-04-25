@@ -61,6 +61,7 @@ export type ScriptMap = {
     result: undefined;
   };
   "general.debug.findCloudsaveCoords": { args: []; result: undefined };
+  "general.debug.constructionNavStress": { args: []; result: undefined };
   "classSpecific.compass.run": {
     args: [CompassUpgrade[]];
     result: undefined;

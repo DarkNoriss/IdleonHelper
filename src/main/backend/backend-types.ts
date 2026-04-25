@@ -43,6 +43,7 @@ export type FindRequest = {
 
 export type FindResponse = {
   matches: Point[];
+  similarities?: number[];
 };
 
 // Find with debug command
@@ -211,6 +212,7 @@ export type FindHSVRequest = {
 
 export type FindHSVResponse = {
   matches: Point[];
+  similarities?: number[];
 };
 
 // FindHSVParallel command
