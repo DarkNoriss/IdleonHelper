@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, CSSProperties } from "react";
+import { ProfileWidget } from "@/components/profile/profile-widget";
 import { useMainState } from "@/hooks/use-main-state";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +45,9 @@ export const TitleBar = () => {
           {pillLabel}
         </span>
       </div>
-      <div className="flex items-center gap-0.5" style={noDragStyle}>
+      <div className="flex items-center gap-1" style={noDragStyle}>
+        <ProfileWidget />
+        <span className="mx-1 inline-block h-3.5 w-px bg-border" />
         <WinBtn onClick={() => window.api.window.minimize()}>_</WinBtn>
         <WinBtn onClick={() => window.api.window.maximize()}>□</WinBtn>
         <WinBtn close onClick={() => window.api.window.close()}>
