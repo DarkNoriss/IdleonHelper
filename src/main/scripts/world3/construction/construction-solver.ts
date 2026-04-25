@@ -2,10 +2,10 @@ import { getPosition } from "../../../../parsers/construction";
 import type {
   ParsedCog,
   ParsedConstructionData,
+  Score,
   SolverResult,
   SolverWeights,
 } from "../../../../types/construction";
-import { logger } from "../../../utils/index";
 import { getOptimalSteps } from "./construction-steps";
 import {
   calculateStateScore,
@@ -17,6 +17,7 @@ import {
   moveCog,
   shuffle,
 } from "./construction-utils";
+import { solverLogger } from "./solver-logger";
 
 const COOLING_RATE = 0.96;
 const INITIAL_ACCEPTANCE_RATE = 0.8;
@@ -26,6 +27,19 @@ const RESTART_TIME_MS = 10_000; // 10 seconds per restart - allows proper explor
 const YIELD_INTERVAL_MS = 100;
 const COOLING_INTERVAL = 50;
 const EARLY_TERMINATION_THRESHOLD = 0.35; // Stop if no improvement for 35% of time (~3.5s per restart)
+
+export type SolverCallbacks = {
+  shouldCancel?: () => boolean;
+  onProgress?: (progress: {
+    bestScore: Score;
+    currentScore: Score;
+    iter: number;
+    iterPerSec: number;
+    elapsedMs: number;
+    restarts: number;
+    improvementPct: number;
+  }) => void;
+};
 
 type ValidMove = {
   cogKey: number;
@@ -178,12 +192,23 @@ const calculateInitialTemperature = (
   return Math.max(minTemp, Math.min(maxTemp, initialTemp));
 };
 
+type ProgressCtx = {
+  totalIterStart: number;
+  restartsCompleted: number;
+  globalBest: { score: number; state: ParsedConstructionData | null };
+  initialScore: number;
+  startWallTime: number;
+  lastProgressAt: number;
+};
+
 const simulatedAnnealingRun = async (
   inventory: ParsedConstructionData,
   weights: SolverWeights,
   timeAllocationMs: number,
   initialTemperature: number,
-  startFromShuffle: boolean
+  startFromShuffle: boolean,
+  callbacks: SolverCallbacks,
+  progressCtx: ProgressCtx
 ): Promise<{
   bestState: ParsedConstructionData;
   bestScore: number;
@@ -207,12 +232,13 @@ const simulatedAnnealingRun = async (
 
   let currentScore = getScoreSum(state.score, weights);
   let bestState = cloneInventory(state);
+  bestState.score = state.score;
   let bestScore = currentScore;
 
   // Pre-compute valid moves once for efficiency
   const validMovesCache = getValidMoves(state);
   if (validMovesCache.length === 0) {
-    logger.log("No valid moves available");
+    solverLogger.warn("No valid moves available");
     return { bestState, bestScore, iterations: 0, improvements: 0 };
   }
 
@@ -229,7 +255,7 @@ const simulatedAnnealingRun = async (
 
     // Early termination: stop if no improvements for threshold % of time
     if (Date.now() - lastImprovementTime > earlyTerminationTime) {
-      logger.log(
+      solverLogger.log(
         `Early termination: no improvements for ${Math.round((Date.now() - lastImprovementTime) / 1000)}s (${Math.round(earlyTerminationTime / 1000)}s threshold)`
       );
       break;
@@ -238,6 +264,51 @@ const simulatedAnnealingRun = async (
     if (Date.now() - lastYield > YIELD_INTERVAL_MS) {
       await new Promise((resolve) => setImmediate(resolve));
       lastYield = Date.now();
+    }
+
+    // Cancel check — break cleanly so the caller keeps the current best state.
+    if (callbacks.shouldCancel?.()) {
+      break;
+    }
+
+    // Progress emit (~every 500 ms).
+    if (callbacks.onProgress) {
+      const nowMs = Date.now();
+      if (nowMs - progressCtx.lastProgressAt > 500) {
+        const totalIter = progressCtx.totalIterStart + iterations;
+        const elapsed = nowMs - progressCtx.startWallTime;
+        const iterPerSec =
+          elapsed > 0 ? Math.round((totalIter * 1000) / elapsed) : 0;
+
+        // Prefer the global best seen across all restarts if it beats this run's best.
+        const useLocalBest = bestScore > progressCtx.globalBest.score;
+        const bestScoreValue = useLocalBest
+          ? bestScore
+          : progressCtx.globalBest.score;
+        const bestStateForReport = useLocalBest
+          ? bestState
+          : (progressCtx.globalBest.state ?? bestState);
+
+        const improvementPct =
+          progressCtx.initialScore > 0
+            ? ((bestScoreValue - progressCtx.initialScore) /
+                progressCtx.initialScore) *
+              100
+            : 0;
+
+        if (bestStateForReport.score && state.score) {
+          callbacks.onProgress({
+            bestScore: bestStateForReport.score,
+            currentScore: state.score,
+            iter: totalIter,
+            iterPerSec,
+            elapsedMs: elapsed,
+            restarts: progressCtx.restartsCompleted,
+            improvementPct,
+          });
+          progressCtx.lastProgressAt = nowMs;
+        }
+      }
     }
 
     if (iterations % COOLING_INTERVAL === 0) {
@@ -283,6 +354,7 @@ const simulatedAnnealingRun = async (
       if (currentScore > bestScore) {
         bestScore = currentScore;
         bestState = cloneInventory(state);
+        bestState.score = state.score;
         lastImprovementTime = Date.now();
       }
     } else {
@@ -297,7 +369,7 @@ const simulatedAnnealingRun = async (
     const improvementRate =
       iterations > 0 ? ((improvements / iterations) * 100).toFixed(2) : "0.00";
     const finalTemp = temperature > 0 ? temperature.toFixed(2) : "0.00";
-    logger.log(
+    solverLogger.log(
       `Annealing run complete: iterations=${iterations}, improvements=${improvements} (${improvementRate}%), final_temp=${finalTemp}, expBonus=${expValue.toFixed(2)}`
     );
   }
@@ -341,15 +413,15 @@ const removeUselessMoves = (
     : Number.NEGATIVE_INFINITY;
 
   if (finalScoreSum > initialScoreSum) {
-    logger.log(
+    solverLogger.log(
       `Final state score (${finalScoreSum.toFixed(2)}) is better than initial (${initialScoreSum.toFixed(2)}), returning final state directly`
     );
     const optimized = cloneInventory(final);
     optimized.score = calculateStateScore(optimized);
 
     if (!optimized.score) {
-      logger.log(
-        "Warning: Failed to recalculate score for optimized state, but final state had valid score"
+      solverLogger.warn(
+        "Failed to recalculate score for optimized state, but final state had valid score"
       );
       optimized.score = finalStateScore;
     }
@@ -361,7 +433,7 @@ const removeUselessMoves = (
   const initialCogs = new Set(Object.keys(initial.cogs).map(Number.parseInt));
   const finalCogs = new Set(Object.keys(final.cogs).map(Number.parseInt));
 
-  logger.log(
+  solverLogger.log(
     `Comparing states: initial has ${initialCogs.size} cogs, final has ${finalCogs.size} cogs`
   );
 
@@ -450,20 +522,20 @@ const removeUselessMoves = (
           Math.abs(finalScoreSum * 0.01);
 
       if (scoreClose && stateMatches) {
-        logger.log(
+        solverLogger.log(
           `Keeping all ${moves.length} moves: together they produce score ${allMovesScore.toFixed(2)} matching final state (final: ${finalScoreSum.toFixed(2)})`
         );
         testAllMovesState.score = calculateStateScore(testAllMovesState);
         return testAllMovesState;
       }
       if (scoreClose) {
-        logger.log(
-          `Warning: All ${moves.length} moves produce score ${allMovesScore.toFixed(2)} close to final ${finalScoreSum.toFixed(2)}, but state doesn't match (${mismatches.length} mismatches). Using all moves anyway.`
+        solverLogger.warn(
+          `All ${moves.length} moves produce score ${allMovesScore.toFixed(2)} close to final ${finalScoreSum.toFixed(2)}, but state doesn't match (${mismatches.length} mismatches). Using all moves anyway.`
         );
         testAllMovesState.score = calculateStateScore(testAllMovesState);
         return testAllMovesState;
       }
-      logger.log(
+      solverLogger.log(
         `Not keeping all moves: together they produce score ${allMovesScore.toFixed(2)} (final: ${finalScoreSum.toFixed(2)}, difference: ${(finalScoreSum - allMovesScore).toFixed(2)})`
       );
     }
@@ -499,11 +571,11 @@ const removeUselessMoves = (
   }
 
   if (moves.length === 0) {
-    logger.log(
+    solverLogger.log(
       "No moves found between initial and final states (states appear identical)"
     );
   } else {
-    logger.log(
+    solverLogger.log(
       `Removed ${moves.length - usefulMoves.length} zero-impact moves, kept ${usefulMoves.length} moves`
     );
   }
@@ -522,7 +594,8 @@ const removeUselessMoves = (
 export const solver = async (
   inventory: ParsedConstructionData,
   weights: SolverWeights,
-  solveTime = 1000
+  solveTime = 1000,
+  callbacks: SolverCallbacks = {}
 ): Promise<SolverResult | null> => {
   if (inventory.flagPose.length === 0) {
     weights = { ...weights, flaggy: 0 };
@@ -535,7 +608,7 @@ export const solver = async (
   const totalCogs = Object.keys(inventory.cogs).length;
   const totalSlots = inventory.availableSlotKeys.length;
 
-  logger.log(
+  solverLogger.info(
     `Starting simulated annealing solver... (${totalCogs} cogs, ${totalSlots} available slots)`
   );
 
@@ -543,12 +616,12 @@ export const solver = async (
   initialState.score = calculateStateScore(initialState);
 
   if (!initialState.score) {
-    logger.log("Failed to calculate initial score");
+    solverLogger.error("Failed to calculate initial score");
     return null;
   }
 
   const initialScore = getScoreSum(initialState.score, weights);
-  logger.log(`Initial score: ${initialScore.toFixed(2)}`);
+  solverLogger.info(`Initial score: ${initialScore.toFixed(2)}`);
 
   const numRestarts = Math.max(
     MIN_RESTARTS,
@@ -556,7 +629,7 @@ export const solver = async (
   );
   const baseTimePerRestart = Math.floor(solveTime / numRestarts);
 
-  logger.log(
+  solverLogger.info(
     `Running ${numRestarts} restart(s), base time ${baseTimePerRestart}ms per restart`
   );
 
@@ -565,7 +638,7 @@ export const solver = async (
     initialScore > 0
       ? ((initialTemperature / initialScore) * 100).toFixed(4)
       : "N/A";
-  logger.log(
+  solverLogger.log(
     `Initial temperature: ${initialTemperature.toExponential(2)} (${tempAsPercent}% of initial score)`
   );
 
@@ -598,9 +671,26 @@ export const solver = async (
     Math.min(10, Math.floor(numRestarts * 0.15))
   );
 
+  const progressCtx: ProgressCtx = {
+    totalIterStart: 0,
+    restartsCompleted: 0,
+    globalBest: {
+      score: initialScore,
+      state: initialState,
+    },
+    initialScore,
+    startWallTime: startTime,
+    lastProgressAt: startTime,
+  };
+
   for (let restart = 0; restart < numRestarts; restart++) {
     if (Date.now() - startTime >= solveTime) {
-      logger.log(`Time limit reached after ${restart} restarts`);
+      solverLogger.warn(`Time limit reached after ${restart} restarts`);
+      break;
+    }
+
+    if (callbacks.shouldCancel?.()) {
+      solverLogger.info(`Cancelled after ${restart} restarts`);
       break;
     }
 
@@ -610,7 +700,7 @@ export const solver = async (
       restart >= minRestartsBeforeEarlyTerm &&
       restartsWithoutImprovement >= maxRestartsWithoutImprovement
     ) {
-      logger.log(
+      solverLogger.log(
         `Early termination: best solution hasn't improved for ${restartsWithoutImprovement} consecutive restarts (after ${restart} total restarts)`
       );
       break;
@@ -649,7 +739,7 @@ export const solver = async (
         ? ((restartTemp / initialScore) * 100).toFixed(4)
         : "N/A";
 
-    logger.log(
+    solverLogger.log(
       `Restart ${restart + 1}/${numRestarts}: ${thisRestartTime}ms, temp=${restartTemp.toExponential(2)} (${tempAsPercent}% of initial score), shuffle=${startFromShuffle}`
     );
 
@@ -658,7 +748,9 @@ export const solver = async (
       weights,
       thisRestartTime,
       restartTemp,
-      startFromShuffle
+      startFromShuffle,
+      callbacks,
+      progressCtx
     );
 
     totalIterations += result.iterations;
@@ -671,6 +763,13 @@ export const solver = async (
       improvements: result.improvements,
     });
 
+    progressCtx.totalIterStart += result.iterations;
+    progressCtx.restartsCompleted += 1;
+    if (result.bestScore > progressCtx.globalBest.score) {
+      progressCtx.globalBest.score = result.bestScore;
+      progressCtx.globalBest.state = result.bestState;
+    }
+
     // Track if best solution improved
     if (result.bestScore > bestScoreSoFar) {
       bestScoreSoFar = result.bestScore;
@@ -679,7 +778,7 @@ export const solver = async (
       restartsWithoutImprovement++;
     }
 
-    logger.log(
+    solverLogger.log(
       `Restart ${restart + 1} complete: score=${result.bestScore.toFixed(2)}, iterations=${result.iterations}, improvements=${result.improvements}`
     );
   }
@@ -688,7 +787,7 @@ export const solver = async (
   const iterationsPerSecond =
     elapsedTime > 0 ? Math.round(totalIterations / (elapsedTime / 1000)) : 0;
 
-  logger.log(
+  solverLogger.info(
     `Solver stats: ${totalIterations} iterations in ${elapsedTime}ms (${iterationsPerSecond}/sec), ${totalImprovements} improvements, ${solutions.length} solutions`
   );
 
@@ -702,12 +801,12 @@ export const solver = async (
       bestSolutionIndex = i;
     }
   }
-  logger.log(
+  solverLogger.log(
     `Selected solution from restart ${bestSolutionIndex}/${solutions.length - 1}${bestSolutionIndex === 0 ? " (initial state)" : ""}`
   );
 
   if (!bestSolution || bestSolution.score === Number.NEGATIVE_INFINITY) {
-    logger.log("No valid solution found");
+    solverLogger.error("No valid solution found");
     return null;
   }
 
@@ -731,16 +830,16 @@ export const solver = async (
     }
   }
 
-  logger.log(
+  solverLogger.info(
     `Best score: ${bestSolution.score.toFixed(2)} (improvement: ${improvement >= 0 ? "+" : ""}${improvement.toFixed(2)}, ${improvementPercent}%)`
   );
 
   if (isInitialState && improvement === 0) {
-    logger.log(
+    solverLogger.info(
       `Note: Initial state appears optimal. Explored ${solutions.length - 1} restarts with ${totalIterations} iterations: ${betterCount} better, ${sameCount - 1} same, ${worseCount} worse.`
     );
     if (betterCount === 0 && worseCount > 0) {
-      logger.log(
+      solverLogger.warn(
         "All explored states were worse or equal to initial state - configuration may already be at maximum optimization."
       );
     }
@@ -750,7 +849,7 @@ export const solver = async (
   if (!bestSolution.state.score) {
     bestSolution.state.score = calculateStateScore(bestSolution.state);
     if (!bestSolution.state.score) {
-      logger.log("Failed to calculate best solution score");
+      solverLogger.error("Failed to calculate best solution score");
       return null;
     }
   }
@@ -776,20 +875,20 @@ export const solver = async (
     const scoreMatches = verifyScoreSum === optimizedScoreSum;
 
     if (!scoreMatches) {
-      logger.log(
-        `Warning: Steps produce score ${verifyScoreSum.toFixed(2)} but expected ${optimizedScoreSum.toFixed(2)}`
+      solverLogger.warn(
+        `Steps produce score ${verifyScoreSum.toFixed(2)} but expected ${optimizedScoreSum.toFixed(2)}`
       );
     }
   }
 
   if (!optimized.score) {
-    logger.log("Failed to calculate optimized score");
+    solverLogger.error("Failed to calculate optimized score");
     return null;
   }
 
   const optimizedScoreSum = getScoreSum(optimized.score, weights);
 
-  logger.log(
+  solverLogger.info(
     `Optimized score: ${optimizedScoreSum.toFixed(2)} (change from initial: ${(optimizedScoreSum - initialScore).toFixed(2)})`
   );
 

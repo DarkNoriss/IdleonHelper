@@ -30,6 +30,9 @@ const state: AppState = {
   placeTraps: {
     current: null,
   },
+  constructionSolver: {
+    progress: null,
+  },
   devServer: {
     port: null,
     armed: false,

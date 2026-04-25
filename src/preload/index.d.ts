@@ -71,6 +71,7 @@ declare global {
               score: Score;
               steps: OptimalStep[];
             } | null>;
+            solverCancel: () => Promise<void>;
           };
         };
       };

@@ -40,6 +40,11 @@ const api = {
             solveTime
           );
         },
+        solverCancel: () => {
+          return ipcRenderer.invoke(
+            "script:world-3.construction.solver.cancel"
+          );
+        },
       },
     },
   },
