@@ -1,5 +1,5 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cancelSignIn } from "@/providers/auth-provider";
 import { useConnectionStore } from "@/store/connection";
 
@@ -77,6 +77,17 @@ const ConsentDialogBody = ({
     return () => clearInterval(id);
   }, [expiresAt]);
 
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+    },
+    []
+  );
+
   const writeClipboard = async (): Promise<boolean> => {
     try {
       if (navigator.clipboard?.writeText) {
@@ -103,8 +114,11 @@ const ConsentDialogBody = ({
 
   const flashCopied = () => {
     setCopied(true);
+    if (copyTimerRef.current) {
+      clearTimeout(copyTimerRef.current);
+    }
     // revert after 5s in case the OS clipboard didn't actually receive it
-    setTimeout(() => setCopied(false), 5000);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 5000);
   };
 
   const onCopy = async () => {
@@ -212,8 +226,7 @@ const ConsentDialogBody = ({
           <span className="inline-flex items-center gap-1 text-primary">
             <span
               aria-hidden
-              className="inline-block size-1.5 rounded-full border-[1.2px] border-primary border-t-transparent"
-              style={{ animation: "v3spin 0.8s linear infinite" }}
+              className="inline-block size-1.5 animate-v3spin rounded-full border-[1.2px] border-primary border-t-transparent"
             />
             waiting for verification
           </span>
