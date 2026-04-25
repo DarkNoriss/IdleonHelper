@@ -32,18 +32,18 @@ export const getScoreSum = (score: Score, weights: SolverWeights): number => {
   switch (weights.focus) {
     case "exp":
       return (
-        score.expBonus * PRIMARY_MULTIPLIER +
+        score.playerExpRate * PRIMARY_MULTIPLIER +
         score.buildRate * SECONDARY_MULTIPLIER
       );
     case "buildRate":
       return (
         score.buildRate * PRIMARY_MULTIPLIER +
-        score.expBonus * SECONDARY_MULTIPLIER
+        score.playerExpRate * SECONDARY_MULTIPLIER
       );
     case "flaggy":
       return (
         score.flaggy * PRIMARY_MULTIPLIER +
-        score.expBonus * SECONDARY_MULTIPLIER
+        score.playerExpRate * SECONDARY_MULTIPLIER
       );
     default:
       return 0;

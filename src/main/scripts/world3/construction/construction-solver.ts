@@ -365,12 +365,13 @@ const simulatedAnnealingRun = async (
   }
 
   if (bestState.score) {
-    const expValue = bestState.score.expBonus;
+    const expBonusValue = bestState.score.expBonus;
+    const playerExpRateValue = bestState.score.playerExpRate;
     const improvementRate =
       iterations > 0 ? ((improvements / iterations) * 100).toFixed(2) : "0.00";
     const finalTemp = temperature > 0 ? temperature.toFixed(2) : "0.00";
     solverLogger.log(
-      `Annealing run complete: iterations=${iterations}, improvements=${improvements} (${improvementRate}%), final_temp=${finalTemp}, expBonus=${expValue.toFixed(2)}`
+      `Annealing run complete: iterations=${iterations}, improvements=${improvements} (${improvementRate}%), final_temp=${finalTemp}, expBonus=${expBonusValue.toFixed(2)}, playerExpRate=${playerExpRateValue.toFixed(2)}`
     );
   }
 

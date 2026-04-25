@@ -411,7 +411,7 @@ const getEntry = (
   return cogs[key] ?? slots[key];
 };
 
-type RadiusBonus = { build: number; flaggy: number };
+type RadiusBonus = { build: number; flaggy: number; exp: number };
 
 const getBoostedCoords = (
   pattern: string,
@@ -536,7 +536,9 @@ export const calculateScore = (
   const bonusGrid: RadiusBonus[][] = new Array(INV_ROWS)
     .fill(0)
     .map(() =>
-      new Array(INV_COLUMNS).fill(0).map(() => ({ build: 0, flaggy: 0 }))
+      new Array(INV_COLUMNS)
+        .fill(0)
+        .map(() => ({ build: 0, flaggy: 0, exp: 0 }))
     );
 
   for (let key = 0; key < BOARD_SIZE; key++) {
@@ -553,7 +555,9 @@ export const calculateScore = (
       typeof entry.buildRadiusBoost === "number" ? entry.buildRadiusBoost : 0;
     const flaggyBoost =
       typeof entry.flaggyRadiusBoost === "number" ? entry.flaggyRadiusBoost : 0;
-    if (buildBoost === 0 && flaggyBoost === 0) {
+    const expBoost =
+      typeof entry.expRadiusBoost === "number" ? entry.expRadiusBoost : 0;
+    if (buildBoost === 0 && flaggyBoost === 0 && expBoost === 0) {
       continue;
     }
 
@@ -569,12 +573,14 @@ export const calculateScore = (
       }
       cell.build += buildBoost;
       cell.flaggy += flaggyBoost;
+      cell.exp += expBoost;
     }
   }
 
   let totalBuildRate = 0;
   let totalFlaggy = 0;
   let totalExpBonus = 0;
+  let totalPlayerExpRate = 0;
 
   for (let key = 0; key < BOARD_SIZE; key++) {
     const entry = getEntry(key, data.cogs, data.slots);
@@ -586,15 +592,21 @@ export const calculateScore = (
     const baseFlaggy = typeof entry.flaggy === "number" ? entry.flaggy : 0;
     const baseExpBonus =
       typeof entry.expBonus === "number" ? entry.expBonus : 0;
+    const baseExpGain = typeof entry.expGain === "number" ? entry.expGain : 0;
 
     const { x: j, y: i } = getPosition(key);
     const cell = safeGet<RadiusBonus>(bonusGrid, i, j);
     const buildBoost = cell ? cell.build : 0;
     const flaggyBoost = cell ? cell.flaggy : 0;
+    const expBoost = cell ? cell.exp : 0;
 
     totalBuildRate += Math.max(baseBuild * (1 + buildBoost / 100), 0);
     totalFlaggy += Math.max(baseFlaggy * (1 + flaggyBoost / 100), 0);
     totalExpBonus += baseExpBonus;
+
+    if (entry.isPlayer && baseExpGain > 0) {
+      totalPlayerExpRate += baseExpGain * (1 + expBoost / 100);
+    }
   }
 
   // Mirror toolbox: only the exp small-cog multiplier is reflected in the
@@ -602,10 +614,12 @@ export const calculateScore = (
   // through a separate mechanism that does not appear in the totals.
   const finalExpBonus = totalExpBonus * (1 + data.smallCogBonuses.exp / 100);
   const finalFlaggy = totalFlaggy * (1 + data.flaggyShopUpgrades * 0.5);
+  const playerExpRate = totalPlayerExpRate * (1 + finalExpBonus / 100);
 
   return {
     buildRate: totalBuildRate,
     expBonus: finalExpBonus,
     flaggy: finalFlaggy,
+    playerExpRate,
   };
 };

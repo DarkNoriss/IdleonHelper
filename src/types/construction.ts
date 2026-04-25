@@ -35,6 +35,7 @@ export type Score = {
   buildRate: number;
   expBonus: number;
   flaggy: number;
+  playerExpRate: number;
 };
 
 export type OptimalStep = {
