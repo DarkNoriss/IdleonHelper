@@ -6,6 +6,7 @@ import { closeConnection, stopBackend } from "./backend/index";
 import { setupHandlers } from "./handlers";
 import { initializeApp } from "./initialization";
 import { setMainWindow } from "./main-window";
+import { setSolverLogger } from "./scripts/world3/construction/solver-logger";
 import { logger, setLogsChangeNotifier } from "./utils/index";
 
 function createWindow(): void {
@@ -55,6 +56,13 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   logger.log("Electron app ready");
   electronApp.setAppUserModelId("com.idleon.helper");
+
+  setSolverLogger({
+    log: (m) => logger.log(m),
+    info: (m) => logger.info(m),
+    warn: (m) => logger.warn(m),
+    error: (m) => logger.error(m),
+  });
 
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);

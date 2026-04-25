@@ -61,3 +61,28 @@ export type SolverResult = {
   score: Score;
   steps: OptimalStep[];
 };
+
+export type SolverProgress = {
+  bestScore: Score;
+  currentScore: Score;
+  iter: number;
+  iterPerSec: number;
+  elapsedMs: number;
+  restarts: number;
+  improvementPct: number;
+};
+
+export type SolverWorkerMessage =
+  | {
+      type: "solve";
+      data: ParsedConstructionData;
+      weights: SolverWeights;
+      solveTimeMs: number;
+    }
+  | { type: "cancel" };
+
+export type SolverWorkerEvent =
+  | { type: "progress"; progress: SolverProgress }
+  | { type: "done"; result: SolverResult | null }
+  | { type: "error"; message: string; stack?: string }
+  | { type: "log"; level: "log" | "info" | "warn" | "error"; message: string };
