@@ -1,3 +1,4 @@
+import { Tooltip } from "@base-ui/react/tooltip";
 import {
   Block,
   Field,
@@ -61,21 +62,37 @@ const BossFarmer = () => {
             label="start boss-farmer"
             scriptId="general.bossFarmer.run"
           />
-          <DisabledHint
-            disabled={gemDisabled}
-            popover="no daily gems available from bosses"
-          >
-            <RunBtn
-              disabled={gemDisabled}
-              getArgs={() => [remaining]}
-              label="start gem farming"
-              scriptId="general.bossFarmer.run"
-            />
-          </DisabledHint>
-          {!gemDisabled && (
-            <span className="self-center font-mono text-[10px] text-text-dim">
-              {remaining} avail
-            </span>
+          {gemDisabled ? (
+            <DisabledHint
+              disabled
+              popover="no daily gems available from bosses"
+            >
+              <RunBtn
+                disabled
+                getArgs={() => [remaining]}
+                label="start gem farming"
+                scriptId="general.bossFarmer.run"
+              />
+            </DisabledHint>
+          ) : (
+            <Tooltip.Root>
+              <Tooltip.Trigger
+                render={<span className="relative inline-flex" />}
+              >
+                <RunBtn
+                  getArgs={() => [remaining]}
+                  label="start gem farming"
+                  scriptId="general.bossFarmer.run"
+                />
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Positioner align="center" side="top" sideOffset={6}>
+                  <Tooltip.Popup className="z-40 rounded-[4px] border border-border bg-panel px-2.5 py-[7px] font-mono text-[10px] text-text-dim leading-[1.55] shadow-[0_8px_22px_rgba(0,0,0,0.55)]">
+                    {remaining} kills available today
+                  </Tooltip.Popup>
+                </Tooltip.Positioner>
+              </Tooltip.Portal>
+            </Tooltip.Root>
           )}
         </div>
         {isRunning && bossFarmer && (
