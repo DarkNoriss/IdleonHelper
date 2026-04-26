@@ -82,6 +82,21 @@ export const getPriorityCells = (
   return result;
 };
 
+export const getMaxBuffPriorityCells = (
+  availableCells: ReadonlySet<number>
+): number[] => {
+  const result: number[] = [];
+  for (let row = 0; row < SUSHI_GRID.ROWS; row++) {
+    for (let col = 0; col < SUSHI_GRID.COLUMNS; col++) {
+      const cell = row * SUSHI_GRID.COLUMNS + col;
+      if (availableCells.has(cell)) {
+        result.push(cell);
+      }
+    }
+  }
+  return result;
+};
+
 const TIER_REGEX = /sushi_t(\d+)/;
 
 // match is the template filename stem from the backend (e.g. sushi_t12), not a path.
