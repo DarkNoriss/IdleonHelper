@@ -37,19 +37,18 @@ import { computeMergeWaitMs, planBestMerge } from "./sushi-station-planner";
 
 const PHASE_DELAY_MS = 1000;
 
+const log = (msg: string): void =>
+  logger.log(`sushi-station-max-buff - ${msg}`);
+
 const logMergePlan = (plan: MergePlan): void => {
   const sourceLabel = plan.cascadeFired ? "buff-firing" : "no buff";
-  logger.log(
-    `sushi-station-max-buff - chosen merge (${sourceLabel}): T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (result T${plan.resultTier})`
+  log(
+    `chosen merge (${sourceLabel}): T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (result T${plan.resultTier})`
   );
   const triggerWord = plan.cascade.length === 1 ? "trigger" : "triggers";
-  logger.log(
-    `sushi-station-max-buff - predicted cascade: ${plan.cascade.length} ${triggerWord}`
-  );
+  log(`predicted cascade: ${plan.cascade.length} ${triggerWord}`);
   for (const step of plan.cascade) {
-    logger.log(
-      `sushi-station-max-buff -   ${formatCell(step.cell)} T${step.tierBefore} -> T${step.tierAfter}`
-    );
+    log(`  ${formatCell(step.cell)} T${step.tierBefore} -> T${step.tierAfter}`);
   }
 };
 
@@ -73,8 +72,8 @@ const verifyMerge = (
   if (fromActual === undefined) {
     passes++;
   } else {
-    logger.log(
-      `sushi-station-max-buff -   FAIL ${formatCell(plan.fromCell)} expected empty, actual ${formatActual(fromActual)}`
+    log(
+      `  FAIL ${formatCell(plan.fromCell)} expected empty, actual ${formatActual(fromActual)}`
     );
   }
 
@@ -83,8 +82,8 @@ const verifyMerge = (
   if (toActual === plan.resultTier) {
     passes++;
   } else {
-    logger.log(
-      `sushi-station-max-buff -   FAIL ${formatCell(plan.toCell)} expected T${plan.resultTier}, actual ${formatActual(toActual)}`
+    log(
+      `  FAIL ${formatCell(plan.toCell)} expected T${plan.resultTier}, actual ${formatActual(toActual)}`
     );
   }
 
@@ -94,8 +93,8 @@ const verifyMerge = (
     if (actual === step.tierAfter) {
       passes++;
     } else {
-      logger.log(
-        `sushi-station-max-buff -   FAIL ${formatCell(step.cell)} expected T${step.tierAfter}, actual ${formatActual(actual)}`
+      log(
+        `  FAIL ${formatCell(step.cell)} expected T${step.tierAfter}, actual ${formatActual(actual)}`
       );
     }
   }
@@ -115,8 +114,8 @@ const verifyMerge = (
     const pre = preCellToTier.get(cell);
     const post = postCellToTier.get(cell);
     if (pre !== post) {
-      logger.log(
-        `sushi-station-max-buff -   EXTRA ${formatCell(cell)} ${formatActual(pre)} -> ${formatActual(post)} (not predicted)`
+      log(
+        `  EXTRA ${formatCell(cell)} ${formatActual(pre)} -> ${formatActual(post)} (not predicted)`
       );
       extras++;
     }
@@ -124,13 +123,11 @@ const verifyMerge = (
 
   if (extras > 0) {
     const actualTriggers = plan.cascade.length + extras;
-    logger.log(
-      `sushi-station-max-buff - verification: ${passes}/${total} predictions match, ${extras} unpredicted (actual cascade ~${actualTriggers} triggers)`
+    log(
+      `verification: ${passes}/${total} predictions match, ${extras} unpredicted (actual cascade ~${actualTriggers} triggers)`
     );
   } else {
-    logger.log(
-      `sushi-station-max-buff - verification: ${passes}/${total} predictions match`
-    );
+    log(`verification: ${passes}/${total} predictions match`);
   }
 };
 
@@ -167,11 +164,9 @@ export default defineScript<[boolean]>({
   id: "world7.sushiStation.sushiStationMaxBuffMerge",
   name: "Sushi Station - Heat of the East Win",
   run: async ({ token, args: [shouldCook] }) => {
-    logger.log(
-      "sushi-station-max-buff - starting (highest tier auto-detected per iteration, X = highest - 6)"
-    );
+    log("starting (highest tier auto-detected per iteration, X = highest - 6)");
 
-    logger.log("sushi-station-max-buff - ensuring tiers are visible");
+    log("ensuring tiers are visible");
 
     const visibility = await backendCommand.isVisibleParallel(
       { tiersOn: SUSHI_TIERS_ON, tiersOff: SUSHI_TIERS_OFF },
@@ -182,7 +177,7 @@ export default defineScript<[boolean]>({
     const tiersOff = visibility.tiersOff ?? [];
 
     if (tiersOff.length > 0) {
-      logger.log("sushi-station-max-buff - tiers off, clicking to enable");
+      log("tiers off, clicking to enable");
       await backendCommand.click(tiersOff[0]!, undefined, token);
       const confirm = await backendCommand.isVisible(
         SUSHI_TIERS_ON,
@@ -190,15 +185,15 @@ export default defineScript<[boolean]>({
         token
       );
       if (confirm.length === 0) {
-        logger.log("sushi-station-max-buff - failed to enable tiers");
+        log("failed to enable tiers");
         return;
       }
-      logger.log("sushi-station-max-buff - tiers enabled");
+      log("tiers enabled");
     }
 
     const regions = buildSushiRegions();
 
-    logger.log("sushi-station-max-buff - calibrating available cells");
+    log("calibrating available cells");
 
     const slotMatches = await backendCommand.isVisibleParallel(
       { normal: GRID_SLOT, red: GRID_SLOT_RED, yellow: GRID_SLOT_YELLOW },
@@ -243,12 +238,12 @@ export default defineScript<[boolean]>({
 
     const priorityCells = getPriorityCells(availableCells);
 
-    logger.log(
-      `sushi-station-max-buff - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, yellow ${slotMatches.yellow?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
+    log(
+      `calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, yellow ${slotMatches.yellow?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
     );
 
     if (availableCells.size === 0) {
-      logger.log("sushi-station-max-buff - no available cells, aborting");
+      log("no available cells, aborting");
       return;
     }
 
@@ -256,12 +251,10 @@ export default defineScript<[boolean]>({
     while (true) {
       token.throwIfCancelled();
       iteration++;
-      logger.log(`sushi-station-max-buff - iteration ${iteration}`);
+      log(`iteration ${iteration}`);
 
       const sortDrags1 = await runSortDrain(regions, priorityCells, token);
-      logger.log(
-        `sushi-station-max-buff - sort phase 1 complete (${sortDrags1} drags)`
-      );
+      log(`sort phase 1 complete (${sortDrags1} drags)`);
 
       await delay(PHASE_DELAY_MS, token);
 
@@ -278,20 +271,16 @@ export default defineScript<[boolean]>({
       const emptyCount = countEmpty(censusBoard, availableCells);
 
       if (emptyCount === 0) {
-        logger.log("sushi-station-max-buff - board full, no spawn needed");
+        log("board full, no spawn needed");
       } else if (shouldCook) {
-        logger.log(
-          `sushi-station-max-buff - ${emptyCount} empty cells, cooking ${emptyCount} sushi`
-        );
+        log(`${emptyCount} empty cells, cooking ${emptyCount} sushi`);
         const cookButton = await backendCommand.isVisible(
           SUSHI_COOK,
           undefined,
           token
         );
         if (cookButton.length === 0) {
-          logger.log(
-            "sushi-station-max-buff - cook button not visible, skipping spawn"
-          );
+          log("cook button not visible, skipping spawn");
         } else {
           const clickOptions = getClickOptionsFromPreset("16x");
           await backendCommand.click(
@@ -302,15 +291,11 @@ export default defineScript<[boolean]>({
           await delay(PHASE_DELAY_MS, token);
         }
       } else {
-        logger.log(
-          `sushi-station-max-buff - ${emptyCount} empty cells, cook disabled, skipping spawn`
-        );
+        log(`${emptyCount} empty cells, cook disabled, skipping spawn`);
       }
 
       const sortDrags2 = await runSortDrain(regions, priorityCells, token);
-      logger.log(
-        `sushi-station-max-buff - sort phase 2 complete (${sortDrags2} drags)`
-      );
+      log(`sort phase 2 complete (${sortDrags2} drags)`);
 
       await delay(PHASE_DELAY_MS, token);
 
@@ -325,37 +310,28 @@ export default defineScript<[boolean]>({
       );
       const preMergeBoard = buildBoardFromResults(preMergeScan.results);
 
-      logBoardGrid(
-        (msg) => logger.log(`sushi-station-max-buff - ${msg}`),
-        "board before merge",
-        preMergeBoard,
-        availableCells
-      );
+      logBoardGrid(log, "board before merge", preMergeBoard, availableCells);
 
       const detectedHighest = getHighestTier(preMergeBoard);
       if (detectedHighest === null) {
-        logger.log(
-          "sushi-station-max-buff - board empty, no merge available, exiting"
-        );
+        log("board empty, no merge available, exiting");
         break;
       }
       const buffCap = detectedHighest - 6;
-      logger.log(
-        `sushi-station-max-buff - detected highest T${detectedHighest}, buff cap T${buffCap}${buffCap < 1 ? " (buff inactive)" : ""}`
+      log(
+        `detected highest T${detectedHighest}, buff cap T${buffCap}${buffCap < 1 ? " (buff inactive)" : ""}`
       );
 
       const plan = planBestMerge(preMergeBoard, buffCap);
       if (!plan) {
-        logger.log(
-          "sushi-station-max-buff - no merge available (no tier has a forward-drag pair), exiting"
-        );
+        log("no merge available (no tier has a forward-drag pair), exiting");
         break;
       }
 
       logMergePlan(plan);
 
-      logger.log(
-        `sushi-station-max-buff - executing merge T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)}`
+      log(
+        `executing merge T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)}`
       );
       token.throwIfCancelled();
       const mergeDragOptions = getDragOptionsFromPreset("16x", true);
@@ -380,18 +356,11 @@ export default defineScript<[boolean]>({
       );
       const postMergeBoard = buildBoardFromResults(postMergeScan.results);
 
-      logBoardGrid(
-        (msg) => logger.log(`sushi-station-max-buff - ${msg}`),
-        "board after merge",
-        postMergeBoard,
-        availableCells
-      );
+      logBoardGrid(log, "board after merge", postMergeBoard, availableCells);
 
       verifyMerge(plan, preMergeBoard, postMergeBoard, availableCells);
     }
 
-    logger.log(
-      `sushi-station-max-buff - loop ended after ${iteration} iterations`
-    );
+    log(`loop ended after ${iteration} iterations`);
   },
 });
