@@ -2,11 +2,14 @@ import {
   backendCommand,
   getClickOptionsFromPreset,
   getDragOptionsFromPreset,
-  type Point,
-  type RegionResult,
 } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
+import {
+  buildBoardFromResults,
+  cellToPoint,
+  pickSortMove,
+} from "./sushi-station-board";
 import {
   buildSushiRegions,
   countEmptyCells,
@@ -14,7 +17,6 @@ import {
   GRID_SLOT_RED,
   GRID_SLOT_YELLOW,
   getPriorityCells,
-  parseTierNumber,
   pointToCellIndex,
   SUSHI_COOK,
   SUSHI_GRID,
@@ -24,95 +26,6 @@ import {
   SUSHI_TIERS_OFF,
   SUSHI_TIERS_ON,
 } from "./sushi-station-constants";
-
-const cellToPoint = (cellIndex: number) => {
-  const col = cellIndex % SUSHI_GRID.COLUMNS;
-  const row = Math.floor(cellIndex / SUSHI_GRID.COLUMNS);
-  return {
-    x: SUSHI_GRID.FIRST_POSITION.x + col * SUSHI_GRID.X_STEP,
-    y: SUSHI_GRID.FIRST_POSITION.y + row * SUSHI_GRID.Y_STEP,
-  };
-};
-
-type SortMove = {
-  from: Point;
-  to: Point;
-  tier: string;
-  fromRow: number;
-  fromCol: number;
-  toRow: number;
-  toCol: number;
-};
-
-const pickSortMove = (
-  results: RegionResult[],
-  priorityCells: number[]
-): SortMove | null => {
-  const sushiOnBoard: { cell: number; tier: string; tierNumber: number }[] = [];
-  for (const result of results) {
-    if (result.match === null) {
-      continue;
-    }
-    const tierNumber = parseTierNumber(result.match);
-    if (tierNumber === null) {
-      continue;
-    }
-    sushiOnBoard.push({
-      cell: result.regionIndex,
-      tier: result.match,
-      tierNumber,
-    });
-  }
-
-  sushiOnBoard.sort((a, b) => b.tierNumber - a.tierNumber);
-
-  for (let i = 0; i < sushiOnBoard.length; i++) {
-    const target = priorityCells[i];
-    if (target === undefined) {
-      logger.log(
-        "sushi-station-merge - more sushi than available cells, skipping sort"
-      );
-      return null;
-    }
-    const expected = sushiOnBoard[i]!;
-    if (expected.cell === target) {
-      continue;
-    }
-
-    // Same-tier pieces are interchangeable for sort purposes. Prefer the
-    // rightmost mismatched same-tier piece as the source so a row-of-T1s
-    // gap is filled by one long drag instead of N-1 left-shift drags.
-    let source = expected;
-    for (let k = sushiOnBoard.length - 1; k > i; k--) {
-      const candidate = sushiOnBoard[k]!;
-      if (candidate.tierNumber !== expected.tierNumber) {
-        continue;
-      }
-      const candidateTarget = priorityCells[k];
-      if (candidateTarget !== undefined && candidate.cell !== candidateTarget) {
-        source = candidate;
-        break;
-      }
-    }
-
-    const fromCol = source.cell % SUSHI_GRID.COLUMNS;
-    const fromRow = Math.floor(source.cell / SUSHI_GRID.COLUMNS);
-    const toCol = target % SUSHI_GRID.COLUMNS;
-    const toRow = Math.floor(target / SUSHI_GRID.COLUMNS);
-
-    return {
-      from: cellToPoint(source.cell),
-      to: cellToPoint(target),
-      tier: source.tier,
-      fromRow,
-      fromCol,
-      toRow,
-      toCol,
-    };
-  }
-
-  return null;
-};
 
 export default defineScript<[boolean]>({
   id: "world7.sushiStation.sushiStationMerge",
@@ -251,7 +164,8 @@ export default defineScript<[boolean]>({
       }
 
       if (!actedThisIteration) {
-        const move = pickSortMove(response.results, priorityCells);
+        const board = buildBoardFromResults(response.results);
+        const move = pickSortMove(board, priorityCells);
         if (move) {
           logger.log(
             `sushi-station-merge - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`

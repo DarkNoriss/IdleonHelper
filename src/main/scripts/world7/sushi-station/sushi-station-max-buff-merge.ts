@@ -2,23 +2,34 @@ import {
   backendCommand,
   getClickOptionsFromPreset,
   getDragOptionsFromPreset,
-  type Point,
   type Rect,
-  type RegionResult,
 } from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
 import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
+import {
+  buildBoardFromResults,
+  buildCellToTier,
+  type CascadeStep,
+  type CellTier,
+  cellToPoint,
+  countEmpty,
+  formatCell,
+  getHighestTier,
+  groupByTier,
+  logBoardGrid,
+  type MergePlan,
+  pickSortMove,
+  TOTAL_CELLS,
+} from "./sushi-station-board";
 import {
   buildSushiRegions,
   GRID_SLOT,
   GRID_SLOT_RED,
   GRID_SLOT_YELLOW,
   getPriorityCells,
-  parseTierNumber,
   pointToCellIndex,
   SUSHI_COOK,
-  SUSHI_GRID,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
   SUSHI_TEMPLATES,
@@ -26,189 +37,12 @@ import {
   SUSHI_TIERS_ON,
 } from "./sushi-station-constants";
 
-const TOTAL_CELLS = SUSHI_GRID.ROWS * SUSHI_GRID.COLUMNS;
-
 const PHASE_DELAY_MS = 1000;
 const MERGE_BASE_DELAY_MS = 1000;
 const MERGE_TRIGGER_INCREMENT_MS = 100;
 
 const computeMergeWaitMs = (triggers: number): number =>
   MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
-
-const cellToPoint = (cellIndex: number): Point => {
-  const col = cellIndex % SUSHI_GRID.COLUMNS;
-  const row = Math.floor(cellIndex / SUSHI_GRID.COLUMNS);
-  return {
-    x: SUSHI_GRID.FIRST_POSITION.x + col * SUSHI_GRID.X_STEP,
-    y: SUSHI_GRID.FIRST_POSITION.y + row * SUSHI_GRID.Y_STEP,
-  };
-};
-
-const formatCell = (cell: number): string => {
-  const col = cell % SUSHI_GRID.COLUMNS;
-  const row = Math.floor(cell / SUSHI_GRID.COLUMNS);
-  return `[${row},${col}]`;
-};
-
-type CellTier = { cell: number; tier: string; tierNumber: number };
-
-const buildBoardFromResults = (results: RegionResult[]): CellTier[] => {
-  const board: CellTier[] = [];
-  for (const result of results) {
-    if (result.match === null) {
-      continue;
-    }
-    const tierNumber = parseTierNumber(result.match);
-    if (tierNumber === null) {
-      continue;
-    }
-    board.push({
-      cell: result.regionIndex,
-      tier: result.match,
-      tierNumber,
-    });
-  }
-  return board;
-};
-
-const buildCellToTier = (board: CellTier[]): Map<number, number> => {
-  const map = new Map<number, number>();
-  for (const piece of board) {
-    map.set(piece.cell, piece.tierNumber);
-  }
-  return map;
-};
-
-const getHighestTier = (board: CellTier[]): number | null => {
-  let highest = -1;
-  for (const piece of board) {
-    if (piece.tierNumber > highest) {
-      highest = piece.tierNumber;
-    }
-  }
-  return highest === -1 ? null : highest;
-};
-
-const groupByTier = (board: CellTier[]): Map<number, CellTier[]> => {
-  const byTier = new Map<number, CellTier[]>();
-  for (const piece of board) {
-    const list = byTier.get(piece.tierNumber);
-    if (list) {
-      list.push(piece);
-    } else {
-      byTier.set(piece.tierNumber, [piece]);
-    }
-  }
-  return byTier;
-};
-
-const formatTierLabel = (tier: number | undefined): string =>
-  tier === undefined ? "___" : `T${tier}`;
-
-const CELL_WIDTH = 5;
-
-const logBoardGrid = (
-  label: string,
-  board: CellTier[],
-  availableCells: ReadonlySet<number>
-): void => {
-  logger.log(`sushi-station-max-buff - ${label}`);
-  const cellToTier = buildCellToTier(board);
-
-  let header = "    ";
-  for (let c = 0; c < SUSHI_GRID.COLUMNS; c++) {
-    header += `c${c}`.padStart(CELL_WIDTH, " ");
-  }
-  logger.log(header);
-
-  for (let r = 0; r < SUSHI_GRID.ROWS; r++) {
-    let line = `r${r}`.padEnd(4, " ");
-    for (let c = 0; c < SUSHI_GRID.COLUMNS; c++) {
-      const cell = r * SUSHI_GRID.COLUMNS + c;
-      if (!availableCells.has(cell)) {
-        line += "-".padStart(CELL_WIDTH, " ");
-        continue;
-      }
-      line += formatTierLabel(cellToTier.get(cell)).padStart(CELL_WIDTH, " ");
-    }
-    logger.log(line);
-  }
-};
-
-type SortMove = {
-  from: Point;
-  to: Point;
-  tier: string;
-  fromRow: number;
-  fromCol: number;
-  toRow: number;
-  toCol: number;
-};
-
-const pickSortMove = (
-  board: CellTier[],
-  priorityCells: number[]
-): SortMove | null => {
-  const sorted = [...board].sort((a, b) => b.tierNumber - a.tierNumber);
-
-  for (let i = 0; i < sorted.length; i++) {
-    const target = priorityCells[i];
-    if (target === undefined) {
-      logger.log(
-        "sushi-station-max-buff - more sushi than priority cells, skipping sort"
-      );
-      return null;
-    }
-    const expected = sorted[i]!;
-    if (expected.cell === target) {
-      continue;
-    }
-
-    // Same-tier pieces are interchangeable for sort purposes. Prefer the
-    // rightmost mismatched same-tier piece as the source so a row-of-T1s
-    // gap is filled by one long drag instead of N-1 left-shift drags.
-    let source = expected;
-    for (let k = sorted.length - 1; k > i; k--) {
-      const candidate = sorted[k]!;
-      if (candidate.tierNumber !== expected.tierNumber) {
-        continue;
-      }
-      const candidateTarget = priorityCells[k];
-      if (candidateTarget !== undefined && candidate.cell !== candidateTarget) {
-        source = candidate;
-        break;
-      }
-    }
-
-    const fromCol = source.cell % SUSHI_GRID.COLUMNS;
-    const fromRow = Math.floor(source.cell / SUSHI_GRID.COLUMNS);
-    const toCol = target % SUSHI_GRID.COLUMNS;
-    const toRow = Math.floor(target / SUSHI_GRID.COLUMNS);
-
-    return {
-      from: cellToPoint(source.cell),
-      to: cellToPoint(target),
-      tier: source.tier,
-      fromRow,
-      fromCol,
-      toRow,
-      toCol,
-    };
-  }
-
-  return null;
-};
-
-type CascadeStep = { cell: number; tierBefore: number; tierAfter: number };
-
-type MergePlan = {
-  fromCell: number;
-  toCell: number;
-  mergeTier: number;
-  resultTier: number;
-  cascade: CascadeStep[];
-  source: "buff" | "fallback";
-};
 
 // Cascade rule (D, "staircase"): the buff fires when the next cell's
 // pre-merge tier is strictly less than the previous cell's pre-merge tier
@@ -315,7 +149,7 @@ const planBestMerge = (
             mergeTier,
             resultTier,
             cascade,
-            source: buffTier >= 0 ? "buff" : "fallback",
+            cascadeFired: buffTier >= 0,
           };
         }
       }
@@ -328,28 +162,8 @@ const planBestMerge = (
   return null;
 };
 
-const countEmpty = (
-  board: CellTier[],
-  availableCells: ReadonlySet<number>
-): number => {
-  const occupied = new Set<number>();
-  for (const piece of board) {
-    occupied.add(piece.cell);
-  }
-  let empty = 0;
-  for (const cell of availableCells) {
-    if (!occupied.has(cell)) {
-      empty++;
-    }
-  }
-  return empty;
-};
-
 const logMergePlan = (plan: MergePlan): void => {
-  const sourceLabel =
-    plan.source === "fallback"
-      ? "fallback (highest-tier non-buff)"
-      : "buff-firing";
+  const sourceLabel = plan.cascadeFired ? "buff-firing" : "no buff";
   logger.log(
     `sushi-station-max-buff - chosen merge (${sourceLabel}): T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (result T${plan.resultTier})`
   );
@@ -636,7 +450,12 @@ export default defineScript<[boolean]>({
       );
       const preMergeBoard = buildBoardFromResults(preMergeScan.results);
 
-      logBoardGrid("board before merge", preMergeBoard, availableCells);
+      logBoardGrid(
+        (msg) => logger.log(`sushi-station-max-buff - ${msg}`),
+        "board before merge",
+        preMergeBoard,
+        availableCells
+      );
 
       const detectedHighest = getHighestTier(preMergeBoard);
       if (detectedHighest === null) {
@@ -686,7 +505,12 @@ export default defineScript<[boolean]>({
       );
       const postMergeBoard = buildBoardFromResults(postMergeScan.results);
 
-      logBoardGrid("board after merge", postMergeBoard, availableCells);
+      logBoardGrid(
+        (msg) => logger.log(`sushi-station-max-buff - ${msg}`),
+        "board after merge",
+        postMergeBoard,
+        availableCells
+      );
 
       verifyMerge(plan, preMergeBoard, postMergeBoard, availableCells);
     }
