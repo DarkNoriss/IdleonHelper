@@ -7,6 +7,9 @@ const SushiStation = () => {
   const shouldCook = useUiPrefsStore((s) => s.sushi.shouldCook);
   const setSushi = useUiPrefsStore((s) => s.setSushi);
 
+  const maxBuff = useUiPrefsStore((s) => s.sushiMaxBuff);
+  const setSushiMaxBuff = useUiPrefsStore((s) => s.setSushiMaxBuff);
+
   useEffect(() => {
     window.api.app
       .isDev()
@@ -39,9 +42,27 @@ const SushiStation = () => {
           scriptId="world7.sushiStation.sushiStationMerge"
         />
       </Block>
+      <Block
+        note="arranges sushi in descending tier order along the snake so each merge tier-ups the right neighbor (Wind of the East). highest tier auto-detected from the board each iteration."
+        tag="script"
+        title="sushi.heat-of-the-east-win"
+      >
+        <div className="mb-3">
+          <TermCheckbox
+            checked={maxBuff.shouldCook}
+            label="spawn new sushi when no pairs found"
+            onChange={(v) => setSushiMaxBuff({ shouldCook: v })}
+          />
+        </div>
+        <RunBtn
+          getArgs={() => [maxBuff.shouldCook]}
+          label="start max-buff merge"
+          scriptId="world7.sushiStation.sushiStationMaxBuffMerge"
+        />
+      </Block>
       {isDev && (
         <Block
-          note="visualizes the board the merge script sees. dev-only."
+          note="captures filtered cell images for new sushi tier templates. dev-only."
           tag="script"
           title="sushi.merge-debug"
         >

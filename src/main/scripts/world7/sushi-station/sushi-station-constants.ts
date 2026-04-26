@@ -1,4 +1,4 @@
-import type { Point, Rect } from "../../../backend/backend-types";
+import type { Point, Rect, RegionResult } from "../../../backend/backend-types";
 
 export const SUSHI_GRID = {
   ROWS: 8,
@@ -23,6 +23,7 @@ export const SUSHI_TIERS_OFF = `${SUSHI_PATH}/sushi_tiers_off`;
 export const SUSHI_COOK = `${SUSHI_PATH}/sushi_cook`;
 export const GRID_SLOT = `${SUSHI_PATH}/grid_slot`;
 export const GRID_SLOT_RED = `${SUSHI_PATH}/grid_slot_red`;
+export const GRID_SLOT_YELLOW = `${SUSHI_PATH}/grid_slot_yellow`;
 
 const SUSHI_TIERS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
@@ -67,12 +68,16 @@ export const pointToCellIndex = (point: Point): number | null => {
   return row * SUSHI_GRID.COLUMNS + col;
 };
 
+// Snake-forward, top-left first. priorityCells[0] = first available cell
+// scanning rows top-to-bottom, columns left-to-right. The sort assigns the
+// highest-tier sushi to priorityCells[0], so the board ends up
+// descending from top-left — the layout Wind of the East needs to chain.
 export const getPriorityCells = (
   availableCells: ReadonlySet<number>
 ): number[] => {
   const result: number[] = [];
-  for (let row = SUSHI_GRID.ROWS - 1; row >= 0; row--) {
-    for (let col = SUSHI_GRID.COLUMNS - 1; col >= 0; col--) {
+  for (let row = 0; row < SUSHI_GRID.ROWS; row++) {
+    for (let col = 0; col < SUSHI_GRID.COLUMNS; col++) {
       const cell = row * SUSHI_GRID.COLUMNS + col;
       if (availableCells.has(cell)) {
         result.push(cell);
@@ -80,4 +85,35 @@ export const getPriorityCells = (
     }
   }
   return result;
+};
+
+const TIER_REGEX = /sushi_t(\d+)/;
+
+// match is the template filename stem from the backend (e.g. sushi_t12), not a path.
+export const parseTierNumber = (match: string): number | null => {
+  const m = TIER_REGEX.exec(match);
+  if (!m) {
+    return null;
+  }
+  const parsed = Number.parseInt(m[1]!, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+export const countEmptyCells = (
+  results: RegionResult[],
+  availableCells: ReadonlySet<number>
+): number => {
+  const occupied = new Set<number>();
+  for (const r of results) {
+    if (r.match !== null) {
+      occupied.add(r.regionIndex);
+    }
+  }
+  let empty = 0;
+  for (const cell of availableCells) {
+    if (!occupied.has(cell)) {
+      empty++;
+    }
+  }
+  return empty;
 };

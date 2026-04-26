@@ -1,3 +1,11 @@
-import { sushiStationMerge, sushiStationMergeDebug } from "./sushi-station";
+import {
+  sushiStationMaxBuffMerge,
+  sushiStationMerge,
+  sushiStationMergeDebug,
+} from "./sushi-station";
 
-export const world7Scripts = [sushiStationMerge, sushiStationMergeDebug];
+export const world7Scripts = [
+  sushiStationMerge,
+  sushiStationMaxBuffMerge,
+  sushiStationMergeDebug,
+];
