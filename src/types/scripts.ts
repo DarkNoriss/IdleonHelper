@@ -53,6 +53,7 @@ export type ScriptMap = {
   "general.cardPresets.apply": { args: [number]; result: undefined };
   "general.cardPresets.select": { args: [number]; result: undefined };
   "general.bossFarmer.run": { args: [number]; result: undefined };
+  "general.gemBossFarmer.run": { args: [number]; result: undefined };
   "general.cloudsave.run": { args: []; result: undefined };
   "general.closeAndCloudsave": { args: []; result: undefined };
   "general.debug.findAttackSkill": { args: [string]; result: undefined };

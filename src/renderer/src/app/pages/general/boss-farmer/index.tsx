@@ -71,7 +71,7 @@ const BossFarmer = () => {
                 disabled
                 getArgs={() => [remaining]}
                 label="start gem farming"
-                scriptId="general.bossFarmer.run"
+                scriptId="general.gemBossFarmer.run"
               />
             </DisabledHint>
           ) : (
@@ -82,7 +82,7 @@ const BossFarmer = () => {
                 <RunBtn
                   getArgs={() => [remaining]}
                   label="start gem farming"
-                  scriptId="general.bossFarmer.run"
+                  scriptId="general.gemBossFarmer.run"
                 />
               </Tooltip.Trigger>
               <Tooltip.Portal>

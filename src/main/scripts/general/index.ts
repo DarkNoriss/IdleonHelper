@@ -1,4 +1,4 @@
-import bossFarmer from "./boss-farmer";
+import { bossFarmer, gemBossFarmer } from "./boss-farmer";
 import candy from "./candy";
 import cardApplyPreset from "./cards/card-apply-preset";
 import cardSelectPreset from "./cards/card-select-preset";
@@ -10,6 +10,7 @@ export const generalScripts = [
   storeItems,
   candy,
   bossFarmer,
+  gemBossFarmer,
   cardApplyPreset,
   cardSelectPreset,
   ...cloudsaveScripts,
