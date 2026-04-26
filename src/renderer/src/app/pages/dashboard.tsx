@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Alert, Block, PageHead, QuickTile, Stat } from "@/components/terminal";
 import { useMainState } from "@/hooks/use-main-state.ts";
+import { useGameData } from "@/providers/game-data-provider";
 import { useIsSignedIn } from "@/store/connection";
 import { useNavigationStore } from "@/store/navigation.ts";
 
@@ -45,6 +46,8 @@ const Dashboard = () => {
   }, []);
 
   const isSignedIn = useIsSignedIn();
+  const { bossFarmer: gemData } = useGameData();
+  const gemKillsRemaining = gemData?.gemBossKillsRemaining ?? 0;
 
   const goto = (page: Parameters<typeof setPage>[0]) => () => setPage(page);
 
@@ -75,6 +78,17 @@ const Dashboard = () => {
         <Stat label="session" value={session} />
         <Stat label="last-run" value={lastRun ?? "—"} />
       </div>
+      {gemKillsRemaining > 0 && (
+        <Block tag="daily" title="daily">
+          <div className="grid grid-cols-3 gap-1.5">
+            <QuickTile
+              desc={`${gemKillsRemaining} gem-boss kills available today`}
+              label="boss-farmer"
+              onClick={goto("general/boss-farmer")}
+            />
+          </div>
+        </Block>
+      )}
       <Block tag="scripts" title="quick-launch">
         <div className="grid grid-cols-3 gap-1.5">
           <QuickTile
