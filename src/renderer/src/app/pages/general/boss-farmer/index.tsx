@@ -68,10 +68,15 @@ const BossFarmer = () => {
             <RunBtn
               disabled={gemDisabled}
               getArgs={() => [remaining]}
-              label={`start gem farming (${remaining} available)`}
+              label="start gem farming"
               scriptId="general.bossFarmer.run"
             />
           </DisabledHint>
+          {!gemDisabled && (
+            <span className="self-center font-mono text-[10px] text-text-dim">
+              {remaining} avail
+            </span>
+          )}
         </div>
         {isRunning && bossFarmer && (
           <div className="grid grid-cols-2 gap-1 rounded-[3px] border border-border-soft bg-panel-2 p-2.5 font-mono text-[10.5px]">
