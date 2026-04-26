@@ -125,13 +125,16 @@ type MergePlan = {
   cascade: CascadeStep[];
 };
 
-// Wind of the East fires once per merge: only the cell immediately to the
-// right of `to` (snake-wrap) is buffed, and the bump does NOT cascade further.
-// Verified empirically on 2026-04-26: predicted 18 chained bumps, only the
-// first bump landed.
+// Wind of the East cascade rule (D, "staircase"): cascade walks right from
+// the merge `to` cell. At each step, the buff fires only if the cell's
+// ORIGINAL pre-merge tier is strictly less than the previous cell's pre-merge
+// tier (and ≤ X). The first step uses resultTier (mergeTier+1) as the
+// threshold. Verified empirically 2026-04-26: rule (A, post-tier compare)
+// over-predicted on flat-tier runs; rule (C, single bump) under-predicted on
+// descending-staircase layouts. Rule (D) matches both.
 //
-// To make best use of the mechanic, evaluate every (i, j) pair in both drag
-// directions and pick the merge whose buff lands on the highest-tier eligible
+// To make best use of the mechanic, evaluate every (i, j) pair in snake-forward
+// direction and pick the merge whose buff lands on the highest-tier eligible
 // neighbor. Non-buff merges are deferred (return null) so high-tier pairs that
 // cannot buff yet wait for lower tiers to catch up.
 const planBestMerge = (
@@ -205,18 +208,38 @@ const planBestMerge = (
           bestBuffTier = rightTier;
           bestMergeTier = mergeTier;
           bestToCell = toCell;
+
+          // Rule D: walk the staircase. Threshold starts at resultTier; each
+          // step's threshold is the previous cell's PRE tier (not the post).
+          const cascade: CascadeStep[] = [];
+          let prevPreTier = resultTier;
+          let cursor = rightCell;
+          while (cursor < TOTAL_CELLS) {
+            const currentTier = cellToTier.get(cursor);
+            if (currentTier === undefined) {
+              break;
+            }
+            if (currentTier > buffCap) {
+              break;
+            }
+            if (currentTier >= prevPreTier) {
+              break;
+            }
+            cascade.push({
+              cell: cursor,
+              tierBefore: currentTier,
+              tierAfter: currentTier + 1,
+            });
+            prevPreTier = currentTier;
+            cursor++;
+          }
+
           bestPlan = {
             fromCell,
             toCell,
             mergeTier,
             resultTier,
-            cascade: [
-              {
-                cell: rightCell,
-                tierBefore: rightTier,
-                tierAfter: rightTier + 1,
-              },
-            ],
+            cascade,
           };
         }
       }
