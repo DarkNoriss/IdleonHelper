@@ -247,69 +247,82 @@ export default defineScript<[boolean]>({
       return;
     }
 
+    const scanBoard = async (): Promise<CellTier[]> => {
+      token.throwIfCancelled();
+      const response = await backendCommand.readRegions(
+        regions,
+        { ...SUSHI_HSV_LOWER },
+        { ...SUSHI_HSV_UPPER },
+        SUSHI_TEMPLATES,
+        undefined,
+        token
+      );
+      return buildBoardFromResults(response.results);
+    };
+
+    const sortPhase = async (label: string): Promise<void> => {
+      const drags = await runSortDrain(regions, priorityCells, token);
+      log(`${label} complete (${drags} drags)`);
+      await delay(PHASE_DELAY_MS, token);
+    };
+
+    const cookPhase = async (): Promise<void> => {
+      const board = await scanBoard();
+      const emptyCount = countEmpty(board, availableCells);
+
+      if (emptyCount === 0) {
+        log("board full, no spawn needed");
+        return;
+      }
+      if (!shouldCook) {
+        log(`${emptyCount} empty cells, cook disabled, skipping spawn`);
+        return;
+      }
+      log(`${emptyCount} empty cells, cooking ${emptyCount} sushi`);
+      const cookButton = await backendCommand.isVisible(
+        SUSHI_COOK,
+        undefined,
+        token
+      );
+      if (cookButton.length === 0) {
+        log("cook button not visible, skipping spawn");
+        return;
+      }
+      const clickOptions = getClickOptionsFromPreset("16x");
+      await backendCommand.click(
+        cookButton[0]!,
+        { ...clickOptions, times: emptyCount },
+        token
+      );
+      await delay(PHASE_DELAY_MS, token);
+    };
+
+    const executeMerge = async (plan: MergePlan): Promise<void> => {
+      log(
+        `executing merge T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)}`
+      );
+      token.throwIfCancelled();
+      const dragOptions = getDragOptionsFromPreset("16x", true);
+      await backendCommand.drag(
+        cellToPoint(plan.fromCell),
+        cellToPoint(plan.toCell),
+        dragOptions,
+        token
+      );
+      await delay(computeMergeWaitMs(plan.cascade.length), token);
+    };
+
     let iteration = 0;
     while (true) {
       token.throwIfCancelled();
       iteration++;
       log(`iteration ${iteration}`);
 
-      const sortDrags1 = await runSortDrain(regions, priorityCells, token);
-      log(`sort phase 1 complete (${sortDrags1} drags)`);
+      await sortPhase("sort phase 1");
+      await cookPhase();
+      await sortPhase("sort phase 2");
 
-      await delay(PHASE_DELAY_MS, token);
-
-      token.throwIfCancelled();
-      const censusScan = await backendCommand.readRegions(
-        regions,
-        { ...SUSHI_HSV_LOWER },
-        { ...SUSHI_HSV_UPPER },
-        SUSHI_TEMPLATES,
-        undefined,
-        token
-      );
-      const censusBoard = buildBoardFromResults(censusScan.results);
-      const emptyCount = countEmpty(censusBoard, availableCells);
-
-      if (emptyCount === 0) {
-        log("board full, no spawn needed");
-      } else if (shouldCook) {
-        log(`${emptyCount} empty cells, cooking ${emptyCount} sushi`);
-        const cookButton = await backendCommand.isVisible(
-          SUSHI_COOK,
-          undefined,
-          token
-        );
-        if (cookButton.length === 0) {
-          log("cook button not visible, skipping spawn");
-        } else {
-          const clickOptions = getClickOptionsFromPreset("16x");
-          await backendCommand.click(
-            cookButton[0]!,
-            { ...clickOptions, times: emptyCount },
-            token
-          );
-          await delay(PHASE_DELAY_MS, token);
-        }
-      } else {
-        log(`${emptyCount} empty cells, cook disabled, skipping spawn`);
-      }
-
-      const sortDrags2 = await runSortDrain(regions, priorityCells, token);
-      log(`sort phase 2 complete (${sortDrags2} drags)`);
-
-      await delay(PHASE_DELAY_MS, token);
-
-      token.throwIfCancelled();
-      const preMergeScan = await backendCommand.readRegions(
-        regions,
-        { ...SUSHI_HSV_LOWER },
-        { ...SUSHI_HSV_UPPER },
-        SUSHI_TEMPLATES,
-        undefined,
-        token
-      );
-      const preMergeBoard = buildBoardFromResults(preMergeScan.results);
-
+      const preMergeBoard = await scanBoard();
       logBoardGrid(log, "board before merge", preMergeBoard, availableCells);
 
       const detectedHighest = getHighestTier(preMergeBoard);
@@ -329,35 +342,10 @@ export default defineScript<[boolean]>({
       }
 
       logMergePlan(plan);
+      await executeMerge(plan);
 
-      log(
-        `executing merge T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)}`
-      );
-      token.throwIfCancelled();
-      const mergeDragOptions = getDragOptionsFromPreset("16x", true);
-      await backendCommand.drag(
-        cellToPoint(plan.fromCell),
-        cellToPoint(plan.toCell),
-        mergeDragOptions,
-        token
-      );
-
-      const totalWaitMs = computeMergeWaitMs(plan.cascade.length);
-      await delay(totalWaitMs, token);
-
-      token.throwIfCancelled();
-      const postMergeScan = await backendCommand.readRegions(
-        regions,
-        { ...SUSHI_HSV_LOWER },
-        { ...SUSHI_HSV_UPPER },
-        SUSHI_TEMPLATES,
-        undefined,
-        token
-      );
-      const postMergeBoard = buildBoardFromResults(postMergeScan.results);
-
+      const postMergeBoard = await scanBoard();
       logBoardGrid(log, "board after merge", postMergeBoard, availableCells);
-
       verifyMerge(plan, preMergeBoard, postMergeBoard, availableCells);
     }
 
