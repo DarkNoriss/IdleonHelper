@@ -3,8 +3,10 @@ import {
   getClickOptionsFromPreset,
   getDragOptionsFromPreset,
   type Point,
+  type Rect,
   type RegionResult,
 } from "../../../backend/index";
+import type { CancellationToken } from "../../../utils/cancellation-token";
 import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
@@ -156,26 +158,26 @@ const planBestMerge = (
     cellToTier.set(piece.cell, piece.tierNumber);
   }
 
+  // Wind of the East fires once per merge: only the cell immediately to the
+  // right of `to` (snake-wrap) is buffed, and the bump does NOT cascade further.
+  // Verified empirically on 2026-04-26: predicted 18 chained bumps, only the
+  // first bump landed.
   const cascade: CascadeStep[] = [];
   const resultTier = bestTier + 1;
-  let incomingTier = resultTier;
-  let cursor = toCell + 1;
-
-  while (cursor < TOTAL_CELLS) {
-    const currentTier = cellToTier.get(cursor);
-    if (currentTier === undefined) {
-      break;
+  const rightCell = toCell + 1;
+  if (rightCell < TOTAL_CELLS) {
+    const rightTier = cellToTier.get(rightCell);
+    if (
+      rightTier !== undefined &&
+      rightTier <= buffCap &&
+      rightTier < resultTier
+    ) {
+      cascade.push({
+        cell: rightCell,
+        tierBefore: rightTier,
+        tierAfter: rightTier + 1,
+      });
     }
-    if (currentTier > buffCap) {
-      break;
-    }
-    if (currentTier >= incomingTier) {
-      break;
-    }
-    const newTier = currentTier + 1;
-    cascade.push({ cell: cursor, tierBefore: currentTier, tierAfter: newTier });
-    incomingTier = newTier;
-    cursor++;
   }
 
   return {
@@ -285,6 +287,38 @@ const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
   );
 };
 
+const runSortDrain = async (
+  regions: Rect[],
+  priorityCells: number[],
+  token: CancellationToken
+): Promise<number> => {
+  let drags = 0;
+  while (true) {
+    token.throwIfCancelled();
+    const response = await backendCommand.readRegions(
+      regions,
+      { ...SUSHI_HSV_LOWER },
+      { ...SUSHI_HSV_UPPER },
+      SUSHI_TEMPLATES,
+      undefined,
+      token
+    );
+    const board = buildBoardFromResults(response.results);
+    const move = pickSortMove(board, priorityCells);
+    if (!move) {
+      break;
+    }
+    logger.log(
+      `sushi-station-max-buff - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
+    );
+    token.throwIfCancelled();
+    const dragOptions = getDragOptionsFromPreset("16x", true);
+    await backendCommand.drag(move.from, move.to, dragOptions, token);
+    drags++;
+  }
+  return drags;
+};
+
 export default defineScript<[number, boolean]>({
   id: "world7.sushiStation.sushiStationMaxBuffMerge",
   name: "Sushi Station - Max Buff Merge",
@@ -377,36 +411,9 @@ export default defineScript<[number, boolean]>({
     }
 
     // ----- PHASE 1: Sort drain (no inter-drag delay) -----
-    let sortDrags = 0;
-    while (true) {
-      token.throwIfCancelled();
-
-      const response = await backendCommand.readRegions(
-        regions,
-        { ...SUSHI_HSV_LOWER },
-        { ...SUSHI_HSV_UPPER },
-        SUSHI_TEMPLATES,
-        undefined,
-        token
-      );
-
-      const board = buildBoardFromResults(response.results);
-      const move = pickSortMove(board, priorityCells);
-      if (!move) {
-        break;
-      }
-
-      logger.log(
-        `sushi-station-max-buff - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
-      );
-      token.throwIfCancelled();
-      const dragOptions = getDragOptionsFromPreset("16x", true);
-      await backendCommand.drag(move.from, move.to, dragOptions, token);
-      sortDrags++;
-    }
-
+    const sortDrags1 = await runSortDrain(regions, priorityCells, token);
     logger.log(
-      `sushi-station-max-buff - sort phase complete (${sortDrags} drags)`
+      `sushi-station-max-buff - sort phase 1 complete (${sortDrags1} drags)`
     );
 
     await delay(PHASE_DELAY_MS, token);
@@ -453,6 +460,14 @@ export default defineScript<[number, boolean]>({
         `sushi-station-max-buff - ${emptyCount} empty cells, cook disabled, skipping spawn`
       );
     }
+
+    // ----- PHASE 2.5: Re-sort to absorb spawned pieces -----
+    const sortDrags2 = await runSortDrain(regions, priorityCells, token);
+    logger.log(
+      `sushi-station-max-buff - sort phase 2 complete (${sortDrags2} drags)`
+    );
+
+    await delay(PHASE_DELAY_MS, token);
 
     // ----- PHASE 3: Plan and execute one merge -----
     token.throwIfCancelled();
