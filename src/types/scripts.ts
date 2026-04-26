@@ -34,6 +34,10 @@ export type ScriptMap = {
     args: [boolean];
     result: undefined;
   };
+  "world7.sushiStation.sushiStationMaxBuffMerge": {
+    args: [number, boolean];
+    result: undefined;
+  };
   "world7.sushiStation.sushiStationMergeDebug": { args: []; result: undefined };
   "world3.construction.apply": { args: [OptimalStep[]]; result: undefined };
   "world3.construction.collectCogs": { args: []; result: undefined };
