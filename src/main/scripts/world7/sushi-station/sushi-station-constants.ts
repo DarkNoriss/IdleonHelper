@@ -68,22 +68,11 @@ export const pointToCellIndex = (point: Point): number | null => {
   return row * SUSHI_GRID.COLUMNS + col;
 };
 
+// Snake-forward, top-left first. priorityCells[0] = first available cell
+// scanning rows top-to-bottom, columns left-to-right. The sort assigns the
+// highest-tier sushi to priorityCells[0], so the board ends up
+// descending from top-left — the layout Wind of the East needs to chain.
 export const getPriorityCells = (
-  availableCells: ReadonlySet<number>
-): number[] => {
-  const result: number[] = [];
-  for (let row = SUSHI_GRID.ROWS - 1; row >= 0; row--) {
-    for (let col = SUSHI_GRID.COLUMNS - 1; col >= 0; col--) {
-      const cell = row * SUSHI_GRID.COLUMNS + col;
-      if (availableCells.has(cell)) {
-        result.push(cell);
-      }
-    }
-  }
-  return result;
-};
-
-export const getMaxBuffPriorityCells = (
   availableCells: ReadonlySet<number>
 ): number[] => {
   const result: number[] = [];

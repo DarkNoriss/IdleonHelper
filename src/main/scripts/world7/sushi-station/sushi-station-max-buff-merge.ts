@@ -14,7 +14,7 @@ import {
   GRID_SLOT,
   GRID_SLOT_RED,
   GRID_SLOT_YELLOW,
-  getMaxBuffPriorityCells,
+  getPriorityCells,
   parseTierNumber,
   pointToCellIndex,
   SUSHI_COOK,
@@ -32,8 +32,6 @@ const PHASE_DELAY_MS = 1000;
 const MERGE_BASE_DELAY_MS = 1000;
 const MERGE_TRIGGER_INCREMENT_MS = 100;
 
-// Wait formula: base delay for the first trigger, +increment per additional.
-// With base 1000 and increment 100: 1 -> 1000, 2 -> 1100, 11 -> 2000, etc.
 const computeMergeWaitMs = (triggers: number): number =>
   MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
 
@@ -44,6 +42,12 @@ const cellToPoint = (cellIndex: number): Point => {
     x: SUSHI_GRID.FIRST_POSITION.x + col * SUSHI_GRID.X_STEP,
     y: SUSHI_GRID.FIRST_POSITION.y + row * SUSHI_GRID.Y_STEP,
   };
+};
+
+const formatCell = (cell: number): string => {
+  const col = cell % SUSHI_GRID.COLUMNS;
+  const row = Math.floor(cell / SUSHI_GRID.COLUMNS);
+  return `[${row},${col}]`;
 };
 
 type CellTier = { cell: number; tier: string; tierNumber: number };
@@ -65,6 +69,70 @@ const buildBoardFromResults = (results: RegionResult[]): CellTier[] => {
     });
   }
   return board;
+};
+
+const buildCellToTier = (board: CellTier[]): Map<number, number> => {
+  const map = new Map<number, number>();
+  for (const piece of board) {
+    map.set(piece.cell, piece.tierNumber);
+  }
+  return map;
+};
+
+const getHighestTier = (board: CellTier[]): number | null => {
+  let highest = -1;
+  for (const piece of board) {
+    if (piece.tierNumber > highest) {
+      highest = piece.tierNumber;
+    }
+  }
+  return highest === -1 ? null : highest;
+};
+
+const groupByTier = (board: CellTier[]): Map<number, CellTier[]> => {
+  const byTier = new Map<number, CellTier[]>();
+  for (const piece of board) {
+    const list = byTier.get(piece.tierNumber);
+    if (list) {
+      list.push(piece);
+    } else {
+      byTier.set(piece.tierNumber, [piece]);
+    }
+  }
+  return byTier;
+};
+
+const formatTierLabel = (tier: number | undefined): string =>
+  tier === undefined ? "___" : `T${tier}`;
+
+const CELL_WIDTH = 5;
+
+const logBoardGrid = (
+  label: string,
+  board: CellTier[],
+  availableCells: ReadonlySet<number>
+): void => {
+  logger.log(`sushi-station-max-buff - ${label}`);
+  const cellToTier = buildCellToTier(board);
+
+  let header = "    ";
+  for (let c = 0; c < SUSHI_GRID.COLUMNS; c++) {
+    header += `c${c}`.padStart(CELL_WIDTH, " ");
+  }
+  logger.log(header);
+
+  for (let r = 0; r < SUSHI_GRID.ROWS; r++) {
+    let line = `r${r}`.padEnd(4, " ");
+    for (let c = 0; c < SUSHI_GRID.COLUMNS; c++) {
+      const cell = r * SUSHI_GRID.COLUMNS + c;
+      if (!availableCells.has(cell)) {
+        line += "-".padStart(CELL_WIDTH, " ");
+        continue;
+      }
+      line += formatTierLabel(cellToTier.get(cell)).padStart(CELL_WIDTH, " ");
+    }
+    logger.log(line);
+  }
 };
 
 type SortMove = {
@@ -96,15 +164,31 @@ const pickSortMove = (
       continue;
     }
 
-    const fromCol = expected.cell % SUSHI_GRID.COLUMNS;
-    const fromRow = Math.floor(expected.cell / SUSHI_GRID.COLUMNS);
+    // Same-tier pieces are interchangeable for sort purposes. Prefer the
+    // rightmost mismatched same-tier piece as the source so a row-of-T1s
+    // gap is filled by one long drag instead of N-1 left-shift drags.
+    let source = expected;
+    for (let k = sorted.length - 1; k > i; k--) {
+      const candidate = sorted[k]!;
+      if (candidate.tierNumber !== expected.tierNumber) {
+        continue;
+      }
+      const candidateTarget = priorityCells[k];
+      if (candidateTarget !== undefined && candidate.cell !== candidateTarget) {
+        source = candidate;
+        break;
+      }
+    }
+
+    const fromCol = source.cell % SUSHI_GRID.COLUMNS;
+    const fromRow = Math.floor(source.cell / SUSHI_GRID.COLUMNS);
     const toCol = target % SUSHI_GRID.COLUMNS;
     const toRow = Math.floor(target / SUSHI_GRID.COLUMNS);
 
     return {
-      from: cellToPoint(expected.cell),
+      from: cellToPoint(source.cell),
       to: cellToPoint(target),
-      tier: expected.tier,
+      tier: source.tier,
       fromRow,
       fromCol,
       toRow,
@@ -123,49 +207,69 @@ type MergePlan = {
   mergeTier: number;
   resultTier: number;
   cascade: CascadeStep[];
+  source: "buff" | "fallback";
 };
 
-// Wind of the East cascade rule (D, "staircase"): cascade walks right from
-// the merge `to` cell. At each step, the buff fires only if the cell's
-// ORIGINAL pre-merge tier is strictly less than the previous cell's pre-merge
-// tier (and ≤ X). The first step uses resultTier (mergeTier+1) as the
-// threshold. Verified empirically 2026-04-26: rule (A, post-tier compare)
-// over-predicted on flat-tier runs; rule (C, single bump) under-predicted on
-// descending-staircase layouts. Rule (D) matches both.
-//
-// To make best use of the mechanic, evaluate every (i, j) pair in snake-forward
-// direction and pick the merge whose buff lands on the highest-tier eligible
-// neighbor. Non-buff merges are deferred (return null) so high-tier pairs that
-// cannot buff yet wait for lower tiers to catch up.
+// Cascade rule (D, "staircase"): the buff fires when the next cell's
+// pre-merge tier is strictly less than the previous cell's pre-merge tier
+// (and within the buff cap). First step's threshold is the merge result tier.
+const simulateCascade = (
+  cellToTier: ReadonlyMap<number, number>,
+  rightCell: number,
+  resultTier: number,
+  buffCap: number
+): CascadeStep[] => {
+  const cascade: CascadeStep[] = [];
+  let prevPreTier = resultTier;
+  let cursor = rightCell;
+  while (cursor < TOTAL_CELLS) {
+    const currentTier = cellToTier.get(cursor);
+    if (currentTier === undefined) {
+      break;
+    }
+    if (currentTier > buffCap) {
+      break;
+    }
+    if (currentTier >= prevPreTier) {
+      break;
+    }
+    cascade.push({
+      cell: cursor,
+      tierBefore: currentTier,
+      tierAfter: currentTier + 1,
+    });
+    prevPreTier = currentTier;
+    cursor++;
+  }
+  return cascade;
+};
+
+// Strategy: pick the highest tier with a forward-drag pair, then within that
+// tier prefer the pair whose right neighbor would receive WoE buff (cascade
+// tiebreaker). Tiebreaker after buff-tier: earlier toCell. Always-highest
+// guarantees the high-tier pile drains every iteration so `buffCap` keeps
+// rising; cascades still happen naturally once the working tier reaches a
+// level where its right neighbor sits at or below `buffCap`, and those
+// cascades chain through more of the descending board than cascade-first
+// could ever produce.
 const planBestMerge = (
   board: CellTier[],
   buffCap: number
 ): MergePlan | null => {
-  const cellToTier = new Map<number, number>();
-  for (const piece of board) {
-    cellToTier.set(piece.cell, piece.tierNumber);
-  }
+  const cellToTier = buildCellToTier(board);
+  const byTier = groupByTier(board);
+  const tiersDesc = [...byTier.keys()].sort((a, b) => b - a);
 
-  const byTier = new Map<number, CellTier[]>();
-  for (const piece of board) {
-    const list = byTier.get(piece.tierNumber);
-    if (list) {
-      list.push(piece);
-    } else {
-      byTier.set(piece.tierNumber, [piece]);
-    }
-  }
-
-  let bestPlan: MergePlan | null = null;
-  let bestBuffTier = -1;
-  let bestMergeTier = -1;
-  let bestToCell = Number.POSITIVE_INFINITY;
-
-  for (const [mergeTier, pieces] of byTier) {
+  for (const mergeTier of tiersDesc) {
+    const pieces = byTier.get(mergeTier)!;
     if (pieces.length < 2) {
       continue;
     }
     const resultTier = mergeTier + 1;
+
+    let best: MergePlan | null = null;
+    let bestBuffTier = -1;
+    let bestToCell = Number.POSITIVE_INFINITY;
 
     for (let i = 0; i < pieces.length; i++) {
       for (let j = 0; j < pieces.length; j++) {
@@ -174,79 +278,54 @@ const planBestMerge = (
         }
         const fromCell = pieces[i]!.cell;
         const toCell = pieces[j]!.cell;
-
-        // Wind of the East only fires on snake-forward drags (cell index
-        // strictly ascending = left-to-right, wrapping rows). Right-to-left
-        // drags merge fine but the buff does not trigger. Enforce direction.
         if (fromCell >= toCell) {
           continue;
         }
 
         const rightCell = toCell + 1;
-        if (rightCell >= TOTAL_CELLS) {
-          continue;
-        }
-        const rightTier = cellToTier.get(rightCell);
-        if (rightTier === undefined) {
-          continue;
-        }
-        if (rightTier > buffCap) {
-          continue;
-        }
-        if (rightTier >= resultTier) {
-          continue;
+        let buffTier = -1;
+        let cascade: CascadeStep[] = [];
+        if (rightCell < TOTAL_CELLS) {
+          const rightTier = cellToTier.get(rightCell);
+          if (
+            rightTier !== undefined &&
+            rightTier <= buffCap &&
+            rightTier < resultTier
+          ) {
+            buffTier = rightTier;
+            cascade = simulateCascade(
+              cellToTier,
+              rightCell,
+              resultTier,
+              buffCap
+            );
+          }
         }
 
         const better =
-          rightTier > bestBuffTier ||
-          (rightTier === bestBuffTier && mergeTier > bestMergeTier) ||
-          (rightTier === bestBuffTier &&
-            mergeTier === bestMergeTier &&
-            toCell < bestToCell);
+          buffTier > bestBuffTier ||
+          (buffTier === bestBuffTier && toCell < bestToCell);
 
         if (better) {
-          bestBuffTier = rightTier;
-          bestMergeTier = mergeTier;
+          bestBuffTier = buffTier;
           bestToCell = toCell;
-
-          // Rule D: walk the staircase. Threshold starts at resultTier; each
-          // step's threshold is the previous cell's PRE tier (not the post).
-          const cascade: CascadeStep[] = [];
-          let prevPreTier = resultTier;
-          let cursor = rightCell;
-          while (cursor < TOTAL_CELLS) {
-            const currentTier = cellToTier.get(cursor);
-            if (currentTier === undefined) {
-              break;
-            }
-            if (currentTier > buffCap) {
-              break;
-            }
-            if (currentTier >= prevPreTier) {
-              break;
-            }
-            cascade.push({
-              cell: cursor,
-              tierBefore: currentTier,
-              tierAfter: currentTier + 1,
-            });
-            prevPreTier = currentTier;
-            cursor++;
-          }
-
-          bestPlan = {
+          best = {
             fromCell,
             toCell,
             mergeTier,
             resultTier,
             cascade,
+            source: buffTier >= 0 ? "buff" : "fallback",
           };
         }
       }
     }
-  }
 
-  return bestPlan;
+    if (best) {
+      return best;
+    }
+  }
+  return null;
 };
 
 const countEmpty = (
@@ -266,15 +345,13 @@ const countEmpty = (
   return empty;
 };
 
-const formatCell = (cell: number): string => {
-  const col = cell % SUSHI_GRID.COLUMNS;
-  const row = Math.floor(cell / SUSHI_GRID.COLUMNS);
-  return `[${row},${col}]`;
-};
-
 const logMergePlan = (plan: MergePlan): void => {
+  const sourceLabel =
+    plan.source === "fallback"
+      ? "fallback (highest-tier non-buff)"
+      : "buff-firing";
   logger.log(
-    `sushi-station-max-buff - best merge: T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (result T${plan.resultTier})`
+    `sushi-station-max-buff - chosen merge (${sourceLabel}): T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (result T${plan.resultTier})`
   );
   const triggerWord = plan.cascade.length === 1 ? "trigger" : "triggers";
   logger.log(
@@ -293,15 +370,8 @@ const verifyMerge = (
   actualBoard: CellTier[],
   availableCells: ReadonlySet<number>
 ): void => {
-  const preCellToTier = new Map<number, number>();
-  for (const piece of preMergeBoard) {
-    preCellToTier.set(piece.cell, piece.tierNumber);
-  }
-
-  const postCellToTier = new Map<number, number>();
-  for (const piece of actualBoard) {
-    postCellToTier.set(piece.cell, piece.tierNumber);
-  }
+  const preCellToTier = buildCellToTier(preMergeBoard);
+  const postCellToTier = buildCellToTier(actualBoard);
 
   const formatActual = (tier: number | undefined): string =>
     tier === undefined ? "empty" : `T${tier}`;
@@ -341,8 +411,6 @@ const verifyMerge = (
     }
   }
 
-  // Surveillance: any cell that changed without being in the predicted set
-  // means our cascade model is missing something. Log so we can investigate.
   const predictedCells = new Set<number>();
   predictedCells.add(plan.fromCell);
   predictedCells.add(plan.toCell);
@@ -406,20 +474,12 @@ const runSortDrain = async (
   return drags;
 };
 
-export default defineScript<[number, boolean]>({
+export default defineScript<[boolean]>({
   id: "world7.sushiStation.sushiStationMaxBuffMerge",
-  name: "Sushi Station - Max Buff Merge",
-  run: async ({ token, args: [highestTier, shouldCook] }) => {
-    const buffCap = highestTier - 6;
-
-    if (buffCap <= 0) {
-      logger.log(
-        "sushi-station-max-buff - buff cap is non-positive, running as plain descending merge"
-      );
-    }
-
+  name: "Sushi Station - Heat of the East Win",
+  run: async ({ token, args: [shouldCook] }) => {
     logger.log(
-      `sushi-station-max-buff - starting (highest T${highestTier}, X = T${buffCap})`
+      "sushi-station-max-buff - starting (highest tier auto-detected per iteration, X = highest - 6)"
     );
 
     logger.log("sushi-station-max-buff - ensuring tiers are visible");
@@ -492,7 +552,7 @@ export default defineScript<[number, boolean]>({
       }
     }
 
-    const priorityCells = getMaxBuffPriorityCells(availableCells);
+    const priorityCells = getPriorityCells(availableCells);
 
     logger.log(
       `sushi-station-max-buff - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, yellow ${slotMatches.yellow?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
@@ -509,7 +569,6 @@ export default defineScript<[number, boolean]>({
       iteration++;
       logger.log(`sushi-station-max-buff - iteration ${iteration}`);
 
-      // ----- PHASE 1: Sort drain (no inter-drag delay) -----
       const sortDrags1 = await runSortDrain(regions, priorityCells, token);
       logger.log(
         `sushi-station-max-buff - sort phase 1 complete (${sortDrags1} drags)`
@@ -517,7 +576,6 @@ export default defineScript<[number, boolean]>({
 
       await delay(PHASE_DELAY_MS, token);
 
-      // ----- PHASE 2: Spawn one batch if there are empty cells -----
       token.throwIfCancelled();
       const censusScan = await backendCommand.readRegions(
         regions,
@@ -560,7 +618,6 @@ export default defineScript<[number, boolean]>({
         );
       }
 
-      // ----- PHASE 2.5: Re-sort to absorb spawned pieces -----
       const sortDrags2 = await runSortDrain(regions, priorityCells, token);
       logger.log(
         `sushi-station-max-buff - sort phase 2 complete (${sortDrags2} drags)`
@@ -568,7 +625,6 @@ export default defineScript<[number, boolean]>({
 
       await delay(PHASE_DELAY_MS, token);
 
-      // ----- PHASE 3: Plan and execute one merge -----
       token.throwIfCancelled();
       const preMergeScan = await backendCommand.readRegions(
         regions,
@@ -580,10 +636,24 @@ export default defineScript<[number, boolean]>({
       );
       const preMergeBoard = buildBoardFromResults(preMergeScan.results);
 
+      logBoardGrid("board before merge", preMergeBoard, availableCells);
+
+      const detectedHighest = getHighestTier(preMergeBoard);
+      if (detectedHighest === null) {
+        logger.log(
+          "sushi-station-max-buff - board empty, no merge available, exiting"
+        );
+        break;
+      }
+      const buffCap = detectedHighest - 6;
+      logger.log(
+        `sushi-station-max-buff - detected highest T${detectedHighest}, buff cap T${buffCap}${buffCap < 1 ? " (buff inactive)" : ""}`
+      );
+
       const plan = planBestMerge(preMergeBoard, buffCap);
       if (!plan) {
         logger.log(
-          "sushi-station-max-buff - no buff-firing merge available, deferring high-tier pairs"
+          "sushi-station-max-buff - no merge available (no tier has a forward-drag pair), exiting"
         );
         break;
       }
@@ -605,7 +675,6 @@ export default defineScript<[number, boolean]>({
       const totalWaitMs = computeMergeWaitMs(plan.cascade.length);
       await delay(totalWaitMs, token);
 
-      // ----- PHASE 4: Verify the cascade prediction against the real board -----
       token.throwIfCancelled();
       const postMergeScan = await backendCommand.readRegions(
         regions,
@@ -616,6 +685,8 @@ export default defineScript<[number, boolean]>({
         token
       );
       const postMergeBoard = buildBoardFromResults(postMergeScan.results);
+
+      logBoardGrid("board after merge", postMergeBoard, availableCells);
 
       verifyMerge(plan, preMergeBoard, postMergeBoard, availableCells);
     }

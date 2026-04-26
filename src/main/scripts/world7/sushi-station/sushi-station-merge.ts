@@ -79,15 +79,31 @@ const pickSortMove = (
       continue;
     }
 
-    const fromCol = expected.cell % SUSHI_GRID.COLUMNS;
-    const fromRow = Math.floor(expected.cell / SUSHI_GRID.COLUMNS);
+    // Same-tier pieces are interchangeable for sort purposes. Prefer the
+    // rightmost mismatched same-tier piece as the source so a row-of-T1s
+    // gap is filled by one long drag instead of N-1 left-shift drags.
+    let source = expected;
+    for (let k = sushiOnBoard.length - 1; k > i; k--) {
+      const candidate = sushiOnBoard[k]!;
+      if (candidate.tierNumber !== expected.tierNumber) {
+        continue;
+      }
+      const candidateTarget = priorityCells[k];
+      if (candidateTarget !== undefined && candidate.cell !== candidateTarget) {
+        source = candidate;
+        break;
+      }
+    }
+
+    const fromCol = source.cell % SUSHI_GRID.COLUMNS;
+    const fromRow = Math.floor(source.cell / SUSHI_GRID.COLUMNS);
     const toCol = target % SUSHI_GRID.COLUMNS;
     const toRow = Math.floor(target / SUSHI_GRID.COLUMNS);
 
     return {
-      from: cellToPoint(expected.cell),
+      from: cellToPoint(source.cell),
       to: cellToPoint(target),
-      tier: expected.tier,
+      tier: source.tier,
       fromRow,
       fromCol,
       toRow,

@@ -17,7 +17,7 @@ type TrappingPrefs = {
 };
 type FarmingPrefs = { overgrowth: string };
 type SushiPrefs = { shouldCook: boolean };
-type SushiMaxBuffPrefs = { highestTier: string; shouldCook: boolean };
+type SushiMaxBuffPrefs = { shouldCook: boolean };
 
 type UiPrefsState = {
   candy: CandyPrefs;
@@ -66,7 +66,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       },
       farming: { overgrowth: "0" },
       sushi: { shouldCook: true },
-      sushiMaxBuff: { highestTier: "28", shouldCook: false },
+      sushiMaxBuff: { shouldCook: false },
 
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
       setBossFarmer: (patch) =>
