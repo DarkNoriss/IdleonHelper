@@ -5,7 +5,7 @@ import {
   type Point,
   type RegionResult,
 } from "../../../backend/index";
-import { logger } from "../../../utils/index";
+import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   buildSushiRegions,
@@ -24,6 +24,14 @@ import {
 } from "./sushi-station-constants";
 
 const TOTAL_CELLS = SUSHI_GRID.ROWS * SUSHI_GRID.COLUMNS;
+
+const SORT_DELAY_MS = 2000;
+const MERGE_ANIMATION_MS_PER_TRIGGER = 2000;
+
+// Gate: flip to true once merge + cascade animation timing is wired up.
+// While false, the script only sorts the board and reports the projected
+// best-merge cascade in the logs without dragging the merge.
+const PERFORM_MERGE: boolean = false;
 
 const cellToPoint = (cellIndex: number): Point => {
   const col = cellIndex % SUSHI_GRID.COLUMNS;
@@ -223,6 +231,86 @@ const pickSortMove = (
   return null;
 };
 
+type CascadeStep = { cell: number; tierBefore: number; tierAfter: number };
+
+type MergePlan = {
+  fromCell: number;
+  toCell: number;
+  mergeTier: number;
+  resultTier: number;
+  cascade: CascadeStep[];
+};
+
+const planBestMerge = (
+  board: CellTier[],
+  buffCap: number
+): MergePlan | null => {
+  const byTier = new Map<number, CellTier[]>();
+  for (const piece of board) {
+    const list = byTier.get(piece.tierNumber);
+    if (list) {
+      list.push(piece);
+    } else {
+      byTier.set(piece.tierNumber, [piece]);
+    }
+  }
+
+  let bestTier = -1;
+  let bestPieces: CellTier[] | null = null;
+  for (const [tier, pieces] of byTier) {
+    if (pieces.length < 2) {
+      continue;
+    }
+    if (tier > bestTier) {
+      bestTier = tier;
+      bestPieces = pieces;
+    }
+  }
+
+  if (!bestPieces) {
+    return null;
+  }
+
+  const sortedByCell = [...bestPieces].sort((a, b) => a.cell - b.cell);
+  const fromCell = sortedByCell[0]!.cell;
+  const toCell = sortedByCell[1]!.cell;
+
+  const cellToTier = new Map<number, number>();
+  for (const piece of board) {
+    cellToTier.set(piece.cell, piece.tierNumber);
+  }
+
+  const cascade: CascadeStep[] = [];
+  const resultTier = bestTier + 1;
+  let incomingTier = resultTier;
+  let cursor = toCell + 1;
+
+  while (cursor < TOTAL_CELLS) {
+    const currentTier = cellToTier.get(cursor);
+    if (currentTier === undefined) {
+      break;
+    }
+    if (currentTier > buffCap) {
+      break;
+    }
+    if (currentTier >= incomingTier) {
+      break;
+    }
+    const newTier = currentTier + 1;
+    cascade.push({ cell: cursor, tierBefore: currentTier, tierAfter: newTier });
+    incomingTier = newTier;
+    cursor++;
+  }
+
+  return {
+    fromCell,
+    toCell,
+    mergeTier: bestTier,
+    resultTier,
+    cascade,
+  };
+};
+
 export default defineScript<[number, boolean]>({
   id: "world7.sushiStation.sushiStationMaxBuffMerge",
   name: "Sushi Station - Max Buff Merge",
@@ -314,7 +402,7 @@ export default defineScript<[number, boolean]>({
       return;
     }
 
-    logger.log("sushi-station-max-buff - starting buff-aware merge loop");
+    logger.log("sushi-station-max-buff - starting sort phase");
 
     while (true) {
       token.throwIfCancelled();
@@ -330,45 +418,43 @@ export default defineScript<[number, boolean]>({
 
       const board = buildBoardFromResults(response.results);
 
-      const merge = pickBuffAwareMerge(board, buffCap);
+      if (PERFORM_MERGE) {
+        const merge = pickBuffAwareMerge(board, buffCap);
+        if (merge) {
+          const fromCol = merge.fromCell % SUSHI_GRID.COLUMNS;
+          const fromRow = Math.floor(merge.fromCell / SUSHI_GRID.COLUMNS);
+          const toCol = merge.toCell % SUSHI_GRID.COLUMNS;
+          const toRow = Math.floor(merge.toCell / SUSHI_GRID.COLUMNS);
 
-      let actedThisIteration = false;
+          const buffNote =
+            merge.buffTargetTier === null
+              ? " (no buff)"
+              : ` (buff T${merge.buffTargetTier} -> T${merge.buffTargetTier + 1}, score ${merge.score})`;
 
-      if (merge) {
-        const fromCol = merge.fromCell % SUSHI_GRID.COLUMNS;
-        const fromRow = Math.floor(merge.fromCell / SUSHI_GRID.COLUMNS);
-        const toCol = merge.toCell % SUSHI_GRID.COLUMNS;
-        const toRow = Math.floor(merge.toCell / SUSHI_GRID.COLUMNS);
-
-        const buffNote =
-          merge.buffTargetTier === null
-            ? " (no buff)"
-            : ` (buff T${merge.buffTargetTier} -> T${merge.buffTargetTier + 1}, score ${merge.score})`;
-
-        logger.log(
-          `sushi-station-max-buff - merging T${merge.tierNumber} [${fromRow},${fromCol}] -> [${toRow},${toCol}]${buffNote}`
-        );
-
-        token.throwIfCancelled();
-        const dragOptions = getDragOptionsFromPreset("16x", true);
-        await backendCommand.drag(merge.from, merge.to, dragOptions, token);
-        actedThisIteration = true;
-      }
-
-      if (!actedThisIteration) {
-        const move = pickSortMove(board, priorityCells);
-        if (move) {
           logger.log(
-            `sushi-station-max-buff - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
+            `sushi-station-max-buff - merging T${merge.tierNumber} [${fromRow},${fromCol}] -> [${toRow},${toCol}]${buffNote}`
           );
+
           token.throwIfCancelled();
           const dragOptions = getDragOptionsFromPreset("16x", true);
-          await backendCommand.drag(move.from, move.to, dragOptions, token);
-          actedThisIteration = true;
+          await backendCommand.drag(merge.from, merge.to, dragOptions, token);
+          continue;
         }
       }
 
-      if (!actedThisIteration && shouldCook) {
+      const move = pickSortMove(board, priorityCells);
+      if (move) {
+        logger.log(
+          `sushi-station-max-buff - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
+        );
+        token.throwIfCancelled();
+        const dragOptions = getDragOptionsFromPreset("16x", true);
+        await backendCommand.drag(move.from, move.to, dragOptions, token);
+        await delay(SORT_DELAY_MS, token);
+        continue;
+      }
+
+      if (PERFORM_MERGE && shouldCook) {
         logger.log("sushi-station-max-buff - no pairs, cooking more sushi");
         const cookButton = await backendCommand.isVisible(
           SUSHI_COOK,
@@ -383,7 +469,58 @@ export default defineScript<[number, boolean]>({
             token
           );
         }
+        continue;
       }
+
+      break;
     }
+
+    logger.log("sushi-station-max-buff - sort complete, analyzing best merge");
+
+    token.throwIfCancelled();
+
+    const finalScan = await backendCommand.readRegions(
+      regions,
+      { ...SUSHI_HSV_LOWER },
+      { ...SUSHI_HSV_UPPER },
+      SUSHI_TEMPLATES,
+      undefined,
+      token
+    );
+
+    const finalBoard = buildBoardFromResults(finalScan.results);
+
+    const plan = planBestMerge(finalBoard, buffCap);
+
+    if (!plan) {
+      logger.log("sushi-station-max-buff - no mergeable pairs found");
+      return;
+    }
+
+    const fromCol = plan.fromCell % SUSHI_GRID.COLUMNS;
+    const fromRow = Math.floor(plan.fromCell / SUSHI_GRID.COLUMNS);
+    const toCol = plan.toCell % SUSHI_GRID.COLUMNS;
+    const toRow = Math.floor(plan.toCell / SUSHI_GRID.COLUMNS);
+
+    logger.log(
+      `sushi-station-max-buff - best merge: T${plan.mergeTier} [${fromRow},${fromCol}] -> [${toRow},${toCol}] (result T${plan.resultTier})`
+    );
+    logger.log(
+      `sushi-station-max-buff - cascade: ${plan.cascade.length} triggers`
+    );
+
+    for (const step of plan.cascade) {
+      const col = step.cell % SUSHI_GRID.COLUMNS;
+      const row = Math.floor(step.cell / SUSHI_GRID.COLUMNS);
+      logger.log(
+        `sushi-station-max-buff -   [${row},${col}] T${step.tierBefore} -> T${step.tierAfter}`
+      );
+    }
+
+    const totalAnimationMs =
+      MERGE_ANIMATION_MS_PER_TRIGGER * plan.cascade.length;
+    logger.log(
+      `sushi-station-max-buff - cascade animation wait would be ${totalAnimationMs}ms (${plan.cascade.length} x ${MERGE_ANIMATION_MS_PER_TRIGGER}ms)`
+    );
   },
 });
