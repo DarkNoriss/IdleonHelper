@@ -13,6 +13,7 @@ import {
   buildSushiRegions,
   GRID_SLOT,
   GRID_SLOT_RED,
+  GRID_SLOT_YELLOW,
   getMaxBuffPriorityCells,
   parseTierNumber,
   pointToCellIndex,
@@ -28,7 +29,6 @@ import {
 const TOTAL_CELLS = SUSHI_GRID.ROWS * SUSHI_GRID.COLUMNS;
 
 const PHASE_DELAY_MS = 2000;
-const COOK_BATCH_SIZE = 40;
 const MERGE_ANIMATION_MS_PER_TRIGGER = 2000;
 
 const cellToPoint = (cellIndex: number): Point => {
@@ -394,7 +394,7 @@ export default defineScript<[number, boolean]>({
     logger.log("sushi-station-max-buff - calibrating available cells");
 
     const slotMatches = await backendCommand.isVisibleParallel(
-      { normal: GRID_SLOT, red: GRID_SLOT_RED },
+      { normal: GRID_SLOT, red: GRID_SLOT_RED, yellow: GRID_SLOT_YELLOW },
       undefined,
       token
     );
@@ -422,6 +422,12 @@ export default defineScript<[number, boolean]>({
         availableCells.add(cell);
       }
     }
+    for (const point of slotMatches.yellow ?? []) {
+      const cell = pointToCellIndex(point);
+      if (cell !== null) {
+        availableCells.add(cell);
+      }
+    }
     for (const result of calibrationScan.results) {
       if (result.match !== null) {
         availableCells.add(result.regionIndex);
@@ -431,7 +437,7 @@ export default defineScript<[number, boolean]>({
     const priorityCells = getMaxBuffPriorityCells(availableCells);
 
     logger.log(
-      `sushi-station-max-buff - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
+      `sushi-station-max-buff - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, yellow ${slotMatches.yellow?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
     );
 
     if (availableCells.size === 0) {
@@ -464,7 +470,7 @@ export default defineScript<[number, boolean]>({
       logger.log("sushi-station-max-buff - board full, no spawn needed");
     } else if (shouldCook) {
       logger.log(
-        `sushi-station-max-buff - ${emptyCount} empty cells, cooking ${COOK_BATCH_SIZE} sushi`
+        `sushi-station-max-buff - ${emptyCount} empty cells, cooking ${emptyCount} sushi`
       );
       const cookButton = await backendCommand.isVisible(
         SUSHI_COOK,
@@ -479,7 +485,7 @@ export default defineScript<[number, boolean]>({
         const clickOptions = getClickOptionsFromPreset("16x");
         await backendCommand.click(
           cookButton[0]!,
-          { ...clickOptions, times: COOK_BATCH_SIZE },
+          { ...clickOptions, times: emptyCount },
           token
         );
         await delay(PHASE_DELAY_MS, token);

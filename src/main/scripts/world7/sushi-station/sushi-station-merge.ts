@@ -9,8 +9,10 @@ import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
   buildSushiRegions,
+  countEmptyCells,
   GRID_SLOT,
   GRID_SLOT_RED,
+  GRID_SLOT_YELLOW,
   getPriorityCells,
   parseTierNumber,
   pointToCellIndex,
@@ -130,7 +132,7 @@ export default defineScript<[boolean]>({
     logger.log("sushi-station-merge - calibrating available cells");
 
     const slotMatches = await backendCommand.isVisibleParallel(
-      { normal: GRID_SLOT, red: GRID_SLOT_RED },
+      { normal: GRID_SLOT, red: GRID_SLOT_RED, yellow: GRID_SLOT_YELLOW },
       undefined,
       token
     );
@@ -158,6 +160,12 @@ export default defineScript<[boolean]>({
         availableCells.add(cell);
       }
     }
+    for (const point of slotMatches.yellow ?? []) {
+      const cell = pointToCellIndex(point);
+      if (cell !== null) {
+        availableCells.add(cell);
+      }
+    }
     for (const result of calibrationScan.results) {
       if (result.match !== null) {
         availableCells.add(result.regionIndex);
@@ -167,7 +175,7 @@ export default defineScript<[boolean]>({
     const priorityCells = getPriorityCells(availableCells);
 
     logger.log(
-      `sushi-station-merge - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
+      `sushi-station-merge - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, yellow ${slotMatches.yellow?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
     );
 
     if (availableCells.size === 0) {
@@ -240,19 +248,24 @@ export default defineScript<[boolean]>({
       }
 
       if (!actedThisIteration && shouldCook) {
-        logger.log("sushi-station-merge - no pairs, cooking more sushi");
-        const cookButton = await backendCommand.isVisible(
-          SUSHI_COOK,
-          undefined,
-          token
-        );
-        if (cookButton.length > 0) {
-          const clickOptions = getClickOptionsFromPreset("16x");
-          await backendCommand.click(
-            cookButton[0]!,
-            { ...clickOptions, times: 40 },
+        const emptyCount = countEmptyCells(response.results, availableCells);
+        if (emptyCount > 0) {
+          logger.log(
+            `sushi-station-merge - no pairs, cooking ${emptyCount} sushi`
+          );
+          const cookButton = await backendCommand.isVisible(
+            SUSHI_COOK,
+            undefined,
             token
           );
+          if (cookButton.length > 0) {
+            const clickOptions = getClickOptionsFromPreset("16x");
+            await backendCommand.click(
+              cookButton[0]!,
+              { ...clickOptions, times: emptyCount },
+              token
+            );
+          }
         }
       }
     }

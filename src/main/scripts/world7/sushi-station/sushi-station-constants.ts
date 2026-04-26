@@ -1,4 +1,4 @@
-import type { Point, Rect } from "../../../backend/backend-types";
+import type { Point, Rect, RegionResult } from "../../../backend/backend-types";
 
 export const SUSHI_GRID = {
   ROWS: 8,
@@ -23,6 +23,7 @@ export const SUSHI_TIERS_OFF = `${SUSHI_PATH}/sushi_tiers_off`;
 export const SUSHI_COOK = `${SUSHI_PATH}/sushi_cook`;
 export const GRID_SLOT = `${SUSHI_PATH}/grid_slot`;
 export const GRID_SLOT_RED = `${SUSHI_PATH}/grid_slot_red`;
+export const GRID_SLOT_YELLOW = `${SUSHI_PATH}/grid_slot_yellow`;
 
 const SUSHI_TIERS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
@@ -107,4 +108,23 @@ export const parseTierNumber = (match: string): number | null => {
   }
   const parsed = Number.parseInt(m[1]!, 10);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+export const countEmptyCells = (
+  results: RegionResult[],
+  availableCells: ReadonlySet<number>
+): number => {
+  const occupied = new Set<number>();
+  for (const r of results) {
+    if (r.match !== null) {
+      occupied.add(r.regionIndex);
+    }
+  }
+  let empty = 0;
+  for (const cell of availableCells) {
+    if (!occupied.has(cell)) {
+      empty++;
+    }
+  }
+  return empty;
 };
