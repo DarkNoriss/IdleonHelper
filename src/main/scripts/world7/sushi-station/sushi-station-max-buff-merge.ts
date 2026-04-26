@@ -253,8 +253,9 @@ const logMergePlan = (plan: MergePlan): void => {
   logger.log(
     `sushi-station-max-buff - best merge: T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (result T${plan.resultTier})`
   );
+  const triggerWord = plan.cascade.length === 1 ? "trigger" : "triggers";
   logger.log(
-    `sushi-station-max-buff - cascade: ${plan.cascade.length} triggers`
+    `sushi-station-max-buff - predicted cascade: ${plan.cascade.length} ${triggerWord}`
   );
   for (const step of plan.cascade) {
     logger.log(
@@ -341,13 +342,16 @@ const verifyMerge = (
     }
   }
 
-  const extraNote =
-    extras > 0
-      ? `, ${extras} unpredicted change${extras === 1 ? "" : "s"}`
-      : "";
-  logger.log(
-    `sushi-station-max-buff - verification: ${passes}/${total} predictions match${extraNote}`
-  );
+  if (extras > 0) {
+    const actualTriggers = plan.cascade.length + extras;
+    logger.log(
+      `sushi-station-max-buff - verification: ${passes}/${total} predictions match, ${extras} unpredicted (actual cascade ~${actualTriggers} triggers)`
+    );
+  } else {
+    logger.log(
+      `sushi-station-max-buff - verification: ${passes}/${total} predictions match`
+    );
+  }
 };
 
 const runSortDrain = async (
