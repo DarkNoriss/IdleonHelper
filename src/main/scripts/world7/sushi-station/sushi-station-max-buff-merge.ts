@@ -263,10 +263,20 @@ const logMergePlan = (plan: MergePlan): void => {
   }
 };
 
-const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
-  const cellToActualTier = new Map<number, number>();
+const verifyMerge = (
+  plan: MergePlan,
+  preMergeBoard: CellTier[],
+  actualBoard: CellTier[],
+  availableCells: ReadonlySet<number>
+): void => {
+  const preCellToTier = new Map<number, number>();
+  for (const piece of preMergeBoard) {
+    preCellToTier.set(piece.cell, piece.tierNumber);
+  }
+
+  const postCellToTier = new Map<number, number>();
   for (const piece of actualBoard) {
-    cellToActualTier.set(piece.cell, piece.tierNumber);
+    postCellToTier.set(piece.cell, piece.tierNumber);
   }
 
   const formatActual = (tier: number | undefined): string =>
@@ -276,7 +286,7 @@ const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
   let total = 0;
 
   total++;
-  const fromActual = cellToActualTier.get(plan.fromCell);
+  const fromActual = postCellToTier.get(plan.fromCell);
   if (fromActual === undefined) {
     passes++;
   } else {
@@ -286,7 +296,7 @@ const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
   }
 
   total++;
-  const toActual = cellToActualTier.get(plan.toCell);
+  const toActual = postCellToTier.get(plan.toCell);
   if (toActual === plan.resultTier) {
     passes++;
   } else {
@@ -297,7 +307,7 @@ const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
 
   for (const step of plan.cascade) {
     total++;
-    const actual = cellToActualTier.get(step.cell);
+    const actual = postCellToTier.get(step.cell);
     if (actual === step.tierAfter) {
       passes++;
     } else {
@@ -307,8 +317,36 @@ const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
     }
   }
 
+  // Surveillance: any cell that changed without being in the predicted set
+  // means our cascade model is missing something. Log so we can investigate.
+  const predictedCells = new Set<number>();
+  predictedCells.add(plan.fromCell);
+  predictedCells.add(plan.toCell);
+  for (const step of plan.cascade) {
+    predictedCells.add(step.cell);
+  }
+
+  let extras = 0;
+  for (const cell of availableCells) {
+    if (predictedCells.has(cell)) {
+      continue;
+    }
+    const pre = preCellToTier.get(cell);
+    const post = postCellToTier.get(cell);
+    if (pre !== post) {
+      logger.log(
+        `sushi-station-max-buff -   EXTRA ${formatCell(cell)} ${formatActual(pre)} -> ${formatActual(post)} (not predicted)`
+      );
+      extras++;
+    }
+  }
+
+  const extraNote =
+    extras > 0
+      ? `, ${extras} unpredicted change${extras === 1 ? "" : "s"}`
+      : "";
   logger.log(
-    `sushi-station-max-buff - verification: ${passes}/${total} predictions match`
+    `sushi-station-max-buff - verification: ${passes}/${total} predictions match${extraNote}`
   );
 };
 
@@ -552,7 +590,7 @@ export default defineScript<[number, boolean]>({
       );
       const postMergeBoard = buildBoardFromResults(postMergeScan.results);
 
-      verifyMerge(plan, postMergeBoard);
+      verifyMerge(plan, preMergeBoard, postMergeBoard, availableCells);
     }
 
     logger.log(
