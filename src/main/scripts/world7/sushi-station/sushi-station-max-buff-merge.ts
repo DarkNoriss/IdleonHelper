@@ -30,10 +30,10 @@ const TOTAL_CELLS = SUSHI_GRID.ROWS * SUSHI_GRID.COLUMNS;
 
 const PHASE_DELAY_MS = 1000;
 const MERGE_BASE_DELAY_MS = 1000;
-const MERGE_TRIGGER_INCREMENT_MS = 250;
+const MERGE_TRIGGER_INCREMENT_MS = 100;
 
-// Wait formula: 500 ms for the first trigger, +250 ms per additional trigger.
-// 1 trigger -> 500, 2 triggers -> 750, 3 triggers -> 1000, etc.
+// Wait formula: base delay for the first trigger, +increment per additional.
+// With base 1000 and increment 100: 1 -> 1000, 2 -> 1100, 11 -> 2000, etc.
 const computeMergeWaitMs = (triggers: number): number =>
   MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
 
