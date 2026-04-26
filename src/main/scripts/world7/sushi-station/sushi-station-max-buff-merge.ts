@@ -119,10 +119,24 @@ type MergePlan = {
   cascade: CascadeStep[];
 };
 
+// Wind of the East fires once per merge: only the cell immediately to the
+// right of `to` (snake-wrap) is buffed, and the bump does NOT cascade further.
+// Verified empirically on 2026-04-26: predicted 18 chained bumps, only the
+// first bump landed.
+//
+// To make best use of the mechanic, evaluate every (i, j) pair in both drag
+// directions and pick the merge whose buff lands on the highest-tier eligible
+// neighbor. Non-buff merges are deferred (return null) so high-tier pairs that
+// cannot buff yet wait for lower tiers to catch up.
 const planBestMerge = (
   board: CellTier[],
   buffCap: number
 ): MergePlan | null => {
+  const cellToTier = new Map<number, number>();
+  for (const piece of board) {
+    cellToTier.set(piece.cell, piece.tierNumber);
+  }
+
   const byTier = new Map<number, CellTier[]>();
   for (const piece of board) {
     const list = byTier.get(piece.tierNumber);
@@ -133,60 +147,75 @@ const planBestMerge = (
     }
   }
 
-  let bestTier = -1;
-  let bestPieces: CellTier[] | null = null;
-  for (const [tier, pieces] of byTier) {
+  let bestPlan: MergePlan | null = null;
+  let bestBuffTier = -1;
+  let bestMergeTier = -1;
+  let bestToCell = Number.POSITIVE_INFINITY;
+
+  for (const [mergeTier, pieces] of byTier) {
     if (pieces.length < 2) {
       continue;
     }
-    if (tier > bestTier) {
-      bestTier = tier;
-      bestPieces = pieces;
+    const resultTier = mergeTier + 1;
+
+    for (let i = 0; i < pieces.length; i++) {
+      for (let j = 0; j < pieces.length; j++) {
+        if (i === j) {
+          continue;
+        }
+        const fromCell = pieces[i]!.cell;
+        const toCell = pieces[j]!.cell;
+        const rightCell = toCell + 1;
+
+        if (rightCell >= TOTAL_CELLS) {
+          continue;
+        }
+        // After the merge, `from` is empty — if it sits to the right of `to`
+        // there is no piece left to buff.
+        if (rightCell === fromCell) {
+          continue;
+        }
+        const rightTier = cellToTier.get(rightCell);
+        if (rightTier === undefined) {
+          continue;
+        }
+        if (rightTier > buffCap) {
+          continue;
+        }
+        if (rightTier >= resultTier) {
+          continue;
+        }
+
+        const better =
+          rightTier > bestBuffTier ||
+          (rightTier === bestBuffTier && mergeTier > bestMergeTier) ||
+          (rightTier === bestBuffTier &&
+            mergeTier === bestMergeTier &&
+            toCell < bestToCell);
+
+        if (better) {
+          bestBuffTier = rightTier;
+          bestMergeTier = mergeTier;
+          bestToCell = toCell;
+          bestPlan = {
+            fromCell,
+            toCell,
+            mergeTier,
+            resultTier,
+            cascade: [
+              {
+                cell: rightCell,
+                tierBefore: rightTier,
+                tierAfter: rightTier + 1,
+              },
+            ],
+          };
+        }
+      }
     }
   }
 
-  if (!bestPieces) {
-    return null;
-  }
-
-  const sortedByCell = [...bestPieces].sort((a, b) => a.cell - b.cell);
-  const fromCell = sortedByCell[0]!.cell;
-  const toCell = sortedByCell[1]!.cell;
-
-  const cellToTier = new Map<number, number>();
-  for (const piece of board) {
-    cellToTier.set(piece.cell, piece.tierNumber);
-  }
-
-  // Wind of the East fires once per merge: only the cell immediately to the
-  // right of `to` (snake-wrap) is buffed, and the bump does NOT cascade further.
-  // Verified empirically on 2026-04-26: predicted 18 chained bumps, only the
-  // first bump landed.
-  const cascade: CascadeStep[] = [];
-  const resultTier = bestTier + 1;
-  const rightCell = toCell + 1;
-  if (rightCell < TOTAL_CELLS) {
-    const rightTier = cellToTier.get(rightCell);
-    if (
-      rightTier !== undefined &&
-      rightTier <= buffCap &&
-      rightTier < resultTier
-    ) {
-      cascade.push({
-        cell: rightCell,
-        tierBefore: rightTier,
-        tierAfter: rightTier + 1,
-      });
-    }
-  }
-
-  return {
-    fromCell,
-    toCell,
-    mergeTier: bestTier,
-    resultTier,
-    cascade,
-  };
+  return bestPlan;
 };
 
 const countEmpty = (
@@ -483,7 +512,9 @@ export default defineScript<[number, boolean]>({
 
     const plan = planBestMerge(preMergeBoard, buffCap);
     if (!plan) {
-      logger.log("sushi-station-max-buff - no mergeable pairs found, stopping");
+      logger.log(
+        "sushi-station-max-buff - no buff-firing merge available, deferring high-tier pairs"
+      );
       return;
     }
 
