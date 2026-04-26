@@ -275,13 +275,9 @@ const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
   let passes = 0;
   let total = 0;
 
-  // From cell should be empty after the merge.
   total++;
   const fromActual = cellToActualTier.get(plan.fromCell);
   if (fromActual === undefined) {
-    logger.log(
-      `sushi-station-max-buff -   PASS ${formatCell(plan.fromCell)} empty (was T${plan.mergeTier})`
-    );
     passes++;
   } else {
     logger.log(
@@ -289,13 +285,9 @@ const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
     );
   }
 
-  // To cell should hold the merge result tier.
   total++;
   const toActual = cellToActualTier.get(plan.toCell);
   if (toActual === plan.resultTier) {
-    logger.log(
-      `sushi-station-max-buff -   PASS ${formatCell(plan.toCell)} T${plan.resultTier} (merge result)`
-    );
     passes++;
   } else {
     logger.log(
@@ -303,14 +295,10 @@ const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
     );
   }
 
-  // Each cascade step should match its predicted tier.
   for (const step of plan.cascade) {
     total++;
     const actual = cellToActualTier.get(step.cell);
     if (actual === step.tierAfter) {
-      logger.log(
-        `sushi-station-max-buff -   PASS ${formatCell(step.cell)} T${step.tierBefore} -> T${step.tierAfter}`
-      );
       passes++;
     } else {
       logger.log(
@@ -345,9 +333,6 @@ const runSortDrain = async (
     if (!move) {
       break;
     }
-    logger.log(
-      `sushi-station-max-buff - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
-    );
     token.throwIfCancelled();
     const dragOptions = getDragOptionsFromPreset("16x", true);
     await backendCommand.drag(move.from, move.to, dragOptions, token);
@@ -552,15 +537,10 @@ export default defineScript<[number, boolean]>({
         token
       );
 
-      const triggers = plan.cascade.length;
-      const totalWaitMs = computeMergeWaitMs(triggers);
-      logger.log(
-        `sushi-station-max-buff - waiting ${totalWaitMs}ms for ${triggers} trigger${triggers === 1 ? "" : "s"}`
-      );
+      const totalWaitMs = computeMergeWaitMs(plan.cascade.length);
       await delay(totalWaitMs, token);
 
       // ----- PHASE 4: Verify the cascade prediction against the real board -----
-      logger.log("sushi-station-max-buff - verifying cascade outcome");
       token.throwIfCancelled();
       const postMergeScan = await backendCommand.readRegions(
         regions,
