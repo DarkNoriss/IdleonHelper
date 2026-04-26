@@ -81,3 +81,15 @@ export const getPriorityCells = (
   }
   return result;
 };
+
+const TIER_REGEX = /sushi_t(\d+)/;
+
+// match is the template filename stem from the backend (e.g. sushi_t12), not a path.
+export const parseTierNumber = (match: string): number | null => {
+  const m = TIER_REGEX.exec(match);
+  if (!m) {
+    return null;
+  }
+  const parsed = Number.parseInt(m[1]!, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+};

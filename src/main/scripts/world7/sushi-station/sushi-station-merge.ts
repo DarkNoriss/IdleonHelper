@@ -12,6 +12,7 @@ import {
   GRID_SLOT,
   GRID_SLOT_RED,
   getPriorityCells,
+  parseTierNumber,
   pointToCellIndex,
   SUSHI_COOK,
   SUSHI_GRID,
@@ -29,18 +30,6 @@ const cellToPoint = (cellIndex: number) => {
     x: SUSHI_GRID.FIRST_POSITION.x + col * SUSHI_GRID.X_STEP,
     y: SUSHI_GRID.FIRST_POSITION.y + row * SUSHI_GRID.Y_STEP,
   };
-};
-
-// match is the template filename stem from the backend (e.g. sushi_t12), not a path
-const TIER_REGEX = /sushi_t(\d+)/;
-
-const parseTierNumber = (match: string): number | null => {
-  const m = TIER_REGEX.exec(match);
-  if (!m) {
-    return null;
-  }
-  const parsed = Number.parseInt(m[1]!, 10);
-  return Number.isFinite(parsed) ? parsed : null;
 };
 
 type SortMove = {
