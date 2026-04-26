@@ -229,6 +229,12 @@ export default defineScript<[number, boolean]>({
   run: async ({ token, args: [highestTier, shouldCook] }) => {
     const buffCap = highestTier - 6;
 
+    if (buffCap <= 0) {
+      logger.log(
+        "sushi-station-max-buff - buff cap is non-positive, running as plain descending merge"
+      );
+    }
+
     logger.log(
       `sushi-station-max-buff - starting (highest T${highestTier}, X = T${buffCap})`
     );
@@ -300,7 +306,7 @@ export default defineScript<[number, boolean]>({
     const priorityCells = getMaxBuffPriorityCells(availableCells);
 
     logger.log(
-      `sushi-station-max-buff - calibrated ${availableCells.size} available cells`
+      `sushi-station-max-buff - calibrated ${availableCells.size} available cells (normal ${slotMatches.normal?.length ?? 0}, red ${slotMatches.red?.length ?? 0}, occupied ${calibrationScan.results.filter((r) => r.match !== null).length})`
     );
 
     if (availableCells.size === 0) {
