@@ -5,7 +5,9 @@ import {
   RunBtn,
   TermInput,
 } from "@/components/terminal";
+import { DisabledHint } from "@/components/terminal/disabled-hint";
 import { useMainState } from "@/hooks/use-main-state.ts";
+import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 
 const formatDuration = (ms: number, precise = false): string => {
@@ -25,6 +27,10 @@ const BossFarmer = () => {
   const bossFarmer = useMainState("bossFarmer");
   const isRunning = bossFarmer?.running ?? false;
   const parsed = Number.parseInt(iterations, 10);
+
+  const { bossFarmer: gemData } = useGameData();
+  const remaining = gemData?.gemBossKillsRemaining ?? 0;
+  const gemDisabled = remaining === 0;
 
   return (
     <>
@@ -55,6 +61,17 @@ const BossFarmer = () => {
             label="start boss-farmer"
             scriptId="general.bossFarmer.run"
           />
+          <DisabledHint
+            disabled={gemDisabled}
+            popover="no daily gems available from bosses"
+          >
+            <RunBtn
+              disabled={gemDisabled}
+              getArgs={() => [remaining]}
+              label={`start gem farming (${remaining} available)`}
+              scriptId="general.bossFarmer.run"
+            />
+          </DisabledHint>
         </div>
         {isRunning && bossFarmer && (
           <div className="grid grid-cols-2 gap-1 rounded-[3px] border border-border-soft bg-panel-2 p-2.5 font-mono text-[10.5px]">
