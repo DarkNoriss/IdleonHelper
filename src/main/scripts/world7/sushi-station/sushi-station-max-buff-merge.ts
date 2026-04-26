@@ -28,8 +28,8 @@ import {
 
 const TOTAL_CELLS = SUSHI_GRID.ROWS * SUSHI_GRID.COLUMNS;
 
-const PHASE_DELAY_MS = 750;
-const MERGE_BASE_DELAY_MS = 750;
+const PHASE_DELAY_MS = 1000;
+const MERGE_BASE_DELAY_MS = 1000;
 const MERGE_TRIGGER_INCREMENT_MS = 250;
 
 // Wait formula: 500 ms for the first trigger, +250 ms per additional trigger.
