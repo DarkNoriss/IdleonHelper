@@ -165,14 +165,16 @@ const planBestMerge = (
         }
         const fromCell = pieces[i]!.cell;
         const toCell = pieces[j]!.cell;
-        const rightCell = toCell + 1;
 
-        if (rightCell >= TOTAL_CELLS) {
+        // Wind of the East only fires on snake-forward drags (cell index
+        // strictly ascending = left-to-right, wrapping rows). Right-to-left
+        // drags merge fine but the buff does not trigger. Enforce direction.
+        if (fromCell >= toCell) {
           continue;
         }
-        // After the merge, `from` is empty — if it sits to the right of `to`
-        // there is no piece left to buff.
-        if (rightCell === fromCell) {
+
+        const rightCell = toCell + 1;
+        if (rightCell >= TOTAL_CELLS) {
           continue;
         }
         const rightTier = cellToTier.get(rightCell);
