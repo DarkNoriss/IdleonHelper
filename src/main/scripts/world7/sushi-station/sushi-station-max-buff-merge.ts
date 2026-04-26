@@ -29,7 +29,13 @@ import {
 const TOTAL_CELLS = SUSHI_GRID.ROWS * SUSHI_GRID.COLUMNS;
 
 const PHASE_DELAY_MS = 2000;
-const MERGE_ANIMATION_MS_PER_TRIGGER = 2000;
+const MERGE_BASE_DELAY_MS = 500;
+const MERGE_TRIGGER_INCREMENT_MS = 250;
+
+// Wait formula: 500 ms for the first trigger, +250 ms per additional trigger.
+// 1 trigger -> 500, 2 triggers -> 750, 3 triggers -> 1000, etc.
+const computeMergeWaitMs = (triggers: number): number =>
+  MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
 
 const cellToPoint = (cellIndex: number): Point => {
   const col = cellIndex % SUSHI_GRID.COLUMNS;
@@ -546,12 +552,10 @@ export default defineScript<[number, boolean]>({
         token
       );
 
-      // Wait for merge animation + cascade animations: the merge itself counts
-      // as the first bump (1) and each cascade trigger is one more bump.
-      const totalWaitMs =
-        MERGE_ANIMATION_MS_PER_TRIGGER * (1 + plan.cascade.length);
+      const triggers = plan.cascade.length;
+      const totalWaitMs = computeMergeWaitMs(triggers);
       logger.log(
-        `sushi-station-max-buff - waiting ${totalWaitMs}ms (${1 + plan.cascade.length} bumps x ${MERGE_ANIMATION_MS_PER_TRIGGER}ms)`
+        `sushi-station-max-buff - waiting ${totalWaitMs}ms for ${triggers} trigger${triggers === 1 ? "" : "s"}`
       );
       await delay(totalWaitMs, token);
 
