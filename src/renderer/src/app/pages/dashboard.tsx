@@ -79,7 +79,7 @@ const Dashboard = () => {
         <Stat label="last-run" value={lastRun ?? "—"} />
       </div>
       {gemKillsRemaining > 0 && (
-        <Block tag="daily" title="daily">
+        <Block tag="alerts" title="daily">
           <div className="grid grid-cols-3 gap-1.5">
             <QuickTile
               desc={`${gemKillsRemaining} gem-boss kills available today`}
