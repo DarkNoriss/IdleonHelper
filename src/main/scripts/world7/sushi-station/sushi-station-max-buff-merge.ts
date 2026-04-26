@@ -26,13 +26,8 @@ import {
 const TOTAL_CELLS = SUSHI_GRID.ROWS * SUSHI_GRID.COLUMNS;
 
 const PHASE_DELAY_MS = 2000;
-const COOK_BATCH_SIZE = 100;
+const COOK_BATCH_SIZE = 40;
 const MERGE_ANIMATION_MS_PER_TRIGGER = 2000;
-
-// Gate: flip to true once merge + cascade animation timing is wired into the
-// outer loop. While false, the loop is sort -> delay -> spawn -> delay -> repeat,
-// and a one-shot analysis logs the projected best merge cascade at the end.
-const PERFORM_MERGE: boolean = false;
 
 const cellToPoint = (cellIndex: number): Point => {
   const col = cellIndex % SUSHI_GRID.COLUMNS;
@@ -209,30 +204,84 @@ const countEmpty = (
   return empty;
 };
 
-const logMergePlan = (plan: MergePlan): void => {
-  const fromCol = plan.fromCell % SUSHI_GRID.COLUMNS;
-  const fromRow = Math.floor(plan.fromCell / SUSHI_GRID.COLUMNS);
-  const toCol = plan.toCell % SUSHI_GRID.COLUMNS;
-  const toRow = Math.floor(plan.toCell / SUSHI_GRID.COLUMNS);
+const formatCell = (cell: number): string => {
+  const col = cell % SUSHI_GRID.COLUMNS;
+  const row = Math.floor(cell / SUSHI_GRID.COLUMNS);
+  return `[${row},${col}]`;
+};
 
+const logMergePlan = (plan: MergePlan): void => {
   logger.log(
-    `sushi-station-max-buff - best merge: T${plan.mergeTier} [${fromRow},${fromCol}] -> [${toRow},${toCol}] (result T${plan.resultTier})`
+    `sushi-station-max-buff - best merge: T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (result T${plan.resultTier})`
   );
   logger.log(
     `sushi-station-max-buff - cascade: ${plan.cascade.length} triggers`
   );
-
   for (const step of plan.cascade) {
-    const col = step.cell % SUSHI_GRID.COLUMNS;
-    const row = Math.floor(step.cell / SUSHI_GRID.COLUMNS);
     logger.log(
-      `sushi-station-max-buff -   [${row},${col}] T${step.tierBefore} -> T${step.tierAfter}`
+      `sushi-station-max-buff -   ${formatCell(step.cell)} T${step.tierBefore} -> T${step.tierAfter}`
+    );
+  }
+};
+
+const verifyMerge = (plan: MergePlan, actualBoard: CellTier[]): void => {
+  const cellToActualTier = new Map<number, number>();
+  for (const piece of actualBoard) {
+    cellToActualTier.set(piece.cell, piece.tierNumber);
+  }
+
+  const formatActual = (tier: number | undefined): string =>
+    tier === undefined ? "empty" : `T${tier}`;
+
+  let passes = 0;
+  let total = 0;
+
+  // From cell should be empty after the merge.
+  total++;
+  const fromActual = cellToActualTier.get(plan.fromCell);
+  if (fromActual === undefined) {
+    logger.log(
+      `sushi-station-max-buff -   PASS ${formatCell(plan.fromCell)} empty (was T${plan.mergeTier})`
+    );
+    passes++;
+  } else {
+    logger.log(
+      `sushi-station-max-buff -   FAIL ${formatCell(plan.fromCell)} expected empty, actual ${formatActual(fromActual)}`
     );
   }
 
-  const totalAnimationMs = MERGE_ANIMATION_MS_PER_TRIGGER * plan.cascade.length;
+  // To cell should hold the merge result tier.
+  total++;
+  const toActual = cellToActualTier.get(plan.toCell);
+  if (toActual === plan.resultTier) {
+    logger.log(
+      `sushi-station-max-buff -   PASS ${formatCell(plan.toCell)} T${plan.resultTier} (merge result)`
+    );
+    passes++;
+  } else {
+    logger.log(
+      `sushi-station-max-buff -   FAIL ${formatCell(plan.toCell)} expected T${plan.resultTier}, actual ${formatActual(toActual)}`
+    );
+  }
+
+  // Each cascade step should match its predicted tier.
+  for (const step of plan.cascade) {
+    total++;
+    const actual = cellToActualTier.get(step.cell);
+    if (actual === step.tierAfter) {
+      logger.log(
+        `sushi-station-max-buff -   PASS ${formatCell(step.cell)} T${step.tierBefore} -> T${step.tierAfter}`
+      );
+      passes++;
+    } else {
+      logger.log(
+        `sushi-station-max-buff -   FAIL ${formatCell(step.cell)} expected T${step.tierAfter}, actual ${formatActual(actual)}`
+      );
+    }
+  }
+
   logger.log(
-    `sushi-station-max-buff - cascade animation wait would be ${totalAnimationMs}ms (${plan.cascade.length} x ${MERGE_ANIMATION_MS_PER_TRIGGER}ms)`
+    `sushi-station-max-buff - verification: ${passes}/${total} predictions match`
   );
 };
 
@@ -327,50 +376,12 @@ export default defineScript<[number, boolean]>({
       return;
     }
 
-    let prevEmptyCount = Number.POSITIVE_INFINITY;
-    let spawnedLastIteration = false;
-
+    // ----- PHASE 1: Sort drain (no inter-drag delay) -----
+    let sortDrags = 0;
     while (true) {
       token.throwIfCancelled();
 
-      // ----- Sort phase: drain all sort moves with no inter-drag delay. -----
-      let sortDrags = 0;
-      while (true) {
-        token.throwIfCancelled();
-
-        const response = await backendCommand.readRegions(
-          regions,
-          { ...SUSHI_HSV_LOWER },
-          { ...SUSHI_HSV_UPPER },
-          SUSHI_TEMPLATES,
-          undefined,
-          token
-        );
-
-        const board = buildBoardFromResults(response.results);
-        const move = pickSortMove(board, priorityCells);
-        if (!move) {
-          break;
-        }
-
-        logger.log(
-          `sushi-station-max-buff - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
-        );
-        token.throwIfCancelled();
-        const dragOptions = getDragOptionsFromPreset("16x", true);
-        await backendCommand.drag(move.from, move.to, dragOptions, token);
-        sortDrags++;
-      }
-
-      logger.log(
-        `sushi-station-max-buff - sort phase complete (${sortDrags} drags)`
-      );
-
-      await delay(PHASE_DELAY_MS, token);
-
-      // ----- Empty-cell census after sort settle. -----
-      token.throwIfCancelled();
-      const censusScan = await backendCommand.readRegions(
+      const response = await backendCommand.readRegions(
         regions,
         { ...SUSHI_HSV_LOWER },
         { ...SUSHI_HSV_UPPER },
@@ -378,81 +389,31 @@ export default defineScript<[number, boolean]>({
         undefined,
         token
       );
-      const censusBoard = buildBoardFromResults(censusScan.results);
-      const emptyCount = countEmpty(censusBoard, availableCells);
 
-      if (emptyCount === 0) {
-        logger.log("sushi-station-max-buff - board is full, exiting loop");
-        break;
-      }
-
-      logger.log(`sushi-station-max-buff - ${emptyCount} empty cells`);
-
-      if (spawnedLastIteration && emptyCount >= prevEmptyCount) {
-        logger.log(
-          "sushi-station-max-buff - spawn did not reduce empty count, exiting"
-        );
-        break;
-      }
-      prevEmptyCount = emptyCount;
-
-      // ----- Merge phase (gated): once enabled, runs here, then waits
-      // MERGE_ANIMATION_MS_PER_TRIGGER * triggers before looping back to sort.
-      if (PERFORM_MERGE) {
-        const plan = planBestMerge(censusBoard, buffCap);
-        if (plan) {
-          logMergePlan(plan);
-          token.throwIfCancelled();
-          const dragOptions = getDragOptionsFromPreset("16x", true);
-          await backendCommand.drag(
-            cellToPoint(plan.fromCell),
-            cellToPoint(plan.toCell),
-            dragOptions,
-            token
-          );
-          await delay(
-            MERGE_ANIMATION_MS_PER_TRIGGER * plan.cascade.length,
-            token
-          );
-        }
-      }
-
-      // ----- Spawn phase: cook a batch if user enabled it. -----
-      if (!shouldCook) {
-        logger.log(
-          "sushi-station-max-buff - cook disabled, exiting loop with empty cells remaining"
-        );
+      const board = buildBoardFromResults(response.results);
+      const move = pickSortMove(board, priorityCells);
+      if (!move) {
         break;
       }
 
       logger.log(
-        `sushi-station-max-buff - cooking ${COOK_BATCH_SIZE} sushi (${emptyCount} empty cells to fill)`
+        `sushi-station-max-buff - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
       );
-      const cookButton = await backendCommand.isVisible(
-        SUSHI_COOK,
-        undefined,
-        token
-      );
-      if (cookButton.length === 0) {
-        logger.log("sushi-station-max-buff - cook button not visible, exiting");
-        break;
-      }
-      const clickOptions = getClickOptionsFromPreset("16x");
-      await backendCommand.click(
-        cookButton[0]!,
-        { ...clickOptions, times: COOK_BATCH_SIZE },
-        token
-      );
-      await delay(PHASE_DELAY_MS, token);
-      spawnedLastIteration = true;
+      token.throwIfCancelled();
+      const dragOptions = getDragOptionsFromPreset("16x", true);
+      await backendCommand.drag(move.from, move.to, dragOptions, token);
+      sortDrags++;
     }
 
-    // ----- Analysis phase: one-shot, after the loop exits. -----
-    logger.log("sushi-station-max-buff - analyzing best merge");
+    logger.log(
+      `sushi-station-max-buff - sort phase complete (${sortDrags} drags)`
+    );
 
+    await delay(PHASE_DELAY_MS, token);
+
+    // ----- PHASE 2: Spawn one batch if there are empty cells -----
     token.throwIfCancelled();
-
-    const finalScan = await backendCommand.readRegions(
+    const censusScan = await backendCommand.readRegions(
       regions,
       { ...SUSHI_HSV_LOWER },
       { ...SUSHI_HSV_UPPER },
@@ -460,16 +421,95 @@ export default defineScript<[number, boolean]>({
       undefined,
       token
     );
+    const censusBoard = buildBoardFromResults(censusScan.results);
+    const emptyCount = countEmpty(censusBoard, availableCells);
 
-    const finalBoard = buildBoardFromResults(finalScan.results);
+    if (emptyCount === 0) {
+      logger.log("sushi-station-max-buff - board full, no spawn needed");
+    } else if (shouldCook) {
+      logger.log(
+        `sushi-station-max-buff - ${emptyCount} empty cells, cooking ${COOK_BATCH_SIZE} sushi`
+      );
+      const cookButton = await backendCommand.isVisible(
+        SUSHI_COOK,
+        undefined,
+        token
+      );
+      if (cookButton.length === 0) {
+        logger.log(
+          "sushi-station-max-buff - cook button not visible, skipping spawn"
+        );
+      } else {
+        const clickOptions = getClickOptionsFromPreset("16x");
+        await backendCommand.click(
+          cookButton[0]!,
+          { ...clickOptions, times: COOK_BATCH_SIZE },
+          token
+        );
+        await delay(PHASE_DELAY_MS, token);
+      }
+    } else {
+      logger.log(
+        `sushi-station-max-buff - ${emptyCount} empty cells, cook disabled, skipping spawn`
+      );
+    }
 
-    const plan = planBestMerge(finalBoard, buffCap);
+    // ----- PHASE 3: Plan and execute one merge -----
+    token.throwIfCancelled();
+    const preMergeScan = await backendCommand.readRegions(
+      regions,
+      { ...SUSHI_HSV_LOWER },
+      { ...SUSHI_HSV_UPPER },
+      SUSHI_TEMPLATES,
+      undefined,
+      token
+    );
+    const preMergeBoard = buildBoardFromResults(preMergeScan.results);
 
+    const plan = planBestMerge(preMergeBoard, buffCap);
     if (!plan) {
-      logger.log("sushi-station-max-buff - no mergeable pairs found");
+      logger.log("sushi-station-max-buff - no mergeable pairs found, stopping");
       return;
     }
 
     logMergePlan(plan);
+
+    logger.log(
+      `sushi-station-max-buff - executing merge T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)}`
+    );
+    token.throwIfCancelled();
+    const mergeDragOptions = getDragOptionsFromPreset("16x", true);
+    await backendCommand.drag(
+      cellToPoint(plan.fromCell),
+      cellToPoint(plan.toCell),
+      mergeDragOptions,
+      token
+    );
+
+    // Wait for merge animation + cascade animations: the merge itself counts
+    // as the first bump (1) and each cascade trigger is one more bump.
+    const totalWaitMs =
+      MERGE_ANIMATION_MS_PER_TRIGGER * (1 + plan.cascade.length);
+    logger.log(
+      `sushi-station-max-buff - waiting ${totalWaitMs}ms (${1 + plan.cascade.length} bumps x ${MERGE_ANIMATION_MS_PER_TRIGGER}ms)`
+    );
+    await delay(totalWaitMs, token);
+
+    // ----- PHASE 4: Verify the cascade prediction against the real board -----
+    logger.log("sushi-station-max-buff - verifying cascade outcome");
+    token.throwIfCancelled();
+    const postMergeScan = await backendCommand.readRegions(
+      regions,
+      { ...SUSHI_HSV_LOWER },
+      { ...SUSHI_HSV_UPPER },
+      SUSHI_TEMPLATES,
+      undefined,
+      token
+    );
+    const postMergeBoard = buildBoardFromResults(postMergeScan.results);
+
+    verifyMerge(plan, postMergeBoard);
+
+    logger.log("sushi-station-max-buff - run complete");
   },
 });
