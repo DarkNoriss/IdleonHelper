@@ -148,7 +148,7 @@ export const downloadUpdate = async (): Promise<void> => {
     }
 
     logger.log("Downloading update...");
-    notifyRenderer("downloading");
+    notifyRenderer("downloading", updateInfo?.version);
     await autoUpdater.downloadUpdate();
   } catch (error) {
     logger.error(
