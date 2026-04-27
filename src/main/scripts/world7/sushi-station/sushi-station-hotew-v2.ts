@@ -279,19 +279,28 @@ export default defineScript<[boolean]>({
         const sortedAsc = aboveFloor
           .filter((p) => p.tierNumber === candidateTier)
           .sort((a, b) => a.cell - b.cell);
+        const candidateCount = sortedAsc.length;
         const fromCell = sortedAsc[0]!.cell;
         const toCell = sortedAsc[1]!.cell;
 
         await executeMerge(fromCell, toCell, candidateTier, drainBoard);
         drainMerges++;
 
-        log("sorting after drain merge");
-        const drainSortDrags = await runSortDrain(
-          regions,
-          priorityCells,
-          token
-        );
-        log(`sort complete (${drainSortDrags} drags)`);
+        // Skip sort when the merged tier had exactly 3 pieces: the cascade
+        // promotes them through the descending staircase, leaving
+        // mergeTier+1 with count=3 already in priority order (one gap at
+        // the from-cell, but the next leftmost-pair fires the same chain).
+        if (candidateCount === 3) {
+          log(`T${candidateTier} had count=3, skipping sort`);
+        } else {
+          log("sorting after drain merge");
+          const drainSortDrags = await runSortDrain(
+            regions,
+            priorityCells,
+            token
+          );
+          log(`sort complete (${drainSortDrags} drags)`);
+        }
       }
       log(`phase 2 complete: ${drainMerges} drain merges`);
 
@@ -323,13 +332,17 @@ export default defineScript<[boolean]>({
             const fromCell = lowestPieces[0]!.cell;
             const toCell = lowestPieces[1]!.cell;
             await executeMerge(fromCell, toCell, seedLowest, seedBoard);
-            log("sorting after seed merge");
-            const seedSortDrags = await runSortDrain(
-              regions,
-              priorityCells,
-              token
-            );
-            log(`sort complete (${seedSortDrags} drags)`);
+            if (lowestPieces.length === 3) {
+              log(`T${seedLowest} had count=3, skipping sort`);
+            } else {
+              log("sorting after seed merge");
+              const seedSortDrags = await runSortDrain(
+                regions,
+                priorityCells,
+                token
+              );
+              log(`sort complete (${seedSortDrags} drags)`);
+            }
           }
         }
       }
