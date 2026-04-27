@@ -119,6 +119,8 @@ export default defineScript({
       return;
     }
 
+    // Outer loop intentional: removing the trailing break flips this script
+    // from one-shot scout to continuous loop without restructuring.
     while (true) {
       token.throwIfCancelled();
 
