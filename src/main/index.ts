@@ -93,8 +93,10 @@ app.on("before-quit", () => {
 app.on("will-quit", async () => {
   if (!app.isPackaged) {
     try {
+      const { stopLogFileSink } = await import("./dev/log-file-sink");
       const { stopDevServer } = await import("./dev/command-server");
       const { unregisterPanicHotkey } = await import("./dev/panic-exit");
+      stopLogFileSink();
       stopDevServer();
       unregisterPanicHotkey();
     } catch {
