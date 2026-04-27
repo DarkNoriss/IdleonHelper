@@ -31,8 +31,8 @@ export const startLogFileSink = (): void => {
 
     const writeStream = createWriteStream(logFilePath, { flags: "w" });
     writeStream.on("error", (error) => {
-      logger.error(`Log file sink stream error - ${error.message}`);
       stopLogFileSink();
+      logger.error(`Log file sink stream error - ${error.message}`);
     });
 
     stream = writeStream;
@@ -48,9 +48,8 @@ export const startLogFileSink = (): void => {
     logger.log(`Dev log file sink started - ${logFilePath}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    stopLogFileSink();
     logger.error(`Log file sink startup failed - ${message}`);
-    stream = null;
-    unsubscribe = null;
   }
 };
 
