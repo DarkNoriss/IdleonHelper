@@ -17,7 +17,6 @@ type TrappingPrefs = {
 };
 type FarmingPrefs = { overgrowth: string };
 type SushiPrefs = { shouldCook: boolean };
-type SushiMaxBuffPrefs = { shouldCook: boolean };
 type SushiHotewV2Prefs = { shouldCook: boolean };
 
 type UiPrefsState = {
@@ -29,7 +28,6 @@ type UiPrefsState = {
   trapping: TrappingPrefs;
   farming: FarmingPrefs;
   sushi: SushiPrefs;
-  sushiMaxBuff: SushiMaxBuffPrefs;
   sushiHotewV2: SushiHotewV2Prefs;
 
   setCandy: (patch: Partial<CandyPrefs>) => void;
@@ -41,7 +39,6 @@ type UiPrefsState = {
   setTrappingCollect: (patch: Partial<TrappingCollectPrefs>) => void;
   setFarming: (patch: Partial<FarmingPrefs>) => void;
   setSushi: (patch: Partial<SushiPrefs>) => void;
-  setSushiMaxBuff: (patch: Partial<SushiMaxBuffPrefs>) => void;
   setSushiHotewV2: (patch: Partial<SushiHotewV2Prefs>) => void;
 };
 
@@ -69,7 +66,6 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       },
       farming: { overgrowth: "0" },
       sushi: { shouldCook: true },
-      sushiMaxBuff: { shouldCook: false },
       sushiHotewV2: { shouldCook: false },
 
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
@@ -97,8 +93,6 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setFarming: (patch) =>
         set((s) => ({ farming: { ...s.farming, ...patch } })),
       setSushi: (patch) => set((s) => ({ sushi: { ...s.sushi, ...patch } })),
-      setSushiMaxBuff: (patch) =>
-        set((s) => ({ sushiMaxBuff: { ...s.sushiMaxBuff, ...patch } })),
       setSushiHotewV2: (patch) =>
         set((s) => ({ sushiHotewV2: { ...s.sushiHotewV2, ...patch } })),
     }),

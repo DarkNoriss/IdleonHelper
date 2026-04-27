@@ -42,6 +42,9 @@ const MERGE_BASE_DELAY_MS = 1250;
 const MERGE_TRIGGER_INCREMENT_MS = 100;
 const COOK_DELAY_MS = 1250;
 
+const DRAG_OPTIONS = getDragOptionsFromPreset("16x", true);
+const CLICK_OPTIONS = getClickOptionsFromPreset("16x");
+
 const computeMergeWaitMs = (triggers: number): number =>
   MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
 
@@ -73,8 +76,7 @@ const runSortDrain = async (
       break;
     }
     token.throwIfCancelled();
-    const dragOptions = getDragOptionsFromPreset("16x", true);
-    await backendCommand.drag(move.from, move.to, dragOptions, token);
+    await backendCommand.drag(move.from, move.to, DRAG_OPTIONS, token);
     drags++;
   }
   return drags;
@@ -208,11 +210,10 @@ export default defineScript<[boolean]>({
       logBoardGrid(log, "expected board:", postBoard, availableCells);
 
       token.throwIfCancelled();
-      const dragOptions = getDragOptionsFromPreset("16x", true);
       await backendCommand.drag(
         cellToPoint(fromCell),
         cellToPoint(toCell),
-        dragOptions,
+        DRAG_OPTIONS,
         token
       );
       await delay(computeMergeWaitMs(cascade.length), token);
@@ -231,8 +232,45 @@ export default defineScript<[boolean]>({
       );
     };
 
-    // Outer loop intentional: removing the trailing break flips this script
-    // from one-shot scout to continuous loop without restructuring.
+    // Skip sort when post-merge state is already useful for the next pick:
+    // - count === 3: cascade promotes the descending staircase, leaving
+    //   mergeTier+1 with count=3 already in priority order.
+    // - isOutOfHotew: no cascade fires; only from/to changed, so the rest
+    //   of the board is untouched.
+    // - isFloorFallback: cluster's right neighbor is another T_floor piece,
+    //   so cascade breaks at <=1 trigger. Post-merge has minimal disruption
+    //   (gap at from-cell, promotions at to and to+1) and the next drain
+    //   on T_floor+1 still picks a valid leftmost-pair on the unsorted
+    //   board.
+    const mergeAndMaybeSort = async (params: {
+      preBoard: CellTier[];
+      fromCell: number;
+      toCell: number;
+      mergeTier: number;
+      count: number;
+      isFloorFallback: boolean;
+    }): Promise<void> => {
+      const { preBoard, fromCell, toCell, mergeTier, count, isFloorFallback } =
+        params;
+      const highest = getHighestTier(preBoard);
+      const buffCap = highest === null ? 0 : highest - 6;
+      const isOutOfHotew = mergeTier > buffCap;
+
+      await executeMerge(fromCell, toCell, mergeTier, preBoard);
+
+      if (count === 3) {
+        log(`T${mergeTier} had count=3, skipping sort`);
+      } else if (isOutOfHotew) {
+        log(`T${mergeTier} above HOTEW (no cascade), skipping sort`);
+      } else if (isFloorFallback) {
+        log(`T${mergeTier} drained as T_floor fallback, skipping sort`);
+      } else {
+        log("sorting after merge");
+        const sortDrags = await runSortDrain(regions, priorityCells, token);
+        log(`sort complete (${sortDrags} drags)`);
+      }
+    };
+
     while (true) {
       token.throwIfCancelled();
 
@@ -298,44 +336,18 @@ export default defineScript<[boolean]>({
         const sortedAsc = drainBoard
           .filter((p) => p.tierNumber === candidateTier)
           .sort((a, b) => a.cell - b.cell);
-        const candidateCount = sortedAsc.length;
         const fromCell = sortedAsc[0]!.cell;
         const toCell = sortedAsc[1]!.cell;
 
-        const drainHighest = getHighestTier(drainBoard);
-        const drainBuffCap = drainHighest === null ? 0 : drainHighest - 6;
-        const isOutOfHotew = candidateTier > drainBuffCap;
-
-        await executeMerge(fromCell, toCell, candidateTier, drainBoard);
+        await mergeAndMaybeSort({
+          preBoard: drainBoard,
+          fromCell,
+          toCell,
+          mergeTier: candidateTier,
+          count: sortedAsc.length,
+          isFloorFallback,
+        });
         drainMerges++;
-
-        // Skip sort in three cases:
-        // - candidateCount === 3: cascade promotes the descending staircase,
-        //   leaving mergeTier+1 with count=3 already in priority order.
-        // - candidateTier > buffCap: out-of-HOTEW merge fires no cascade,
-        //   so only from/to changed; the rest of the board is untouched
-        //   and the next leftmost-pair pick still works.
-        // - isFloorFallback: drained T_floor itself. Cluster's right
-        //   neighbor is another T_floor piece, so cascade always breaks
-        //   at <=1 trigger. Post-merge has minimal disruption (gap at
-        //   from-cell, promotions at to and to+1) and the next drain on
-        //   T_floor+1 (count >= 3 now) still picks a valid leftmost-pair
-        //   on the unsorted board.
-        if (candidateCount === 3) {
-          log(`T${candidateTier} had count=3, skipping sort`);
-        } else if (isOutOfHotew) {
-          log(`T${candidateTier} above HOTEW (no cascade), skipping sort`);
-        } else if (isFloorFallback) {
-          log(`T${candidateTier} drained as T_floor fallback, skipping sort`);
-        } else {
-          log("sorting after drain merge");
-          const drainSortDrags = await runSortDrain(
-            regions,
-            priorityCells,
-            token
-          );
-          log(`sort complete (${drainSortDrags} drags)`);
-        }
       }
       log(`phase 2 complete: ${drainMerges} drain merges`);
 
@@ -355,10 +367,9 @@ export default defineScript<[boolean]>({
           log("cook button not visible, skipping spawn");
         } else {
           log(`${emptyCount} empty cells, cooking ${emptyCount} sushi`);
-          const clickOptions = getClickOptionsFromPreset("16x");
           await backendCommand.click(
             cookButton[0]!,
-            { ...clickOptions, times: emptyCount },
+            { ...CLICK_OPTIONS, times: emptyCount },
             token
           );
           await delay(COOK_DELAY_MS, token);
@@ -401,25 +412,14 @@ export default defineScript<[boolean]>({
               `cannot seed: T${seedLowest} has only ${lowestPieces.length} pieces`
             );
           } else {
-            const fromCell = lowestPieces[0]!.cell;
-            const toCell = lowestPieces[1]!.cell;
-            const seedHighest = getHighestTier(seedBoard);
-            const seedBuffCap = seedHighest === null ? 0 : seedHighest - 6;
-            const seedIsOutOfHotew = seedLowest > seedBuffCap;
-            await executeMerge(fromCell, toCell, seedLowest, seedBoard);
-            if (lowestPieces.length === 3) {
-              log(`T${seedLowest} had count=3, skipping sort`);
-            } else if (seedIsOutOfHotew) {
-              log(`T${seedLowest} above HOTEW (no cascade), skipping sort`);
-            } else {
-              log("sorting after seed merge");
-              const seedSortDrags = await runSortDrain(
-                regions,
-                priorityCells,
-                token
-              );
-              log(`sort complete (${seedSortDrags} drags)`);
-            }
+            await mergeAndMaybeSort({
+              preBoard: seedBoard,
+              fromCell: lowestPieces[0]!.cell,
+              toCell: lowestPieces[1]!.cell,
+              mergeTier: seedLowest,
+              count: lowestPieces.length,
+              isFloorFallback: false,
+            });
           }
         }
       }
@@ -427,8 +427,6 @@ export default defineScript<[boolean]>({
       // Phase 6: final board log
       const finalBoard = await scanBoard();
       logBoardGrid(log, "final board:", finalBoard, availableCells);
-
-      break;
     }
   },
 });

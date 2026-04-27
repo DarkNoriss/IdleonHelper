@@ -7,9 +7,6 @@ const SushiStation = () => {
   const shouldCook = useUiPrefsStore((s) => s.sushi.shouldCook);
   const setSushi = useUiPrefsStore((s) => s.setSushi);
 
-  const maxBuff = useUiPrefsStore((s) => s.sushiMaxBuff);
-  const setSushiMaxBuff = useUiPrefsStore((s) => s.setSushiMaxBuff);
-
   const sushiHotewV2 = useUiPrefsStore((s) => s.sushiHotewV2);
   const setSushiHotewV2 = useUiPrefsStore((s) => s.setSushiHotewV2);
 
@@ -46,21 +43,21 @@ const SushiStation = () => {
         />
       </Block>
       <Block
-        note="arranges sushi in descending tier order along the snake so each merge tier-ups the right neighbor (Wind of the East). highest tier auto-detected from the board each iteration."
+        note="drains stuck multi-piece tiers above lowest+1, seeds the climb at lowest+1, optionally cooks new sushi between iterations. loops until stopped."
         tag="script"
-        title="sushi.heat-of-the-east-win"
+        title="sushi.hotew-v2"
       >
         <div className="mb-3">
           <TermCheckbox
-            checked={maxBuff.shouldCook}
+            checked={sushiHotewV2.shouldCook}
             label="spawn new sushi when no pairs found"
-            onChange={(v) => setSushiMaxBuff({ shouldCook: v })}
+            onChange={(v) => setSushiHotewV2({ shouldCook: v })}
           />
         </div>
         <RunBtn
-          getArgs={() => [maxBuff.shouldCook]}
-          label="start max-buff merge"
-          scriptId="world7.sushiStation.sushiStationMaxBuffMerge"
+          getArgs={() => [sushiHotewV2.shouldCook]}
+          label="run once"
+          scriptId="world7.sushiStation.sushiStationHotewV2"
         />
       </Block>
       {isDev && (
@@ -84,26 +81,6 @@ const SushiStation = () => {
           <RunBtn
             label="sort once"
             scriptId="world7.sushiStation.sushiStationSort"
-          />
-        </Block>
-      )}
-      {isDev && (
-        <Block
-          note="drains stuck multi-piece tiers above lowest+1, seeds the climb at lowest+1, optionally cooks new sushi, sorts and logs final state. one-shot. dev-only."
-          tag="script"
-          title="sushi.hotew-v2"
-        >
-          <div className="mb-3">
-            <TermCheckbox
-              checked={sushiHotewV2.shouldCook}
-              label="spawn new sushi when no pairs found"
-              onChange={(v) => setSushiHotewV2({ shouldCook: v })}
-            />
-          </div>
-          <RunBtn
-            getArgs={() => [sushiHotewV2.shouldCook]}
-            label="run once"
-            scriptId="world7.sushiStation.sushiStationHotewV2"
           />
         </Block>
       )}

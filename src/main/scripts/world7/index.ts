@@ -1,6 +1,5 @@
 import {
   sushiStationHotewV2,
-  sushiStationMaxBuffMerge,
   sushiStationMerge,
   sushiStationMergeDebug,
   sushiStationSort,
@@ -8,7 +7,6 @@ import {
 
 export const world7Scripts = [
   sushiStationMerge,
-  sushiStationMaxBuffMerge,
   sushiStationSort,
   sushiStationMergeDebug,
   sushiStationHotewV2,
