@@ -39,7 +39,7 @@ import {
 
 const SETTLE_DELAY_MS = 1250;
 const MERGE_BASE_DELAY_MS = 1250;
-const MERGE_TRIGGER_INCREMENT_MS = 250;
+const MERGE_TRIGGER_INCREMENT_MS = 100;
 const COOK_DELAY_MS = 1250;
 
 const computeMergeWaitMs = (triggers: number): number =>
