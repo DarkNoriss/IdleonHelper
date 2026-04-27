@@ -1,4 +1,5 @@
 import {
+  sushiStationHotewV2,
   sushiStationMaxBuffMerge,
   sushiStationMerge,
   sushiStationMergeDebug,
@@ -10,4 +11,5 @@ export const world7Scripts = [
   sushiStationMaxBuffMerge,
   sushiStationSort,
   sushiStationMergeDebug,
+  sushiStationHotewV2,
 ];
