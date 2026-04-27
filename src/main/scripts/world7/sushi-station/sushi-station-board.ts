@@ -98,6 +98,50 @@ export const getHighestTier = (board: CellTier[]): number | null => {
   return highest === -1 ? null : highest;
 };
 
+export const getLowestTier = (board: CellTier[]): number | null => {
+  let lowest = Number.POSITIVE_INFINITY;
+  for (const piece of board) {
+    if (piece.tierNumber < lowest) {
+      lowest = piece.tierNumber;
+    }
+  }
+  return lowest === Number.POSITIVE_INFINITY ? null : lowest;
+};
+
+export const getHighestTierWithCount = (
+  board: CellTier[],
+  minCount: number
+): number | null => {
+  const byTier = groupByTier(board);
+  let highest: number | null = null;
+  for (const [tier, pieces] of byTier) {
+    if (pieces.length < minCount) {
+      continue;
+    }
+    if (highest === null || tier > highest) {
+      highest = tier;
+    }
+  }
+  return highest;
+};
+
+export const getLowestTierWithCount = (
+  board: CellTier[],
+  minCount: number
+): number | null => {
+  const byTier = groupByTier(board);
+  let lowest: number | null = null;
+  for (const [tier, pieces] of byTier) {
+    if (pieces.length < minCount) {
+      continue;
+    }
+    if (lowest === null || tier < lowest) {
+      lowest = tier;
+    }
+  }
+  return lowest;
+};
+
 export const countEmpty = (
   board: CellTier[],
   availableCells: ReadonlySet<number>

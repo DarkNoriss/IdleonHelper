@@ -84,6 +84,18 @@ const SushiStation = () => {
           />
         </Block>
       )}
+      {isDev && (
+        <Block
+          note="sorts the board, waits 1.25s, then logs lowest/highest-2+/full-grid/highest-3+/lowest-3+. scouting only - no merges or cooking. dev-only."
+          tag="script"
+          title="sushi.hotew-v2"
+        >
+          <RunBtn
+            label="scout once"
+            scriptId="world7.sushiStation.sushiStationHotewV2"
+          />
+        </Block>
+      )}
     </>
   );
 };
