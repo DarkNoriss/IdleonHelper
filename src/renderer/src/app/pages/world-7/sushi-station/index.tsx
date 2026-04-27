@@ -43,6 +43,16 @@ const SushiStation = () => {
         />
       </Block>
       <Block
+        note="performs a single sort pass over the board: arranges sushi in descending tier order along the snake. no merging, no cooking, exits when sorted."
+        tag="script"
+        title="sushi.sort"
+      >
+        <RunBtn
+          label="sort once"
+          scriptId="world7.sushiStation.sushiStationSort"
+        />
+      </Block>
+      <Block
         note="arranges sushi in descending tier order along the snake so each merge tier-ups the right neighbor (Wind of the East). highest tier auto-detected from the board each iteration."
         tag="script"
         title="sushi.heat-of-the-east-win"

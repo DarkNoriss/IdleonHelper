@@ -25,6 +25,7 @@ import {
   GRID_SLOT_RED,
   GRID_SLOT_YELLOW,
   getPriorityCells,
+  MAX_TEMPLATE_TIER,
   pointToCellIndex,
   SUSHI_COOK,
   SUSHI_HSV_LOWER,
@@ -33,7 +34,12 @@ import {
   SUSHI_TIERS_OFF,
   SUSHI_TIERS_ON,
 } from "./sushi-station-constants";
-import { computeMergeWaitMs, planBestMerge } from "./sushi-station-planner";
+import {
+  computeMergeWaitMs,
+  planCleanupMerge,
+  planNextMerge,
+  planUnlockMerge,
+} from "./sushi-station-planner";
 
 const PHASE_DELAY_MS = 1000;
 
@@ -49,6 +55,21 @@ const logMergePlan = (plan: MergePlan): void => {
   log(`predicted cascade: ${plan.cascade.length} ${triggerWord}`);
   for (const step of plan.cascade) {
     log(`  ${formatCell(step.cell)} T${step.tierBefore} -> T${step.tierAfter}`);
+  }
+};
+
+const logCleanupPlan = (plan: MergePlan): void => {
+  log(
+    `cleanup merge: T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (lifts T${plan.resultTier} count toward 3+)`
+  );
+  if (plan.cascade.length > 0) {
+    const triggerWord = plan.cascade.length === 1 ? "trigger" : "triggers";
+    log(`cleanup cascade: ${plan.cascade.length} ${triggerWord}`);
+    for (const step of plan.cascade) {
+      log(
+        `  ${formatCell(step.cell)} T${step.tierBefore} -> T${step.tierAfter}`
+      );
+    }
   }
 };
 
@@ -164,7 +185,9 @@ export default defineScript<[boolean]>({
   id: "world7.sushiStation.sushiStationMaxBuffMerge",
   name: "Sushi Station - Heat of the East Win",
   run: async ({ token, args: [shouldCook] }) => {
-    log("starting (highest tier auto-detected per iteration, X = highest - 6)");
+    log(
+      "starting (strict 3+ in HOTEW range, X = highest - 6, cleanup as fallback)"
+    );
 
     log("ensuring tiers are visible");
 
@@ -260,9 +283,9 @@ export default defineScript<[boolean]>({
       return buildBoardFromResults(response.results);
     };
 
-    const sortPhase = async (label: string): Promise<void> => {
+    const sortPhase = async (): Promise<void> => {
       const drags = await runSortDrain(regions, priorityCells, token);
-      log(`${label} complete (${drags} drags)`);
+      log(`sort complete (${drags} drags)`);
       await delay(PHASE_DELAY_MS, token);
     };
 
@@ -318,35 +341,119 @@ export default defineScript<[boolean]>({
       iteration++;
       log(`iteration ${iteration}`);
 
-      await sortPhase("sort phase 1");
       await cookPhase();
-      await sortPhase("sort phase 2");
+      await sortPhase();
 
-      const preMergeBoard = await scanBoard();
-      logBoardGrid(log, "board before merge", preMergeBoard, availableCells);
+      // Inner merge train: keep merging while a tier in HOTEW range has 3+
+      // pieces. No sort or cook between climb merges - that is the speed
+      // win. Cleanup is a fallback only: when no 3+ tier exists, lift a
+      // 2-piece tier so the next iteration has something to climb.
+      let mergesInTrain = 0;
+      while (true) {
+        token.throwIfCancelled();
+        const preMergeBoard = await scanBoard();
+        logBoardGrid(log, "board before merge", preMergeBoard, availableCells);
 
-      const detectedHighest = getHighestTier(preMergeBoard);
-      if (detectedHighest === null) {
-        log("board empty, no merge available, exiting");
+        const detectedHighest = getHighestTier(preMergeBoard);
+        if (detectedHighest === null) {
+          log("board empty, ending train");
+          break;
+        }
+        const buffCap = detectedHighest - 6;
+        log(
+          `detected highest T${detectedHighest}, buff cap T${buffCap}${buffCap < 1 ? " (buff inactive)" : ""}`
+        );
+
+        const plan = planNextMerge(preMergeBoard, buffCap);
+        if (plan) {
+          logMergePlan(plan);
+          await executeMerge(plan);
+          mergesInTrain++;
+
+          const postMergeBoard = await scanBoard();
+          logBoardGrid(
+            log,
+            "board after merge",
+            postMergeBoard,
+            availableCells
+          );
+          verifyMerge(plan, preMergeBoard, postMergeBoard, availableCells);
+
+          // Climb peaked: this merge pushed a piece above buffCap (out of
+          // HOTEW range). Stop the train and let the outer loop cook+sort
+          // before the next climb so we do not regress to bottom-tier
+          // merges.
+          if (plan.mergeTier === buffCap) {
+            log(`buffCap merge complete (T${plan.mergeTier}), ending train`);
+            break;
+          }
+          continue;
+        }
+
+        // Climb has nothing - try lifting a 2-piece tier as a fallback.
+        const cleanup = planCleanupMerge(preMergeBoard, buffCap);
+        if (!cleanup) {
+          log("no eligible 3+ merge in HOTEW range, ending train");
+          break;
+        }
+
+        logCleanupPlan(cleanup);
+        await executeMerge(cleanup);
+        mergesInTrain++;
+        const postCleanupBoard = await scanBoard();
+        logBoardGrid(
+          log,
+          "board after cleanup",
+          postCleanupBoard,
+          availableCells
+        );
+        verifyMerge(cleanup, preMergeBoard, postCleanupBoard, availableCells);
+        await sortPhase();
+      }
+
+      log(`train complete: ${mergesInTrain} merges`);
+
+      // End-of-train unlock pass: drain above-buffCap stockpile to push
+      // the highest tier upward. No cascade fires above buffCap, so these
+      // are flat 2:1 merges. Capped at MAX_TEMPLATE_TIER - 1 so results
+      // stay within the recognized template set.
+      log("unlock pass: starting");
+      let unlockMerges = 0;
+      while (true) {
+        token.throwIfCancelled();
+        const preBoard = await scanBoard();
+        const detected = getHighestTier(preBoard);
+        if (detected === null) {
+          break;
+        }
+        const buffCap = detected - 6;
+
+        const plan = planUnlockMerge(preBoard, buffCap, MAX_TEMPLATE_TIER - 1);
+        if (!plan) {
+          break;
+        }
+
+        log(
+          `unlock merge: T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (result T${plan.resultTier})`
+        );
+        await executeMerge(plan);
+        unlockMerges++;
+
+        const postBoard = await scanBoard();
+        logBoardGrid(
+          log,
+          "board after unlock merge",
+          postBoard,
+          availableCells
+        );
+        verifyMerge(plan, preBoard, postBoard, availableCells);
+      }
+      log(`unlock pass complete: ${unlockMerges} merges`);
+
+      if (mergesInTrain === 0 && unlockMerges === 0) {
+        log("no progress this iteration, exiting");
         break;
       }
-      const buffCap = detectedHighest - 6;
-      log(
-        `detected highest T${detectedHighest}, buff cap T${buffCap}${buffCap < 1 ? " (buff inactive)" : ""}`
-      );
-
-      const plan = planBestMerge(preMergeBoard, buffCap);
-      if (!plan) {
-        log("no merge available (no tier has a forward-drag pair), exiting");
-        break;
-      }
-
-      logMergePlan(plan);
-      await executeMerge(plan);
-
-      const postMergeBoard = await scanBoard();
-      logBoardGrid(log, "board after merge", postMergeBoard, availableCells);
-      verifyMerge(plan, preMergeBoard, postMergeBoard, availableCells);
     }
 
     log(`loop ended after ${iteration} iterations`);
