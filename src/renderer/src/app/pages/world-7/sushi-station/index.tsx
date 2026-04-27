@@ -10,6 +10,9 @@ const SushiStation = () => {
   const maxBuff = useUiPrefsStore((s) => s.sushiMaxBuff);
   const setSushiMaxBuff = useUiPrefsStore((s) => s.setSushiMaxBuff);
 
+  const sushiHotewV2 = useUiPrefsStore((s) => s.sushiHotewV2);
+  const setSushiHotewV2 = useUiPrefsStore((s) => s.setSushiHotewV2);
+
   useEffect(() => {
     window.api.app
       .isDev()
@@ -86,12 +89,20 @@ const SushiStation = () => {
       )}
       {isDev && (
         <Block
-          note="sorts the board, waits 1.25s, then logs lowest/highest-2+/full-grid/highest-3+/lowest-3+. scouting only - no merges or cooking. dev-only."
+          note="drains stuck multi-piece tiers above lowest+1, seeds the climb at lowest+1, optionally cooks new sushi, sorts and logs final state. one-shot. dev-only."
           tag="script"
           title="sushi.hotew-v2"
         >
+          <div className="mb-3">
+            <TermCheckbox
+              checked={sushiHotewV2.shouldCook}
+              label="spawn new sushi when no pairs found"
+              onChange={(v) => setSushiHotewV2({ shouldCook: v })}
+            />
+          </div>
           <RunBtn
-            label="scout once"
+            getArgs={() => [sushiHotewV2.shouldCook]}
+            label="run once"
             scriptId="world7.sushiStation.sushiStationHotewV2"
           />
         </Block>

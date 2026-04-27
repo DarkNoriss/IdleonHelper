@@ -35,7 +35,7 @@ export type ScriptMap = {
     result: undefined;
   };
   "world7.sushiStation.sushiStationHotewV2": {
-    args: [];
+    args: [boolean];
     result: undefined;
   };
   "world7.sushiStation.sushiStationMaxBuffMerge": {

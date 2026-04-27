@@ -262,6 +262,169 @@ export const pickSortMove = (
   return null;
 };
 
+// Duplicated from sushi-station-planner.ts (private there). Pulling into a
+// shared module would either touch planner.ts (v1 script's dependency
+// surface, explicitly avoided) or create a circular import. Will be
+// extracted once HOTEW v1 is rewritten on top of this helper.
+export const simulateCascade = (
+  cellToTier: ReadonlyMap<number, number>,
+  rightCell: number,
+  resultTier: number,
+  buffCap: number,
+  emptyCell?: number
+): CascadeStep[] => {
+  const cascade: CascadeStep[] = [];
+  let prevPreTier = resultTier;
+  let cursor = rightCell;
+  while (cursor < TOTAL_CELLS) {
+    if (cursor === emptyCell) {
+      break;
+    }
+    const currentTier = cellToTier.get(cursor);
+    if (currentTier === undefined) {
+      break;
+    }
+    if (currentTier > buffCap) {
+      break;
+    }
+    if (currentTier >= prevPreTier) {
+      break;
+    }
+    cascade.push({
+      cell: cursor,
+      tierBefore: currentTier,
+      tierAfter: currentTier + 1,
+    });
+    prevPreTier = currentTier;
+    cursor++;
+  }
+  return cascade;
+};
+
+// Predict the post-merge board for a leftmost-pair merge. Returns the
+// cascade list plus the projected board. Used by HOTEW v2 to log expected
+// state and verify against the post-drag rescan.
+//
+// buffCap caps the cascade walk only; merging above buffCap is allowed
+// and just yields cascade=[] (flat 2:1 swap).
+export const simulateMerge = (
+  board: CellTier[],
+  fromCell: number,
+  toCell: number,
+  mergeTier: number,
+  buffCap: number
+): { cascade: CascadeStep[]; postBoard: CellTier[] } => {
+  const cellToTier = buildCellToTier(board);
+  const resultTier = mergeTier + 1;
+  const cascade = simulateCascade(
+    cellToTier,
+    toCell + 1,
+    resultTier,
+    buffCap,
+    fromCell
+  );
+
+  const projected = new Map(cellToTier);
+  projected.delete(fromCell);
+  projected.set(toCell, resultTier);
+  for (const step of cascade) {
+    projected.set(step.cell, step.tierAfter);
+  }
+
+  const postBoard: CellTier[] = [];
+  for (const [cell, tierNumber] of projected) {
+    postBoard.push({ cell, tier: `T${tierNumber}`, tierNumber });
+  }
+  return { cascade, postBoard };
+};
+
+// Compare predicted vs actual post-merge state. Logs FAIL for predicted
+// cells that don't match, EXTRA for unpredicted changes, and a summary
+// pass/total + extras line. Mirrors the verifyMerge helper from the v1
+// HOTEW script.
+export const verifyMergeOutcome = (
+  fromCell: number,
+  toCell: number,
+  resultTier: number,
+  cascade: readonly CascadeStep[],
+  preMergeBoard: CellTier[],
+  actualBoard: CellTier[],
+  availableCells: ReadonlySet<number>,
+  log: (msg: string) => void
+): void => {
+  const preCellToTier = buildCellToTier(preMergeBoard);
+  const postCellToTier = buildCellToTier(actualBoard);
+
+  const formatActual = (tier: number | undefined): string =>
+    tier === undefined ? "empty" : `T${tier}`;
+
+  let passes = 0;
+  let total = 0;
+
+  total++;
+  const fromActual = postCellToTier.get(fromCell);
+  if (fromActual === undefined) {
+    passes++;
+  } else {
+    log(
+      `  FAIL ${formatCell(fromCell)} expected empty, actual ${formatActual(fromActual)}`
+    );
+  }
+
+  total++;
+  const toActual = postCellToTier.get(toCell);
+  if (toActual === resultTier) {
+    passes++;
+  } else {
+    log(
+      `  FAIL ${formatCell(toCell)} expected T${resultTier}, actual ${formatActual(toActual)}`
+    );
+  }
+
+  for (const step of cascade) {
+    total++;
+    const actual = postCellToTier.get(step.cell);
+    if (actual === step.tierAfter) {
+      passes++;
+    } else {
+      log(
+        `  FAIL ${formatCell(step.cell)} expected T${step.tierAfter}, actual ${formatActual(actual)}`
+      );
+    }
+  }
+
+  const predictedCells = new Set<number>();
+  predictedCells.add(fromCell);
+  predictedCells.add(toCell);
+  for (const step of cascade) {
+    predictedCells.add(step.cell);
+  }
+
+  let extras = 0;
+  for (const cell of availableCells) {
+    if (predictedCells.has(cell)) {
+      continue;
+    }
+    const pre = preCellToTier.get(cell);
+    const post = postCellToTier.get(cell);
+    if (pre !== post) {
+      log(
+        `  EXTRA ${formatCell(cell)} ${formatActual(pre)} -> ${formatActual(post)} (not predicted)`
+      );
+      extras++;
+    }
+  }
+
+  if (extras > 0) {
+    const actualTriggers = cascade.length + extras;
+    log(
+      `verification: ${passes}/${total} predictions match, ${extras} unpredicted (actual cascade ~${actualTriggers} triggers)`
+    );
+  } else {
+    log(`verification: ${passes}/${total} predictions match`);
+  }
+};
+
 const CELL_WIDTH = 5;
 
 export const logBoardGrid = (

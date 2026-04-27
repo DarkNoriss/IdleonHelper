@@ -18,6 +18,7 @@ type TrappingPrefs = {
 type FarmingPrefs = { overgrowth: string };
 type SushiPrefs = { shouldCook: boolean };
 type SushiMaxBuffPrefs = { shouldCook: boolean };
+type SushiHotewV2Prefs = { shouldCook: boolean };
 
 type UiPrefsState = {
   candy: CandyPrefs;
@@ -29,6 +30,7 @@ type UiPrefsState = {
   farming: FarmingPrefs;
   sushi: SushiPrefs;
   sushiMaxBuff: SushiMaxBuffPrefs;
+  sushiHotewV2: SushiHotewV2Prefs;
 
   setCandy: (patch: Partial<CandyPrefs>) => void;
   setBossFarmer: (patch: Partial<BossFarmerPrefs>) => void;
@@ -40,6 +42,7 @@ type UiPrefsState = {
   setFarming: (patch: Partial<FarmingPrefs>) => void;
   setSushi: (patch: Partial<SushiPrefs>) => void;
   setSushiMaxBuff: (patch: Partial<SushiMaxBuffPrefs>) => void;
+  setSushiHotewV2: (patch: Partial<SushiHotewV2Prefs>) => void;
 };
 
 const INITIAL_ALCHEMY_SELECTIONS: Selections = {
@@ -67,6 +70,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       farming: { overgrowth: "0" },
       sushi: { shouldCook: true },
       sushiMaxBuff: { shouldCook: false },
+      sushiHotewV2: { shouldCook: false },
 
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
       setBossFarmer: (patch) =>
@@ -95,6 +99,8 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setSushi: (patch) => set((s) => ({ sushi: { ...s.sushi, ...patch } })),
       setSushiMaxBuff: (patch) =>
         set((s) => ({ sushiMaxBuff: { ...s.sushiMaxBuff, ...patch } })),
+      setSushiHotewV2: (patch) =>
+        set((s) => ({ sushiHotewV2: { ...s.sushiHotewV2, ...patch } })),
     }),
     {
       name: "ui-prefs-storage",
