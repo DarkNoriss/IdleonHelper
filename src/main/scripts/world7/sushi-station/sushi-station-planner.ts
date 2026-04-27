@@ -105,6 +105,44 @@ export const planCleanupMerge = (
   return null;
 };
 
+// Merge above the HOTEW range. Used by the end-of-train unlock pass to
+// drain the above-buffCap stockpile and grow the highest tier.
+//
+// HOTEW activates only when the INITIAL mergeTier is in buff range
+// (mergeTier <= buffCap). For unlock merges, mergeTier > buffCap by
+// construction, so no cascade fires regardless of what sits to the right
+// of the merge target. So this plan is just a flat 2:1 swap. Pair selection
+// is leftmost-first for parity with planNextMerge / planCleanupMerge; it
+// has no effect since no cascade fires.
+//
+// upperBound is the inclusive max mergeTier to consider — caller passes
+// MAX_TEMPLATE_TIER - 1 so results stay within the recognized template set.
+export const planUnlockMerge = (
+  board: CellTier[],
+  buffCap: number,
+  upperBound: number
+): MergePlan | null => {
+  const byTier = groupByTier(board);
+
+  for (let t = buffCap + 1; t <= upperBound; t++) {
+    const pieces = byTier.get(t);
+    if (!pieces || pieces.length < 2) {
+      continue;
+    }
+
+    const sortedAsc = [...pieces].sort((a, b) => a.cell - b.cell);
+    return {
+      fromCell: sortedAsc[0]!.cell,
+      toCell: sortedAsc[1]!.cell,
+      mergeTier: t,
+      resultTier: t + 1,
+      cascade: [],
+      cascadeFired: false,
+    };
+  }
+  return null;
+};
+
 // Strict 3+ rule, restricted to the HOTEW buff range.
 //
 // Eligible tiers must satisfy BOTH:

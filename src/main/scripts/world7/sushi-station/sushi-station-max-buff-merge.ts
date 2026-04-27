@@ -25,6 +25,7 @@ import {
   GRID_SLOT_RED,
   GRID_SLOT_YELLOW,
   getPriorityCells,
+  MAX_TEMPLATE_TIER,
   pointToCellIndex,
   SUSHI_COOK,
   SUSHI_HSV_LOWER,
@@ -37,6 +38,7 @@ import {
   computeMergeWaitMs,
   planCleanupMerge,
   planNextMerge,
+  planUnlockMerge,
 } from "./sushi-station-planner";
 
 const PHASE_DELAY_MS = 1000;
@@ -411,7 +413,44 @@ export default defineScript<[boolean]>({
 
       log(`train complete: ${mergesInTrain} merges`);
 
-      if (mergesInTrain === 0) {
+      // End-of-train unlock pass: drain above-buffCap stockpile to push
+      // the highest tier upward. No cascade fires above buffCap, so these
+      // are flat 2:1 merges. Capped at MAX_TEMPLATE_TIER - 1 so results
+      // stay within the recognized template set.
+      log("unlock pass: starting");
+      let unlockMerges = 0;
+      while (true) {
+        token.throwIfCancelled();
+        const preBoard = await scanBoard();
+        const detected = getHighestTier(preBoard);
+        if (detected === null) {
+          break;
+        }
+        const buffCap = detected - 6;
+
+        const plan = planUnlockMerge(preBoard, buffCap, MAX_TEMPLATE_TIER - 1);
+        if (!plan) {
+          break;
+        }
+
+        log(
+          `unlock merge: T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (result T${plan.resultTier})`
+        );
+        await executeMerge(plan);
+        unlockMerges++;
+
+        const postBoard = await scanBoard();
+        logBoardGrid(
+          log,
+          "board after unlock merge",
+          postBoard,
+          availableCells
+        );
+        verifyMerge(plan, preBoard, postBoard, availableCells);
+      }
+      log(`unlock pass complete: ${unlockMerges} merges`);
+
+      if (mergesInTrain === 0 && unlockMerges === 0) {
         log("no progress this iteration, exiting");
         break;
       }
