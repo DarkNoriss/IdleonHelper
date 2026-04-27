@@ -120,10 +120,18 @@ export const countEmpty = (
 // gap is filled by one long drag instead of N-1 left-shift drags.
 // Returns null when there is no move (sorted) or there is more sushi
 // than priority cells (caller decides whether to log/abort).
+//
+// Same-tier collision guard: if the priority slot is already occupied
+// by a piece of the expected tier, treat it as satisfied and continue.
+// Without this, the source picked below could be dragged onto a same-
+// tier piece and the in-game drag would MERGE them (T16 + T16 -> T17),
+// silently destroying a piece mid-sort. Confirmed in iter-2 trace where
+// 4 T16s post-cleanup collapsed to 2 T16 + 1 extra T17 across 7 drags.
 export const pickSortMove = (
   board: CellTier[],
   priorityCells: number[]
 ): SortMove | null => {
+  const cellToTier = buildCellToTier(board);
   const sorted = [...board].sort((a, b) => b.tierNumber - a.tierNumber);
 
   for (let i = 0; i < sorted.length; i++) {
@@ -133,6 +141,9 @@ export const pickSortMove = (
     }
     const expected = sorted[i]!;
     if (expected.cell === target) {
+      continue;
+    }
+    if (cellToTier.get(target) === expected.tierNumber) {
       continue;
     }
 

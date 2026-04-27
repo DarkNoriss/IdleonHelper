@@ -346,9 +346,12 @@ export default defineScript<[boolean]>({
 
       // Inner merge train: keep merging while a tier in HOTEW range has 3+
       // pieces. No sort or cook between climb merges - that is the speed
-      // win. Cleanup is a fallback only: when no 3+ tier exists, lift a
-      // 2-piece tier so the next iteration has something to climb.
+      // win. Cleanup is a one-shot fallback: when no 3+ tier exists above
+      // the floor, lift a 2-piece tier once, then end the train so the
+      // outer loop can cook + sort fresh.
       let mergesInTrain = 0;
+      let floorTier = 0;
+      let cleanupUsed = false;
       while (true) {
         token.throwIfCancelled();
         const preMergeBoard = await scanBoard();
@@ -364,11 +367,17 @@ export default defineScript<[boolean]>({
           `detected highest T${detectedHighest}, buff cap T${buffCap}${buffCap < 1 ? " (buff inactive)" : ""}`
         );
 
-        const plan = planNextMerge(preMergeBoard, buffCap);
+        const plan = planNextMerge(
+          preMergeBoard,
+          buffCap,
+          mergesInTrain === 0,
+          floorTier
+        );
         if (plan) {
           logMergePlan(plan);
           await executeMerge(plan);
           mergesInTrain++;
+          floorTier = plan.mergeTier;
 
           const postMergeBoard = await scanBoard();
           logBoardGrid(
@@ -390,7 +399,14 @@ export default defineScript<[boolean]>({
           continue;
         }
 
-        // Climb has nothing - try lifting a 2-piece tier as a fallback.
+        if (cleanupUsed) {
+          log("no eligible 3+ merge after cleanup, ending train");
+          break;
+        }
+
+        // Climb has nothing - try lifting a 2-piece tier as a one-shot
+        // fallback. After this, the train ends regardless of cleanup
+        // outcome so we get fresh pieces and a clean board.
         const cleanup = planCleanupMerge(preMergeBoard, buffCap);
         if (!cleanup) {
           log("no eligible 3+ merge in HOTEW range, ending train");
@@ -400,6 +416,7 @@ export default defineScript<[boolean]>({
         logCleanupPlan(cleanup);
         await executeMerge(cleanup);
         mergesInTrain++;
+        cleanupUsed = true;
         const postCleanupBoard = await scanBoard();
         logBoardGrid(
           log,

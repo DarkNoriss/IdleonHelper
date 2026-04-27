@@ -184,7 +184,7 @@ export default defineScript({
       `highest T${highest}, buff cap T${buffCap}${buffCap < 1 ? " (buff inactive)" : ""}`
     );
 
-    const plan = planNextMerge(board, buffCap);
+    const plan = planNextMerge(board, buffCap, true);
     if (!plan) {
       log("no eligible 3+ merge in HOTEW range");
       return;
