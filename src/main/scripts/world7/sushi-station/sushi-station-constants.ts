@@ -30,8 +30,6 @@ const SUSHI_TIERS = [
   23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
 ];
 
-export const MAX_TEMPLATE_TIER = SUSHI_TIERS.at(-1)!;
-
 export const SUSHI_TEMPLATES = SUSHI_TIERS.map(
   (t) => `${SUSHI_PATH}/sushi_t${t}`
 );

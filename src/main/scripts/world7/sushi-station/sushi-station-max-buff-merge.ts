@@ -33,7 +33,11 @@ import {
   SUSHI_TIERS_OFF,
   SUSHI_TIERS_ON,
 } from "./sushi-station-constants";
-import { computeMergeWaitMs, planBestMerge } from "./sushi-station-planner";
+import {
+  computeMergeWaitMs,
+  planCleanupMerge,
+  planNextMerge,
+} from "./sushi-station-planner";
 
 const PHASE_DELAY_MS = 1000;
 
@@ -49,6 +53,21 @@ const logMergePlan = (plan: MergePlan): void => {
   log(`predicted cascade: ${plan.cascade.length} ${triggerWord}`);
   for (const step of plan.cascade) {
     log(`  ${formatCell(step.cell)} T${step.tierBefore} -> T${step.tierAfter}`);
+  }
+};
+
+const logCleanupPlan = (plan: MergePlan): void => {
+  log(
+    `cleanup merge: T${plan.mergeTier} ${formatCell(plan.fromCell)} -> ${formatCell(plan.toCell)} (lifts T${plan.resultTier} count toward 3+)`
+  );
+  if (plan.cascade.length > 0) {
+    const triggerWord = plan.cascade.length === 1 ? "trigger" : "triggers";
+    log(`cleanup cascade: ${plan.cascade.length} ${triggerWord}`);
+    for (const step of plan.cascade) {
+      log(
+        `  ${formatCell(step.cell)} T${step.tierBefore} -> T${step.tierAfter}`
+      );
+    }
   }
 };
 
@@ -164,7 +183,9 @@ export default defineScript<[boolean]>({
   id: "world7.sushiStation.sushiStationMaxBuffMerge",
   name: "Sushi Station - Heat of the East Win",
   run: async ({ token, args: [shouldCook] }) => {
-    log("starting (highest tier auto-detected per iteration, X = highest - 6)");
+    log(
+      "starting (strict 3+ in HOTEW range, X = highest - 6, cleanup as fallback)"
+    );
 
     log("ensuring tiers are visible");
 
@@ -260,9 +281,9 @@ export default defineScript<[boolean]>({
       return buildBoardFromResults(response.results);
     };
 
-    const sortPhase = async (label: string): Promise<void> => {
+    const sortPhase = async (): Promise<void> => {
       const drags = await runSortDrain(regions, priorityCells, token);
-      log(`${label} complete (${drags} drags)`);
+      log(`sort complete (${drags} drags)`);
       await delay(PHASE_DELAY_MS, token);
     };
 
@@ -318,35 +339,82 @@ export default defineScript<[boolean]>({
       iteration++;
       log(`iteration ${iteration}`);
 
-      await sortPhase("sort phase 1");
       await cookPhase();
-      await sortPhase("sort phase 2");
+      await sortPhase();
 
-      const preMergeBoard = await scanBoard();
-      logBoardGrid(log, "board before merge", preMergeBoard, availableCells);
+      // Inner merge train: keep merging while a tier in HOTEW range has 3+
+      // pieces. No sort or cook between climb merges - that is the speed
+      // win. Cleanup is a fallback only: when no 3+ tier exists, lift a
+      // 2-piece tier so the next iteration has something to climb.
+      let mergesInTrain = 0;
+      while (true) {
+        token.throwIfCancelled();
+        const preMergeBoard = await scanBoard();
+        logBoardGrid(log, "board before merge", preMergeBoard, availableCells);
 
-      const detectedHighest = getHighestTier(preMergeBoard);
-      if (detectedHighest === null) {
-        log("board empty, no merge available, exiting");
+        const detectedHighest = getHighestTier(preMergeBoard);
+        if (detectedHighest === null) {
+          log("board empty, ending train");
+          break;
+        }
+        const buffCap = detectedHighest - 6;
+        log(
+          `detected highest T${detectedHighest}, buff cap T${buffCap}${buffCap < 1 ? " (buff inactive)" : ""}`
+        );
+
+        const plan = planNextMerge(preMergeBoard, buffCap);
+        if (plan) {
+          logMergePlan(plan);
+          await executeMerge(plan);
+          mergesInTrain++;
+
+          const postMergeBoard = await scanBoard();
+          logBoardGrid(
+            log,
+            "board after merge",
+            postMergeBoard,
+            availableCells
+          );
+          verifyMerge(plan, preMergeBoard, postMergeBoard, availableCells);
+
+          // Climb peaked: this merge pushed a piece above buffCap (out of
+          // HOTEW range). Stop the train and let the outer loop cook+sort
+          // before the next climb so we do not regress to bottom-tier
+          // merges.
+          if (plan.mergeTier === buffCap) {
+            log(`buffCap merge complete (T${plan.mergeTier}), ending train`);
+            break;
+          }
+          continue;
+        }
+
+        // Climb has nothing - try lifting a 2-piece tier as a fallback.
+        const cleanup = planCleanupMerge(preMergeBoard, buffCap);
+        if (!cleanup) {
+          log("no eligible 3+ merge in HOTEW range, ending train");
+          break;
+        }
+
+        logCleanupPlan(cleanup);
+        await executeMerge(cleanup);
+        mergesInTrain++;
+        const postCleanupBoard = await scanBoard();
+        logBoardGrid(
+          log,
+          "board after cleanup",
+          postCleanupBoard,
+          availableCells
+        );
+        verifyMerge(cleanup, preMergeBoard, postCleanupBoard, availableCells);
+        await sortPhase();
+      }
+
+      log(`train complete: ${mergesInTrain} merges`);
+
+      if (mergesInTrain === 0) {
+        log("no progress this iteration, exiting");
         break;
       }
-      const buffCap = detectedHighest - 6;
-      log(
-        `detected highest T${detectedHighest}, buff cap T${buffCap}${buffCap < 1 ? " (buff inactive)" : ""}`
-      );
-
-      const plan = planBestMerge(preMergeBoard, buffCap);
-      if (!plan) {
-        log("no merge available (no tier has a forward-drag pair), exiting");
-        break;
-      }
-
-      logMergePlan(plan);
-      await executeMerge(plan);
-
-      const postMergeBoard = await scanBoard();
-      logBoardGrid(log, "board after merge", postMergeBoard, availableCells);
-      verifyMerge(plan, preMergeBoard, postMergeBoard, availableCells);
     }
 
     log(`loop ended after ${iteration} iterations`);
