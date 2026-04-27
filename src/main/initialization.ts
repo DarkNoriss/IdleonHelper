@@ -73,8 +73,10 @@ export const initializeApp = (): void => {
 
   if (!app.isPackaged) {
     const startDevTools = async (): Promise<void> => {
+      const { startLogFileSink } = await import("./dev/log-file-sink");
       const { startDevServer } = await import("./dev/command-server");
       const { registerPanicHotkey } = await import("./dev/panic-exit");
+      startLogFileSink();
       startDevServer(
         allScripts.map((s) => ({
           id: s.id,
