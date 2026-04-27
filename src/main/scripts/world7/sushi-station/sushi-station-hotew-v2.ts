@@ -300,15 +300,23 @@ export default defineScript<[boolean]>({
         const fromCell = sortedAsc[0]!.cell;
         const toCell = sortedAsc[1]!.cell;
 
+        const drainHighest = getHighestTier(drainBoard);
+        const drainBuffCap = drainHighest === null ? 0 : drainHighest - 6;
+        const isOutOfHotew = candidateTier > drainBuffCap;
+
         await executeMerge(fromCell, toCell, candidateTier, drainBoard);
         drainMerges++;
 
-        // Skip sort when the merged tier had exactly 3 pieces: the cascade
-        // promotes them through the descending staircase, leaving
-        // mergeTier+1 with count=3 already in priority order (one gap at
-        // the from-cell, but the next leftmost-pair fires the same chain).
+        // Skip sort in two cases:
+        // - candidateCount === 3: cascade promotes the descending staircase,
+        //   leaving mergeTier+1 with count=3 already in priority order.
+        // - candidateTier > buffCap: out-of-HOTEW merge fires no cascade,
+        //   so only from/to changed; the rest of the board is untouched
+        //   and the next leftmost-pair pick still works.
         if (candidateCount === 3) {
           log(`T${candidateTier} had count=3, skipping sort`);
+        } else if (isOutOfHotew) {
+          log(`T${candidateTier} above HOTEW (no cascade), skipping sort`);
         } else {
           log("sorting after drain merge");
           const drainSortDrags = await runSortDrain(
@@ -385,9 +393,14 @@ export default defineScript<[boolean]>({
           } else {
             const fromCell = lowestPieces[0]!.cell;
             const toCell = lowestPieces[1]!.cell;
+            const seedHighest = getHighestTier(seedBoard);
+            const seedBuffCap = seedHighest === null ? 0 : seedHighest - 6;
+            const seedIsOutOfHotew = seedLowest > seedBuffCap;
             await executeMerge(fromCell, toCell, seedLowest, seedBoard);
             if (lowestPieces.length === 3) {
               log(`T${seedLowest} had count=3, skipping sort`);
+            } else if (seedIsOutOfHotew) {
+              log(`T${seedLowest} above HOTEW (no cascade), skipping sort`);
             } else {
               log("sorting after seed merge");
               const seedSortDrags = await runSortDrain(
