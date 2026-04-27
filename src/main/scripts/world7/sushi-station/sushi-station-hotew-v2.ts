@@ -262,50 +262,23 @@ export default defineScript<[boolean]>({
       while (true) {
         token.throwIfCancelled();
         const drainBoard = await scanBoard();
-        const lowestTier = (() => {
-          let lowest: number | null = null;
-          for (const piece of drainBoard) {
-            if (lowest === null || piece.tierNumber < lowest) {
-              lowest = piece.tierNumber;
-            }
-          }
-          return lowest;
-        })();
+        const lowestTier = getLowestTier(drainBoard);
         if (lowestTier === null) {
           log("board empty, ending drain");
           break;
         }
         const drainFloor = lowestTier + 1;
 
-        // Find highest tier with count>=2 strictly above drainFloor.
-        const byTier = new Map<number, CellTier[]>();
-        for (const piece of drainBoard) {
-          if (piece.tierNumber <= drainFloor) {
-            continue;
-          }
-          const list = byTier.get(piece.tierNumber);
-          if (list) {
-            list.push(piece);
-          } else {
-            byTier.set(piece.tierNumber, [piece]);
-          }
-        }
-        let candidateTier: number | null = null;
-        for (const [tier, pieces] of byTier) {
-          if (pieces.length < 2) {
-            continue;
-          }
-          if (candidateTier === null || tier > candidateTier) {
-            candidateTier = tier;
-          }
-        }
+        const aboveFloor = drainBoard.filter((p) => p.tierNumber > drainFloor);
+        const candidateTier = getHighestTierWithCount(aboveFloor, 2);
         if (candidateTier === null) {
           log("no eligible drain target, exiting drain loop");
           break;
         }
 
-        const pieces = byTier.get(candidateTier)!;
-        const sortedAsc = [...pieces].sort((a, b) => a.cell - b.cell);
+        const sortedAsc = aboveFloor
+          .filter((p) => p.tierNumber === candidateTier)
+          .sort((a, b) => a.cell - b.cell);
         const fromCell = sortedAsc[0]!.cell;
         const toCell = sortedAsc[1]!.cell;
 
@@ -325,15 +298,7 @@ export default defineScript<[boolean]>({
       // Phase 3: seed merge (one-shot)
       log("phase 3: seed check");
       const seedBoard = await scanBoard();
-      const seedLowest = (() => {
-        let lowest: number | null = null;
-        for (const piece of seedBoard) {
-          if (lowest === null || piece.tierNumber < lowest) {
-            lowest = piece.tierNumber;
-          }
-        }
-        return lowest;
-      })();
+      const seedLowest = getLowestTier(seedBoard);
       if (seedLowest === null) {
         log("board empty, skipping seed");
       } else {
