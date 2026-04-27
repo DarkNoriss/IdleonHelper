@@ -49,7 +49,7 @@ const computeMergeWaitMs = (triggers: number): number =>
   MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
 
 const log = (msg: string): void =>
-  logger.log(`sushi-station-hotew-v2 - ${msg}`);
+  logger.log(`sushi-station-heat-of-the-east-wind - ${msg}`);
 
 const formatTierOrNone = (tier: number | null): string =>
   tier === null ? "none" : `T${tier}`;
@@ -83,8 +83,8 @@ const runSortDrain = async (
 };
 
 export default defineScript<[boolean]>({
-  id: "world7.sushiStation.sushiStationHotewV2",
-  name: "Sushi Station - HOTEW v2",
+  id: "world7.sushiStation.sushiStationHeatOfTheEastWind",
+  name: "Sushi Station - Heat of the East Wind",
   run: async ({ token, args: [shouldCook] }) => {
     log("ensuring tiers are visible");
 

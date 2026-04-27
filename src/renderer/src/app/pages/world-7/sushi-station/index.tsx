@@ -7,8 +7,12 @@ const SushiStation = () => {
   const shouldCook = useUiPrefsStore((s) => s.sushi.shouldCook);
   const setSushi = useUiPrefsStore((s) => s.setSushi);
 
-  const sushiHotewV2 = useUiPrefsStore((s) => s.sushiHotewV2);
-  const setSushiHotewV2 = useUiPrefsStore((s) => s.setSushiHotewV2);
+  const sushiHeatOfTheEastWind = useUiPrefsStore(
+    (s) => s.sushiHeatOfTheEastWind
+  );
+  const setSushiHeatOfTheEastWind = useUiPrefsStore(
+    (s) => s.setSushiHeatOfTheEastWind
+  );
 
   useEffect(() => {
     window.api.app
@@ -45,19 +49,19 @@ const SushiStation = () => {
       <Block
         note="drains stuck multi-piece tiers above lowest+1, seeds the climb at lowest+1, optionally cooks new sushi between iterations. loops until stopped."
         tag="script"
-        title="sushi.hotew-v2"
+        title="sushi.heat-of-the-east-wind"
       >
         <div className="mb-3">
           <TermCheckbox
-            checked={sushiHotewV2.shouldCook}
+            checked={sushiHeatOfTheEastWind.shouldCook}
             label="spawn new sushi when no pairs found"
-            onChange={(v) => setSushiHotewV2({ shouldCook: v })}
+            onChange={(v) => setSushiHeatOfTheEastWind({ shouldCook: v })}
           />
         </div>
         <RunBtn
-          getArgs={() => [sushiHotewV2.shouldCook]}
+          getArgs={() => [sushiHeatOfTheEastWind.shouldCook]}
           label="run once"
-          scriptId="world7.sushiStation.sushiStationHotewV2"
+          scriptId="world7.sushiStation.sushiStationHeatOfTheEastWind"
         />
       </Block>
       {isDev && (

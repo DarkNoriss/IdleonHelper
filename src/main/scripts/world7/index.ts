@@ -1,5 +1,5 @@
 import {
-  sushiStationHotewV2,
+  sushiStationHeatOfTheEastWind,
   sushiStationMerge,
   sushiStationMergeDebug,
   sushiStationSort,
@@ -9,5 +9,5 @@ export const world7Scripts = [
   sushiStationMerge,
   sushiStationSort,
   sushiStationMergeDebug,
-  sushiStationHotewV2,
+  sushiStationHeatOfTheEastWind,
 ];

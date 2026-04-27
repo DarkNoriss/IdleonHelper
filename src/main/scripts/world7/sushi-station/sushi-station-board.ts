@@ -262,10 +262,9 @@ export const pickSortMove = (
   return null;
 };
 
-// Duplicated from sushi-station-planner.ts (private there). Pulling into a
-// shared module would either touch planner.ts (v1 script's dependency
-// surface, explicitly avoided) or create a circular import. Will be
-// extracted once HOTEW v1 is rewritten on top of this helper.
+// Duplicated from sushi-station-planner.ts (private there). Pulling into
+// a shared module would either touch planner.ts (still owned by the
+// merge-debug tool) or create a circular import.
 export const simulateCascade = (
   cellToTier: ReadonlyMap<number, number>,
   rightCell: number,
@@ -309,8 +308,8 @@ export const simulateCascade = (
 };
 
 // Predict the post-merge board for a leftmost-pair merge. Returns the
-// cascade list plus the projected board. Used by HOTEW v2 to log expected
-// state and verify against the post-drag rescan.
+// cascade list plus the projected board. Used by the heat-of-the-east-wind
+// script to log expected state and verify against the post-drag rescan.
 //
 // buffCap caps the cascade walk only; merging above buffCap is allowed
 // and just yields cascade=[] (flat 2:1 swap).
@@ -347,8 +346,7 @@ export const simulateMerge = (
 
 // Compare predicted vs actual post-merge state. Logs FAIL for predicted
 // cells that don't match, EXTRA for unpredicted changes, and a summary
-// pass/total + extras line. Mirrors the verifyMerge helper from the v1
-// HOTEW script.
+// pass/total + extras line.
 export const verifyMergeOutcome = (
   fromCell: number,
   toCell: number,

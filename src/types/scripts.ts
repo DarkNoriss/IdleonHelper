@@ -34,7 +34,7 @@ export type ScriptMap = {
     args: [boolean];
     result: undefined;
   };
-  "world7.sushiStation.sushiStationHotewV2": {
+  "world7.sushiStation.sushiStationHeatOfTheEastWind": {
     args: [boolean];
     result: undefined;
   };
