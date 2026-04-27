@@ -115,6 +115,45 @@ export const countEmpty = (
   return empty;
 };
 
+// True when the merge plan's cascade stopped at an empty cell on the
+// board (an empty hole on the cascade walk path), as opposed to a
+// natural break (tier-equality, above-buffCap, or end-of-board /
+// non-available).
+//
+// Used by the train as a lookahead: after each climb merge, run
+// planNextMerge against the post-merge board and check whether the
+// chosen tier's cascade would be capped by a hole. If yes the gap
+// matters and sortPhase should consolidate; if no (the planner picked
+// a tier whose leftmost-pair walks AROUND the gap, e.g. the
+// "T20 ___ T20 T20" row-break-spanning cluster), the gap is benign
+// and sorting wastes drags.
+//
+// Why structural heuristics weren't enough: a hole at cell C between
+// two occupied T pieces looks identical regardless of which tier the
+// planner picks next. If the planner's descending walk picks T (the
+// gap-spanning cluster), leftmost-pair skips C; if it picks a higher
+// tier T', T' climbs from r0 and its cascade walks rightward straight
+// into C. Only inspecting the actual chosen plan distinguishes them.
+export const cascadeBlockedByEmpty = (
+  plan: MergePlan,
+  board: CellTier[],
+  availableCells: ReadonlySet<number>
+): boolean => {
+  const endCell = plan.toCell + 1 + plan.cascade.length;
+  if (endCell >= TOTAL_CELLS) {
+    return false;
+  }
+  if (!availableCells.has(endCell)) {
+    return false;
+  }
+  for (const piece of board) {
+    if (piece.cell === endCell) {
+      return false;
+    }
+  }
+  return true;
+};
+
 // Same-tier pieces are interchangeable for sort purposes. Prefer the
 // rightmost mismatched same-tier piece as the source so a row-of-T1s
 // gap is filled by one long drag instead of N-1 left-shift drags.

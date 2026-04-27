@@ -104,18 +104,35 @@ const createsStuckState = (
   return computePostMergeCount(byTier, mergeTier, mergeTier, cascade) === 2;
 };
 
-// Cleanup merge for "stuck at 2" tiers in the HOTEW range. Used as a
-// fallback when planNextMerge returns null (no 3+ tier ready to climb).
+// Cleanup merge for HOTEW states that planNextMerge can't handle. Used
+// as a fallback when planNextMerge returns null (no 3+ tier above the
+// lowestExclusion floor is ready to climb).
 //
-// Lift strategy: for the lowest 2-piece tier T in [minTier+1, buffCap],
-// merge the LEFTMOST pair of T-1 pieces (pieces[0] -> pieces[1]). After
-// sort, T-1's leftmost cells sit immediately right of the existing T
-// cluster, so the merge result at T-1[1] clusters with the original T
-// pieces. Cascade fires T-1 -> T at T-1[2], adding a SECOND new T piece.
-// Net: T gains 2, T-1 burns 3.
+// Two strategies, tried in order:
 //
-// The post-cleanup sort phase closes the empty cell at T-1[0] before
-// the next climb runs, keeping cluster boundaries clean.
+// Primary - "stuck at 2" lift: for the lowest 2-piece tier T in
+// [minTier+1, buffCap], merge the LEFTMOST pair of T-1 pieces
+// (pieces[0] -> pieces[1]). After sort, T-1's leftmost cells sit
+// immediately right of the existing T cluster, so the merge result at
+// T-1[1] clusters with the original T pieces. Cascade fires T-1 -> T
+// at T-1[2], adding a SECOND new T piece. Net: T gains 2, T-1 burns 3.
+//
+// Fallback - singleton-staircase deadlock: when no count=2 tier exists
+// but minTier has count >= 3, lift the leftmost pair of minTier into
+// minTier+1. The deadlock arises after the unlock pass drains the
+// above-buffCap stockpile to single pieces and the next iteration's
+// cook + sort produces a fat lowest-tier cluster sitting next to a
+// 1-piece staircase: planNextMerge bails (lowestExclusion blocks
+// minTier, every other HOTEW tier has count<3) and the primary cleanup
+// bails (no count=2 anchor). Without this fallback the train ends with
+// 0 merges even though the lowest tier has the entire HOTEW window's
+// worth of pieces ready to climb. Routing through cleanup (rather than
+// relaxing lowestExclusion in planNextMerge) keeps the post-merge
+// sortPhase invariant - new pieces get consolidated before the next
+// climb tries to leftmost-pair them.
+//
+// The post-cleanup sort phase closes the empty cell at the from cell
+// before the next climb runs, keeping cluster boundaries clean.
 export const planCleanupMerge = (
   board: CellTier[],
   buffCap: number
@@ -160,7 +177,34 @@ export const planCleanupMerge = (
       cascadeFired: cascade.length > 0,
     };
   }
-  return null;
+
+  if (minTier + 1 > buffCap) {
+    return null;
+  }
+  const lowestPieces = byTier.get(minTier);
+  if (!lowestPieces || lowestPieces.length < 3) {
+    return null;
+  }
+  const sortedAsc = [...lowestPieces].sort((a, b) => a.cell - b.cell);
+  const fromCell = sortedAsc[0]!.cell;
+  const toCell = sortedAsc[1]!.cell;
+  const mergeTier = minTier;
+  const resultTier = minTier + 1;
+  const cascade = simulateCascade(
+    cellToTier,
+    toCell + 1,
+    resultTier,
+    buffCap,
+    fromCell
+  );
+  return {
+    fromCell,
+    toCell,
+    mergeTier,
+    resultTier,
+    cascade,
+    cascadeFired: cascade.length > 0,
+  };
 };
 
 // Merge above the HOTEW range. Used by the end-of-train unlock pass to

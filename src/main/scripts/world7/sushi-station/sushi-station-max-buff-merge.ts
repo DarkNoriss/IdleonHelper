@@ -11,6 +11,7 @@ import {
   buildBoardFromResults,
   buildCellToTier,
   type CellTier,
+  cascadeBlockedByEmpty,
   cellToPoint,
   countEmpty,
   formatCell,
@@ -395,6 +396,27 @@ export default defineScript<[boolean]>({
           if (plan.mergeTier === buffCap) {
             log(`buffCap merge complete (T${plan.mergeTier}), ending train`);
             break;
+          }
+
+          // Lookahead: peek at the next climb's plan and only sort if
+          // its cascade would be capped by an empty cell. Lets benign
+          // gaps through (e.g. "T20 ___ T20 T20" where the leftmost
+          // pair from the r0-side T spans the row-break and the
+          // cascade walks from the r1c1 side onward) without firing
+          // on every drain leftover regardless of whether the next
+          // climb actually walks through it.
+          const nextPlan = planNextMerge(
+            postMergeBoard,
+            buffCap,
+            false,
+            floorTier
+          );
+          if (
+            nextPlan &&
+            cascadeBlockedByEmpty(nextPlan, postMergeBoard, availableCells)
+          ) {
+            log("next cascade blocked by gap, sorting to repair");
+            await sortPhase();
           }
           continue;
         }
