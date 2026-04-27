@@ -1,5 +1,5 @@
 import {
-  sushiStationMaxBuffMerge,
+  sushiStationHeatOfTheEastWind,
   sushiStationMerge,
   sushiStationMergeDebug,
   sushiStationSort,
@@ -7,7 +7,7 @@ import {
 
 export const world7Scripts = [
   sushiStationMerge,
-  sushiStationMaxBuffMerge,
   sushiStationSort,
   sushiStationMergeDebug,
+  sushiStationHeatOfTheEastWind,
 ];

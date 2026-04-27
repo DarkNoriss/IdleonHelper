@@ -7,8 +7,12 @@ const SushiStation = () => {
   const shouldCook = useUiPrefsStore((s) => s.sushi.shouldCook);
   const setSushi = useUiPrefsStore((s) => s.setSushi);
 
-  const maxBuff = useUiPrefsStore((s) => s.sushiMaxBuff);
-  const setSushiMaxBuff = useUiPrefsStore((s) => s.setSushiMaxBuff);
+  const sushiHeatOfTheEastWind = useUiPrefsStore(
+    (s) => s.sushiHeatOfTheEastWind
+  );
+  const setSushiHeatOfTheEastWind = useUiPrefsStore(
+    (s) => s.setSushiHeatOfTheEastWind
+  );
 
   useEffect(() => {
     window.api.app
@@ -43,21 +47,21 @@ const SushiStation = () => {
         />
       </Block>
       <Block
-        note="arranges sushi in descending tier order along the snake so each merge tier-ups the right neighbor (Wind of the East). highest tier auto-detected from the board each iteration."
+        note="drains stuck multi-piece tiers above lowest+1, seeds the climb at lowest+1, optionally cooks new sushi between iterations. loops until stopped."
         tag="script"
-        title="sushi.heat-of-the-east-win"
+        title="sushi.heat-of-the-east-wind"
       >
         <div className="mb-3">
           <TermCheckbox
-            checked={maxBuff.shouldCook}
+            checked={sushiHeatOfTheEastWind.shouldCook}
             label="spawn new sushi when no pairs found"
-            onChange={(v) => setSushiMaxBuff({ shouldCook: v })}
+            onChange={(v) => setSushiHeatOfTheEastWind({ shouldCook: v })}
           />
         </div>
         <RunBtn
-          getArgs={() => [maxBuff.shouldCook]}
-          label="start max-buff merge"
-          scriptId="world7.sushiStation.sushiStationMaxBuffMerge"
+          getArgs={() => [sushiHeatOfTheEastWind.shouldCook]}
+          label="run once"
+          scriptId="world7.sushiStation.sushiStationHeatOfTheEastWind"
         />
       </Block>
       {isDev && (
