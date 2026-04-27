@@ -270,13 +270,30 @@ export default defineScript<[boolean]>({
         const drainFloor = lowestTier + 1;
 
         const aboveFloor = drainBoard.filter((p) => p.tierNumber > drainFloor);
-        const candidateTier = getHighestTierWithCount(aboveFloor, 2);
+        let candidateTier = getHighestTierWithCount(aboveFloor, 2);
+
+        // Fallback: drain T_floor itself only when nothing above is
+        // eligible AND it has count >= 3. Below 3, the cascade fires only
+        // 1 trigger and leaves <2 floor pieces behind, breaking the chain
+        // for the next iteration's seed.
+        if (candidateTier === null) {
+          const floorCount = drainBoard.filter(
+            (p) => p.tierNumber === drainFloor
+          ).length;
+          if (floorCount >= 3) {
+            candidateTier = drainFloor;
+            log(
+              `no candidate above T${drainFloor}; draining T${drainFloor} (count=${floorCount})`
+            );
+          }
+        }
+
         if (candidateTier === null) {
           log("no eligible drain target, exiting drain loop");
           break;
         }
 
-        const sortedAsc = aboveFloor
+        const sortedAsc = drainBoard
           .filter((p) => p.tierNumber === candidateTier)
           .sort((a, b) => a.cell - b.cell);
         const candidateCount = sortedAsc.length;
