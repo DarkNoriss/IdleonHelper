@@ -43,7 +43,7 @@ const MERGE_TRIGGER_INCREMENT_MS = 250;
 const COOK_DELAY_MS = 1250;
 
 const computeMergeWaitMs = (triggers: number): number =>
-  MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * triggers;
+  MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
 
 const log = (msg: string): void =>
   logger.log(`sushi-station-hotew-v2 - ${msg}`);
@@ -304,8 +304,45 @@ export default defineScript<[boolean]>({
       }
       log(`phase 2 complete: ${drainMerges} drain merges`);
 
-      // Phase 3: seed merge (one-shot)
-      log("phase 3: seed check");
+      // Phase 3: cook (gated by checkbox)
+      log("phase 3: cook check");
+      const cookBoard = await scanBoard();
+      const emptyCount = countEmpty(cookBoard, availableCells);
+      if (emptyCount === 0) {
+        log("board full, no spawn needed");
+      } else if (shouldCook) {
+        const cookButton = await backendCommand.isVisible(
+          SUSHI_COOK,
+          undefined,
+          token
+        );
+        if (cookButton.length === 0) {
+          log("cook button not visible, skipping spawn");
+        } else {
+          log(`${emptyCount} empty cells, cooking ${emptyCount} sushi`);
+          const clickOptions = getClickOptionsFromPreset("16x");
+          await backendCommand.click(
+            cookButton[0]!,
+            { ...clickOptions, times: emptyCount },
+            token
+          );
+          await delay(COOK_DELAY_MS, token);
+        }
+      } else {
+        log(`${emptyCount} empty cells, cook disabled, skipping spawn`);
+      }
+
+      // Phase 4: post-cook sort
+      log("phase 4: post-cook sort");
+      const postCookSortDrags = await runSortDrain(
+        regions,
+        priorityCells,
+        token
+      );
+      log(`sort complete (${postCookSortDrags} drags)`);
+
+      // Phase 5: seed merge (one-shot, prepares lowestTier+1 for next run)
+      log("phase 5: seed check");
       const seedBoard = await scanBoard();
       const seedLowest = getLowestTier(seedBoard);
       if (seedLowest === null) {
@@ -346,39 +383,6 @@ export default defineScript<[boolean]>({
           }
         }
       }
-
-      // Phase 4: cook (gated by checkbox)
-      log("phase 4: cook check");
-      const cookBoard = await scanBoard();
-      const emptyCount = countEmpty(cookBoard, availableCells);
-      if (emptyCount === 0) {
-        log("board full, no spawn needed");
-      } else if (shouldCook) {
-        const cookButton = await backendCommand.isVisible(
-          SUSHI_COOK,
-          undefined,
-          token
-        );
-        if (cookButton.length === 0) {
-          log("cook button not visible, skipping spawn");
-        } else {
-          log(`${emptyCount} empty cells, cooking ${emptyCount} sushi`);
-          const clickOptions = getClickOptionsFromPreset("16x");
-          await backendCommand.click(
-            cookButton[0]!,
-            { ...clickOptions, times: emptyCount },
-            token
-          );
-          await delay(COOK_DELAY_MS, token);
-        }
-      } else {
-        log(`${emptyCount} empty cells, cook disabled, skipping spawn`);
-      }
-
-      // Phase 5: final sort
-      log("phase 5: final sort");
-      const finalSortDrags = await runSortDrain(regions, priorityCells, token);
-      log(`sort complete (${finalSortDrags} drags)`);
 
       // Phase 6: final board log
       const finalBoard = await scanBoard();
