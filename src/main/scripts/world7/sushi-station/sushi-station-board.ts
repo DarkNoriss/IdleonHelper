@@ -273,6 +273,13 @@ export const simulateCascade = (
   buffCap: number,
   emptyCell?: number
 ): CascadeStep[] => {
+  // HOTEW only fires when the merge's pre-merge tier is in the buff range
+  // (mergeTier <= buffCap, equivalently resultTier - 1 <= buffCap). Above-
+  // buffCap merges are flat 2:1 swaps with no cascade regardless of what
+  // sits to the right of the merge target.
+  if (resultTier - 1 > buffCap) {
+    return [];
+  }
   const cascade: CascadeStep[] = [];
   let prevPreTier = resultTier;
   let cursor = rightCell;
