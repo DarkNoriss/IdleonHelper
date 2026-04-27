@@ -276,12 +276,14 @@ export default defineScript<[boolean]>({
         // eligible AND it has count >= 3. Below 3, the cascade fires only
         // 1 trigger and leaves <2 floor pieces behind, breaking the chain
         // for the next iteration's seed.
+        let isFloorFallback = false;
         if (candidateTier === null) {
           const floorCount = drainBoard.filter(
             (p) => p.tierNumber === drainFloor
           ).length;
           if (floorCount >= 3) {
             candidateTier = drainFloor;
+            isFloorFallback = true;
             log(
               `no candidate above T${drainFloor}; draining T${drainFloor} (count=${floorCount})`
             );
@@ -307,16 +309,24 @@ export default defineScript<[boolean]>({
         await executeMerge(fromCell, toCell, candidateTier, drainBoard);
         drainMerges++;
 
-        // Skip sort in two cases:
+        // Skip sort in three cases:
         // - candidateCount === 3: cascade promotes the descending staircase,
         //   leaving mergeTier+1 with count=3 already in priority order.
         // - candidateTier > buffCap: out-of-HOTEW merge fires no cascade,
         //   so only from/to changed; the rest of the board is untouched
         //   and the next leftmost-pair pick still works.
+        // - isFloorFallback: drained T_floor itself. Cluster's right
+        //   neighbor is another T_floor piece, so cascade always breaks
+        //   at <=1 trigger. Post-merge has minimal disruption (gap at
+        //   from-cell, promotions at to and to+1) and the next drain on
+        //   T_floor+1 (count >= 3 now) still picks a valid leftmost-pair
+        //   on the unsorted board.
         if (candidateCount === 3) {
           log(`T${candidateTier} had count=3, skipping sort`);
         } else if (isOutOfHotew) {
           log(`T${candidateTier} above HOTEW (no cascade), skipping sort`);
+        } else if (isFloorFallback) {
+          log(`T${candidateTier} drained as T_floor fallback, skipping sort`);
         } else {
           log("sorting after drain merge");
           const drainSortDrags = await runSortDrain(
