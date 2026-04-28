@@ -1,3 +1,5 @@
+import type { ExternalSources } from "@/parsers/sushi-station-formulas";
+
 export type SushiStationData = {
   /** Length = SUSHI_UPG.length (typically ~45). Indexed by upgrade index. */
   upgradeLevels: number[];
@@ -19,6 +21,9 @@ export type SushiStationData = {
   hasBundleV: boolean;
   /** Sparks count — input to fireplace effect base. */
   sparks: number;
+  /** External multiplier inputs to bucks-per-hr metric. Most fields default
+   *  to 0 in v1 (per port-source.md open issue #2). */
+  externalSources: ExternalSources;
 };
 
 export type OptimizerCategory = "all" | "bucks" | "fuelRate" | "fuelCap";
