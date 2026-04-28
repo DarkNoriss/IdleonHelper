@@ -3,6 +3,10 @@ import { persist } from "zustand/middleware";
 
 import type { Selections } from "@/types/alchemy";
 import type { SolverFocus } from "@/types/construction";
+import type {
+  OptimizerCategory,
+  OptimizerMaxSteps,
+} from "@/types/sushi-station";
 
 type CandyPrefs = { duration: string };
 type BossFarmerPrefs = { iterations: string };
@@ -18,6 +22,11 @@ type TrappingPrefs = {
 type FarmingPrefs = { overgrowth: string };
 type SushiPrefs = { shouldCook: boolean };
 type SushiHeatOfTheEastWindPrefs = { shouldCook: boolean };
+type SushiOptimizerPrefs = {
+  category: OptimizerCategory;
+  maxSteps: OptimizerMaxSteps;
+  onlyAffordable: boolean;
+};
 
 type UiPrefsState = {
   candy: CandyPrefs;
@@ -29,6 +38,7 @@ type UiPrefsState = {
   farming: FarmingPrefs;
   sushi: SushiPrefs;
   sushiHeatOfTheEastWind: SushiHeatOfTheEastWindPrefs;
+  sushiOptimizer: SushiOptimizerPrefs;
 
   setCandy: (patch: Partial<CandyPrefs>) => void;
   setBossFarmer: (patch: Partial<BossFarmerPrefs>) => void;
@@ -42,6 +52,7 @@ type UiPrefsState = {
   setSushiHeatOfTheEastWind: (
     patch: Partial<SushiHeatOfTheEastWindPrefs>
   ) => void;
+  setSushiOptimizer: (patch: Partial<SushiOptimizerPrefs>) => void;
 };
 
 const INITIAL_ALCHEMY_SELECTIONS: Selections = {
@@ -69,6 +80,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       farming: { overgrowth: "0" },
       sushi: { shouldCook: true },
       sushiHeatOfTheEastWind: { shouldCook: false },
+      sushiOptimizer: { category: "all", maxSteps: 25, onlyAffordable: false },
 
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
       setBossFarmer: (patch) =>
@@ -98,6 +110,10 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setSushiHeatOfTheEastWind: (patch) =>
         set((s) => ({
           sushiHeatOfTheEastWind: { ...s.sushiHeatOfTheEastWind, ...patch },
+        })),
+      setSushiOptimizer: (patch) =>
+        set((s) => ({
+          sushiOptimizer: { ...s.sushiOptimizer, ...patch },
         })),
     }),
     {
