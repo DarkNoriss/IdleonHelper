@@ -21,7 +21,6 @@ export const SUSHI_HSV_LOWER = { h: 0, s: 0, v: 120 } as const;
 export const SUSHI_HSV_UPPER = { h: 180, s: 255, v: 255 } as const;
 
 export const SUSHI_DRAG_OPTIONS = getDragOptionsFromPreset("4x", true);
-export const SUSHI_SORT_DRAG_OPTIONS = getDragOptionsFromPreset("1x", true);
 export const SUSHI_CLICK_OPTIONS = getClickOptionsFromPreset("4x");
 
 const SUSHI_PATH = "ui/map/world-7/sushi-station";

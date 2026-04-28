@@ -9,9 +9,9 @@ import {
   planSortDrags,
 } from "./sushi-station-board";
 import {
+  SUSHI_DRAG_OPTIONS,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
-  SUSHI_SORT_DRAG_OPTIONS,
   SUSHI_TEMPLATES,
 } from "./sushi-station-constants";
 
@@ -89,12 +89,7 @@ export const runPlannedSort = async (
       `drag #${i + 1}: ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
     );
     token.throwIfCancelled();
-    await backendCommand.drag(
-      move.from,
-      move.to,
-      SUSHI_SORT_DRAG_OPTIONS,
-      token
-    );
+    await backendCommand.drag(move.from, move.to, SUSHI_DRAG_OPTIONS, token);
   }
 
   token.throwIfCancelled();
