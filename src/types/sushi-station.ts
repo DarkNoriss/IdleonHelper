@@ -31,6 +31,8 @@ export type OptimizerCategory = "all" | "bucks" | "fuelRate" | "fuelCap";
 export const OPTIMIZER_MAX_STEPS_OPTIONS = [10, 25, 50, 100, 300] as const;
 export type OptimizerMaxSteps = (typeof OPTIMIZER_MAX_STEPS_OPTIONS)[number];
 
+export type OptimizerGroupMode = "none" | "upgrade" | "summary";
+
 export type OptimizerStep = {
   /** 1-indexed step in the path. */
   rank: number;
@@ -48,6 +50,24 @@ export type OptimizerStep = {
   efficiency: number | null;
   /** Running sum of `cost` across the path. */
   cumulativeCost: number;
+};
+
+/**
+ * A displayable row produced by `groupSteps()`. Represents either a single
+ * step (`count === 1`) or a collapsed group of consecutive/binned steps.
+ * `cumulativeCost` is `null` for summary rows because they aren't ordered
+ * by spend.
+ */
+export type OptimizerRow = {
+  rank: number;
+  name: string;
+  fromLevel: number;
+  toLevel: number;
+  cost: number;
+  gain: number | null;
+  efficiency: number | null;
+  cumulativeCost: number | null;
+  count: number;
 };
 
 export type ComputePathInput = {

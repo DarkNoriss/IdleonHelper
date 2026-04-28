@@ -1,5 +1,5 @@
 import { notateNumber } from "@/lib/notateNumber";
-import type { OptimizerCategory, OptimizerStep } from "@/types/sushi-station";
+import type { OptimizerCategory, OptimizerRow } from "@/types/sushi-station";
 
 const HAS_METRIC: Record<OptimizerCategory, boolean> = {
   all: false,
@@ -11,12 +11,12 @@ const HAS_METRIC: Record<OptimizerCategory, boolean> = {
 const formatScientific = (n: number): string => n.toExponential(2);
 
 type Props = {
-  steps: readonly OptimizerStep[];
+  rows: readonly OptimizerRow[];
   category: OptimizerCategory;
 };
 
-export const UpgradeOptimizerTable = ({ steps, category }: Props) => {
-  if (steps.length === 0) {
+export const UpgradeOptimizerTable = ({ rows, category }: Props) => {
+  if (rows.length === 0) {
     return (
       <div className="rounded-[5px] border border-border bg-panel p-4 text-center font-mono text-[11px] text-text-dim">
         no upgrades match these filters
@@ -41,29 +41,36 @@ export const UpgradeOptimizerTable = ({ steps, category }: Props) => {
           </tr>
         </thead>
         <tbody>
-          {steps.map((s) => (
+          {rows.map((r) => (
             <tr
               className="border-border-soft border-t text-foreground"
-              key={s.rank}
+              key={`${r.rank}-${r.name}`}
             >
-              <td className="px-3 py-1 text-text-dim">{s.rank}</td>
-              <td className="px-3 py-1">{s.name}</td>
+              <td className="px-3 py-1 text-text-dim">{r.rank}</td>
               <td className="px-3 py-1">
-                <span className="text-text-dim">{s.fromLevel}</span>
-                <span className="px-1 text-text-muted">{">"}</span>
-                <span className="text-primary">{s.toLevel}</span>
+                {r.name}
+                {r.count > 1 && (
+                  <span className="ml-1 text-text-dim">×{r.count}</span>
+                )}
               </td>
-              <td className="px-3 py-1 text-right">{notateNumber(s.cost)}</td>
+              <td className="px-3 py-1">
+                <span className="text-text-dim">{r.fromLevel}</span>
+                <span className="px-1 text-text-muted">{">"}</span>
+                <span className="text-primary">{r.toLevel}</span>
+              </td>
+              <td className="px-3 py-1 text-right">{notateNumber(r.cost)}</td>
               <td className="px-3 py-1 text-right">
-                {showMetric && s.gain !== null ? notateNumber(s.gain) : "-"}
+                {showMetric && r.gain !== null ? notateNumber(r.gain) : "-"}
               </td>
               <td className="px-3 py-1 text-right text-text-dim">
-                {showMetric && s.efficiency !== null
-                  ? formatScientific(s.efficiency)
+                {showMetric && r.efficiency !== null
+                  ? formatScientific(r.efficiency)
                   : "-"}
               </td>
               <td className="px-3 py-1 text-right text-text-dim">
-                {notateNumber(s.cumulativeCost)}
+                {r.cumulativeCost === null
+                  ? "-"
+                  : notateNumber(r.cumulativeCost)}
               </td>
             </tr>
           ))}

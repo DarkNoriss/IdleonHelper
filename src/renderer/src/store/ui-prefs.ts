@@ -5,6 +5,7 @@ import type { Selections } from "@/types/alchemy";
 import type { SolverFocus } from "@/types/construction";
 import type {
   OptimizerCategory,
+  OptimizerGroupMode,
   OptimizerMaxSteps,
 } from "@/types/sushi-station";
 
@@ -26,6 +27,7 @@ type SushiOptimizerPrefs = {
   category: OptimizerCategory;
   maxSteps: OptimizerMaxSteps;
   onlyAffordable: boolean;
+  groupMode: OptimizerGroupMode;
 };
 
 type UiPrefsState = {
@@ -80,7 +82,12 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       farming: { overgrowth: "0" },
       sushi: { shouldCook: true },
       sushiHeatOfTheEastWind: { shouldCook: false },
-      sushiOptimizer: { category: "all", maxSteps: 25, onlyAffordable: false },
+      sushiOptimizer: {
+        category: "all",
+        maxSteps: 25,
+        onlyAffordable: false,
+        groupMode: "none",
+      },
 
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
       setBossFarmer: (patch) =>

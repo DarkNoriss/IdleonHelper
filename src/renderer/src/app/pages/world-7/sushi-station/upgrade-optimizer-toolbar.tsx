@@ -4,6 +4,7 @@ import { useUiPrefsStore } from "@/store/ui-prefs";
 import {
   OPTIMIZER_MAX_STEPS_OPTIONS,
   type OptimizerCategory,
+  type OptimizerGroupMode,
   type OptimizerMaxSteps,
 } from "@/types/sushi-station";
 
@@ -19,6 +20,15 @@ const MAX_STEPS_OPTIONS = OPTIMIZER_MAX_STEPS_OPTIONS.map((n) => ({
   value: String(n),
   label: String(n),
 }));
+
+const GROUP_MODE_OPTIONS: readonly {
+  value: OptimizerGroupMode;
+  label: string;
+}[] = [
+  { value: "none", label: "none" },
+  { value: "upgrade", label: "upgrade" },
+  { value: "summary", label: "summary" },
+];
 
 type Props = {
   bucks: number;
@@ -47,6 +57,15 @@ export const UpgradeOptimizerToolbar = ({ bucks }: Props) => {
           }
           options={MAX_STEPS_OPTIONS}
           value={String(prefs.maxSteps)}
+        />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <span className="text-text-dim">group</span>
+        <TermSelect
+          onChange={(v) => setPrefs({ groupMode: v as OptimizerGroupMode })}
+          options={GROUP_MODE_OPTIONS}
+          value={prefs.groupMode}
         />
       </div>
 

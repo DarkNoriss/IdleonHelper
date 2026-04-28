@@ -1,3 +1,4 @@
+import { groupSteps } from "@/parsers/sushi-station-grouping";
 import { computePath } from "@/parsers/sushi-station-optimizer";
 import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs";
@@ -23,10 +24,12 @@ export const UpgradeOptimizer = () => {
     onlyAffordable: prefs.onlyAffordable,
   });
 
+  const rows = groupSteps(steps, prefs.groupMode, prefs.category);
+
   return (
     <div className="flex flex-col">
       <UpgradeOptimizerToolbar bucks={sushiStation.bucks} />
-      <UpgradeOptimizerTable category={prefs.category} steps={steps} />
+      <UpgradeOptimizerTable category={prefs.category} rows={rows} />
     </div>
   );
 };
