@@ -1,5 +1,4 @@
-import { backendCommand, type Rect } from "../../../backend/index";
-import type { CancellationToken } from "../../../utils/cancellation-token";
+import { backendCommand } from "../../../backend/index";
 import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
@@ -13,7 +12,6 @@ import {
   getLowestTier,
   getLowestTierWithCount,
   logBoardGrid,
-  pickSortMove,
   simulateMerge,
   verifyMergeOutcome,
 } from "./sushi-station-board";
@@ -33,15 +31,12 @@ import {
   SUSHI_TIERS_OFF,
   SUSHI_TIERS_ON,
 } from "./sushi-station-constants";
+import { runPlannedSort } from "./sushi-station-sort-runner";
 
 const SETTLE_DELAY_MS = 1250;
 const MERGE_BASE_DELAY_MS = 1250;
 const MERGE_TRIGGER_INCREMENT_MS = 100;
 const COOK_DELAY_MS = 1250;
-
-// Number of consecutive identical board scans (after drags) that signals
-// the game has frozen and is silently dropping inputs.
-const STUCK_DETECT_THRESHOLD = 3;
 
 const computeMergeWaitMs = (triggers: number): number =>
   MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
@@ -51,54 +46,6 @@ const log = (msg: string): void =>
 
 const formatTierOrNone = (tier: number | null): string =>
   tier === null ? "none" : `T${tier}`;
-
-const hashBoardState = (board: CellTier[]): string =>
-  [...board]
-    .sort((a, b) => a.cell - b.cell)
-    .map((p) => `${p.cell}:${p.tierNumber}`)
-    .join("|");
-
-const runSortDrain = async (
-  regions: Rect[],
-  priorityCells: number[],
-  token: CancellationToken
-): Promise<number> => {
-  let drags = 0;
-  let prevBoardHash: string | null = null;
-  let stuckIters = 0;
-  while (true) {
-    token.throwIfCancelled();
-    const response = await backendCommand.readRegions(
-      regions,
-      { ...SUSHI_HSV_LOWER },
-      { ...SUSHI_HSV_UPPER },
-      SUSHI_TEMPLATES,
-      undefined,
-      token
-    );
-    const board = buildBoardFromResults(response.results);
-    const boardHash = hashBoardState(board);
-    if (prevBoardHash !== null && prevBoardHash === boardHash) {
-      stuckIters++;
-      if (stuckIters >= STUCK_DETECT_THRESHOLD) {
-        throw new Error(
-          `Sushi Station appears unresponsive: board state unchanged after ${stuckIters} consecutive drags. The game may be frozen - please restart Legends of Idleon and re-run the script.`
-        );
-      }
-    } else {
-      stuckIters = 0;
-    }
-    prevBoardHash = boardHash;
-    const move = pickSortMove(board, priorityCells);
-    if (!move) {
-      break;
-    }
-    token.throwIfCancelled();
-    await backendCommand.drag(move.from, move.to, SUSHI_DRAG_OPTIONS, token);
-    drags++;
-  }
-  return drags;
-};
 
 export default defineScript<[boolean]>({
   id: "world7.sushiStation.sushiStationHeatOfTheEastWind",
@@ -288,16 +235,26 @@ export default defineScript<[boolean]>({
         log(`T${mergeTier} drained as T_floor fallback, skipping sort`);
       } else {
         log("sorting after merge");
-        const sortDrags = await runSortDrain(regions, priorityCells, token);
-        log(`sort complete (${sortDrags} drags)`);
+        const sortResult = await runPlannedSort(
+          regions,
+          availableCells,
+          priorityCells,
+          token
+        );
+        log(`sort complete (${sortResult.drags} drags)`);
       }
     };
 
     while (true) {
       token.throwIfCancelled();
 
-      const sortDrags = await runSortDrain(regions, priorityCells, token);
-      log(`sort complete (${sortDrags} drags)`);
+      const sortResult = await runPlannedSort(
+        regions,
+        availableCells,
+        priorityCells,
+        token
+      );
+      log(`sort complete (${sortResult.drags} drags)`);
 
       log(`scouting board after ${SETTLE_DELAY_MS}ms settle`);
       await delay(SETTLE_DELAY_MS, token);
@@ -418,12 +375,13 @@ export default defineScript<[boolean]>({
 
       // Phase 4: post-cook sort
       log("phase 4: post-cook sort");
-      const postCookSortDrags = await runSortDrain(
+      const postCookSortResult = await runPlannedSort(
         regions,
+        availableCells,
         priorityCells,
         token
       );
-      log(`sort complete (${postCookSortDrags} drags)`);
+      log(`sort complete (${postCookSortResult.drags} drags)`);
 
       // Phase 5: seed merge (one-shot, prepares lowestTier+1 for next run)
       log("phase 5: seed check");
