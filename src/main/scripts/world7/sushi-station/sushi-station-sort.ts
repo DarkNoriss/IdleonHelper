@@ -1,7 +1,4 @@
-import {
-  backendCommand,
-  getDragOptionsFromPreset,
-} from "../../../backend/index";
+import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { buildBoardFromResults, pickSortMove } from "./sushi-station-board";
@@ -12,6 +9,7 @@ import {
   GRID_SLOT_YELLOW,
   getPriorityCells,
   pointToCellIndex,
+  SUSHI_DRAG_OPTIONS,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
   SUSHI_TEMPLATES,
@@ -121,8 +119,7 @@ export default defineScript({
         break;
       }
       token.throwIfCancelled();
-      const dragOptions = getDragOptionsFromPreset("16x", true);
-      await backendCommand.drag(move.from, move.to, dragOptions, token);
+      await backendCommand.drag(move.from, move.to, SUSHI_DRAG_OPTIONS, token);
       drags++;
     }
 

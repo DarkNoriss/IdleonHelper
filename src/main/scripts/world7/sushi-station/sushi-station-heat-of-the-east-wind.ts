@@ -1,9 +1,4 @@
-import {
-  backendCommand,
-  getClickOptionsFromPreset,
-  getDragOptionsFromPreset,
-  type Rect,
-} from "../../../backend/index";
+import { backendCommand, type Rect } from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
 import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
@@ -29,7 +24,9 @@ import {
   GRID_SLOT_YELLOW,
   getPriorityCells,
   pointToCellIndex,
+  SUSHI_CLICK_OPTIONS,
   SUSHI_COOK,
+  SUSHI_DRAG_OPTIONS,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
   SUSHI_TEMPLATES,
@@ -41,9 +38,6 @@ const SETTLE_DELAY_MS = 1250;
 const MERGE_BASE_DELAY_MS = 1250;
 const MERGE_TRIGGER_INCREMENT_MS = 100;
 const COOK_DELAY_MS = 1250;
-
-const DRAG_OPTIONS = getDragOptionsFromPreset("16x", true);
-const CLICK_OPTIONS = getClickOptionsFromPreset("16x");
 
 const computeMergeWaitMs = (triggers: number): number =>
   MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
@@ -76,7 +70,7 @@ const runSortDrain = async (
       break;
     }
     token.throwIfCancelled();
-    await backendCommand.drag(move.from, move.to, DRAG_OPTIONS, token);
+    await backendCommand.drag(move.from, move.to, SUSHI_DRAG_OPTIONS, token);
     drags++;
   }
   return drags;
@@ -213,7 +207,7 @@ export default defineScript<[boolean]>({
       await backendCommand.drag(
         cellToPoint(fromCell),
         cellToPoint(toCell),
-        DRAG_OPTIONS,
+        SUSHI_DRAG_OPTIONS,
         token
       );
       await delay(computeMergeWaitMs(cascade.length), token);
@@ -389,7 +383,7 @@ export default defineScript<[boolean]>({
           log(`${emptyCount} empty cells, cooking ${emptyCount} sushi`);
           await backendCommand.click(
             cookButton[0]!,
-            { ...CLICK_OPTIONS, times: emptyCount },
+            { ...SUSHI_CLICK_OPTIONS, times: emptyCount },
             token
           );
           await delay(COOK_DELAY_MS, token);
