@@ -39,6 +39,10 @@ const MERGE_BASE_DELAY_MS = 1250;
 const MERGE_TRIGGER_INCREMENT_MS = 100;
 const COOK_DELAY_MS = 1250;
 
+// Number of consecutive identical board scans (after drags) that signals
+// the game has frozen and is silently dropping inputs.
+const STUCK_DETECT_THRESHOLD = 3;
+
 const computeMergeWaitMs = (triggers: number): number =>
   MERGE_BASE_DELAY_MS + MERGE_TRIGGER_INCREMENT_MS * Math.max(0, triggers - 1);
 
@@ -48,12 +52,20 @@ const log = (msg: string): void =>
 const formatTierOrNone = (tier: number | null): string =>
   tier === null ? "none" : `T${tier}`;
 
+const hashBoardState = (board: CellTier[]): string =>
+  [...board]
+    .sort((a, b) => a.cell - b.cell)
+    .map((p) => `${p.cell}:${p.tierNumber}`)
+    .join("|");
+
 const runSortDrain = async (
   regions: Rect[],
   priorityCells: number[],
   token: CancellationToken
 ): Promise<number> => {
   let drags = 0;
+  let prevBoardHash: string | null = null;
+  let stuckIters = 0;
   while (true) {
     token.throwIfCancelled();
     const response = await backendCommand.readRegions(
@@ -65,6 +77,18 @@ const runSortDrain = async (
       token
     );
     const board = buildBoardFromResults(response.results);
+    const boardHash = hashBoardState(board);
+    if (prevBoardHash !== null && prevBoardHash === boardHash) {
+      stuckIters++;
+      if (stuckIters >= STUCK_DETECT_THRESHOLD) {
+        throw new Error(
+          `Sushi Station appears unresponsive: board state unchanged after ${stuckIters} consecutive drags. The game may be frozen - please restart Legends of Idleon and re-run the script.`
+        );
+      }
+    } else {
+      stuckIters = 0;
+    }
+    prevBoardHash = boardHash;
     const move = pickSortMove(board, priorityCells);
     if (!move) {
       break;
