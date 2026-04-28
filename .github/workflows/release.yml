@@ -66,8 +66,21 @@ jobs:
         if: steps.semantic.outputs.new_release_published == 'true'
         run: pnpm build
 
-      - name: Publish Electron app
+      - name: Build Electron app
         if: steps.semantic.outputs.new_release_published == 'true'
-        run: pnpm exec electron-builder --win --publish always
+        run: pnpm exec electron-builder --win --publish never
+
+      - name: Upload artifacts to GitHub release
+        if: steps.semantic.outputs.new_release_published == 'true'
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "v${{ steps.semantic.outputs.new_release_version }}"
+          $assets = Get-ChildItem -Path dist -File -Include *.exe, *.exe.blockmap, latest.yml -Recurse |
+            Select-Object -ExpandProperty FullName
+          if (-not $assets) {
+            throw "No release artifacts found in dist/"
+          }
+          gh release upload $tag @assets --clobber
+          if ($LASTEXITCODE -ne 0) { throw "gh release upload failed with exit code $LASTEXITCODE" }
