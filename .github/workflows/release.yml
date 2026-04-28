@@ -77,7 +77,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = "v${{ steps.semantic.outputs.new_release_version }}"
-          $assets = Get-ChildItem -Path dist -File -Include *.exe, *.exe.blockmap, latest.yml -Recurse |
+          $assets = Get-ChildItem -Path dist\* -File -Include *.exe, *.exe.blockmap, latest.yml |
             Select-Object -ExpandProperty FullName
           if (-not $assets) {
             throw "No release artifacts found in dist/"
