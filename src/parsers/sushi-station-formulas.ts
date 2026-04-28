@@ -718,3 +718,101 @@ export function upgCost(
     costBase ** currentLv
   );
 }
+
+// ---------------------------------------------------------------------------
+// Fuel metric chain (Task 6)
+// ---------------------------------------------------------------------------
+
+// Sums (tier + 1) * fireplaceEffBase across all slots whose column fireplace type is 0 (orange/red).
+// fireplaceEffBase is precomputed by the caller (sushi.js:197-207).
+// Defensive reads per open issue #3.
+export function computeOrangeFireSum(
+  sushiData: unknown,
+  fireplaceEffBase: number
+): number {
+  const sd = sushiData as { 0?: unknown; 3?: unknown } | null | undefined;
+  let sum = 0;
+  for (let s = 0; s < MAX_SLOTS; s++) {
+    const tier = Number((sd?.[0] as unknown[] | undefined)?.[s]);
+    const fireRaw = (sd?.[3] as unknown[] | undefined)?.[s % 15];
+    if (
+      tier >= 0 &&
+      fireRaw !== undefined &&
+      fireRaw !== null &&
+      Number(fireRaw) === 0
+    ) {
+      sum += (tier + 1) * fireplaceEffBase;
+    }
+  }
+  return sum;
+}
+
+// Returns fuel generated per hour accounting for upgrades, knowledge, orange-fireplace bonus,
+// and bundle multiplier (sushi.js:154-172).
+// Calls knowledgeBonusSpecific for tiers 27, 36, 45 -- tiers 36/45 return 0 per open issue #7.
+export function fuelGenPerHr(
+  upgLevels: readonly number[],
+  sushiData: unknown,
+  knowledgeTotals: readonly number[],
+  orangeFireSum: number,
+  hasBundleV: boolean
+): number {
+  const bundleMult = 1 + Math.min(1, hasBundleV ? 1 : 0);
+  const upgFuel =
+    upgradeQTY(8, upgLevels) +
+    upgradeQTY(9, upgLevels) +
+    upgradeQTY(10, upgLevels) +
+    upgradeQTY(11, upgLevels) +
+    upgradeQTY(12, upgLevels);
+  const knowledgeFuel = knowledgeTotals?.[4] || 0;
+  const knowledgeSpec27 = knowledgeBonusSpecific(27, sushiData);
+  const knowledgeSpec36 = knowledgeBonusSpecific(36, sushiData);
+  const knowledgeSpec45 = knowledgeBonusSpecific(45, sushiData);
+  const fbMulti9 = 1 + (Number(upgLevels[9]) || 0) / 100;
+  const fbMulti10 = 1 + (Number(upgLevels[10]) || 0) / 100;
+  const fbMulti11 = 1 + (Number(upgLevels[11]) || 0) / 100;
+  const fbMulti12 = 1 + (Number(upgLevels[12]) || 0) / 100;
+  return (
+    50 *
+    bundleMult *
+    (1 + upgFuel / 100) *
+    (1 + orangeFireSum / 100) *
+    (1 + knowledgeFuel / 100) *
+    (1 + knowledgeSpec27 / 100) *
+    (1 + knowledgeSpec36 / 100) *
+    (1 + knowledgeSpec45 / 100) *
+    fbMulti9 *
+    fbMulti10 *
+    fbMulti11 *
+    fbMulti12
+  );
+}
+
+// Returns maximum fuel capacity from upgrades, knowledge category 3, and bundle multiplier (sushi.js:177-189).
+export function fuelCapacity(
+  upgLevels: readonly number[],
+  knowledgeTotals: readonly number[],
+  hasBundleV: boolean
+): number {
+  const bundleMult = 1 + Math.min(1, hasBundleV ? 1 : 0);
+  const upgCap =
+    upgradeQTY(1, upgLevels) +
+    upgradeQTY(2, upgLevels) +
+    upgradeQTY(3, upgLevels) +
+    upgradeQTY(4, upgLevels) +
+    upgradeQTY(5, upgLevels);
+  const knowledgeCap = knowledgeTotals?.[3] || 0;
+  const capMulti2 = 1 + (Number(upgLevels[2]) || 0) / 100;
+  const capMulti3 = 1 + (Number(upgLevels[3]) || 0) / 100;
+  const capMulti4 = 1 + (Number(upgLevels[4]) || 0) / 100;
+  const capMulti5 = 1 + (Number(upgLevels[5]) || 0) / 100;
+  return (
+    (200 + knowledgeCap) *
+    bundleMult *
+    (1 + upgCap / 100) *
+    capMulti2 *
+    capMulti3 *
+    capMulti4 *
+    capMulti5
+  );
+}
