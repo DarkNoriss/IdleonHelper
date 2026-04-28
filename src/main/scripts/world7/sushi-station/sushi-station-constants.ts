@@ -1,4 +1,8 @@
 import type { Point, Rect, RegionResult } from "../../../backend/backend-types";
+import {
+  getClickOptionsFromPreset,
+  getDragOptionsFromPreset,
+} from "../../../backend/index";
 
 export const SUSHI_GRID = {
   ROWS: 8,
@@ -15,6 +19,9 @@ export const SUSHI_ROI = {
 
 export const SUSHI_HSV_LOWER = { h: 0, s: 0, v: 120 } as const;
 export const SUSHI_HSV_UPPER = { h: 180, s: 255, v: 255 } as const;
+
+export const SUSHI_DRAG_OPTIONS = getDragOptionsFromPreset("8x", true);
+export const SUSHI_CLICK_OPTIONS = getClickOptionsFromPreset("16x");
 
 const SUSHI_PATH = "ui/map/world-7/sushi-station";
 

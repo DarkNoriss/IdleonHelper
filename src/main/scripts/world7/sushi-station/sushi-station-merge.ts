@@ -1,8 +1,4 @@
-import {
-  backendCommand,
-  getClickOptionsFromPreset,
-  getDragOptionsFromPreset,
-} from "../../../backend/index";
+import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import {
@@ -18,7 +14,9 @@ import {
   GRID_SLOT_YELLOW,
   getPriorityCells,
   pointToCellIndex,
+  SUSHI_CLICK_OPTIONS,
   SUSHI_COOK,
+  SUSHI_DRAG_OPTIONS,
   SUSHI_GRID,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
@@ -157,8 +155,7 @@ export default defineScript<[boolean]>({
         );
 
         token.throwIfCancelled();
-        const dragOptions = getDragOptionsFromPreset("16x", true);
-        await backendCommand.drag(from, to, dragOptions, token);
+        await backendCommand.drag(from, to, SUSHI_DRAG_OPTIONS, token);
         actedThisIteration = true;
         break;
       }
@@ -171,8 +168,12 @@ export default defineScript<[boolean]>({
             `sushi-station-merge - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
           );
           token.throwIfCancelled();
-          const dragOptions = getDragOptionsFromPreset("16x", true);
-          await backendCommand.drag(move.from, move.to, dragOptions, token);
+          await backendCommand.drag(
+            move.from,
+            move.to,
+            SUSHI_DRAG_OPTIONS,
+            token
+          );
           actedThisIteration = true;
         }
       }
@@ -189,10 +190,9 @@ export default defineScript<[boolean]>({
             token
           );
           if (cookButton.length > 0) {
-            const clickOptions = getClickOptionsFromPreset("16x");
             await backendCommand.click(
               cookButton[0]!,
-              { ...clickOptions, times: emptyCount },
+              { ...SUSHI_CLICK_OPTIONS, times: emptyCount },
               token
             );
           }
