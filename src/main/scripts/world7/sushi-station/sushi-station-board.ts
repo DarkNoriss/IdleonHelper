@@ -262,6 +262,199 @@ export const pickSortMove = (
   return null;
 };
 
+// True when every priority slot holds the tier dictated by descending
+// piece order. Source of truth for "is the board sorted?" - do not infer
+// from planSortDrags returning 0 moves, because a full board with
+// mismatches also returns 0 (place + evict both blocked, see below).
+export const isBoardSorted = (
+  board: CellTier[],
+  priorityCells: number[]
+): boolean => {
+  const cellToTier = buildCellToTier(board);
+  const sortedPieces = [...board].sort((a, b) => b.tierNumber - a.tierNumber);
+  for (let i = 0; i < sortedPieces.length; i++) {
+    const slot = priorityCells[i];
+    if (slot === undefined) {
+      break;
+    }
+    if (cellToTier.get(slot) !== sortedPieces[i]!.tierNumber) {
+      return false;
+    }
+  }
+  return true;
+};
+
+// Plan an entire sort as a sequence of drags computed up front, with no
+// scans between drags. Steps 1 and 2 produce empty-target drags only,
+// so they can never trigger an in-game same-tier merge. Step 3 is a
+// direct-swap fallback for full boards (no empty scratch cells): it
+// drags a piece of the wanted tier onto a wrong-tier slot, relying on
+// the game's drop-on-different-tier swap behavior. The same-tier check
+// at the source is enforced (`occupant.tierNumber !== wanted` and the
+// swap source has tier = wanted), so step 3 also cannot merge.
+//
+// Algorithm (greedy with bounded fallback):
+//   1. Place: find a priority slot that is empty in the simulated state
+//      and wants tier T. Find any piece of T elsewhere whose own slot
+//      does not want T (so moving it does not break a satisfied slot).
+//      Drag piece -> slot.
+//   2. Evict: if no place move is available but mismatches remain, pick
+//      a priority slot whose occupant is the wrong tier and move that
+//      occupant to any empty cell. This frees the slot for a future
+//      place move.
+//   3. Swap: if neither place nor evict can progress (full board, no
+//      empty cells), find a misplaced slot A and any non-satisfied cell
+//      B that holds A's wanted tier. Drag B -> A; the game swaps the
+//      pieces (A becomes satisfied, B inherits A's old wrong tier and
+//      may need further work).
+// Loop until satisfied or no progress is possible. The piece-count and
+// tier-multiset is preserved (no merges) so termination is bounded by
+// priorityCells.length * 4.
+const buildSortMove = (piece: CellTier, targetCell: number): SortMove => ({
+  from: cellToPoint(piece.cell),
+  to: cellToPoint(targetCell),
+  tier: piece.tier,
+  fromRow: Math.floor(piece.cell / SUSHI_GRID.COLUMNS),
+  fromCol: piece.cell % SUSHI_GRID.COLUMNS,
+  toRow: Math.floor(targetCell / SUSHI_GRID.COLUMNS),
+  toCol: targetCell % SUSHI_GRID.COLUMNS,
+});
+
+export const planSortDrags = (
+  board: CellTier[],
+  priorityCells: number[],
+  availableCells: ReadonlySet<number>
+): SortMove[] => {
+  const cellToPiece = new Map<number, CellTier>();
+  for (const piece of board) {
+    cellToPiece.set(piece.cell, piece);
+  }
+
+  const sortedPieces = [...board].sort((a, b) => b.tierNumber - a.tierNumber);
+  const wantedAt = new Map<number, number>();
+  for (let i = 0; i < sortedPieces.length; i++) {
+    const slot = priorityCells[i];
+    if (slot === undefined) {
+      break;
+    }
+    wantedAt.set(slot, sortedPieces[i]!.tierNumber);
+  }
+
+  const moves: SortMove[] = [];
+  const maxMoves = priorityCells.length * 4;
+
+  while (moves.length < maxMoves) {
+    let progressed = false;
+
+    for (const slot of priorityCells) {
+      const wanted = wantedAt.get(slot);
+      if (wanted === undefined) {
+        continue;
+      }
+      const occupant = cellToPiece.get(slot);
+      if (occupant !== undefined) {
+        continue;
+      }
+
+      let sourcePiece: CellTier | null = null;
+      for (const [cell, piece] of cellToPiece) {
+        if (piece.tierNumber !== wanted) {
+          continue;
+        }
+        if (wantedAt.get(cell) === wanted) {
+          continue;
+        }
+        sourcePiece = piece;
+        break;
+      }
+      if (sourcePiece !== null) {
+        moves.push(buildSortMove(sourcePiece, slot));
+        cellToPiece.delete(sourcePiece.cell);
+        cellToPiece.set(slot, { ...sourcePiece, cell: slot });
+        progressed = true;
+        break;
+      }
+    }
+    if (progressed) {
+      continue;
+    }
+
+    for (const slot of priorityCells) {
+      const wanted = wantedAt.get(slot);
+      const occupant = cellToPiece.get(slot);
+      if (occupant === undefined) {
+        continue;
+      }
+      if (occupant.tierNumber === wanted) {
+        continue;
+      }
+
+      let emptyCell: number | null = null;
+      for (const cell of availableCells) {
+        if (cell === slot) {
+          continue;
+        }
+        if (!cellToPiece.has(cell)) {
+          emptyCell = cell;
+          break;
+        }
+      }
+      if (emptyCell !== null) {
+        moves.push(buildSortMove(occupant, emptyCell));
+        cellToPiece.delete(occupant.cell);
+        cellToPiece.set(emptyCell, { ...occupant, cell: emptyCell });
+        progressed = true;
+        break;
+      }
+    }
+    if (progressed) {
+      continue;
+    }
+
+    for (const slot of priorityCells) {
+      const wanted = wantedAt.get(slot);
+      if (wanted === undefined) {
+        continue;
+      }
+      const occupant = cellToPiece.get(slot);
+      if (occupant === undefined) {
+        continue;
+      }
+      if (occupant.tierNumber === wanted) {
+        continue;
+      }
+
+      let swapPiece: CellTier | null = null;
+      for (const [cell, piece] of cellToPiece) {
+        if (cell === slot) {
+          continue;
+        }
+        if (piece.tierNumber !== wanted) {
+          continue;
+        }
+        if (wantedAt.get(cell) === piece.tierNumber) {
+          continue;
+        }
+        swapPiece = piece;
+        break;
+      }
+      if (swapPiece !== null) {
+        moves.push(buildSortMove(swapPiece, slot));
+        const swapOldCell = swapPiece.cell;
+        cellToPiece.set(slot, { ...swapPiece, cell: slot });
+        cellToPiece.set(swapOldCell, { ...occupant, cell: swapOldCell });
+        progressed = true;
+        break;
+      }
+    }
+    if (!progressed) {
+      break;
+    }
+  }
+
+  return moves;
+};
+
 // Duplicated from sushi-station-planner.ts (private there). Pulling into
 // a shared module would either touch planner.ts (still owned by the
 // merge-debug tool) or create a circular import.
