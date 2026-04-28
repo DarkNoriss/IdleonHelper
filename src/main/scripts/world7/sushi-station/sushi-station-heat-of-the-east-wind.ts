@@ -33,7 +33,6 @@ import {
 } from "./sushi-station-constants";
 import { runPlannedSort } from "./sushi-station-sort-runner";
 
-const SETTLE_DELAY_MS = 1250;
 const MERGE_BASE_DELAY_MS = 1250;
 const MERGE_TRIGGER_INCREMENT_MS = 100;
 const COOK_DELAY_MS = 1250;
@@ -255,9 +254,6 @@ export default defineScript<[boolean]>({
         token
       );
       log(`sort complete (${sortResult.drags} drags)`);
-
-      log(`scouting board after ${SETTLE_DELAY_MS}ms settle`);
-      await delay(SETTLE_DELAY_MS, token);
 
       const board = await scanBoard();
 
