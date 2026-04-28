@@ -459,3 +459,107 @@ export function buildRogArray(uniqueSushi: number): number[] {
   }
   return arr;
 }
+
+// ---------------------------------------------------------------------------
+// Save-data helpers (depend on sushiData structure)
+// ---------------------------------------------------------------------------
+
+// Counts consecutive discovered tiers in Sushi[5] (sushi.js:44-53).
+// Returns 0 if Sushi[5] is missing or not an array.
+export function computeUniqueSushi(sushiData: unknown): number {
+  const tiers = (sushiData as { 5?: unknown } | null | undefined)?.[5];
+  if (!Array.isArray(tiers)) {
+    return 0;
+  }
+  let count = 0;
+  for (let i = 0; i < tiers.length; i++) {
+    if ((Number(tiers[i]) || 0) >= 0) {
+      count = i + 1;
+    } else {
+      break;
+    }
+  }
+  return count;
+}
+
+// Returns the knowledge bonus for a specific tier (sushi.js:128-135).
+// Returns 0 for tiers past TIER_TO_KNOWLEDGE_CAT length (open issue #7).
+export function knowledgeBonusSpecific(
+  tier: number,
+  sushiData: unknown
+): number {
+  const cat = TIER_TO_KNOWLEDGE_CAT[tier];
+  if (cat === undefined) {
+    return 0;
+  }
+  const baseVal = KNOWLEDGE_CAT_VALUE[cat] || 0;
+  const sd = sushiData as { 7?: unknown; 5?: unknown } | null | undefined;
+  const knowledgeLv =
+    Number((sd?.[7] as unknown[] | undefined)?.[tier] ?? 0) || 0;
+  const discoveryMult = Math.min(
+    2,
+    1 + (Number((sd?.[5] as unknown[] | undefined)?.[tier] ?? 0) || 0)
+  );
+  return Math.max(0, baseVal * knowledgeLv * discoveryMult * (1 + tier / 30));
+}
+
+// Sums knowledge bonuses across all tiers into 11 category buckets (sushi.js:140-147).
+// Category 6 is the cost-discount input used by upgCost.
+export function knowledgeBonusTotals(sushiData: unknown): number[] {
+  const totals = new Array<number>(11).fill(0);
+  for (let tier = 0; tier <= MAX_TIER; tier++) {
+    const cat = TIER_TO_KNOWLEDGE_CAT[tier];
+    if (cat !== undefined) {
+      totals[cat] =
+        (totals[cat] ?? 0) + knowledgeBonusSpecific(tier, sushiData);
+    }
+  }
+  return totals;
+}
+
+// Deliberate no-op stub -- the real rogBonusQTY takes uniqueSushi not upgLevels;
+// this local variant always returns 0 to match the reference exactly (open issue #6).
+function _rogBonusQTYLocal(
+  _idx: number,
+  _upgLevels: readonly number[]
+): number {
+  return 0;
+}
+
+// Returns the one-level upgrade cost for the given slot (sushi.js:100-117).
+export function upgCost(
+  slot: number,
+  upgLevels: readonly number[],
+  knowledgeTotals: readonly number[]
+): number {
+  const upgIdx = SLOT_TO_UPG[slot];
+  const upg = SUSHI_UPG[upgIdx as number];
+  if (!upg) {
+    return Number.POSITIVE_INFINITY;
+  }
+  const costDN = upg[4] === 0 ? 1 : Math.max(0.1, upg[4]);
+  const t = slot;
+  const wholesaleReduction = 1 / (1 + upgradeQTY(36, upgLevels) / 100);
+  const rogCheaper = Math.max(
+    0.1,
+    1 -
+      Math.max(
+        _rogBonusQTYLocal(26, upgLevels),
+        _rogBonusQTYLocal(44, upgLevels)
+      ) /
+        100
+  );
+  const knowledgeCheaper = 1 / (1 + (knowledgeTotals?.[6] || 0) / 100);
+  const costBase = upg[2];
+  const currentLv = Number(upgLevels[upgIdx as number]) || 0;
+  return (
+    costDN *
+    (5 + t + Math.max(0, t - 1) ** 2) *
+    (1.5 + Math.max(0, t - 3) / 16) ** Math.max(0, t - 4) *
+    1.3 ** Math.max(0, t - 20) *
+    wholesaleReduction *
+    rogCheaper *
+    knowledgeCheaper *
+    costBase ** currentLv
+  );
+}
