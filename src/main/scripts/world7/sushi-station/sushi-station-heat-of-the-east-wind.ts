@@ -233,8 +233,12 @@ export default defineScript<[boolean]>({
     };
 
     // Skip sort when post-merge state is already useful for the next pick:
-    // - count === 3: cascade promotes the descending staircase, leaving
-    //   mergeTier+1 with count=3 already in priority order.
+    // - count <= 3: leftmost-pair logic finds the next pair regardless of
+    //   board tidiness. count=2 leaves the new mergeTier+1 pair at the
+    //   original staircase slot + merge-to cell (non-adjacent, but cascade
+    //   walks from to+1 rightward and is unaffected by holes left at r0's
+    //   right edge). count=3 cascade promotes the descending staircase,
+    //   leaving mergeTier+1 with count=3 already in priority order.
     // - isOutOfHotew: no cascade fires; only from/to changed, so the rest
     //   of the board is untouched.
     // - isFloorFallback: cluster's right neighbor is another T_floor piece,
@@ -258,8 +262,8 @@ export default defineScript<[boolean]>({
 
       await executeMerge(fromCell, toCell, mergeTier, preBoard);
 
-      if (count === 3) {
-        log(`T${mergeTier} had count=3, skipping sort`);
+      if (count <= 3) {
+        log(`T${mergeTier} had count=${count}, skipping sort`);
       } else if (isOutOfHotew) {
         log(`T${mergeTier} above HOTEW (no cascade), skipping sort`);
       } else if (isFloorFallback) {
@@ -297,6 +301,11 @@ export default defineScript<[boolean]>({
       // Phase 2: drain merges loop
       log("phase 2: drain merges");
       let drainMerges = 0;
+      // HOTEW cascades only promote tiers upward, so within one drain
+      // session candidates should never drop below an already-merged tier.
+      // A downward drop means the staircase is consolidated; yield to
+      // cook -> spawn -> seed instead of polluting the working area.
+      let drainMinTier: number | null = null;
       while (true) {
         token.throwIfCancelled();
         const drainBoard = await scanBoard();
@@ -333,6 +342,13 @@ export default defineScript<[boolean]>({
           break;
         }
 
+        if (drainMinTier !== null && candidateTier < drainMinTier) {
+          log(
+            `drain candidate T${candidateTier} below session min T${drainMinTier}; exiting drain (staircase consolidated)`
+          );
+          break;
+        }
+
         const sortedAsc = drainBoard
           .filter((p) => p.tierNumber === candidateTier)
           .sort((a, b) => a.cell - b.cell);
@@ -347,6 +363,10 @@ export default defineScript<[boolean]>({
           count: sortedAsc.length,
           isFloorFallback,
         });
+        drainMinTier =
+          drainMinTier === null
+            ? candidateTier
+            : Math.min(drainMinTier, candidateTier);
         drainMerges++;
       }
       log(`phase 2 complete: ${drainMerges} drain merges`);
