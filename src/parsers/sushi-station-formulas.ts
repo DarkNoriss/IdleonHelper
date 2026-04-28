@@ -679,20 +679,13 @@ export function totalBucksPerHr(
   return total;
 }
 
-// Deliberate no-op stub -- the real rogBonusQTY takes uniqueSushi not upgLevels;
-// this local variant always returns 0 to match the reference exactly (open issue #6).
-function _rogBonusQTYLocal(
-  _idx: number,
-  _upgLevels: readonly number[]
-): number {
-  return 0;
-}
-
 // Returns the one-level upgrade cost for the given slot (sushi.js:100-117).
+// Mirrors toolbox sushiStation.ts:117-128: rogDiscount = max(rogBonusQTY(26), rogBonusQTY(44)).
 export function upgCost(
   slot: number,
   upgLevels: readonly number[],
-  knowledgeTotals: readonly number[]
+  knowledgeTotals: readonly number[],
+  uniqueSushi: number
 ): number {
   const upgIdx = SLOT_TO_UPG[slot];
   const upg = SUSHI_UPG[upgIdx as number];
@@ -705,11 +698,7 @@ export function upgCost(
   const rogCheaper = Math.max(
     0.1,
     1 -
-      Math.max(
-        _rogBonusQTYLocal(26, upgLevels),
-        _rogBonusQTYLocal(44, upgLevels)
-      ) /
-        100
+      Math.max(rogBonusQTY(26, uniqueSushi), rogBonusQTY(44, uniqueSushi)) / 100
   );
   const knowledgeCheaper = 1 / (1 + (knowledgeTotals?.[6] || 0) / 100);
   const costBase = upg[2];

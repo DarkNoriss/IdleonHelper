@@ -67,6 +67,7 @@ export function computePath(input: ComputePathInput): OptimizerStep[] {
 
   const levels = data.upgradeLevels.slice();
   const knowledgeTotals = knowledgeBonusTotals(data.rawSushiData);
+  const uniqueSushi = computeUniqueSushi(data.rawSushiData);
   const metric = buildMetric(
     category,
     data,
@@ -108,7 +109,7 @@ export function computePath(input: ComputePathInput): OptimizerStep[] {
         continue;
       }
 
-      const cost = upgCost(slot, levels, knowledgeTotals);
+      const cost = upgCost(slot, levels, knowledgeTotals, uniqueSushi);
       // (4) cost floor
       if (!Number.isFinite(cost) || cost <= 0) {
         continue;
