@@ -517,6 +517,161 @@ export function knowledgeBonusTotals(sushiData: unknown): number[] {
   return totals;
 }
 
+// ---------------------------------------------------------------------------
+// Bucks-per-hour metric chain (Task 5)
+// ---------------------------------------------------------------------------
+
+/**
+ * External save-field multipliers used by the bucks-per-hour metric chain.
+ * All fields default to 0 / false, giving the lower-bound estimate per open issue #2.
+ * The formulas module is purely dumb: it accepts whatever ExternalSources it receives;
+ * defaults are set by the parser/optimizer caller.
+ */
+export type ExternalSources = {
+  /** Bundle V ownership -- `(1 + min(1, hasBundleV))` factor in computeCurrencyMulti. Default false. */
+  hasBundleV: boolean;
+  /** `(1 + atom14/100)` factor in computeCurrencyMulti. Default 0. */
+  atom14: number;
+  /** `(1 + 100 * sailing39 / 100)` factor in computeCurrencyMulti. Default 0. */
+  sailing39: number;
+  /** `(1 + arcade67/100)` factor in computeCurrencyMulti. Default 0. */
+  arcade67: number;
+  /** `(1 + gridBonus189/100)` factor in computeCurrencyMulti. Default 0. */
+  gridBonus189: number;
+  /** `Math.max(1, Math.min(1.25, 1 + mineheadBonus11/100))` factor in computeCurrencyMulti. Default 0. */
+  mineheadBonus11: number;
+  /** Adds `100 * gamingSuperBit67` into surchargeSum in computeCurrencyMulti. Default 0. */
+  gamingSuperBit67: number;
+  /** `(1 + buttonBonus2/100)` factor in computeCurrencyMulti. Default 0. */
+  buttonBonus2: number;
+};
+
+// Returns the fireplace-effect base multiplier from sparks and knowledge category 9 (sushi.js:212-218).
+export function fireplaceEffectBase(
+  knowledgeTotals: readonly number[],
+  sparks: number
+): number {
+  const s = Math.max(sparks, 1);
+  const sparkMulti =
+    sparks > 0 ? 0.2 * (Math.log(s) / Math.log(2)) + getLOG(s) : 0;
+  return (1 + (knowledgeTotals?.[9] || 0) / 100) * (1 + sparkMulti / 100);
+}
+
+// Returns the slot-effect base multiplier from knowledge category 8 (sushi.js:223-225).
+export function slotEffectBase(knowledgeTotals: readonly number[]): number {
+  return 1 + (knowledgeTotals?.[8] || 0) / 100;
+}
+
+// Returns bucks generated per hour for a single slot (sushi.js:230-244).
+// Applies hot-plate and fireplace bonuses using defensive reads per open issue #3.
+export function currencyPerSlot(
+  slotIdx: number,
+  sushiData: unknown,
+  currencyMulti: number,
+  knowledgeTotals: readonly number[]
+): number {
+  const sd = sushiData as
+    | { 0?: unknown; 1?: unknown; 3?: unknown; 4?: unknown }
+    | null
+    | undefined;
+  const tier = Number((sd?.[0] as unknown[] | undefined)?.[slotIdx]);
+  if (tier < 0 || Number.isNaN(tier)) {
+    return 0;
+  }
+
+  let slotDN = 1;
+  if (Number((sd?.[1] as unknown[] | undefined)?.[slotIdx] ?? 0) === 1) {
+    slotDN *= 1 + (50 * slotEffectBase(knowledgeTotals)) / 100;
+  }
+  const fireType =
+    Number((sd?.[3] as unknown[] | undefined)?.[slotIdx % 15] ?? 0) || 0;
+  if (fireType === 1) {
+    const sparks = Number((sd?.[4] as unknown[] | undefined)?.[2] ?? 0) || 0;
+    const fpBase = fireplaceEffectBase(knowledgeTotals, sparks);
+    slotDN *= 1 + (150 * fpBase) / 100;
+  }
+  return slotDN * currencyMulti * currencyPerTier(tier);
+}
+
+// Returns the overtuned multiplier from SPA accumulated (sushi.js:294-299).
+// Returns 0 if SPA is 0 or negative.
+export function computeOvertunedMulti(sushiData: unknown): number {
+  const sd = sushiData as { 4?: unknown } | null | undefined;
+  const spa = Number((sd?.[4] as unknown[] | undefined)?.[1] ?? 0) || 0;
+  if (spa <= 0) {
+    return 0;
+  }
+  const x = Math.max(spa / 1e6, 1);
+  return 5 * (Math.log(x) / Math.log(2)) + 10 * getLOG(x);
+}
+
+// Returns the combined currency multiplier from all sources (sushi.js:249-277).
+// uniqueSushi is the scalar count from computeUniqueSushi(), not an array.
+export function computeCurrencyMulti(
+  upgLevels: readonly number[],
+  sushiData: unknown,
+  uniqueSushi: number,
+  knowledgeTotals: readonly number[],
+  externalSources: ExternalSources
+): number {
+  const arcade67 = externalSources?.arcade67 || 0;
+  const gridBonus189 = externalSources?.gridBonus189 || 0;
+  const mineheadBonus11 = externalSources?.mineheadBonus11 || 0;
+  const overtunedMulti = computeOvertunedMulti(sushiData);
+  const atom14 = externalSources?.atom14 || 0;
+  const sailing39 = externalSources?.sailing39 || 0;
+  const hasBundleV = externalSources?.hasBundleV ? 1 : 0;
+  const gamingSuperBit67 = externalSources?.gamingSuperBit67 || 0;
+  const buttonBonus2 = externalSources?.buttonBonus2 || 0;
+
+  const surchargeSum =
+    upgradeQTY(30, upgLevels) +
+    upgradeQTY(31, upgLevels) +
+    upgradeQTY(32, upgLevels) +
+    upgradeQTY(33, upgLevels) +
+    upgradeQTY(34, upgLevels) +
+    100 * gamingSuperBit67;
+
+  return (
+    (1 + arcade67 / 100) *
+    1.1 ** uniqueSushi *
+    (1 + Math.min(1, hasBundleV)) *
+    (1 + surchargeSum / 100) *
+    (1 + (knowledgeTotals?.[0] || 0) / 100) *
+    (1 + buttonBonus2 / 100) *
+    (1 + gridBonus189 / 100) *
+    (1 + upgradeQTY(40, upgLevels) / 100) *
+    Math.max(1, Math.min(1.25, 1 + mineheadBonus11 / 100)) *
+    (1 + (upgradeQTY(41, upgLevels) + upgradeQTY(43, upgLevels)) / 100) *
+    (1 + overtunedMulti / 100) *
+    (1 + atom14 / 100) *
+    (1 + (100 * sailing39) / 100)
+  );
+}
+
+// Returns total bucks generated per hour across all active slots (sushi.js:282-289).
+// uniqueSushi is the scalar count from computeUniqueSushi(), not an array.
+export function totalBucksPerHr(
+  sushiData: unknown,
+  upgLevels: readonly number[],
+  uniqueSushi: number,
+  knowledgeTotals: readonly number[],
+  externalSources: ExternalSources
+): number {
+  const multi = computeCurrencyMulti(
+    upgLevels,
+    sushiData,
+    uniqueSushi,
+    knowledgeTotals,
+    externalSources
+  );
+  let total = 0;
+  for (let s = 0; s < MAX_SLOTS; s++) {
+    total += currencyPerSlot(s, sushiData, multi, knowledgeTotals);
+  }
+  return total;
+}
+
 // Deliberate no-op stub -- the real rogBonusQTY takes uniqueSushi not upgLevels;
 // this local variant always returns 0 to match the reference exactly (open issue #6).
 function _rogBonusQTYLocal(
