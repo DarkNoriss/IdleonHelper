@@ -1,5 +1,5 @@
-import { groupSteps } from "@/parsers/sushi-station-grouping";
-import { computePath } from "@/parsers/sushi-station-optimizer";
+import { groupSteps } from "@/parsers/optimizer-core";
+import { computeSushiPath } from "@/parsers/sushi-station-optimizer";
 import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs";
 import { UpgradeOptimizerTable } from "./upgrade-optimizer-table";
@@ -17,14 +17,14 @@ export const UpgradeOptimizer = () => {
     );
   }
 
-  const steps = computePath({
+  const steps = computeSushiPath({
     data: sushiStation,
     category: prefs.category,
     maxSteps: prefs.maxSteps,
     onlyAffordable: prefs.onlyAffordable,
   });
 
-  const rows = groupSteps(steps, prefs.groupMode, prefs.category);
+  const rows = groupSteps(steps, prefs.groupMode, prefs.category !== "all");
 
   return (
     <div className="flex flex-col">

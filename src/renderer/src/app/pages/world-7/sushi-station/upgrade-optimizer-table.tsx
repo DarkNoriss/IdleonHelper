@@ -37,7 +37,6 @@ export const UpgradeOptimizerTable = ({ rows, category }: Props) => {
             <th className="px-3 py-1.5 text-right">cost</th>
             <th className="px-3 py-1.5 text-right">gain</th>
             <th className="px-3 py-1.5 text-right">eff.</th>
-            <th className="px-3 py-1.5 text-right">cumul.</th>
           </tr>
         </thead>
         <tbody>
@@ -66,11 +65,6 @@ export const UpgradeOptimizerTable = ({ rows, category }: Props) => {
                 {showMetric && r.efficiency !== null
                   ? formatScientific(r.efficiency)
                   : "-"}
-              </td>
-              <td className="px-3 py-1 text-right text-text-dim">
-                {r.cumulativeCost === null
-                  ? "-"
-                  : notateNumber(r.cumulativeCost)}
               </td>
             </tr>
           ))}

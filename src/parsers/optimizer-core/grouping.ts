@@ -1,25 +1,18 @@
-import type {
-  OptimizerCategory,
-  OptimizerGroupMode,
-  OptimizerRow,
-  OptimizerStep,
-} from "@/types/sushi-station";
+import type { OptimizerGroupMode, OptimizerRow, OptimizerStep } from "./types";
 
 /**
  * Reshapes greedy steps into displayable rows according to `mode`.
+ * - "none": passthrough.
+ * - "upgrade": collapses consecutive same-name picks into a range.
+ * - "summary": bins all picks by name globally; resorts by cost asc when
+ *   isMetric=false, by gain desc when isMetric=true.
  *
- * - "none": one row per step (passthrough).
- * - "upgrade": collapses consecutive same-name picks into a single range row.
- *   Mirrors toolbox `GenericUpgradeOptimizer.jsx:139-200`.
- * - "summary": bins all picks by name into one row each. Sort differs from
- *   toolbox: we sort by total cost ascending for "all" and total gain
- *   descending for metric categories — first-appearance order from
- *   `Object.values(grouped)` is meaningless once rows are collapsed.
+ * Tie-break in summary mode: lower step rank wins (deterministic).
  */
 export function groupSteps(
   steps: readonly OptimizerStep[],
   mode: OptimizerGroupMode,
-  category: OptimizerCategory
+  isMetric: boolean
 ): OptimizerRow[] {
   if (steps.length === 0) {
     return [];
@@ -32,9 +25,9 @@ export function groupSteps(
       fromLevel: s.fromLevel,
       toLevel: s.toLevel,
       cost: s.cost,
+      resourceId: s.resourceId,
       gain: s.gain,
       efficiency: s.efficiency,
-      cumulativeCost: s.cumulativeCost,
       count: 1,
     }));
   }
@@ -43,7 +36,7 @@ export function groupSteps(
     return collapseConsecutive(steps);
   }
 
-  return collapseSummary(steps, category);
+  return collapseSummary(steps, isMetric);
 }
 
 function collapseConsecutive(steps: readonly OptimizerStep[]): OptimizerRow[] {
@@ -67,9 +60,9 @@ function collapseConsecutive(steps: readonly OptimizerStep[]): OptimizerRow[] {
       fromLevel: first.fromLevel,
       toLevel: last.toLevel,
       cost: totalCost,
+      resourceId: first.resourceId,
       gain: totalGain,
       efficiency: totalGain === null ? null : totalGain / totalCost,
-      cumulativeCost: last.cumulativeCost,
       count: group.length,
     });
     group = [];
@@ -89,7 +82,7 @@ function collapseConsecutive(steps: readonly OptimizerStep[]): OptimizerRow[] {
 
 function collapseSummary(
   steps: readonly OptimizerStep[],
-  category: OptimizerCategory
+  isMetric: boolean
 ): OptimizerRow[] {
   const buckets = new Map<string, OptimizerStep[]>();
   for (const step of steps) {
@@ -126,17 +119,17 @@ function collapseSummary(
       fromLevel: minFrom,
       toLevel: maxTo,
       cost: totalCost,
+      resourceId: first.resourceId,
       gain: totalGain,
       efficiency: totalGain === null ? null : totalGain / totalCost,
-      cumulativeCost: null,
       count: bucket.length,
     });
   }
 
-  if (category === "all") {
-    rows.sort((a, b) => a.cost - b.cost);
-  } else {
+  if (isMetric) {
     rows.sort((a, b) => (b.gain ?? 0) - (a.gain ?? 0));
+  } else {
+    rows.sort((a, b) => a.cost - b.cost);
   }
 
   for (let i = 0; i < rows.length; i++) {
