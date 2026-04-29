@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { TermCheckbox, TermSelect } from "@/components/terminal";
 import type { OptimizerGroupMode } from "@/parsers/optimizer-core";
 
@@ -26,6 +27,10 @@ type Props = {
   onScoreModeChange?: (m: ScoreMode) => void;
   onOpenRphDialog?: () => void;
   rphDirty?: boolean;
+
+  // Anything caller wants pinned to the right edge of the toolbar (e.g.
+  // single-currency inventory display). Rendered last, with ml-auto.
+  rightSlot?: ReactNode;
 };
 
 const GROUP_MODE_OPTIONS: readonly {
@@ -52,6 +57,7 @@ export const OptimizerToolbar = ({
   onScoreModeChange,
   onOpenRphDialog,
   rphDirty,
+  rightSlot,
 }: Props) => {
   const categoryOptions = categories.map((c) => ({
     value: c.id,
@@ -136,6 +142,8 @@ export const OptimizerToolbar = ({
           )}
         </button>
       )}
+
+      {rightSlot && <div className="ml-auto">{rightSlot}</div>}
     </div>
   );
 };

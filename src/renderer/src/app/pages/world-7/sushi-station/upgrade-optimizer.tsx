@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { OptimizerResourceChips } from "@/components/optimizer/optimizer-resource-chips";
 import { OptimizerTable } from "@/components/optimizer/optimizer-table";
 import { OptimizerToolbar } from "@/components/optimizer/optimizer-toolbar";
 import { notateNumber } from "@/lib/notateNumber";
@@ -50,9 +49,6 @@ export const UpgradeOptimizer = () => {
 
   return (
     <div className="flex flex-col">
-      <OptimizerResourceChips
-        inventory={[{ id: "bucks", label: "bucks", value: sushiStation.bucks }]}
-      />
       <OptimizerToolbar
         categories={CATEGORY_OPTIONS}
         category={prefs.category}
@@ -64,6 +60,14 @@ export const UpgradeOptimizer = () => {
         onlyAffordable={prefs.onlyAffordable}
         onMaxStepsChange={(n) => setPrefs({ maxSteps: n as OptimizerMaxSteps })}
         onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
+        rightSlot={
+          <span className="text-text-dim">
+            bucks:{" "}
+            <span className="text-foreground">
+              {notateNumber(sushiStation.bucks)}
+            </span>
+          </span>
+        }
       />
       <OptimizerTable
         formatCost={(cost) => notateNumber(cost)}
