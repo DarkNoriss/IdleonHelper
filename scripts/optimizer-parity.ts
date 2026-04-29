@@ -8,8 +8,14 @@
 // files under <out-dir>. Diff the output of two runs (main vs refactor) to
 // validate parity.
 //
-// All numbers are serialized with a replacer that preserves Infinity / NaN
-// as string sentinels so JSON.stringify doesn't drop them.
+// Output is normalized to a common shape (rank, slot, name, fromLevel,
+// toLevel, cost, gain, efficiency [, count]) so that branch-specific fields
+// like cumulativeCost (pre-refactor) and resourceId (post-refactor) do NOT
+// appear in the diff. Parity is about the optimization decision, not the
+// surrounding metadata.
+//
+// Numbers are serialized with a replacer that preserves Infinity / NaN as
+// string sentinels so JSON.stringify doesn't drop them.
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -22,20 +28,71 @@ const MAX_STEPS = [10, 25, 50, 100, 300] as const;
 const GROUP_MODES = ["none", "upgrade", "summary"] as const;
 const AFFORDABLE = [false, true] as const;
 
-const [, , fixturePath, outDir] = process.argv;
-if (!(fixturePath && outDir)) {
-  console.error("Usage: tsx scripts/optimizer-parity.ts <fixture> <outDir>");
-  process.exit(1);
-}
+type NormalStep = {
+  rank: number;
+  slot: number;
+  name: string;
+  fromLevel: number;
+  toLevel: number;
+  cost: number;
+  gain: number | null;
+  efficiency: number | null;
+};
 
-const raw = JSON.parse(readFileSync(fixturePath, "utf8"));
-const data = parseSushiStation(raw);
-if (!data) {
-  console.error("parseSushiStation returned null - bad fixture?");
-  process.exit(1);
-}
+type NormalRow = {
+  rank: number;
+  name: string;
+  fromLevel: number;
+  toLevel: number;
+  cost: number;
+  gain: number | null;
+  efficiency: number | null;
+  count: number;
+};
 
-mkdirSync(outDir, { recursive: true });
+type StepLike = {
+  rank: number;
+  slot: number;
+  name: string;
+  fromLevel: number;
+  toLevel: number;
+  cost: number;
+  gain: number | null;
+  efficiency: number | null;
+};
+
+type RowLike = {
+  rank: number;
+  name: string;
+  fromLevel: number;
+  toLevel: number;
+  cost: number;
+  gain: number | null;
+  efficiency: number | null;
+  count: number;
+};
+
+const normStep = (s: StepLike): NormalStep => ({
+  rank: s.rank,
+  slot: s.slot,
+  name: s.name,
+  fromLevel: s.fromLevel,
+  toLevel: s.toLevel,
+  cost: s.cost,
+  gain: s.gain,
+  efficiency: s.efficiency,
+});
+
+const normRow = (r: RowLike): NormalRow => ({
+  rank: r.rank,
+  name: r.name,
+  fromLevel: r.fromLevel,
+  toLevel: r.toLevel,
+  cost: r.cost,
+  gain: r.gain,
+  efficiency: r.efficiency,
+  count: r.count,
+});
 
 const replacer = (_k: string, v: unknown): unknown => {
   if (typeof v === "number") {
@@ -52,6 +109,21 @@ const replacer = (_k: string, v: unknown): unknown => {
   return v;
 };
 
+const [, , fixturePath, outDir] = process.argv;
+if (!(fixturePath && outDir)) {
+  console.error("Usage: tsx scripts/optimizer-parity.ts <fixture> <outDir>");
+  process.exit(1);
+}
+
+const raw = JSON.parse(readFileSync(fixturePath, "utf8"));
+const data = parseSushiStation(raw);
+if (!data) {
+  console.error("parseSushiStation returned null - bad fixture?");
+  process.exit(1);
+}
+
+mkdirSync(outDir, { recursive: true });
+
 let total = 0;
 for (const category of CATEGORIES) {
   for (const maxSteps of MAX_STEPS) {
@@ -67,7 +139,14 @@ for (const category of CATEGORIES) {
         const filename = `${category}-${maxSteps}-${groupMode}-${onlyAffordable}.json`;
         writeFileSync(
           join(outDir, filename),
-          JSON.stringify({ steps, rows }, replacer, 2)
+          JSON.stringify(
+            {
+              steps: steps.map((s) => normStep(s as StepLike)),
+              rows: rows.map((r) => normRow(r as RowLike)),
+            },
+            replacer,
+            2
+          )
         );
         total++;
       }
