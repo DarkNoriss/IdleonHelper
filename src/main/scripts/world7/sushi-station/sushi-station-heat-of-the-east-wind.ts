@@ -422,6 +422,10 @@ export default defineScript<[boolean, boolean]>({
       const seedLowest = getLowestTier(seedBoard);
       if (seedLowest === null) {
         log("board empty, skipping seed");
+      } else if (seedLowest === MAX_TEMPLATE_TIER) {
+        log(
+          `seed lowest is T${MAX_TEMPLATE_TIER} hard cap, skipping seed (defensive)`
+        );
       } else {
         const seedTarget = seedLowest + 1;
         const seedTargetCount = seedBoard.filter(
