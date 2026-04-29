@@ -6,7 +6,7 @@
     "ultracite/biome/type-aware"
   ],
   "files": {
-    "includes": ["!**/.design-ref", "!**/docs/tickets"]
+    "includes": ["!**/.design-ref", "!**/docs/tickets", "!**/.worktrees"]
   },
   "linter": {
     "rules": {
