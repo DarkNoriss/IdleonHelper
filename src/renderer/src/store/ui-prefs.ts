@@ -22,7 +22,10 @@ type TrappingPrefs = {
 };
 type FarmingPrefs = { overgrowth: string };
 type SushiPrefs = { shouldCook: boolean };
-type SushiHeatOfTheEastWindPrefs = { shouldCook: boolean };
+type SushiHeatOfTheEastWindPrefs = {
+  shouldCook: boolean;
+  mergeAboveHotew: boolean;
+};
 type SushiOptimizerPrefs = {
   category: OptimizerCategory;
   maxSteps: OptimizerMaxSteps;
@@ -81,7 +84,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       },
       farming: { overgrowth: "0" },
       sushi: { shouldCook: true },
-      sushiHeatOfTheEastWind: { shouldCook: false },
+      sushiHeatOfTheEastWind: { shouldCook: false, mergeAboveHotew: false },
       sushiOptimizer: {
         category: "all",
         maxSteps: 25,
