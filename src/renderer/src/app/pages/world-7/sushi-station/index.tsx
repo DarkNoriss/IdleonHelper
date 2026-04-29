@@ -68,15 +68,25 @@ const SushiStation = () => {
           tag="script"
           title="sushi.heat-of-the-east-wind"
         >
-          <div className="mb-3">
+          <div className="mb-3 space-y-2">
             <TermCheckbox
               checked={sushiHeatOfTheEastWind.shouldCook}
               label="spawn new sushi when no pairs found"
               onChange={(v) => setSushiHeatOfTheEastWind({ shouldCook: v })}
             />
+            <TermCheckbox
+              checked={sushiHeatOfTheEastWind.mergeAboveHotew ?? false}
+              label="merge tiers above HOTEW band (max tier - 6)"
+              onChange={(v) =>
+                setSushiHeatOfTheEastWind({ mergeAboveHotew: v })
+              }
+            />
           </div>
           <RunBtn
-            getArgs={() => [sushiHeatOfTheEastWind.shouldCook]}
+            getArgs={() => [
+              sushiHeatOfTheEastWind.shouldCook,
+              sushiHeatOfTheEastWind.mergeAboveHotew ?? false,
+            ]}
             label="run once"
             scriptId="world7.sushiStation.sushiStationHeatOfTheEastWind"
           />

@@ -35,7 +35,7 @@ export type ScriptMap = {
     result: undefined;
   };
   "world7.sushiStation.sushiStationHeatOfTheEastWind": {
-    args: [boolean];
+    args: [boolean, boolean];
     result: undefined;
   };
   "world7.sushiStation.sushiStationMergeDebug": {

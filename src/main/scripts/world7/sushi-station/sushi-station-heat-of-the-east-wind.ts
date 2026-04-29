@@ -46,11 +46,12 @@ const log = (msg: string): void =>
 const formatTierOrNone = (tier: number | null): string =>
   tier === null ? "none" : `T${tier}`;
 
-export default defineScript<[boolean]>({
+export default defineScript<[boolean, boolean]>({
   id: "world7.sushiStation.sushiStationHeatOfTheEastWind",
   name: "Sushi Station - Heat of the East Wind",
-  run: async ({ token, args: [shouldCook] }) => {
+  run: async ({ token, args: [shouldCook, mergeAboveHotew] }) => {
     log("ensuring tiers are visible");
+    log(`mergeAboveHotew=${mergeAboveHotew}`);
 
     const visibility = await backendCommand.isVisibleParallel(
       { tiersOn: SUSHI_TIERS_ON, tiersOff: SUSHI_TIERS_OFF },
