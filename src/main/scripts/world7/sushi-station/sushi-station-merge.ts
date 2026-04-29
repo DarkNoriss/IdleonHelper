@@ -137,9 +137,17 @@ export default defineScript<[boolean]>({
         }
       }
 
+      const hardCapTemplate = SUSHI_TEMPLATES.at(-1)!;
+
       let actedThisIteration = false;
       for (const [tier, indices] of grouped) {
         if (indices.length < 2) {
+          continue;
+        }
+        if (tier === hardCapTemplate) {
+          logger.log(
+            `sushi-station-merge - skipping ${tier} hard cap (defensive)`
+          );
           continue;
         }
 

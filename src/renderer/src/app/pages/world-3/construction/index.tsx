@@ -61,6 +61,18 @@ const formatDiff = (current: number, optimized: number): string => {
   return `${sign}${notateNumber(diff)}`;
 };
 
+// Display helper for primary readouts — no sign prefix; use formatPercentDiff for deltas.
+const formatPercent = (n: number): string => `${notateNumber(n)}%`;
+
+const formatPercentDiff = (current: number, optimized: number): string => {
+  const diff = optimized - current;
+  if (diff === 0) {
+    return "";
+  }
+  const sign = diff > 0 ? "+" : "";
+  return `${sign}${notateNumber(diff)}%`;
+};
+
 const pad = (n: number) => n.toString().padStart(2, "0");
 
 const formatElapsed = (ms: number): string => {
@@ -223,9 +235,12 @@ const Construction = () => {
 
   const solved = solverResult !== null;
   const buildRate = solverResult?.score.buildRate ?? score?.buildRate ?? 0;
+  const expBonus = solverResult?.score.expBonus ?? score?.expBonus ?? 0;
   const flaggy = solverResult?.score.flaggy ?? score?.flaggy ?? 0;
   const playerExpRate =
     solverResult?.score.playerExpRate ?? score?.playerExpRate ?? 0;
+  const playerExpRateDiff =
+    solved && score ? formatDiff(score.playerExpRate, playerExpRate) : "";
 
   const solverHint = (
     <>
@@ -288,19 +303,36 @@ const Construction = () => {
             label="build-rate"
           />
           <ScoreCol
-            current={notateNumber(playerExpRate)}
+            current={formatPercent(expBonus)}
             diff={
               solved && score
-                ? formatDiff(score.playerExpRate, playerExpRate)
+                ? formatPercentDiff(score.expBonus, expBonus)
                 : null
             }
-            label="exp-rate/hr"
+            label="exp-bonus"
           />
           <ScoreCol
             current={notateNumber(flaggy)}
             diff={solved && score ? formatDiff(score.flaggy, flaggy) : null}
             label="flaggy"
           />
+        </div>
+        <div className="mt-2 flex items-center gap-2 font-mono text-[10px]">
+          <span className="text-text-muted uppercase tracking-[1px]">
+            exp-rate/hr
+          </span>
+          <span className="text-foreground">{notateNumber(playerExpRate)}</span>
+          {playerExpRateDiff && (
+            <span
+              className={
+                playerExpRateDiff.startsWith("-")
+                  ? "text-destructive"
+                  : "text-success"
+              }
+            >
+              {playerExpRateDiff}
+            </span>
+          )}
         </div>
       </Block>
 
