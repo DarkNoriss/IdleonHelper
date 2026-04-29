@@ -41,7 +41,7 @@ const SushiStation = () => {
       </Tabs.List>
       <Tabs.Panel value="scripts">
         <PageHead
-          description="Merges matching sushi pieces on the board, optionally spawning new ones when no pairs remain."
+          description="cook and merge sushi to push to higher tiers. each new tier unlocks a permanent rest-of-game bonus and boosts Bucks/hr. scripts here automate the merge board."
           path="world-7 / sushi-station"
           title="sushi-station"
         />
@@ -64,7 +64,7 @@ const SushiStation = () => {
           />
         </Block>
         <Block
-          note="drains stuck multi-piece tiers above lowest+1, seeds the climb at lowest+1, optionally cooks new sushi between iterations. loops until stopped."
+          note="in-game buff: combining a sushi tiers-up the one to its right, if it's lower tiered. this script feeds that chain - drains stuck high tiers and seeds merges from the bottom, optionally cooking new sushi between iterations. loops until stopped."
           tag="script"
           title="sushi.heat-of-the-east-wind"
         >
@@ -83,7 +83,8 @@ const SushiStation = () => {
         </Block>
         {isDev && (
           <Block
-            note="captures filtered cell images for new sushi tier templates. dev-only."
+            dev
+            note="captures filtered cell images for new sushi tier templates."
             tag="script"
             title="sushi.merge-debug"
           >
@@ -95,7 +96,8 @@ const SushiStation = () => {
         )}
         {isDev && (
           <Block
-            note="performs a single sort pass over the board: arranges sushi in descending tier order along the snake. no merging, no cooking, exits when sorted. dev-only."
+            dev
+            note="performs a single sort pass over the board: arranges sushi in descending tier order along the snake. no merging, no cooking, exits when sorted."
             tag="script"
             title="sushi.sort"
           >

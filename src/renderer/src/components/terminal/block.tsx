@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 type BlockProps = {
   title: string;
   tag?: string;
+  dev?: boolean;
   note?: ReactNode;
   compact?: boolean;
   children: ReactNode;
@@ -13,6 +14,7 @@ type BlockProps = {
 export const Block = ({
   title,
   tag,
+  dev,
   note,
   compact,
   children,
@@ -32,6 +34,11 @@ export const Block = ({
       {tag && (
         <span className="rounded-sm border border-border-soft bg-surface px-1.5 text-[9px] text-text-dim">
           {tag}
+        </span>
+      )}
+      {dev && (
+        <span className="rounded-sm border border-border-soft px-[3px] text-[8px] text-warn tracking-[0.5px]">
+          dev
         </span>
       )}
     </div>
