@@ -1,7 +1,13 @@
+import {
+  affordabilityGate,
+  computePath,
+  type GateFn,
+  maxedGate,
+  type OptimizerStep,
+} from "@/parsers/optimizer-core";
 import type {
   ComputePathInput,
   OptimizerCategory,
-  OptimizerStep,
   SushiStationData,
 } from "@/types/sushi-station";
 import {
@@ -21,6 +27,12 @@ import {
 } from "./sushi-station-formulas";
 
 const MAX_LEVEL_INFINITE = 9999;
+const RESOURCE_ID = "bucks";
+
+type SushiState = {
+  levels: number[];
+  spent: number;
+};
 
 type Metric = (levels: number[]) => number;
 
@@ -33,7 +45,6 @@ function buildMetric(
   if (category === "all") {
     return null;
   }
-
   const uniqueSushi = computeUniqueSushi(data.rawSushiData);
   const fireplaceBase = fireplaceEffectBase(knowledgeTotals, data.sparks);
   const orangeFire = computeOrangeFireSum(data.rawSushiData, fireplaceBase);
@@ -58,14 +69,12 @@ function buildMetric(
         data.hasBundleV
       );
   }
-  // fuelCap
   return (levels) => fuelCapacity(levels, knowledgeTotals, data.hasBundleV);
 }
 
-export function computePath(input: ComputePathInput): OptimizerStep[] {
+export function computeSushiPath(input: ComputePathInput): OptimizerStep[] {
   const { data, category, maxSteps, onlyAffordable } = input;
 
-  const levels = data.upgradeLevels.slice();
   const knowledgeTotals = knowledgeBonusTotals(data.rawSushiData);
   const uniqueSushi = computeUniqueSushi(data.rawSushiData);
   const metric = buildMetric(
@@ -75,99 +84,85 @@ export function computePath(input: ComputePathInput): OptimizerStep[] {
     data.externalSources
   );
 
-  let spent = 0;
-  const steps: OptimizerStep[] = [];
+  const initial: SushiState = {
+    levels: data.upgradeLevels.slice(),
+    spent: 0,
+  };
 
-  for (let step = 1; step <= maxSteps; step++) {
-    const baseline = metric ? metric(levels) : 0;
+  // ---- Domain-specific gates ----
+  const researchLevelGate: GateFn<SushiState> = (slot, state) => {
+    const upgIdx = slotUpgIdx(slot);
+    const lv = state.levels[upgIdx] ?? 0;
+    if (data.researchLevel < upgLvReq(slot) && lv === 0) {
+      return { ok: false, reason: "locked" };
+    }
+    return { ok: true };
+  };
 
-    let bestSlot = -1;
-    let bestCost = 0;
-    let bestGain: number | null = null;
-    let bestScore = Number.NEGATIVE_INFINITY;
+  const chainGate: GateFn<SushiState> = (slot, state) => {
+    if (slot === 0) {
+      return { ok: true };
+    }
+    const prevLv = state.levels[slotUpgIdx(slot - 1)] ?? 0;
+    const lv = state.levels[slotUpgIdx(slot)] ?? 0;
+    if (prevLv === 0 && lv === 0) {
+      return { ok: false, reason: "locked" };
+    }
+    return { ok: true };
+  };
 
-    for (let slot = 0; slot < SLOT_TO_UPG.length; slot++) {
+  const slotExistsGate: GateFn<SushiState> = (slot) => {
+    const upg = SUSHI_UPG[slotUpgIdx(slot)];
+    return upg ? { ok: true } : { ok: false, reason: "locked" };
+  };
+
+  const maxed = maxedGate<SushiState>(
+    (slot, s) => s.levels[slotUpgIdx(slot)] ?? 0,
+    (slot) => SUSHI_UPG[slotUpgIdx(slot)]?.[1] ?? 0,
+    MAX_LEVEL_INFINITE
+  );
+
+  const affordability = affordabilityGate<SushiState>(
+    () => onlyAffordable,
+    (slot, s) => {
+      const cost = upgCost(slot, s.levels, knowledgeTotals, uniqueSushi);
+      return Number.isFinite(cost) && cost <= data.bucks - s.spent;
+    }
+  );
+
+  const steps = computePath<SushiState>({
+    initialState: initial,
+    slotCount: SLOT_TO_UPG.length,
+    maxSteps,
+    gates: [slotExistsGate, maxed, researchLevelGate, chainGate, affordability],
+    score: (slot, s) => upgCost(slot, s.levels, knowledgeTotals, uniqueSushi),
+    gain: (slot, s) => {
+      if (!metric) {
+        return null;
+      }
+      const baseline = metric(s.levels);
+      const sim = s.levels.slice();
       const upgIdx = slotUpgIdx(slot);
-      const upg = SUSHI_UPG[upgIdx];
-      if (!upg) {
-        continue;
-      }
-      const lv = levels[upgIdx] ?? 0;
-      const maxLv = upg[1];
-
-      // (1) skip maxed (treat 9999 as infinite)
-      if (lv >= maxLv && maxLv < MAX_LEVEL_INFINITE) {
-        continue;
-      }
-      // (2) research-level lock — locked unless already past level 0
-      if (data.researchLevel < upgLvReq(slot) && lv === 0) {
-        continue;
-      }
-      // (3) sequential-chain lock
-      const prevLv = slot > 0 ? (levels[slotUpgIdx(slot - 1)] ?? 0) : 1;
-      if (prevLv === 0 && lv === 0) {
-        continue;
-      }
-
-      const cost = upgCost(slot, levels, knowledgeTotals, uniqueSushi);
-      // (4) cost floor
-      if (!Number.isFinite(cost) || cost <= 0) {
-        continue;
-      }
-      // (5) affordability
-      if (onlyAffordable && cost > data.bucks - spent) {
-        continue;
-      }
-
-      let gain: number | null = null;
-      let score: number;
-      if (metric) {
-        const sim = levels.slice();
-        sim[upgIdx] = lv + 1;
-        const next = metric(sim);
-        gain = next - baseline;
-        // (6) skip non-positive gain or NaN
-        if (!Number.isFinite(gain) || gain <= 0) {
-          continue;
-        }
-        score = gain / cost;
-      } else {
-        // "all" category: cheapest first; tie-break by slot ascending
-        score = -cost;
-      }
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestSlot = slot;
-        bestCost = cost;
-        bestGain = gain;
-      }
-    }
-
-    if (bestSlot === -1) {
-      break;
-    }
-
-    const upgIdx = slotUpgIdx(bestSlot);
-    const fromLevel = levels[upgIdx] ?? 0;
-    const toLevel = fromLevel + 1;
-    levels[upgIdx] = toLevel;
-    spent += bestCost;
-
-    // upgIdx is guaranteed valid: bestSlot was only set when SUSHI_UPG[upgIdx] was truthy
-    const bestUpg = SUSHI_UPG[upgIdx] as (typeof SUSHI_UPG)[number];
-    steps.push({
-      rank: step,
-      slot: bestSlot,
-      name: bestUpg[0],
-      fromLevel,
-      toLevel,
-      cost: bestCost,
-      gain: bestGain,
-      efficiency: bestGain === null ? null : bestGain / bestCost,
-      cumulativeCost: spent,
-    });
-  }
+      const lv = sim[upgIdx] ?? 0;
+      sim[upgIdx] = lv + 1;
+      const next = metric(sim);
+      const gainValue = next - baseline;
+      return Number.isFinite(gainValue) && gainValue > 0 ? gainValue : 0;
+    },
+    apply: (slot, s) => {
+      const cost = upgCost(slot, s.levels, knowledgeTotals, uniqueSushi);
+      const next = s.levels.slice();
+      const upgIdx = slotUpgIdx(slot);
+      next[upgIdx] = (next[upgIdx] ?? 0) + 1;
+      return { levels: next, spent: s.spent + cost };
+    },
+    resourceOf: (slot, s) => ({
+      id: RESOURCE_ID,
+      cost: upgCost(slot, s.levels, knowledgeTotals, uniqueSushi),
+    }),
+    nameOf: (slot) => SUSHI_UPG[slotUpgIdx(slot)]?.[0] ?? "",
+    fromLevel: (slot, s) => s.levels[slotUpgIdx(slot)] ?? 0,
+  });
 
   return steps;
 }

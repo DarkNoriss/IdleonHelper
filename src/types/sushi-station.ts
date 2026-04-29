@@ -1,5 +1,12 @@
 import type { ExternalSources } from "@/parsers/sushi-station-formulas";
 
+// Re-export the optimizer-core types so existing imports keep working.
+export type {
+  OptimizerGroupMode,
+  OptimizerRow,
+  OptimizerStep,
+} from "@/parsers/optimizer-core";
+
 export type SushiStationData = {
   /** Length = SUSHI_UPG.length (typically ~45). Indexed by upgrade index. */
   upgradeLevels: number[];
@@ -30,45 +37,6 @@ export type OptimizerCategory = "all" | "bucks" | "fuelRate" | "fuelCap";
 
 export const OPTIMIZER_MAX_STEPS_OPTIONS = [10, 25, 50, 100, 300] as const;
 export type OptimizerMaxSteps = (typeof OPTIMIZER_MAX_STEPS_OPTIONS)[number];
-
-export type OptimizerGroupMode = "none" | "upgrade" | "summary";
-
-export type OptimizerStep = {
-  /** 1-indexed step in the path. */
-  rank: number;
-  /** Slot index (0..SLOT_TO_UPG.length - 1). */
-  slot: number;
-  /** Display name from SUSHI_UPG[upgIdx][0]. */
-  name: string;
-  fromLevel: number;
-  toLevel: number;
-  /** Cost of THIS single level-up at simulation time. */
-  cost: number;
-  /** Metric delta. `null` for category "all". */
-  gain: number | null;
-  /** `gain / cost`. `null` for category "all". */
-  efficiency: number | null;
-  /** Running sum of `cost` across the path. */
-  cumulativeCost: number;
-};
-
-/**
- * A displayable row produced by `groupSteps()`. Represents either a single
- * step (`count === 1`) or a collapsed group of consecutive/binned steps.
- * `cumulativeCost` is `null` for summary rows because they aren't ordered
- * by spend.
- */
-export type OptimizerRow = {
-  rank: number;
-  name: string;
-  fromLevel: number;
-  toLevel: number;
-  cost: number;
-  gain: number | null;
-  efficiency: number | null;
-  cumulativeCost: number | null;
-  count: number;
-};
 
 export type ComputePathInput = {
   data: SushiStationData;

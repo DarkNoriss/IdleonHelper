@@ -1,30 +1,31 @@
-import { notateNumber } from "@/lib/notateNumber";
-import type { OptimizerCategory, OptimizerRow } from "@/types/sushi-station";
-
-const HAS_METRIC: Record<OptimizerCategory, boolean> = {
-  all: false,
-  bucks: true,
-  fuelRate: true,
-  fuelCap: true,
-};
-
-const formatScientific = (n: number): string => n.toExponential(2);
+import type { ReactNode } from "react";
+import type { OptimizerRow } from "@/parsers/optimizer-core";
 
 type Props = {
   rows: readonly OptimizerRow[];
-  category: OptimizerCategory;
+  isMetric: boolean;
+  formatCost: (cost: number, resourceId: string) => ReactNode;
+  formatGain?: (gain: number) => ReactNode;
+  emptyMessage?: string;
 };
 
-export const UpgradeOptimizerTable = ({ rows, category }: Props) => {
+const defaultFormatGain = (gain: number): string => gain.toExponential(2);
+const formatScientific = (n: number): string => n.toExponential(2);
+
+export const OptimizerTable = ({
+  rows,
+  isMetric,
+  formatCost,
+  formatGain = defaultFormatGain,
+  emptyMessage = "no upgrades match these filters",
+}: Props) => {
   if (rows.length === 0) {
     return (
       <div className="rounded-[5px] border border-border bg-panel p-4 text-center font-mono text-[11px] text-text-dim">
-        no upgrades match these filters
+        {emptyMessage}
       </div>
     );
   }
-
-  const showMetric = HAS_METRIC[category];
 
   return (
     <div className="overflow-x-auto rounded-[5px] border border-border bg-panel">
@@ -35,9 +36,8 @@ export const UpgradeOptimizerTable = ({ rows, category }: Props) => {
             <th className="px-3 py-1.5 text-left">upgrade</th>
             <th className="px-3 py-1.5 text-left">lvl</th>
             <th className="px-3 py-1.5 text-right">cost</th>
-            <th className="px-3 py-1.5 text-right">gain</th>
-            <th className="px-3 py-1.5 text-right">eff.</th>
-            <th className="px-3 py-1.5 text-right">cumul.</th>
+            {isMetric && <th className="px-3 py-1.5 text-right">gain</th>}
+            {isMetric && <th className="px-3 py-1.5 text-right">eff.</th>}
           </tr>
         </thead>
         <tbody>
@@ -58,20 +58,19 @@ export const UpgradeOptimizerTable = ({ rows, category }: Props) => {
                 <span className="px-1 text-text-muted">{">"}</span>
                 <span className="text-primary">{r.toLevel}</span>
               </td>
-              <td className="px-3 py-1 text-right">{notateNumber(r.cost)}</td>
               <td className="px-3 py-1 text-right">
-                {showMetric && r.gain !== null ? notateNumber(r.gain) : "-"}
+                {formatCost(r.cost, r.resourceId)}
               </td>
-              <td className="px-3 py-1 text-right text-text-dim">
-                {showMetric && r.efficiency !== null
-                  ? formatScientific(r.efficiency)
-                  : "-"}
-              </td>
-              <td className="px-3 py-1 text-right text-text-dim">
-                {r.cumulativeCost === null
-                  ? "-"
-                  : notateNumber(r.cumulativeCost)}
-              </td>
+              {isMetric && (
+                <td className="px-3 py-1 text-right">
+                  {r.gain === null ? "-" : formatGain(r.gain)}
+                </td>
+              )}
+              {isMetric && (
+                <td className="px-3 py-1 text-right text-text-dim">
+                  {r.efficiency === null ? "-" : formatScientific(r.efficiency)}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
