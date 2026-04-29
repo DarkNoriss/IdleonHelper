@@ -80,3 +80,8 @@ CLAUDE.md
 docs/superpowers/
 docs/mockups/
 docs/tickets/
+
+# ---------------------------
+# Save fixtures (may contain personal data)
+# ---------------------------
+fixtures/

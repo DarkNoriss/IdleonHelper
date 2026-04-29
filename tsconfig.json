@@ -8,6 +8,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/renderer/src/*"],
+      "@/parsers/*": ["./src/parsers/*"],
       "@/types/*": ["src/types/*"],
       "@/shared/*": ["src/shared/*"]
     }
