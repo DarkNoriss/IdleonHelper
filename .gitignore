@@ -85,3 +85,8 @@ docs/tickets/
 # Save fixtures (may contain personal data)
 # ---------------------------
 fixtures/
+
+# ---------------------------
+# Parity script scratch output
+# ---------------------------
+tmp/
