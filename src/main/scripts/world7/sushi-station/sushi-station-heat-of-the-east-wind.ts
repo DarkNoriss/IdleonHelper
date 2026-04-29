@@ -21,6 +21,7 @@ import {
   GRID_SLOT_RED,
   GRID_SLOT_YELLOW,
   getPriorityCells,
+  MAX_TEMPLATE_TIER,
   pointToCellIndex,
   SUSHI_CLICK_OPTIONS,
   SUSHI_COOK,
@@ -51,7 +52,6 @@ export default defineScript<[boolean, boolean]>({
   name: "Sushi Station - Heat of the East Wind",
   run: async ({ token, args: [shouldCook, mergeAboveHotew] }) => {
     log("ensuring tiers are visible");
-    log(`mergeAboveHotew=${mergeAboveHotew}`);
 
     const visibility = await backendCommand.isVisibleParallel(
       { tiersOn: SUSHI_TIERS_ON, tiersOff: SUSHI_TIERS_OFF },
@@ -288,15 +288,51 @@ export default defineScript<[boolean, boolean]>({
         }
         const drainFloor = lowestTier + 1;
 
+        const drainHighest = getHighestTier(drainBoard);
+        const drainBuffCap = drainHighest === null ? null : drainHighest - 6;
+
         const aboveFloor = drainBoard.filter((p) => p.tierNumber > drainFloor);
-        let candidateTier = getHighestTierWithCount(aboveFloor, 2);
+        const eligible = aboveFloor.filter((p) => {
+          if (p.tierNumber === MAX_TEMPLATE_TIER) {
+            return false;
+          }
+          if (
+            !mergeAboveHotew &&
+            drainBuffCap !== null &&
+            p.tierNumber > drainBuffCap
+          ) {
+            return false;
+          }
+          return true;
+        });
+
+        const filteredHardCap = aboveFloor.some(
+          (p) => p.tierNumber === MAX_TEMPLATE_TIER
+        );
+        const filteredAboveBand =
+          !mergeAboveHotew &&
+          drainBuffCap !== null &&
+          aboveFloor.some(
+            (p) =>
+              p.tierNumber > drainBuffCap && p.tierNumber !== MAX_TEMPLATE_TIER
+          );
+        if (filteredHardCap) {
+          log(`excluding T${MAX_TEMPLATE_TIER} hard cap (defensive)`);
+        }
+        if (filteredAboveBand) {
+          log(
+            `excluding tiers above buffCap T${drainBuffCap} (mergeAboveHotew=false)`
+          );
+        }
+
+        let candidateTier = getHighestTierWithCount(eligible, 2);
 
         // Fallback: drain T_floor itself only when nothing above is
         // eligible AND it has count >= 3. Below 3, the cascade fires only
         // 1 trigger and leaves <2 floor pieces behind, breaking the chain
         // for the next iteration's seed.
         let isFloorFallback = false;
-        if (candidateTier === null) {
+        if (candidateTier === null && drainFloor !== MAX_TEMPLATE_TIER) {
           const floorCount = drainBoard.filter(
             (p) => p.tierNumber === drainFloor
           ).length;
