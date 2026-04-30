@@ -14,6 +14,7 @@ export const PAGE_IDS = [
   "classSpecific/compass",
   "classSpecific/compass-debug",
   "classSpecific/tesseract",
+  "classSpecific/grimoire",
   "world2/weekly-battle",
   "world2/alchemy-upgrade",
   "world3/construction",

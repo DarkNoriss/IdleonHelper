@@ -37,6 +37,7 @@ export const navConfig: NavEntry[] = [
         devOnly: true,
       },
       { title: "tesseract", page: "classSpecific/tesseract" },
+      { title: "grimoire", page: "classSpecific/grimoire" },
     ],
   },
   {
