@@ -9,16 +9,19 @@ import { type BossFarmerData, parseBossFarmer } from "@/parsers/boss-farmer";
 import { parseCompass } from "@/parsers/compass";
 import { parseConstruction } from "@/parsers/construction";
 import { parseSushiStation } from "@/parsers/sushi-station";
+import { parseTesseract } from "@/parsers/tesseract";
 import { useRawJsonStore } from "@/store/raw-json.ts";
 import type { CompassData } from "@/types/compass";
 import type { ParsedConstructionData } from "@/types/construction";
 import type { SushiStationData } from "@/types/sushi-station";
+import type { TesseractData } from "@/types/tesseract";
 
 type GameDataContextType = {
   construction: ParsedConstructionData | null;
   bossFarmer: BossFarmerData | null;
   sushiStation: SushiStationData | null;
   compass: CompassData | null;
+  tesseract: TesseractData | null;
 };
 
 const GameDataContext = createContext<GameDataContextType>({
@@ -26,6 +29,7 @@ const GameDataContext = createContext<GameDataContextType>({
   bossFarmer: null,
   sushiStation: null,
   compass: null,
+  tesseract: null,
 });
 
 export const useGameData = () => useContext(GameDataContext);
@@ -43,6 +47,7 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
     null
   );
   const [compass, setCompass] = useState<CompassData | null>(null);
+  const [tesseract, setTesseract] = useState<TesseractData | null>(null);
 
   useEffect(() => {
     if (!parsedJson) {
@@ -96,9 +101,22 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
     }
   }, [parsedJson]);
 
+  useEffect(() => {
+    if (!parsedJson) {
+      setTesseract(null);
+      return;
+    }
+    try {
+      setTesseract(parseTesseract(parsedJson));
+    } catch (error) {
+      console.error("Failed to parse tesseract data:", error);
+      setTesseract(null);
+    }
+  }, [parsedJson]);
+
   return (
     <GameDataContext.Provider
-      value={{ construction, bossFarmer, sushiStation, compass }}
+      value={{ construction, bossFarmer, sushiStation, compass, tesseract }}
     >
       {children}
     </GameDataContext.Provider>
