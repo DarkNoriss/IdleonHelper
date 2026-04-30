@@ -3,17 +3,8 @@ import type {
   TesseractStats,
   TesseractUpgradeDef,
 } from "@/types/tesseract";
+import { lavaLog } from "./lava-log";
 import { TESSERACT_UPGRADE_DEFS } from "./tesseract-data";
-
-// Toolbox utility - log10 with floor at 0 for inputs <= 1. Same impl as
-// compass-formulas.ts:344-348. Duplicated rather than exported until a
-// third optimizer (grimoire) needs it (YAGNI).
-function lavaLog(value: number): number {
-  if (value <= 1) {
-    return 0;
-  }
-  return Math.log10(value);
-}
 
 // Indices whose bonus is "self" (level * x5) and NOT modulated by
 // bonus(39). Verbatim from toolbox tesseract.ts:564-569.

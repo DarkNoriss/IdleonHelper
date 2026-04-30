@@ -1,5 +1,6 @@
 import type { CompassData, CompassStats } from "@/types/compass";
 import { COMPASS_RANDOM_LIST, COMPASS_UPGRADE_DEFS } from "./compass-data";
+import { lavaLog } from "./lava-log";
 
 const DUST_COST_FLOOR = 6.2;
 const PATH_RANDO_BASE = 3.69;
@@ -338,12 +339,4 @@ export function getExtraDustMultiplier(state: CompassData): number {
                     getLocalCompassBonus(state, 89)))))))) /
         100)
   );
-}
-
-// Toolbox utility — log10 with floor at 0 for inputs <= 1.
-function lavaLog(value: number): number {
-  if (value <= 1) {
-    return 0;
-  }
-  return Math.log10(value);
 }
