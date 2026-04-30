@@ -7,7 +7,7 @@ import type { TesseractUpgradeDef } from "@/types/tesseract";
 export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   {
     index: 0,
-    name: "Arcanist Damage 製 (Tap for more info)",
+    name: "Arcanist Damage",
     description: "+{ Base Damage in Arcanist Form",
     x1: 8,
     x2: 1.08,
@@ -40,7 +40,7 @@ export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   },
   {
     index: 3,
-    name: "The Prisma Bubble is Real 製",
+    name: "The Prisma Bubble is Real",
     description: "While in Arcanist Form, 1 in $ mobs drop Prisma Bubbles",
     x1: 10,
     x2: 1.07,
@@ -62,7 +62,7 @@ export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   },
   {
     index: 5,
-    name: "Wand Drops 製",
+    name: "Wand Drops",
     description: "Mobs can drop Arcanist Weapons up to {% Quality",
     x1: 50,
     x2: 1.2,
@@ -205,7 +205,7 @@ export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   },
   {
     index: 18,
-    name: "Parallel Statues 製",
+    name: "Parallel Statues",
     description: "{% chance for Statues to drop with 2x Quantity",
     x1: 2000,
     x2: 1.55,
@@ -260,7 +260,7 @@ export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   },
   {
     index: 23,
-    name: "Ring Drops 製",
+    name: "Ring Drops",
     description: "Mobs can drop Arcanist Rings up to {% Quality",
     x1: 7500,
     x2: 1.2,
@@ -337,7 +337,7 @@ export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   },
   {
     index: 30,
-    name: "Parallel Golden Food 製",
+    name: "Parallel Golden Food",
     description: "{% chance for Golden Food to drop with 2x Quantity",
     x1: 7000,
     x2: 1.55,
@@ -546,7 +546,7 @@ export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   },
   {
     index: 49,
-    name: "Massivon Hoarding 製",
+    name: "Massivon Hoarding",
     description: "+{% cheaper upgrades per POW 10 Silver Tachyons owned",
     x1: 300_000,
     x2: 1.35,
@@ -568,7 +568,7 @@ export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   },
   {
     index: 51,
-    name: "Drop Rate Crossfire 製",
+    name: "Drop Rate Crossfire",
     description: "{% of your Drop Rate affects Prisma Bubble drop chance",
     x1: 600_000,
     x2: 1.5,
@@ -601,7 +601,7 @@ export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   },
   {
     index: 54,
-    name: "Endless Reductions 製",
+    name: "Endless Reductions",
     description: "+{% cheaper Summoning upgrades per Endless Mode Victory",
     x1: 1_200_000,
     x2: 1.8,
@@ -645,7 +645,7 @@ export const TESSERACT_UPGRADE_DEFS: readonly TesseractUpgradeDef[] = [
   },
   {
     index: 58,
-    name: "Beyond All Limits 製",
+    name: "Beyond All Limits",
     description: "The max Arcane Crystal bonus is +$x higher",
     x1: 5_000_000,
     x2: 200,
