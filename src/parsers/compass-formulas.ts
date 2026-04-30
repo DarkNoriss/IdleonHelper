@@ -1,5 +1,7 @@
 import type { CompassData, CompassStats } from "@/types/compass";
 import { COMPASS_RANDOM_LIST, COMPASS_UPGRADE_DEFS } from "./compass-data";
+import { lavaLog } from "./lava-log";
+import { getMasterclassCostReduction } from "./masterclass-cost-reduction";
 
 const DUST_COST_FLOOR = 6.2;
 const PATH_RANDO_BASE = 3.69;
@@ -154,15 +156,10 @@ export function getUpgradeCost(
       idxInList
   );
 
-  // Toolbox misc.ts:217-227 — getMasterclassCostReduction. Picks the
-  // discount multiplier from the (forceLegendTalent x hasBonusBundle) pair.
-  let allMcRedux: number;
-  if (forceLegendTalent) {
-    allMcRedux = state.hasBonusBundle ? 0.05 : 0.2;
-  } else {
-    allMcRedux = state.hasBonusBundle ? 0.25 : 1;
-  }
-  const masterclassMultiplier = allMcRedux * state.first3mcMultiplier;
+  const masterclassMultiplier = getMasterclassCostReduction(
+    state,
+    forceLegendTalent
+  );
 
   // Toolbox 635-642 — final cost. DO NOT re-parenthesize.
   return (
@@ -338,12 +335,4 @@ export function getExtraDustMultiplier(state: CompassData): number {
                     getLocalCompassBonus(state, 89)))))))) /
         100)
   );
-}
-
-// Toolbox utility — log10 with floor at 0 for inputs <= 1.
-function lavaLog(value: number): number {
-  if (value <= 1) {
-    return 0;
-  }
-  return Math.log10(value);
 }

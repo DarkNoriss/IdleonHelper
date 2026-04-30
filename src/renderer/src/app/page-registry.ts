@@ -17,6 +17,7 @@ export const pageRegistry = {
   "classSpecific/compass-debug": () =>
     import("./pages/class-specific/compass-debug"),
   "classSpecific/tesseract": () => import("./pages/class-specific/tesseract"),
+  "classSpecific/grimoire": () => import("./pages/class-specific/grimoire"),
   "world2/weekly-battle": () => import("./pages/world-2/weekly-battle/index"),
   "world2/alchemy-upgrade": () =>
     import("./pages/world-2/alchemy-upgrade/index"),

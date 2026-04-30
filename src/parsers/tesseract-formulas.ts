@@ -3,17 +3,9 @@ import type {
   TesseractStats,
   TesseractUpgradeDef,
 } from "@/types/tesseract";
+import { lavaLog } from "./lava-log";
+import { getMasterclassCostReduction } from "./masterclass-cost-reduction";
 import { TESSERACT_UPGRADE_DEFS } from "./tesseract-data";
-
-// Toolbox utility - log10 with floor at 0 for inputs <= 1. Same impl as
-// compass-formulas.ts:344-348. Duplicated rather than exported until a
-// third optimizer (grimoire) needs it (YAGNI).
-function lavaLog(value: number): number {
-  if (value <= 1) {
-    return 0;
-  }
-  return Math.log10(value);
-}
 
 // Indices whose bonus is "self" (level * x5) and NOT modulated by
 // bonus(39). Verbatim from toolbox tesseract.ts:564-569.
@@ -81,15 +73,10 @@ export function getUpgradeCost(
     return Number.POSITIVE_INFINITY;
   }
 
-  // getMasterclassCostReduction (toolbox misc.ts:217-227). Inline copy of
-  // compass-formulas.ts:159-165 - duplicated until grimoire phase.
-  let allMcRedux: number;
-  if (forceLegendTalent) {
-    allMcRedux = state.hasBonusBundle ? 0.05 : 0.2;
-  } else {
-    allMcRedux = state.hasBonusBundle ? 0.25 : 1;
-  }
-  const masterclassReduction = allMcRedux * state.first3mcMultiplier;
+  const masterclassReduction = getMasterclassCostReduction(
+    state,
+    forceLegendTalent
+  );
 
   const bonus49 = calcTesseractBonus(state, 49);
   const silverTachyons = state.tachyons[4] ?? 0;
