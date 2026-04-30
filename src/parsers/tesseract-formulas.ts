@@ -1,4 +1,8 @@
-import type { TesseractData, TesseractUpgradeDef } from "@/types/tesseract";
+import type {
+  TesseractData,
+  TesseractStats,
+  TesseractUpgradeDef,
+} from "@/types/tesseract";
 import { TESSERACT_UPGRADE_DEFS } from "./tesseract-data";
 
 // Toolbox utility - log10 with floor at 0 for inputs <= 1. Same impl as
@@ -98,4 +102,61 @@ export function getUpgradeCost(
     1.04 ** index *
     (level + (def.x1 + level) * (def.x2 + 0.01) ** level)
   );
+}
+
+// Toolbox getArcanistStats - externals-stripped port. See spec section 4.4 for
+// reasoning. Per-tachyon-to-bonus map:
+//   damage    bonus(12) * lavaLog(opt[388]=purple)
+//   accuracy  bonus(27) * lavaLog(opt[389]=brown)
+//   defence   bonus(41) * lavaLog(opt[391]=red)
+export function getArcanistStats(state: TesseractData): TesseractStats {
+  const b = (i: number) => calcTesseractBonus(state, i);
+  const purpleLog = lavaLog(state.tachyons[0] ?? 0);
+  const brownLog = lavaLog(state.tachyons[1] ?? 0);
+  const redLog = lavaLog(state.tachyons[3] ?? 0);
+
+  // damage chain: base 5 + sum_chain1 [0,6,15,36,50] additive,
+  // multiplied by (1 + (bonus(12)*purpleLog + chain2 [4,24,31,42,53]) / 100)
+  const damage =
+    (5 + (b(0) + b(6) + b(15) + b(36) + b(50))) *
+    (1 + (b(12) * purpleLog + b(4) + b(24) + b(31) + b(42) + b(53)) / 100);
+
+  // accuracy chain: base 2 + sum [1,9,19,38,52], multiplied by
+  // (1 + (bonus(22)+bonus(44)+bonus(55)) / 100) * (1 + bonus(27)*brownLog/100)
+  const accuracy =
+    (2 + (b(1) + b(9) + b(19) + b(38) + b(52))) *
+    (1 + (b(22) + b(44) + b(55)) / 100) *
+    (1 + (b(27) * brownLog) / 100);
+
+  // defence chain: sum [2,11,29,46], multiplied by
+  // (1 + (bonus(22)+bonus(44)+bonus(55))/100) * (1 + bonus(41)*redLog/100)
+  const defence =
+    (b(2) + b(11) + b(29) + b(46)) *
+    (1 + (b(22) + b(44) + b(55)) / 100) *
+    (1 + (b(41) * redLog) / 100);
+
+  // crit: base 5 + bonus(8). Toolbox also adds labotomizer*lab/10 - dropped.
+  const critPct = 5 + b(8);
+  const critDamage = 1 + (20 + b(14)) / 100;
+
+  // attackSpeed: just bonus(21). Toolbox adds ghastlyPowerY*total/100 - dropped.
+  const attackSpeed = b(21);
+
+  return { damage, accuracy, defence, critPct, critDamage, attackSpeed };
+}
+
+// Toolbox getExtraTachyon - externals-stripped port. KEEP only:
+//   bonus(17) + bonus(34)*lavaLog(opt[390]=green) + bonus(56)*lavaLog(opt[393]=gold)
+// DROP: TESSERACT talent, gear (slot 95), arcadeBonus, jewelBonus,
+//       emperorBonus, charmBonus, backupEnergy, bundleBonus.
+// All dropped factors are state-independent within a single upgrade step
+// -> they cancel in (after - before) / before.
+export function getExtraTachyonGain(state: TesseractData): number {
+  const greenLog = lavaLog(state.tachyons[2] ?? 0);
+  const goldLog = lavaLog(state.tachyons[5] ?? 0);
+  const additive =
+    calcTesseractBonus(state, 17) +
+    calcTesseractBonus(state, 34) * greenLog +
+    calcTesseractBonus(state, 56) * goldLog;
+  return 1 + additive / 100;
 }
