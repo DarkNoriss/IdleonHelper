@@ -123,7 +123,7 @@ export const GrimoireOptimizerTab = () => {
   if (!grimoire) {
     return (
       <div className="rounded-[5px] border border-border bg-panel p-4 text-center font-mono text-[11px] text-text-dim">
-        no grimoire data - load your save first via the cloudsave page
+        no grimoire data — load your save first via the cloudsave page
       </div>
     );
   }
