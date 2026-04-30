@@ -9,6 +9,11 @@ import type {
 } from "@/types/compass";
 import type { SolverFocus } from "@/types/construction";
 import type {
+  GrimoireBoneFilter,
+  GrimoireCategory,
+  GrimoireRphRates,
+} from "@/types/grimoire";
+import type {
   OptimizerCategory,
   OptimizerGroupMode,
   OptimizerMaxSteps,
@@ -58,6 +63,14 @@ type TesseractOptimizerPrefs = {
   groupMode: OptimizerGroupMode;
   onlyAffordable: boolean;
 };
+type GrimoireOptimizerPrefs = {
+  category: GrimoireCategory;
+  rph: GrimoireRphRates;
+  boneFilter: GrimoireBoneFilter;
+  maxSteps: number;
+  groupMode: OptimizerGroupMode;
+  onlyAffordable: boolean;
+};
 
 type UiPrefsState = {
   candy: CandyPrefs;
@@ -72,6 +85,7 @@ type UiPrefsState = {
   sushiOptimizer: SushiOptimizerPrefs;
   compassOptimizer: CompassOptimizerPrefs;
   tesseractOptimizer: TesseractOptimizerPrefs;
+  grimoireOptimizer: GrimoireOptimizerPrefs;
 
   setCandy: (patch: Partial<CandyPrefs>) => void;
   setBossFarmer: (patch: Partial<BossFarmerPrefs>) => void;
@@ -88,6 +102,7 @@ type UiPrefsState = {
   setSushiOptimizer: (patch: Partial<SushiOptimizerPrefs>) => void;
   setCompassOptimizer: (patch: Partial<CompassOptimizerPrefs>) => void;
   setTesseractOptimizer: (patch: Partial<TesseractOptimizerPrefs>) => void;
+  setGrimoireOptimizer: (patch: Partial<GrimoireOptimizerPrefs>) => void;
 };
 
 const INITIAL_ALCHEMY_SELECTIONS: Selections = {
@@ -137,6 +152,14 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         groupMode: "none",
         onlyAffordable: false,
       },
+      grimoireOptimizer: {
+        category: "all",
+        rph: { 0: 1, 1: 1, 2: 1, 3: 1 },
+        boneFilter: "all",
+        maxSteps: 25,
+        groupMode: "none",
+        onlyAffordable: false,
+      },
 
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
       setBossFarmer: (patch) =>
@@ -178,6 +201,10 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setTesseractOptimizer: (patch) =>
         set((s) => ({
           tesseractOptimizer: { ...s.tesseractOptimizer, ...patch },
+        })),
+      setGrimoireOptimizer: (patch) =>
+        set((s) => ({
+          grimoireOptimizer: { ...s.grimoireOptimizer, ...patch },
         })),
     }),
     {
