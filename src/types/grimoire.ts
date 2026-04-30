@@ -56,6 +56,8 @@ export type GrimoireRphRates = {
   3: number;
 };
 
+// No scoreMode field - grimoire optimizes by per-hour cost only. Cost-only
+// ranking proved uninformative across compass + tesseract.
 export type GrimoireOptimizerInput = {
   data: GrimoireData;
   category: GrimoireCategory;
