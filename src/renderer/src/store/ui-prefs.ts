@@ -2,6 +2,11 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type { Selections } from "@/types/alchemy";
+import type {
+  CompassCategory,
+  CompassDustFilter,
+  CompassRphRates,
+} from "@/types/compass";
 import type { SolverFocus } from "@/types/construction";
 import type {
   OptimizerCategory,
@@ -32,6 +37,14 @@ type SushiOptimizerPrefs = {
   onlyAffordable: boolean;
   groupMode: OptimizerGroupMode;
 };
+type CompassOptimizerPrefs = {
+  category: CompassCategory;
+  rph: CompassRphRates;
+  dustFilter: CompassDustFilter;
+  maxSteps: number;
+  groupMode: OptimizerGroupMode;
+  onlyAffordable: boolean;
+};
 
 type UiPrefsState = {
   candy: CandyPrefs;
@@ -44,6 +57,7 @@ type UiPrefsState = {
   sushi: SushiPrefs;
   sushiHeatOfTheEastWind: SushiHeatOfTheEastWindPrefs;
   sushiOptimizer: SushiOptimizerPrefs;
+  compassOptimizer: CompassOptimizerPrefs;
 
   setCandy: (patch: Partial<CandyPrefs>) => void;
   setBossFarmer: (patch: Partial<BossFarmerPrefs>) => void;
@@ -58,6 +72,7 @@ type UiPrefsState = {
     patch: Partial<SushiHeatOfTheEastWindPrefs>
   ) => void;
   setSushiOptimizer: (patch: Partial<SushiOptimizerPrefs>) => void;
+  setCompassOptimizer: (patch: Partial<CompassOptimizerPrefs>) => void;
 };
 
 const INITIAL_ALCHEMY_SELECTIONS: Selections = {
@@ -90,6 +105,14 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         maxSteps: 25,
         onlyAffordable: false,
         groupMode: "none",
+      },
+      compassOptimizer: {
+        category: "damage",
+        rph: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 },
+        dustFilter: "all",
+        maxSteps: 25,
+        groupMode: "none",
+        onlyAffordable: false,
       },
 
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
@@ -124,6 +147,10 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setSushiOptimizer: (patch) =>
         set((s) => ({
           sushiOptimizer: { ...s.sushiOptimizer, ...patch },
+        })),
+      setCompassOptimizer: (patch) =>
+        set((s) => ({
+          compassOptimizer: { ...s.compassOptimizer, ...patch },
         })),
     }),
     {
