@@ -1,6 +1,7 @@
-// Same Google OAuth client used by IdleonToolbox - the only client trusted by
-// the idlemmo Firebase project's Google sign-in provider, configured for the
-// device-code flow. Mirrored from IdleonToolbox services/auth/google.js.
+// Google OAuth client trusted by the game's `idlemmo` Firebase project for its
+// Google sign-in provider, configured for the device-code flow. The client ID
+// is whatever Firebase has registered for that project — bundled in the game's
+// official web sign-in surface.
 export const GOOGLE_OAUTH_CLIENT_ID =
   "267901585099-u6fjd75v6k9gefq7bcokcndv99riir5j";
 

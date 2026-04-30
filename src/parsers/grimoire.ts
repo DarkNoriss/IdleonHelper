@@ -32,13 +32,13 @@ export function parseGrimoire(parsedJson: unknown): GrimoireData | null {
   }
   // Game over-allocates the Grimoire array (~100 slots); only the first
   // GRIMOIRE_UPGRADE_DEFS.length (55) slots are meaningful, the rest are 0.
-  // We sum the full array for parity with toolbox.
+  // We sum the full array for parity with the game's totalLevels.
   const upgradeLevels = grimoireRaw.map((v) => Number(v ?? 0) || 0);
   const totalUpgradeLevels = upgradeLevels.reduce((a, b) => a + b, 0);
 
   const unlockedIndices = computeUnlockedIndices(totalUpgradeLevels);
 
-  // OptLacc -> toolbox accountOptions. Bones at 330..333, kill counts at 334..336.
+  // OptLacc -> the game's accountOptions. Bones at 330..333, kill counts at 334..336.
   const accountOptions = parseArrayValue(root.OptLacc);
   const bones = Array.from({ length: BONE_COUNT }, (_, i) =>
     Array.isArray(accountOptions)
@@ -97,7 +97,7 @@ export function parseGrimoire(parsedJson: unknown): GrimoireData | null {
   };
 }
 
-// Toolbox grimoire.ts:77 - `upgrade.unlockLevel <= totalUpgradeLevels`.
+// Mirrors the game's grimoire unlock check: `upgrade.unlockLevel <= totalUpgradeLevels`.
 function computeUnlockedIndices(
   totalUpgradeLevels: number
 ): ReadonlySet<number> {

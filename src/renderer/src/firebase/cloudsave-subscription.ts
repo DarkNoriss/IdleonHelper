@@ -7,9 +7,9 @@ const MAX_CONSECUTIVE_ERRORS = 3;
 
 // The Firestore `_data/{uid}` document IS the game state — top-level keys are
 // flat (e.g. `GemItemsPurchased`, `CogM`, `Guild`). Our existing parsers expect
-// the idleontoolbox.com export shape `{ data: {...} }`, so we wrap the full
-// document under a `data` key before persisting. We also mirror toolbox's
-// top-level envelope (charNames, companion, guildData, tournament, serverVars,
+// the standard `{ data: {...} }` cloudsave-export envelope, so we wrap the
+// full document under a `data` key before persisting. We also mirror the
+// envelope's siblings (charNames, companion, guildData, tournament, serverVars,
 // accountCreateTime, lastUpdated, extraData) with null placeholders so future
 // features can populate them without re-shaping the store.
 type CloudsaveDoc = Record<string, unknown> & { lastUpdated?: number };

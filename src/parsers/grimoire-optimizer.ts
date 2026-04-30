@@ -14,8 +14,8 @@ import type {
 import { GRIMOIRE_UPGRADE_DEFS } from "./grimoire-data";
 import { getUpgradeCost, getWraithStats } from "./grimoire-formulas";
 
-// Verbatim from toolbox grimoire.ts:17-48. "all" is NOT in this map - it's
-// handled by the engine's null-gain path (engine.ts:62-64).
+// Verbatim from the game's grimoire category map. "all" is NOT in this map -
+// it's handled by the engine's null-gain path (engine.ts:62-64).
 export const GRIMOIRE_UPGRADE_CATEGORIES = {
   damage: [0, 6, 8, 13, 16, 18, 20, 21, 28, 31, 33, 35, 43, 46, 50],
   accuracy: [1, 7, 12, 25, 37, 38, 41, 47],

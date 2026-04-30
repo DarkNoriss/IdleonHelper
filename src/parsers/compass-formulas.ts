@@ -7,8 +7,8 @@ const DUST_COST_FLOOR = 6.2;
 const PATH_RANDO_BASE = 3.69;
 const RANDO_LIST_LENGTH_DIVISOR = 27;
 
-// Toolbox compass.ts:518-525 — verbatim port. DO NOT re-parenthesize.
-// Note: in toolbox the upgrade carries `level` directly. Here, level lives in
+// Verbatim port of the game's compass local-bonus formula. DO NOT re-parenthesize.
+// Note: the game stores `level` on the upgrade; here, level lives in
 // `state.upgradeLevels[index]`. Only the access pattern changes.
 export function getLocalCompassBonus(
   state: CompassData,
@@ -35,8 +35,7 @@ export function getLocalCompassBonus(
   return level * def.x5;
 }
 
-// Toolbox compass.ts:511-517 — same as getLocalCompassBonus but with a level
-// override for the target index.
+// Same as getLocalCompassBonus but with a level override for the target index.
 export function getCompassBonusAtLevel(
   state: CompassData,
   index: number,
@@ -50,9 +49,10 @@ export function getCompassBonusAtLevel(
   );
 }
 
-// Toolbox compass.ts:559-645 — verbatim port. Returns INFINITY when maxed.
+// Verbatim port of the game's compass upgrade-cost formula. Returns INFINITY
+// when maxed.
 //
-// `forceLegendTalent` mirrors toolbox's `getMasterclassCostReduction` param:
+// `forceLegendTalent` mirrors the game's `getMasterclassCostReduction` param:
 // when true, the legend talent IS active (first-N upgrades of the day);
 // when false, it is NOT (24th onwards). The optimizer flips this per step
 // based on `dailyDiscountsRemaining`.
@@ -70,7 +70,7 @@ export function getUpgradeCost(
     return Number.POSITIVE_INFINITY;
   }
 
-  // Per-target redCost — toolbox cases 45/43/48/57/51/54.
+  // Per-target redCost — the game switches on indices 45/43/48/57/51/54.
   let redCost = 1;
   switch (index) {
     case 45:
@@ -125,29 +125,29 @@ export function getUpgradeCost(
       break;
   }
 
-  // Toolbox 616-621 — surplus cost for "Path" upgrades.
-  // Note: toolbox checks `compassUpgPath.includes('Path')` against `x10`
-  // stringified. In our data x10 is a number (path index 0..N). Toolbox's
+  // Surplus cost for "Path" upgrades.
+  // Note: the game checks `compassUpgPath.includes('Path')` against `x10`
+  // stringified. In our data x10 is a number (path index 0..N). The game's
   // check effectively only triggers when x10 is the literal string 'Path*';
   // since our defs store numeric x10, surplusCost is always 0 by this rule.
-  // Preserved for parity in case future toolbox data switches back.
+  // Preserved for parity in case the game's data switches back.
   let surplusCost = 0;
   if (String(def.x10).includes("Path")) {
     surplusCost = ((3 * level) ** 2 + 12 * level) * 1.1 ** level;
   }
 
-  // Toolbox 624 — clamp serverDustCost above floor (already clamped at parse,
-  // re-clamp defensively).
+  // Clamp serverDustCost above floor (already clamped at parse, re-clamp
+  // defensively).
   const dustCost = Math.max(state.serverDustCost, DUST_COST_FLOOR);
 
-  // Toolbox 625-628 — bonus reduction from upgrades 36 + 77.
+  // Bonus reduction from upgrades 36 + 77.
   const bonusReduction =
     1 +
     (getLocalCompassBonus(state, 36) + getLocalCompassBonus(state, 77)) / 100;
 
-  // Toolbox 631-633 — path randoMultiplier. randomList is baked into
-  // compass-data.ts (toolbox keeps it in @website-data, not in saves).
-  // Indexed by `def.x10` directly (we already sliced from toolbox index 105).
+  // Path randoMultiplier. randomList is baked into compass-data.ts (the game
+  // keeps it alongside its other static data tables, not in saves).
+  // Indexed by `def.x10` directly (we already sliced from the game's index 105).
   const randoList = COMPASS_RANDOM_LIST[Math.round(def.x10)] ?? [];
   const idxInList = randoList.indexOf(String(index));
   const randoMultiplier = Math.max(
@@ -161,7 +161,7 @@ export function getUpgradeCost(
     forceLegendTalent
   );
 
-  // Toolbox 635-642 — final cost. DO NOT re-parenthesize.
+  // Final cost. DO NOT re-parenthesize.
   return (
     masterclassMultiplier *
     (surplusCost +
@@ -176,12 +176,12 @@ export function getUpgradeCost(
 
 // ---- Stats + categoryGain (Task 1.6) ----
 
-// Verbatim port of toolbox `getCompassStats` (compass.ts:382-505), with
-// external state zeroed (talents, gear, breeding, medallions, accountOptions
-// [232]). Compass-internal chains preserved so upgrades like 23 (Cooldust
-// Hoarding) and 78 (`78 * lavaLog(hp)`) score correctly.
+// Verbatim port of the game's `getCompassStats`, with external state zeroed
+// (talents, gear, breeding, medallions, accountOptions[232]). Compass-internal
+// chains preserved so upgrades like 23 (Cooldust Hoarding) and 78
+// (`78 * lavaLog(hp)`) score correctly.
 //
-// Toolbox writes the chains as `(a + (b + (c + ...)))` for historical reasons.
+// The game writes the chains as `(a + (b + (c + ...)))` for historical reasons.
 // `+` is associative so the flat form `a + b + c + ...` is mathematically
 // identical and easier to maintain. The only non-additive term is
 // `bonus(78) * lavaLog(hp)` (and equivalents); operator precedence gives `*`
@@ -191,7 +191,7 @@ export function getCompassStats(state: CompassData): CompassStats {
   const moondust = state.dusts[1];
   const cooldust = state.dusts[3];
 
-  // toolbox 392-396 — HP.
+  // HP.
   const hp =
     (10 + getLocalCompassBonus(state, 28) + getLocalCompassBonus(state, 87)) *
     (1 +
@@ -200,7 +200,7 @@ export function getCompassStats(state: CompassData): CompassStats {
         getLocalCompassBonus(state, 92)) /
         100);
 
-  // toolbox 410-429 — Damage.
+  // Damage.
   // Dropped externals:
   //   `Math.pow(1.05, equipmentWeaponPower)` -> 1
   //   `(1 + equipBonus4 / 100)` -> 1
@@ -234,8 +234,7 @@ export function getCompassStats(state: CompassData): CompassStats {
     getLocalCompassBonus(state, 94);
   const damage = damageBase * damageMul1 * (1 + damageChain / 100);
 
-  // toolbox 430-446 — Accuracy. Dropped: defenceAndAccTalent, medallions,
-  // equipBonus.
+  // Accuracy. Dropped: defenceAndAccTalent, medallions, equipBonus.
   const accuracyBase =
     3 +
     getLocalCompassBonus(state, 17) +
@@ -259,7 +258,7 @@ export function getCompassStats(state: CompassData): CompassStats {
     getLocalCompassBonus(state, 90);
   const accuracy = accuracyBase * accuracyMul1 * (1 + accuracyChain / 100);
 
-  // toolbox 447-461 — Defence. Dropped: defenceAndAccTalent, equipBonus.
+  // Defence. Dropped: defenceAndAccTalent, equipBonus.
   const defenceBase =
     1 + getLocalCompassBonus(state, 29) + getLocalCompassBonus(state, 63);
   const defenceMul1 =
@@ -275,11 +274,11 @@ export function getCompassStats(state: CompassData): CompassStats {
     getLocalCompassBonus(state, 91);
   const defence = defenceBase * defenceMul1 * (1 + defenceChain / 100);
 
-  // toolbox 463-466 — Crit %. critTalent, breeding dropped.
+  // Crit %. critTalent, breeding dropped.
   const critPct =
     5 + getLocalCompassBonus(state, 16) + getLocalCompassBonus(state, 66);
 
-  // toolbox 468-471 — Crit damage. equipBonus2 dropped.
+  // Crit damage. equipBonus2 dropped.
   const critDamage =
     1 +
     (20 +
@@ -287,15 +286,15 @@ export function getCompassStats(state: CompassData): CompassStats {
       getLocalCompassBonus(state, 75)) /
       100;
 
-  // toolbox 473-475 — Attack speed. equipBonus3 dropped.
+  // Attack speed. equipBonus3 dropped.
   const attackSpeed =
     getLocalCompassBonus(state, 21) + getLocalCompassBonus(state, 69);
 
-  // toolbox 462 — Mastery (not currently surfaced in any UPGRADE_CATEGORIES
-  // entry; populated for completeness).
+  // Mastery (not currently surfaced in any UPGRADE_CATEGORIES entry;
+  // populated for completeness).
   const mastery = Math.min(0.7, 0.2 + getLocalCompassBonus(state, 70) / 100);
 
-  // toolbox 485-489 — Multi shop %. multiTalent dropped.
+  // Multi shop %. multiTalent dropped.
   const multi =
     getLocalCompassBonus(state, 18) +
     (getLocalCompassBonus(state, 125) + getLocalCompassBonus(state, 73));
@@ -313,10 +312,10 @@ export function getCompassStats(state: CompassData): CompassStats {
   };
 }
 
-// Toolbox 538-556 — verbatim port (extra dust multiplier). External bonuses
+// Verbatim port of the game's extra dust multiplier. External bonuses
 // (charm, equip, emperor, dustTalent, compassTalent, arcadeBonus) are absent
 // in CompassData; treated as 0 for phase 1. lavaLog is over solardust
-// (accountOptions[359] in toolbox = state.dusts[2]).
+// (the game's accountOptions[359] = state.dusts[2]).
 export function getExtraDustMultiplier(state: CompassData): number {
   return (
     (1 +

@@ -354,9 +354,9 @@ export const SUSHI_UPG: readonly (readonly [
 ] as const;
 
 // slot -> SUSHI_UPG index. 45 entries; _computePath iterates slot < SLOT_TO_UPG.length.
-// Source: IdleonToolbox `data/website-data.json` research[32] (the game's actual
-// Research[32] save key). Earlier snapshot from research-optimizer's customlists.js
-// was a stale 32-entry subset that produced costs ~10^14x too high for late-slot
+// Source: the game's `Research[32]` save key (mirrored in the data tables as
+// research[32]). Earlier snapshot from research-optimizer's customlists.js was
+// a stale 32-entry subset that produced costs ~10^14x too high for late-slot
 // upgrades and incorrectly gated unlock checks.
 export const SLOT_TO_UPG: readonly number[] = [
   41, 8, 44, 1, 30, 9, 0, 6, 2, 43, 17, 31, 14, 42, 13, 23, 35, 10, 3, 20, 32,
@@ -365,8 +365,8 @@ export const SLOT_TO_UPG: readonly number[] = [
 ] as const;
 
 // Maps sushi tier (0..53) to knowledge category index (0..10).
-// Source: IdleonToolbox `data/website-data.json` research[33] (the game's
-// Research[33] save key). Earlier 32-entry snapshot was stale and incorrect.
+// Source: the game's `Research[33]` save key (mirrored in the data tables as
+// research[33]). Earlier 32-entry snapshot was stale and incorrect.
 export const TIER_TO_KNOWLEDGE_CAT: readonly number[] = [
   0, 1, 2, 0, 2, 3, 1, 0, 2, 4, 3, 0, 1, 5, 2, 4, 3, 0, 6, 3, 2, 5, 1, 4, 0, 6,
   2, 7, 3, 5, 1, 6, 0, 4, 8, 2, 7, 5, 6, 3, 1, 8, 4, 9, 2, 7, 5, 8, 3, 10, 6, 9,
@@ -679,8 +679,8 @@ export function totalBucksPerHr(
   return total;
 }
 
-// Returns the one-level upgrade cost for the given slot (sushi.js:100-117).
-// Mirrors toolbox sushiStation.ts:117-128: rogDiscount = max(rogBonusQTY(26), rogBonusQTY(44)).
+// Returns the one-level upgrade cost for the given slot.
+// Mirrors the game's sushi-station logic: rogDiscount = max(rogBonusQTY(26), rogBonusQTY(44)).
 export function upgCost(
   slot: number,
   upgLevels: readonly number[],

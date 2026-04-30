@@ -1,6 +1,6 @@
-// Toolbox misc.ts:217-227 - getMasterclassCostReduction. Picks the discount
-// multiplier from the (forceLegendTalent x hasBonusBundle) pair, then
-// composes with the always-on first3mcCostRedux multiplier.
+// Verbatim port of the game's `getMasterclassCostReduction`. Picks the discount
+// multiplier from the (forceLegendTalent x hasBonusBundle) pair, then composes
+// with the always-on first3mcCostRedux multiplier.
 // Hoisted from compass-formulas.ts + tesseract-formulas.ts (third-copy threshold).
 
 type MasterclassCostInput = {

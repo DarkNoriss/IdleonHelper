@@ -18,8 +18,8 @@ import {
   getUpgradeCost,
 } from "./compass-formulas";
 
-// Toolbox UPGRADE_CATEGORIES — verbatim port. Each category lists the upgrade
-// indices the optimizer should consider when scoring that category.
+// Verbatim port of the game's compass UPGRADE_CATEGORIES. Each category lists
+// the upgrade indices the optimizer should consider when scoring that category.
 export const COMPASS_UPGRADE_CATEGORIES = {
   damage: [
     6, 8, 10, 23, 113, 112, 14, 119, 15, 122, 123, 121, 129, 130, 127, 24, 132,
@@ -37,7 +37,7 @@ export const COMPASS_UPGRADE_CATEGORIES = {
 } as const satisfies Record<string, readonly number[]>;
 
 // Per-category list of CompassStats keys to sum percentChange over.
-// Matches toolbox UPGRADE_CATEGORIES[category].stats.
+// Matches the game's UPGRADE_CATEGORIES[category].stats.
 const CATEGORY_STATS: Record<
   Exclude<CompassCategory, "all" | "dust">,
   readonly (keyof CompassStats)[]
@@ -64,7 +64,7 @@ type CompassState = {
   // Daily cheap-upgrades remaining; decremented per applied step. Drives the
   // `forceLegendTalent` flag passed into the cost formula. Goes from
   // `data.dailyDiscountsRemaining` down to 0, then upgrades use the no-legend
-  // multiplier (matches toolbox genericUpgradeOptimizer.ts:65 / 103 / 186).
+  // multiplier (matches the game's generic upgrade-optimizer behavior).
   reductionsRemaining: number;
 };
 
@@ -171,10 +171,10 @@ export function computeCompassPath(
     return cost;
   };
 
-  // Match toolbox: gain = sum of percentChange across the category's stats.
+  // Match the game: gain = sum of percentChange across the category's stats.
   // percentChange[s] = (after[s] - before[s]) / before[s] * 100, or 0 when
   // before[s] <= 0. The optimizer-core engine then computes
-  // efficiency = gain / score, which equals toolbox's
+  // efficiency = gain / score, which equals the game's
   // efficiency = totalStatChange / cost (or / timeCost for perHour).
   const gain = (slot: number, s: CompassState): number | null => {
     if (category === "all") {
