@@ -36,6 +36,7 @@ export const navConfig: NavEntry[] = [
         page: "classSpecific/compass-debug",
         devOnly: true,
       },
+      { title: "tesseract", page: "classSpecific/tesseract" },
     ],
   },
   {
