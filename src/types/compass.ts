@@ -46,7 +46,7 @@ export type CompassData = {
   totalDustsCollected: number;
 
   // Set of upgrade indices the user has unlocked. Locked upgrades never
-  // appear in toolbox's optimizer either — they're not in groupedUpgrades.
+  // appear in the game's optimizer either — they're not in groupedUpgrades.
   unlockedIndices: ReadonlySet<number>;
 
   // Daily Shopping Spree (legend talent 23) — first N upgrades per day are

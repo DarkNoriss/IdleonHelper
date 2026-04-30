@@ -33,7 +33,7 @@ export function parseTesseract(parsedJson: unknown): TesseractData | null {
 
   const unlockedIndices = computeUnlockedIndices(totalUpgradeLevels);
 
-  // OptLacc -> toolbox accountOptions. Tachyons live at 388..393.
+  // OptLacc -> the game's accountOptions. Tachyons live at 388..393.
   const accountOptions = parseArrayValue(root.OptLacc);
   const tachyons = Array.from({ length: TACHYON_COUNT }, (_, i) =>
     Array.isArray(accountOptions)
@@ -86,7 +86,7 @@ export function parseTesseract(parsedJson: unknown): TesseractData | null {
   };
 }
 
-// Toolbox tesseract.ts:88 - `upgrade.x6 <= totalUpgradeLevels`.
+// Mirrors the game's tesseract unlock check: `upgrade.x6 <= totalUpgradeLevels`.
 function computeUnlockedIndices(
   totalUpgradeLevels: number
 ): ReadonlySet<number> {

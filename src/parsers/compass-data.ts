@@ -1,6 +1,6 @@
 import type { CompassUpgradeDef } from "@/types/compass";
 
-// Ported verbatim from IdleonToolbox data/website-data.json (compass array).
+// Ported verbatim from the game's data tables (compass array).
 // Order matters: array index === upgrade index referenced by compass-formulas.
 // DO NOT EDIT VALUES.
 export const COMPASS_UPGRADE_DEFS: CompassUpgradeDef[] = [
@@ -2213,7 +2213,7 @@ export const COMPASS_UPGRADE_DEFS: CompassUpgradeDef[] = [
   },
 ];
 
-// Path-randomizer entries from toolbox randomList[105..114].
+// Path-randomizer entries from the game's randomList[105..114].
 // Indexed by upgrade `def.x10` (0..N path index).
 // DO NOT EDIT — used by compass-formulas.getUpgradeCost.
 export const COMPASS_RANDOM_LIST: readonly (readonly string[])[] = [

@@ -202,7 +202,7 @@ const extractCogOrder = (jsonData: RawJson): string[] => {
   return [];
 };
 
-// number2letter from toolbox: index 0 = '_', 1 = 'a', 2 = 'b', 3 = 'c', ...
+// number2letter from the game: index 0 = '_', 1 = 'a', 2 = 'b', 3 = 'c', ...
 // Small cog name format: CogSm{type}{level} where type is one of '_', 'a', 'b'.
 // typeIndex 0 (_) — base x2, applies as multiplier on flaggy
 // typeIndex 1 (a) — base x4, applies as multiplier on buildRate
@@ -617,8 +617,8 @@ export const calculateScore = (
     }
   }
 
-  // Mirror toolbox: only the exp small-cog multiplier is reflected in the
-  // displayed score. Build/flaggy small cogs affect the actual game rate
+  // Mirror the game's UI: only the exp small-cog multiplier is reflected in
+  // the displayed score. Build/flaggy small cogs affect the actual game rate
   // through a separate mechanism that does not appear in the totals.
   const finalExpBonus = totalExpBonus * (1 + data.smallCogBonuses.exp / 100);
   const finalFlaggy = totalFlaggy * (1 + data.flaggyShopUpgrades * 0.5);

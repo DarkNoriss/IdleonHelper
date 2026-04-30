@@ -5,7 +5,7 @@ export type RawJson = {
     CogO?: string;
     [key: string]: unknown;
   };
-  // Mirrors IdleonToolbox's top-level envelope so future features (guild,
+  // Mirrors the standard cloudsave envelope so future features (guild,
   // companions, tournament, char-name lookups) can live in the same store
   // without re-shaping. v1 only populates `data` from Firestore — siblings
   // stay null until per-feature parsers are added.

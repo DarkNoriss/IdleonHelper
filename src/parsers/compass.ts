@@ -9,7 +9,7 @@ const FIRST_3MC_REDUX_INDEX = 499;
 const DAILY_DISCOUNTS_USED_INDEX = 480;
 
 // Legend talent 23 "Daily Shopping Spree" — first N masterclass upgrades each
-// day are cheaper. Toolbox legendTalents[23]: x1=3 (max level), x2=8 (per
+// day are cheaper. The game's legendTalents[23]: x1=3 (max level), x2=8 (per
 // level). At max level: bonus = 24 daily discounts.
 const LEGEND_TALENT_DAILY_SPREE_INDEX = 23;
 const LEGEND_TALENT_DAILY_SPREE_PER_LEVEL = 8;
@@ -50,9 +50,9 @@ export function parseCompass(parsedJson: unknown): CompassData | null {
     abominationsRaw
   );
 
-  // Account-level options ("OptLacc" in raw save). Toolbox renames it to
-  // "accountOptions" during its parse pipeline. Missing-or-invalid is OK —
-  // dusts default to 0 so the upgrade list still renders.
+  // Account-level options ("OptLacc" in raw save). The game refers to this as
+  // "accountOptions" in its parse pipeline. Missing-or-invalid is OK — dusts
+  // default to 0 so the upgrade list still renders.
   const accountOptions = parseArrayValue(root.OptLacc);
   const dusts = Array.from({ length: DUST_SLOT_COUNT }, (_, i) =>
     Array.isArray(accountOptions)
@@ -110,13 +110,12 @@ export function parseCompass(parsedJson: unknown): CompassData | null {
   };
 }
 
-// Toolbox compass.ts:313-372 (`getGroupedUpgrades`) — verbatim port of the
-// unlock logic. Each path's first upgrade carries its level as the "unlock
-// counter": item at position i is unlocked when i <= count. Abomination
-// path is unlocked per `Compass[1]` directly. Default group covers
-// upgrades 0 (Pathfinder) and 170 (Worldfinder).
+// Verbatim port of the game's `getGroupedUpgrades` unlock logic. Each path's
+// first upgrade carries its level as the "unlock counter": item at position i
+// is unlocked when i <= count. Abomination path is unlocked per `Compass[1]`
+// directly. Default group covers upgrades 0 (Pathfinder) and 170 (Worldfinder).
 //
-// Upgrades not in any path are left LOCKED — toolbox's optimizer iterates
+// Upgrades not in any path are left LOCKED — the game's optimizer iterates
 // only over `groupedUpgrades`, never over the raw def list.
 const PATH_PREPENDS: ReadonlyArray<{
   randomListIdx: number;

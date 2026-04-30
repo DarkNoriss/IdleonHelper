@@ -18,8 +18,8 @@ import {
   getUpgradeCost,
 } from "./tesseract-formulas";
 
-// Verbatim from toolbox tesseract.ts:26-57. "all" is NOT in this map - it's
-// handled by the engine's null-gain path (engine.ts:62-64).
+// Verbatim from the game's tesseract category map. "all" is NOT in this map -
+// it's handled by the engine's null-gain path (engine.ts:62-64).
 export const TESSERACT_UPGRADE_CATEGORIES = {
   damage: [0, 4, 6, 12, 15, 24, 31, 36, 42, 50, 53, 39, 49, 54],
   accuracy: [1, 9, 19, 22, 27, 38, 44, 52, 55, 39, 49, 54],

@@ -7,8 +7,8 @@ import { lavaLog } from "./lava-log";
 import { getMasterclassCostReduction } from "./masterclass-cost-reduction";
 import { TESSERACT_UPGRADE_DEFS } from "./tesseract-data";
 
-// Indices whose bonus is "self" (level * x5) and NOT modulated by
-// bonus(39). Verbatim from toolbox tesseract.ts:564-569.
+// Indices whose bonus is "self" (level * x5) and NOT modulated by bonus(39).
+// Verbatim from the game's tesseract self-multiplier list.
 const SELF_MULTIPLIER_INDICES = new Set<number>([
   3, 7, 8, 10, 13, 16, 20, 25, 26, 28, 33, 35, 39, 40, 43, 45, 48, 57, 58,
 ]);
@@ -21,9 +21,10 @@ function defOf(index: number): TesseractUpgradeDef | undefined {
   return TESSERACT_UPGRADE_DEFS[index];
 }
 
-// Toolbox calcTesseractBonus(upgrades, index, 0). The `anotherIndex === 999`
-// branch in toolbox is only used by description rendering; we drop it.
-// Recursion terminates because 39 is in SELF_MULTIPLIER_INDICES (depth <= 1).
+// Verbatim port of the game's `calcTesseractBonus(upgrades, index, 0)`. The
+// `anotherIndex === 999` branch is only used by description rendering; we
+// drop it. Recursion terminates because 39 is in SELF_MULTIPLIER_INDICES
+// (depth <= 1).
 export function calcTesseractBonus(
   state: TesseractData,
   index: number
@@ -40,8 +41,8 @@ export function calcTesseractBonus(
   return base * (1 + calcTesseractBonus(state, 39) / 100);
 }
 
-// Toolbox getTesseractBonusAtLevel - projects calcTesseractBonus with a
-// modified level for `index`.
+// Verbatim port of the game's `getTesseractBonusAtLevel` - projects
+// calcTesseractBonus with a modified level for `index`.
 export function getTesseractBonusAtLevel(
   state: TesseractData,
   index: number,
@@ -56,9 +57,9 @@ export function getTesseractBonusAtLevel(
   return calcTesseractBonus(projected, index);
 }
 
-// Toolbox getUpgradeCost - verbatim port. opt[392] = silver tachyons
-// (388+4=392, tachyonNames[4]=Silver). Cost reduction (bonus 49) scales by
-// lavaLog(silver_count). DO NOT re-parenthesize.
+// Verbatim port of the game's tesseract `getUpgradeCost`. opt[392] = silver
+// tachyons (388+4=392, tachyonNames[4]=Silver). Cost reduction (bonus 49)
+// scales by lavaLog(silver_count). DO NOT re-parenthesize.
 export function getUpgradeCost(
   state: TesseractData,
   index: number,
@@ -91,8 +92,8 @@ export function getUpgradeCost(
   );
 }
 
-// Toolbox getArcanistStats - externals-stripped port. See spec section 4.4 for
-// reasoning. Per-tachyon-to-bonus map:
+// Externals-stripped port of the game's `getArcanistStats`. See spec section
+// 4.4 for reasoning. Per-tachyon-to-bonus map:
 //   damage    bonus(12) * lavaLog(opt[388]=purple)
 //   accuracy  bonus(27) * lavaLog(opt[389]=brown)
 //   defence   bonus(41) * lavaLog(opt[391]=red)
@@ -122,17 +123,17 @@ export function getArcanistStats(state: TesseractData): TesseractStats {
     (1 + (b(22) + b(44) + b(55)) / 100) *
     (1 + (b(41) * redLog) / 100);
 
-  // crit: base 5 + bonus(8). Toolbox also adds labotomizer*lab/10 - dropped.
+  // crit: base 5 + bonus(8). The game also adds labotomizer*lab/10 - dropped.
   const critPct = 5 + b(8);
   const critDamage = 1 + (20 + b(14)) / 100;
 
-  // attackSpeed: just bonus(21). Toolbox adds ghastlyPowerY*total/100 - dropped.
+  // attackSpeed: just bonus(21). The game adds ghastlyPowerY*total/100 - dropped.
   const attackSpeed = b(21);
 
   return { damage, accuracy, defence, critPct, critDamage, attackSpeed };
 }
 
-// Toolbox getExtraTachyon - externals-stripped port. KEEP only:
+// Externals-stripped port of the game's `getExtraTachyon`. KEEP only:
 //   bonus(17) + bonus(34)*lavaLog(opt[390]=green) + bonus(56)*lavaLog(opt[393]=gold)
 // DROP: TESSERACT talent, gear (slot 95), arcadeBonus, jewelBonus,
 //       emperorBonus, charmBonus, backupEnergy, bundleBonus.
