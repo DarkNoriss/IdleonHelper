@@ -3,7 +3,7 @@ import { GRIMOIRE_UPGRADE_DEFS } from "./grimoire-data";
 import { getMasterclassCostReduction } from "./masterclass-cost-reduction";
 
 // Indices whose bonus is "self" (level * x5) and NOT modulated by bonus(36).
-// Verbatim from toolbox grimoire.ts:253 conditional.
+// Verbatim from toolbox grimoire.ts:253-258 conditional.
 const SELF_MULTIPLIER_INDICES = new Set<number>([
   9, 11, 17, 26, 32, 36, 39, 45,
 ]);
@@ -45,6 +45,8 @@ export function getUpgradeCost(
     return Number.POSITIVE_INFINITY;
   }
   const level = levelOf(state, index);
+  // Optimizer-side guard - toolbox returns the formula at any level; we cap
+  // at max so the optimizer cannot purchase past it. Mirrors tesseract.
   if (level >= def.x4) {
     return Number.POSITIVE_INFINITY;
   }
