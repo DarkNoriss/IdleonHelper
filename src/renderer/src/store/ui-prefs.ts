@@ -13,6 +13,11 @@ import type {
   OptimizerGroupMode,
   OptimizerMaxSteps,
 } from "@/types/sushi-station";
+import type {
+  TesseractCategory,
+  TesseractRphRates,
+  TesseractTachyonFilter,
+} from "@/types/tesseract";
 
 type CandyPrefs = { duration: string };
 type BossFarmerPrefs = { iterations: string };
@@ -45,6 +50,14 @@ type CompassOptimizerPrefs = {
   groupMode: OptimizerGroupMode;
   onlyAffordable: boolean;
 };
+type TesseractOptimizerPrefs = {
+  category: TesseractCategory;
+  rph: TesseractRphRates;
+  tachyonFilter: TesseractTachyonFilter;
+  maxSteps: number;
+  groupMode: OptimizerGroupMode;
+  onlyAffordable: boolean;
+};
 
 type UiPrefsState = {
   candy: CandyPrefs;
@@ -58,6 +71,7 @@ type UiPrefsState = {
   sushiHeatOfTheEastWind: SushiHeatOfTheEastWindPrefs;
   sushiOptimizer: SushiOptimizerPrefs;
   compassOptimizer: CompassOptimizerPrefs;
+  tesseractOptimizer: TesseractOptimizerPrefs;
 
   setCandy: (patch: Partial<CandyPrefs>) => void;
   setBossFarmer: (patch: Partial<BossFarmerPrefs>) => void;
@@ -73,6 +87,7 @@ type UiPrefsState = {
   ) => void;
   setSushiOptimizer: (patch: Partial<SushiOptimizerPrefs>) => void;
   setCompassOptimizer: (patch: Partial<CompassOptimizerPrefs>) => void;
+  setTesseractOptimizer: (patch: Partial<TesseractOptimizerPrefs>) => void;
 };
 
 const INITIAL_ALCHEMY_SELECTIONS: Selections = {
@@ -107,9 +122,17 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         groupMode: "none",
       },
       compassOptimizer: {
-        category: "damage",
+        category: "all",
         rph: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 },
         dustFilter: "all",
+        maxSteps: 25,
+        groupMode: "none",
+        onlyAffordable: false,
+      },
+      tesseractOptimizer: {
+        category: "all",
+        rph: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 },
+        tachyonFilter: "all",
         maxSteps: 25,
         groupMode: "none",
         onlyAffordable: false,
@@ -151,6 +174,10 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setCompassOptimizer: (patch) =>
         set((s) => ({
           compassOptimizer: { ...s.compassOptimizer, ...patch },
+        })),
+      setTesseractOptimizer: (patch) =>
+        set((s) => ({
+          tesseractOptimizer: { ...s.tesseractOptimizer, ...patch },
         })),
     }),
     {
