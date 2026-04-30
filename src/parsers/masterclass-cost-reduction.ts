@@ -4,7 +4,6 @@
 // Hoisted from compass-formulas.ts + tesseract-formulas.ts (third-copy threshold).
 
 type MasterclassCostInput = {
-  hasLegendTalent: boolean;
   hasBonusBundle: boolean;
   first3mcMultiplier: number;
 };
