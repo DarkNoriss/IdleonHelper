@@ -6,9 +6,11 @@ import {
   useState,
 } from "react";
 import { type BossFarmerData, parseBossFarmer } from "@/parsers/boss-farmer";
+import { parseCompass } from "@/parsers/compass";
 import { parseConstruction } from "@/parsers/construction";
 import { parseSushiStation } from "@/parsers/sushi-station";
 import { useRawJsonStore } from "@/store/raw-json.ts";
+import type { CompassData } from "@/types/compass";
 import type { ParsedConstructionData } from "@/types/construction";
 import type { SushiStationData } from "@/types/sushi-station";
 
@@ -16,12 +18,14 @@ type GameDataContextType = {
   construction: ParsedConstructionData | null;
   bossFarmer: BossFarmerData | null;
   sushiStation: SushiStationData | null;
+  compass: CompassData | null;
 };
 
 const GameDataContext = createContext<GameDataContextType>({
   construction: null,
   bossFarmer: null,
   sushiStation: null,
+  compass: null,
 });
 
 export const useGameData = () => useContext(GameDataContext);
@@ -38,6 +42,7 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
   const [sushiStation, setSushiStation] = useState<SushiStationData | null>(
     null
   );
+  const [compass, setCompass] = useState<CompassData | null>(null);
 
   useEffect(() => {
     if (!parsedJson) {
@@ -78,9 +83,22 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
     }
   }, [parsedJson]);
 
+  useEffect(() => {
+    if (!parsedJson) {
+      setCompass(null);
+      return;
+    }
+    try {
+      setCompass(parseCompass(parsedJson));
+    } catch (error) {
+      console.error("Failed to parse compass data:", error);
+      setCompass(null);
+    }
+  }, [parsedJson]);
+
   return (
     <GameDataContext.Provider
-      value={{ construction, bossFarmer, sushiStation }}
+      value={{ construction, bossFarmer, sushiStation, compass }}
     >
       {children}
     </GameDataContext.Provider>

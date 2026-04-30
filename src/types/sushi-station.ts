@@ -36,7 +36,9 @@ export type SushiStationData = {
 export type OptimizerCategory = "all" | "bucks" | "fuelRate" | "fuelCap";
 
 export const OPTIMIZER_MAX_STEPS_OPTIONS = [10, 25, 50, 100, 300] as const;
-export type OptimizerMaxSteps = (typeof OPTIMIZER_MAX_STEPS_OPTIONS)[number];
+// Toolbar accepts both presets and arbitrary user-typed positive integers
+// via its "custom" option, so this is `number` rather than the preset union.
+export type OptimizerMaxSteps = number;
 
 export type ComputePathInput = {
   data: SushiStationData;

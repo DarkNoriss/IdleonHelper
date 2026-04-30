@@ -9,7 +9,6 @@ import { useUiPrefsStore } from "@/store/ui-prefs";
 import {
   OPTIMIZER_MAX_STEPS_OPTIONS,
   type OptimizerCategory,
-  type OptimizerMaxSteps,
 } from "@/types/sushi-station";
 
 const CATEGORY_OPTIONS: readonly { id: OptimizerCategory; label: string }[] = [
@@ -58,7 +57,7 @@ export const UpgradeOptimizer = () => {
         onCategoryChange={(c) => setPrefs({ category: c as OptimizerCategory })}
         onGroupModeChange={(m) => setPrefs({ groupMode: m })}
         onlyAffordable={prefs.onlyAffordable}
-        onMaxStepsChange={(n) => setPrefs({ maxSteps: n as OptimizerMaxSteps })}
+        onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
         onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
         rightSlot={
           <span className="text-text-dim">
