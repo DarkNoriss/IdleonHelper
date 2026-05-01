@@ -111,7 +111,7 @@ export const UpdateFooter = () => {
   } else if (status === "checking") {
     left = VerCurrent;
     right = (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 rounded-[3px] border border-transparent px-2 py-0.5">
         <span className="inline-block h-2 w-2 animate-v3spin rounded-full border-[1.5px] border-amber border-t-transparent" />
         <span className="text-amber">checking…</span>
       </div>
