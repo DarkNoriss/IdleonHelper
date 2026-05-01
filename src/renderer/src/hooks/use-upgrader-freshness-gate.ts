@@ -88,8 +88,8 @@ export function useUpgraderFreshnessGate({
         (expectedByIndex.get(step.index) ?? 0) + step.levels
       );
     }
-    const overs: string[] = [];
-    const unders: string[] = [];
+    const prefix = logPrefix ?? scriptId;
+    const messages: string[] = [];
     for (const [index, expectedDelta] of expectedByIndex) {
       const before = snapshot[index] ?? 0;
       const after = current[index] ?? 0;
@@ -100,32 +100,22 @@ export function useUpgraderFreshnessGate({
       const name = upgradeNameOf?.(index) ?? "?";
       const drift = actualDelta - expectedDelta;
       const sign = drift > 0 ? "+" : "";
-      const desc = `#${index} ${name} expected +${expectedDelta} got +${actualDelta} (${sign}${drift})`;
-      if (actualDelta > expectedDelta) {
-        overs.push(desc);
-      } else {
-        unders.push(desc);
-      }
+      const expected = before + expectedDelta;
+      messages.push(
+        `[${prefix}] #${index} ${name} expected ${expected} got ${after} (${sign}${drift})`
+      );
     }
-    if (overs.length === 0 && unders.length === 0) {
+    if (messages.length === 0) {
       return;
     }
-    const prefix = logPrefix ?? scriptId;
-    const total = overs.length + unders.length;
-    const parts: string[] = [];
-    if (overs.length > 0) {
-      parts.push(`over: ${overs.join(", ")}`);
-    }
-    if (unders.length > 0) {
-      parts.push(`under: ${unders.join(", ")}`);
-    }
-    const message = `[${prefix}] state diff after run: ${total} mismatch(es) on ${planned.length} planned step(s) - ${parts.join(", ")}`;
-    try {
-      window.api.logs.warn(message);
-    } catch {
-      // Fall back to renderer console if the IPC bridge is somehow missing,
-      // so we never silently lose the diagnostic.
-      console.warn(message);
+    for (const message of messages) {
+      try {
+        window.api.logs.warn(message);
+      } catch {
+        // Fall back to renderer console if the IPC bridge is somehow missing,
+        // so we never silently lose the diagnostic.
+        console.warn(message);
+      }
     }
   }, [dataIsStale, getCurrentLevels, upgradeNameOf, logPrefix, scriptId]);
 
