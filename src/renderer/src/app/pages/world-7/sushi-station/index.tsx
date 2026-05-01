@@ -1,22 +1,26 @@
 import { Tabs } from "@base-ui/react/tabs";
 import { useEffect, useState } from "react";
-import { Block, PageHead, RunBtn, TermCheckbox } from "@/components/terminal";
+import {
+  Block,
+  PageHead,
+  RunBtn,
+  TermCheckbox,
+  TermTabs,
+} from "@/components/terminal";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 import { UpgradeOptimizer } from "./upgrade-optimizer";
 
 type ActiveTab = "scripts" | "optimizer";
 
+const TABS = [
+  { value: "scripts", label: "scripts" },
+  { value: "optimizer", label: "optimizer" },
+] as const satisfies readonly { value: ActiveTab; label: string }[];
+
 const SCRIPTS_DESCRIPTION =
   "cook and merge sushi to push to higher tiers. each new tier unlocks a permanent rest-of-game bonus and boosts Bucks/hr. scripts here automate the merge board.";
 const OPTIMIZER_DESCRIPTION =
   "optimal upgrade order across bucks/hr, fuel rate, fuel cap, or cheapest overall. rows are sorted by efficiency.";
-
-// Base UI's `Tabs.Tab` renders as <button>, so the UA `font` shorthand resets
-// font-family + font-size — explicit `font-mono text-sm` here ensures tabs
-// render in mono at 14px, intentionally larger than the surrounding `›` / `·`
-// chrome so the labels read as the primary control on the strip.
-const TAB_CLASS =
-  "cursor-pointer border-0 bg-transparent p-0 font-mono text-sm text-text-dim data-[active]:font-medium data-[active]:text-primary data-[active]:underline data-[active]:decoration-primary-dim data-[active]:underline-offset-[3px]";
 
 const SushiStation = () => {
   const [isDev, setIsDev] = useState(false);
@@ -50,21 +54,7 @@ const SushiStation = () => {
         path="world-7 / sushi-station"
         title="sushi-station"
       />
-      <Tabs.Root
-        className="w-full"
-        onValueChange={(v) => setActiveTab(v as ActiveTab)}
-        value={activeTab}
-      >
-        <Tabs.List className="mb-3 flex items-center gap-0 border-border-soft border-b pb-1.5 font-mono text-[10.5px] text-text-muted">
-          <span className="mr-1.5 text-primary">›</span>
-          <Tabs.Tab className={TAB_CLASS} value="scripts">
-            scripts
-          </Tabs.Tab>
-          <span className="px-1.5 text-text-muted">·</span>
-          <Tabs.Tab className={TAB_CLASS} value="optimizer">
-            optimizer
-          </Tabs.Tab>
-        </Tabs.List>
+      <TermTabs onValueChange={setActiveTab} tabs={TABS} value={activeTab}>
         <Tabs.Panel value="scripts">
           <Block
             note="open the sushi station in-game. the script reads the board visually and merges pairs it finds."
@@ -152,7 +142,7 @@ const SushiStation = () => {
         <Tabs.Panel value="optimizer">
           <UpgradeOptimizer />
         </Tabs.Panel>
-      </Tabs.Root>
+      </TermTabs>
     </>
   );
 };
