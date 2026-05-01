@@ -7,12 +7,15 @@ import {
 } from "@/components/optimizer/optimizer-rph-dialog";
 import { OptimizerTable } from "@/components/optimizer/optimizer-table";
 import { OptimizerToolbar } from "@/components/optimizer/optimizer-toolbar";
+import { RunBtn } from "@/components/terminal";
+import { DisabledHint } from "@/components/terminal/disabled-hint";
+import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
 import {
   BONE_RESOURCE_IDS,
   computeGrimoirePath,
 } from "@/parsers/grimoire-optimizer";
-import { groupSteps } from "@/parsers/optimizer-core";
+import { groupSteps, toUpgraderSteps } from "@/parsers/optimizer-core";
 import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs";
 import type {
@@ -20,6 +23,8 @@ import type {
   GrimoireCategory,
   GrimoireRphRates,
 } from "@/types/grimoire";
+
+const UPGRADER_SCRIPT_ID = "classSpecific.grimoire.runUpgrader";
 
 const CATEGORY_OPTIONS: readonly { id: GrimoireCategory; label: string }[] = [
   { id: "all", label: "all (cheapest)" },
@@ -101,14 +106,24 @@ export const GrimoireOptimizerTab = () => {
   const { grimoire } = useGameData();
   const prefs = useUiPrefsStore((s) => s.grimoireOptimizer);
   const setPrefs = useUiPrefsStore((s) => s.setGrimoireOptimizer);
+  const lastRunAt = useUiPrefsStore((s) => s.grimoireUpgraderRun.lastRunAt);
+  const setUpgraderRun = useUiPrefsStore((s) => s.setGrimoireUpgraderRun);
+
+  const { dataIsStale } = useUpgraderFreshnessGate({
+    scriptId: UPGRADER_SCRIPT_ID,
+    lastRunAt,
+    setLastRunAt: (ms) => setUpgraderRun({ lastRunAt: ms }),
+  });
 
   const [rphOpen, setRphOpen] = useState(false);
 
-  const rows = useMemo(() => {
+  const isMetric = prefs.category !== "all";
+
+  const steps = useMemo(() => {
     if (!grimoire) {
       return [];
     }
-    const steps = computeGrimoirePath({
+    return computeGrimoirePath({
       data: grimoire,
       category: prefs.category,
       rph: prefs.rph,
@@ -117,8 +132,17 @@ export const GrimoireOptimizerTab = () => {
       groupMode: prefs.groupMode,
       onlyAffordable: prefs.onlyAffordable,
     });
-    return groupSteps(steps, prefs.groupMode, prefs.category !== "all");
   }, [grimoire, prefs]);
+
+  const rows = useMemo(
+    () => groupSteps(steps, prefs.groupMode, isMetric),
+    [steps, prefs.groupMode, isMetric]
+  );
+
+  const upgraderSteps = useMemo(
+    () => toUpgraderSteps(steps, prefs.groupMode, isMetric),
+    [steps, prefs.groupMode, isMetric]
+  );
 
   if (!grimoire) {
     return (
@@ -127,8 +151,6 @@ export const GrimoireOptimizerTab = () => {
       </div>
     );
   }
-
-  const isMetric = prefs.category !== "all";
 
   const inventory = BONE_RESOURCE_IDS.map((id, i) => ({
     id,
@@ -167,6 +189,33 @@ export const GrimoireOptimizerTab = () => {
         resourceFilterLabel="resource"
         resourceFilterOptions={BONE_FILTER_OPTIONS}
         resourceFilterValue={boneFilterToId(prefs.boneFilter ?? "all")}
+        rightSlot={(() => {
+          const upgraderDisabled =
+            !prefs.onlyAffordable || upgraderSteps.length === 0 || dataIsStale;
+          const upgraderHint = dataIsStale
+            ? "waiting for next cloudsave - game state is stale until firestore refreshes"
+            : prefs.onlyAffordable
+              ? upgraderSteps.length === 0
+                ? "no affordable upgrades found - tweak the optimizer or earn more bones"
+                : null
+              : "enable 'show only affordable' to use the upgrader";
+          const button = (
+            <RunBtn
+              disabled={upgraderDisabled}
+              getArgs={() => [upgraderSteps]}
+              label="run upgrader"
+              scriptId={UPGRADER_SCRIPT_ID}
+              small
+            />
+          );
+          return upgraderHint ? (
+            <DisabledHint disabled popover={upgraderHint}>
+              {button}
+            </DisabledHint>
+          ) : (
+            button
+          );
+        })()}
         rphDirty={isRphDirty(prefs.rph)}
       />
       <OptimizerTable

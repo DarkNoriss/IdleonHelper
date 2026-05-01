@@ -2,6 +2,7 @@ import type { Selections } from "./alchemy";
 import type { CompassUpgrade } from "./compass";
 import type { OptimalStep, SolverProgress } from "./construction";
 import type { HsvColor } from "./hsv";
+import type { UpgraderStep } from "./upgrader";
 
 export type WeeklyBattleStep = {
   stepName: string;
@@ -96,6 +97,14 @@ export type ScriptMap = {
   };
   "classSpecific.compass.stressTestNav": {
     args: [];
+    result: undefined;
+  };
+  "classSpecific.tesseract.runUpgrader": {
+    args: [UpgraderStep[]];
+    result: undefined;
+  };
+  "classSpecific.grimoire.runUpgrader": {
+    args: [UpgraderStep[]];
     result: undefined;
   };
 };
