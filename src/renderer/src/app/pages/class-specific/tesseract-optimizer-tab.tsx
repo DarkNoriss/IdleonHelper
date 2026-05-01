@@ -12,6 +12,7 @@ import { DisabledHint } from "@/components/terminal/disabled-hint";
 import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
 import { groupSteps, toUpgraderSteps } from "@/parsers/optimizer-core";
+import { TESSERACT_UPGRADE_DEFS } from "@/parsers/tesseract-data";
 import {
   computeTesseractPath,
   TACHYON_RESOURCE_IDS,
@@ -122,6 +123,10 @@ export const TesseractOptimizerTab = () => {
     scriptId: UPGRADER_SCRIPT_ID,
     lastRunAt,
     setLastRunAt: (ms) => setUpgraderRun({ lastRunAt: ms }),
+    getCurrentLevels: () => tesseract?.upgradeLevels ?? [],
+    getPlannedSteps: () => upgraderSteps,
+    upgradeNameOf: (i) => TESSERACT_UPGRADE_DEFS[i]?.name ?? "?",
+    logPrefix: "tesseract-upgrader",
   });
 
   const [rphOpen, setRphOpen] = useState(false);
