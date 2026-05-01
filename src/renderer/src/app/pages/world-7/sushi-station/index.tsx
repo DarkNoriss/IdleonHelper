@@ -84,11 +84,13 @@ const SushiStation = () => {
                 onChange={(v) => setSushi({ shouldCook: v })}
               />
             </div>
-            <RunBtn
-              getArgs={() => [shouldCook]}
-              label="start merge"
-              scriptId="world7.sushiStation.sushiStationMerge"
-            />
+            <div className="self-start">
+              <RunBtn
+                getArgs={() => [shouldCook]}
+                label="start merge"
+                scriptId="world7.sushiStation.sushiStationMerge"
+              />
+            </div>
           </Block>
           <Block
             note="in-game buff: combining a sushi tiers-up the one to its right, if it's lower tiered. this script feeds that chain - drains stuck high tiers and seeds merges from the bottom, optionally cooking new sushi between iterations. loops until stopped."
@@ -109,14 +111,16 @@ const SushiStation = () => {
                 }
               />
             </div>
-            <RunBtn
-              getArgs={() => [
-                sushiHeatOfTheEastWind.shouldCook,
-                sushiHeatOfTheEastWind.mergeAboveHotew ?? false,
-              ]}
-              label="run once"
-              scriptId="world7.sushiStation.sushiStationHeatOfTheEastWind"
-            />
+            <div className="self-start">
+              <RunBtn
+                getArgs={() => [
+                  sushiHeatOfTheEastWind.shouldCook,
+                  sushiHeatOfTheEastWind.mergeAboveHotew ?? false,
+                ]}
+                label="start loop"
+                scriptId="world7.sushiStation.sushiStationHeatOfTheEastWind"
+              />
+            </div>
           </Block>
           {isDev && (
             <div className="mt-1.5 rounded-[5px] border border-border border-dashed bg-black/20 px-2.5 pt-2 pb-1">
