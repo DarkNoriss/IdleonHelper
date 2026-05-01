@@ -206,7 +206,7 @@ export const GrimoireOptimizerTab = () => {
           const upgraderDisabled =
             !prefs.onlyAffordable || upgraderSteps.length === 0 || dataIsStale;
           const upgraderHint = dataIsStale
-            ? "waiting for next cloudsave - game state is stale until firestore refreshes"
+            ? "waiting for upgrade levels to update - idleon hasn't synced post-run state yet"
             : prefs.onlyAffordable
               ? upgraderSteps.length === 0
                 ? "no affordable upgrades found - tweak the optimizer or earn more bones"

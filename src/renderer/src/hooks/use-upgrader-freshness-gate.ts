@@ -8,10 +8,13 @@ type Args = {
   scriptId: keyof ScriptMap;
   lastRunAt: number | null;
   setLastRunAt: (ms: number) => void;
-  // When all four are present, the hook also runs a debug diff: it snapshots
-  // upgrade levels at idle->running, then on the next cloudsave that lands
-  // strictly after lastRunAt it compares actual deltas against planned
-  // deltas and logs a single warn line via window.api.logs.warn on mismatch.
+  // When all four are present, the hook switches on STRICT freshness: it
+  // snapshots upgrade levels at idle->running, then waits for at least one
+  // planned upgrade index to actually move past its snapshot value. Idleon's
+  // cloudsave lastUpdated timestamp can advance with stale upgradeLevels (the
+  // game serializes a save a moment before our click lands), so we cannot
+  // trust the timestamp alone - real value change is the only safe signal.
+  // Without these fields, the hook falls back to the timestamp-based gate.
   getCurrentLevels?: () => readonly number[];
   getPlannedSteps?: () => readonly UpgraderStep[];
   upgradeNameOf?: (index: number) => string;
@@ -19,10 +22,10 @@ type Args = {
 };
 
 // Encapsulates the upgrader "freshness gate":
-// - Stamps `lastRunAt` on the running -> idle transition (so a cloudsave that
-//   fires DURING the run isn't mistaken for fresh post-run data).
-// - Reports `dataIsStale = true` until a cloudsave landed strictly after
-//   `lastRunAt`. Run button should be locked while stale.
+// - Stamps `lastRunAt` on the running -> idle transition.
+// - Reports `dataIsStale = true` until either a planned upgrade level has
+//   actually changed (strict mode) or a cloudsave landed strictly after
+//   `lastRunAt` (fallback). Run button should be locked while stale.
 export function useUpgraderFreshnessGate({
   scriptId,
   lastRunAt,
@@ -41,48 +44,66 @@ export function useUpgraderFreshnessGate({
   const plannedRef = useRef<readonly UpgraderStep[] | null>(null);
   const wasStaleRef = useRef(false);
 
-  // Stamp lastRunAt on running -> idle. Snapshot levels + planned steps on
-  // idle -> running so the diff can compare against pre-run state.
   useEffect(() => {
     if (!wasRunningRef.current && isRunning) {
-      // idle -> running
+      // idle -> running: capture pre-run snapshot so the strict gate has a
+      // baseline to compare against.
       snapshotRef.current = getCurrentLevels?.() ?? null;
       plannedRef.current = getPlannedSteps?.() ?? null;
     }
     if (wasRunningRef.current && !isRunning) {
-      // running -> idle
+      // running -> idle: stamp run end. Strict gate now waits for a planned
+      // index to move; fallback gate waits for a cloudsave timestamp advance.
       setLastRunAt(Date.now());
     }
     wasRunningRef.current = isRunning;
   }, [isRunning, setLastRunAt, getCurrentLevels, getPlannedSteps]);
 
+  // Strict change detection happens at render time so dataIsStale reacts the
+  // moment the underlying upgradeLevels reference updates (a real cloudsave
+  // landed). Refs are intentionally NOT cleared after the diff fires - they
+  // must persist so dataIsStale stays false until the next run starts.
+  const snapshot = snapshotRef.current;
+  const planned = plannedRef.current;
+  const current = getCurrentLevels?.();
+  const isStrictMode =
+    getCurrentLevels !== undefined && getPlannedSteps !== undefined;
+  const haveSnapshot =
+    snapshot !== null && planned !== null && current !== undefined;
+  const levelsChanged =
+    haveSnapshot &&
+    current.length > 0 &&
+    planned.some(
+      (step) => (current[step.index] ?? 0) !== (snapshot[step.index] ?? 0)
+    );
+
   const dataIsStale =
     lastRunAt !== null &&
-    (cloudsaveLastUpdated === null || cloudsaveLastUpdated <= lastRunAt);
+    (isStrictMode && haveSnapshot
+      ? !levelsChanged
+      : cloudsaveLastUpdated === null || cloudsaveLastUpdated <= lastRunAt);
 
-  // Run the diff exactly once on the dataIsStale: true -> false transition.
-  // That transition only fires after a cloudsave whose timestamp is strictly
-  // greater than lastRunAt - i.e. a cloudsave produced AFTER the run ended.
-  // Mid-run cloudsaves are filtered by the gate above.
+  // Diff fires once on the dataIsStale: true -> false transition. With strict
+  // mode that transition happens exactly when a planned upgrade actually
+  // moved, so the diff is comparing real post-save data rather than racing
+  // against a stale-but-fresh-timestamped save.
   useEffect(() => {
     const wasStale = wasStaleRef.current;
     wasStaleRef.current = dataIsStale;
     if (!(wasStale && !dataIsStale)) {
       return;
     }
-    const snapshot = snapshotRef.current;
-    const planned = plannedRef.current;
-    snapshotRef.current = null;
-    plannedRef.current = null;
-    if (!(snapshot && planned) || planned.length === 0) {
+    const snap = snapshotRef.current;
+    const plan = plannedRef.current;
+    if (!(snap && plan) || plan.length === 0) {
       return;
     }
-    const current = getCurrentLevels?.();
-    if (!current || current.length === 0) {
+    const cur = getCurrentLevels?.();
+    if (!cur || cur.length === 0) {
       return;
     }
     const expectedByIndex = new Map<number, number>();
-    for (const step of planned) {
+    for (const step of plan) {
       expectedByIndex.set(
         step.index,
         (expectedByIndex.get(step.index) ?? 0) + step.levels
@@ -91,8 +112,8 @@ export function useUpgraderFreshnessGate({
     const prefix = logPrefix ?? scriptId;
     const messages: string[] = [];
     for (const [index, expectedDelta] of expectedByIndex) {
-      const before = snapshot[index] ?? 0;
-      const after = current[index] ?? 0;
+      const before = snap[index] ?? 0;
+      const after = cur[index] ?? 0;
       const actualDelta = after - before;
       if (actualDelta === expectedDelta) {
         continue;
