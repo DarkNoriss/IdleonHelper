@@ -7,12 +7,20 @@ import {
 } from "@/components/optimizer/optimizer-rph-dialog";
 import { OptimizerTable } from "@/components/optimizer/optimizer-table";
 import { OptimizerToolbar } from "@/components/optimizer/optimizer-toolbar";
+import { RunBtn } from "@/components/terminal";
+import { DisabledHint } from "@/components/terminal/disabled-hint";
+import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
+import { COMPASS_UPGRADE_DEFS } from "@/parsers/compass-data";
 import {
   computeCompassPath,
   DUST_RESOURCE_IDS,
 } from "@/parsers/compass-optimizer";
-import { groupSteps } from "@/parsers/optimizer-core";
+import {
+  groupSteps,
+  toUpgraderSteps,
+  withFromLevels,
+} from "@/parsers/optimizer-core";
 import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs";
 import type {
@@ -20,6 +28,8 @@ import type {
   CompassDustFilter,
   CompassRphRates,
 } from "@/types/compass";
+
+const UPGRADER_SCRIPT_ID = "classSpecific.compass.run";
 
 const CATEGORY_OPTIONS: readonly { id: CompassCategory; label: string }[] = [
   { id: "all", label: "all (cheapest)" },
@@ -107,14 +117,28 @@ export const CompassOptimizerTab = () => {
   const { compass } = useGameData();
   const prefs = useUiPrefsStore((s) => s.compassOptimizer);
   const setPrefs = useUiPrefsStore((s) => s.setCompassOptimizer);
+  const lastRunAt = useUiPrefsStore((s) => s.compassUpgraderRun.lastRunAt);
+  const setUpgraderRun = useUiPrefsStore((s) => s.setCompassUpgraderRun);
+
+  const { dataIsStale } = useUpgraderFreshnessGate({
+    scriptId: UPGRADER_SCRIPT_ID,
+    lastRunAt,
+    setLastRunAt: (ms) => setUpgraderRun({ lastRunAt: ms }),
+    getCurrentLevels: () => compass?.upgradeLevels ?? [],
+    getPlannedSteps: () => upgraderSteps,
+    upgradeNameOf: (i) => COMPASS_UPGRADE_DEFS[i]?.name ?? "?",
+    logPrefix: "compass-upgrader",
+  });
 
   const [rphOpen, setRphOpen] = useState(false);
 
-  const rows = useMemo(() => {
+  const isMetric = prefs.category !== "all";
+
+  const steps = useMemo(() => {
     if (!compass) {
       return [];
     }
-    const steps = computeCompassPath({
+    return computeCompassPath({
       data: compass,
       category: prefs.category,
       // Compass always scores by time-to-afford; with rph defaulting to 1
@@ -128,8 +152,21 @@ export const CompassOptimizerTab = () => {
       groupMode: prefs.groupMode,
       onlyAffordable: prefs.onlyAffordable,
     });
-    return groupSteps(steps, prefs.groupMode, prefs.category !== "all");
   }, [compass, prefs]);
+
+  const rows = useMemo(
+    () => groupSteps(steps, prefs.groupMode, isMetric),
+    [steps, prefs.groupMode, isMetric]
+  );
+
+  const upgraderSteps = useMemo(
+    () =>
+      withFromLevels(
+        toUpgraderSteps(steps, prefs.groupMode, isMetric),
+        compass?.upgradeLevels ?? []
+      ),
+    [steps, prefs.groupMode, isMetric, compass?.upgradeLevels]
+  );
 
   if (!compass) {
     return (
@@ -138,8 +175,6 @@ export const CompassOptimizerTab = () => {
       </div>
     );
   }
-
-  const isMetric = prefs.category !== "all";
 
   const inventory = DUST_RESOURCE_IDS.map((id, i) => ({
     id,
@@ -160,26 +195,59 @@ export const CompassOptimizerTab = () => {
         dailyDiscounts={dailyDiscounts}
         inventory={inventory}
       />
-      <OptimizerToolbar
-        categories={CATEGORY_OPTIONS}
-        category={prefs.category}
-        groupMode={prefs.groupMode}
-        maxSteps={prefs.maxSteps}
-        maxStepsOptions={MAX_STEPS_OPTIONS}
-        onCategoryChange={(c) => setPrefs({ category: c as CompassCategory })}
-        onGroupModeChange={(m) => setPrefs({ groupMode: m })}
-        onlyAffordable={prefs.onlyAffordable}
-        onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
-        onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
-        onOpenRphDialog={() => setRphOpen(true)}
-        onResourceFilterChange={(id) =>
-          setPrefs({ dustFilter: idToDustFilter(id) })
-        }
-        resourceFilterLabel="resource"
-        resourceFilterOptions={DUST_FILTER_OPTIONS}
-        resourceFilterValue={dustFilterToId(prefs.dustFilter ?? "all")}
-        rphDirty={isRphDirty(prefs.rph)}
-      />
+      <div className="mb-2.5 rounded-[5px] border border-border bg-panel p-2.5">
+        <OptimizerToolbar
+          categories={CATEGORY_OPTIONS}
+          category={prefs.category}
+          className="mb-0"
+          groupMode={prefs.groupMode}
+          maxSteps={prefs.maxSteps}
+          maxStepsOptions={MAX_STEPS_OPTIONS}
+          onCategoryChange={(c) => setPrefs({ category: c as CompassCategory })}
+          onGroupModeChange={(m) => setPrefs({ groupMode: m })}
+          onlyAffordable={prefs.onlyAffordable}
+          onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
+          onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
+          onOpenRphDialog={() => setRphOpen(true)}
+          onResourceFilterChange={(id) =>
+            setPrefs({ dustFilter: idToDustFilter(id) })
+          }
+          resourceFilterLabel="resources"
+          resourceFilterOptions={DUST_FILTER_OPTIONS}
+          resourceFilterValue={dustFilterToId(prefs.dustFilter ?? "all")}
+          rightSlot={(() => {
+            const upgraderDisabled =
+              !prefs.onlyAffordable ||
+              upgraderSteps.length === 0 ||
+              dataIsStale;
+            const upgraderHint = dataIsStale
+              ? "waiting for upgrade levels to update - idleon hasn't synced post-run state yet"
+              : prefs.onlyAffordable
+                ? upgraderSteps.length === 0
+                  ? "no affordable upgrades found - tweak the optimizer or earn more dust"
+                  : null
+                : "enable 'show only affordable' to use the upgrader";
+            const button = (
+              <RunBtn
+                disabled={upgraderDisabled}
+                getArgs={() => [upgraderSteps]}
+                label="run upgrader"
+                scriptId={UPGRADER_SCRIPT_ID}
+                small
+              />
+            );
+            return upgraderHint ? (
+              <DisabledHint disabled popover={upgraderHint}>
+                {button}
+              </DisabledHint>
+            ) : (
+              button
+            );
+          })()}
+          rphDirty={isRphDirty(prefs.rph)}
+          upgradeCount={rows.reduce((sum, r) => sum + r.count, 0)}
+        />
+      </div>
       <OptimizerTable
         formatCost={notateNumber}
         formatGain={(gain) => `+${gain.toFixed(2)}%`}

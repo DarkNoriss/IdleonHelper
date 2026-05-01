@@ -2,7 +2,9 @@ import {
   COMPASS_MINOR_NODE_DEFS,
   COMPASS_NODE_DEFS,
 } from "@/shared/compass-config";
-import type { CompassUpgrade, MinorNodeWithParent } from "@/types/compass";
+import type { MinorNodeWithParent } from "@/types/compass";
+import type { UpgraderStep } from "@/types/upgrader";
+import { COMPASS_UPGRADE_DEFS } from "../../../../parsers/compass-data";
 import { getClickOptionsFromPreset } from "../../../backend/backend-config";
 import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
@@ -18,13 +20,27 @@ import {
 } from "./compass-utils";
 
 type ResolvedUpgrade =
-  | { type: "standard"; id: string; change: number }
-  | { type: "minor"; minor: MinorNodeWithParent; change: number };
+  | { type: "standard"; id: string; levels: number; label: string }
+  | {
+      type: "minor";
+      minor: MinorNodeWithParent;
+      levels: number;
+      label: string;
+    };
 
 const ALL_NODE_IDS = new Set([
   ...COMPASS_NODE_DEFS.map((n) => n.id),
   ...COMPASS_MINOR_NODE_DEFS.map((n) => n.id),
 ]);
+
+// Mirrors the dash-casing in compass-parser.ts so def names land on the same
+// id table the standalone parser produces (e.g. "Faster Attack Speed" ->
+// "faster-attack-speed", which then matches "compass-faster-attack-speed").
+const defNameToNodeName = (name: string): string =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const findMatch = (name: string): string | undefined => {
   if (ALL_NODE_IDS.has(name)) {
@@ -38,30 +54,39 @@ const findMatch = (name: string): string | undefined => {
   return undefined;
 };
 
-const resolveUpgrade = (upgrade: CompassUpgrade): ResolvedUpgrade | null => {
-  const matchedId = findMatch(upgrade.name);
+const resolveStep = (step: UpgraderStep): ResolvedUpgrade | null => {
+  const def = COMPASS_UPGRADE_DEFS[step.index];
+  if (!def) {
+    return null;
+  }
+  const matchedId = findMatch(defNameToNodeName(def.name));
   if (!matchedId) {
     return null;
   }
 
   const minor = COMPASS_MINOR_NODE_DEFS.find((m) => m.id === matchedId);
   if (minor) {
-    return { type: "minor", minor, change: upgrade.change };
+    return { type: "minor", minor, levels: step.levels, label: def.name };
   }
 
   const standard = COMPASS_NODE_DEFS.find((n) => n.id === matchedId);
   if (standard) {
-    return { type: "standard", id: standard.id, change: upgrade.change };
+    return {
+      type: "standard",
+      id: standard.id,
+      levels: step.levels,
+      label: def.name,
+    };
   }
 
   return null;
 };
 
-export default defineScript<[CompassUpgrade[]]>({
+export default defineScript<[UpgraderStep[]]>({
   id: "classSpecific.compass.run",
   name: "Compass",
-  run: async ({ token, args: [upgrades] }) => {
-    logger.log(`Compass: processing ${upgrades.length} upgrades`);
+  run: async ({ token, args: [steps] }) => {
+    logger.log(`Compass: processing ${steps.length} upgrades`);
 
     // Setup
     await openCompass(token);
@@ -82,16 +107,16 @@ export default defineScript<[CompassUpgrade[]]>({
     const graph = loadGraph();
     let currentNode = startNode.id;
 
-    for (let i = 0; i < upgrades.length; i++) {
+    for (let i = 0; i < steps.length; i++) {
       token.throwIfCancelled();
-      const upgrade = upgrades[i]!;
-      logger.log(
-        `[${i + 1}/${upgrades.length}] ${upgrade.name} +${upgrade.change}`
-      );
+      const step = steps[i]!;
+      const def = COMPASS_UPGRADE_DEFS[step.index];
+      const label = def?.name ?? `index-${step.index}`;
+      logger.log(`[${i + 1}/${steps.length}] ${label} +${step.levels}`);
 
-      const resolved = resolveUpgrade(upgrade);
+      const resolved = resolveStep(step);
       if (!resolved) {
-        logger.log(`  SKIP: no matching node for "${upgrade.name}"`);
+        logger.log(`  SKIP: no matching node for "${label}"`);
         continue;
       }
 
@@ -151,7 +176,7 @@ export default defineScript<[CompassUpgrade[]]>({
         const fastClick = getClickOptionsFromPreset("2x");
         await backendCommand.click(
           panelState.upgrade![0]!,
-          { times: resolved.change, ...fastClick },
+          { times: resolved.levels, ...fastClick },
           token
         );
       } else if (panelState.upgradeOff!.length > 0) {
@@ -163,6 +188,6 @@ export default defineScript<[CompassUpgrade[]]>({
       await dismissPanel(token);
     }
 
-    logger.log(`Compass: done (${upgrades.length} upgrades processed)`);
+    logger.log(`Compass: done (${steps.length} upgrades processed)`);
   },
 });

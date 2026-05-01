@@ -63,7 +63,7 @@ const CompassDebug = () => {
   return (
     <>
       <PageHead
-        description="Debug probes for compass navigation and image templates. Intended for development."
+        description="dev probes for compass navigation: neighbor discovery, minor-node debug, center calibration, and image-audit against pasted upgrade lists. results land in logs."
         path="class-specific / compass-debug"
         title="compass-debug"
       />
