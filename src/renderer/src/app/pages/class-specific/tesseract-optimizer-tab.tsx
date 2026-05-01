@@ -11,7 +11,11 @@ import { RunBtn } from "@/components/terminal";
 import { DisabledHint } from "@/components/terminal/disabled-hint";
 import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
-import { groupSteps, toUpgraderSteps } from "@/parsers/optimizer-core";
+import {
+  groupSteps,
+  toUpgraderSteps,
+  withFromLevels,
+} from "@/parsers/optimizer-core";
 import { TESSERACT_UPGRADE_DEFS } from "@/parsers/tesseract-data";
 import {
   computeTesseractPath,
@@ -157,8 +161,12 @@ export const TesseractOptimizerTab = () => {
   );
 
   const upgraderSteps = useMemo(
-    () => toUpgraderSteps(steps, prefs.groupMode, isMetric),
-    [steps, prefs.groupMode, isMetric]
+    () =>
+      withFromLevels(
+        toUpgraderSteps(steps, prefs.groupMode, isMetric),
+        tesseract?.upgradeLevels ?? []
+      ),
+    [steps, prefs.groupMode, isMetric, tesseract?.upgradeLevels]
   );
 
   if (!tesseract) {

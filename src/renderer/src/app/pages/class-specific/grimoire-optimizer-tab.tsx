@@ -16,7 +16,11 @@ import {
   BONE_RESOURCE_IDS,
   computeGrimoirePath,
 } from "@/parsers/grimoire-optimizer";
-import { groupSteps, toUpgraderSteps } from "@/parsers/optimizer-core";
+import {
+  groupSteps,
+  toUpgraderSteps,
+  withFromLevels,
+} from "@/parsers/optimizer-core";
 import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs";
 import type {
@@ -145,8 +149,12 @@ export const GrimoireOptimizerTab = () => {
   );
 
   const upgraderSteps = useMemo(
-    () => toUpgraderSteps(steps, prefs.groupMode, isMetric),
-    [steps, prefs.groupMode, isMetric]
+    () =>
+      withFromLevels(
+        toUpgraderSteps(steps, prefs.groupMode, isMetric),
+        grimoire?.upgradeLevels ?? []
+      ),
+    [steps, prefs.groupMode, isMetric, grimoire?.upgradeLevels]
   );
 
   if (!grimoire) {

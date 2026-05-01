@@ -59,3 +59,19 @@ export function toUpgraderSteps(
   }
   return collapsed;
 }
+
+// Decorates upgrader steps with the level each row starts at when the script
+// reaches that step. Tracks per-index cumulative offsets so re-targeting the
+// same row across non-consecutive steps still reports the right fromLevel.
+export function withFromLevels(
+  steps: readonly UpgraderStep[],
+  currentLevels: readonly number[]
+): UpgraderStep[] {
+  const offsets = new Map<number, number>();
+  return steps.map((s) => {
+    const base = currentLevels[s.index] ?? 0;
+    const offset = offsets.get(s.index) ?? 0;
+    offsets.set(s.index, offset + s.levels);
+    return { ...s, fromLevel: base + offset };
+  });
+}
