@@ -14,7 +14,7 @@ export default defineScript<[UpgraderStep[]]>({
         headerImage: "class-specific/grimoire_header",
         skillName: "Grimoire",
         totalRows: GRIMOIRE_UPGRADE_DEFS.length,
-        geometry: { scrollbarX: 815, clickX: 865 },
+        geometry: { scrollbarX: 815 },
         upgradeNameOf: (i) => GRIMOIRE_UPGRADE_DEFS[i]?.name ?? "?",
         logPrefix: "grimoire-upgrader",
       },

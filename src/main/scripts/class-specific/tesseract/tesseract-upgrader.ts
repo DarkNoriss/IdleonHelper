@@ -14,7 +14,7 @@ export default defineScript<[UpgraderStep[]]>({
         headerImage: "class-specific/tesseract_header",
         skillName: "Tesseract",
         totalRows: TESSERACT_UPGRADE_DEFS.length,
-        geometry: { scrollbarX: 928, clickX: 865 },
+        geometry: { scrollbarX: 928 },
         upgradeNameOf: (i) => TESSERACT_UPGRADE_DEFS[i]?.name ?? "?",
         logPrefix: "tesseract-upgrader",
       },

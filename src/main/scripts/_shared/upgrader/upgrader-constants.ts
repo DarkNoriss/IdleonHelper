@@ -9,13 +9,15 @@ import type { HsvColor, Point } from "../../../backend/backend-types";
 
 export const UPGRADER_VISIBLE_ROWS = 8;
 
-// Click coords for the inline upgrade button. X is per-skill (passed via
-// UpgraderGeometry). Y mapping is linear from row 0 (105) to row 7 (463)
-// within the visible page.
+// Click coords for the inline upgrade button. X is derived from scrollbarX
+// (the upgrade button is at a fixed offset left of the scrollbar within each
+// panel - the panel widths differ but the column layout is the same). Y
+// mapping is linear from row 0 (105) to row 7 (463) within the visible page.
 export const UPGRADER_FIRST_ROW_Y = 105;
 export const UPGRADER_LAST_ROW_Y = 463;
 export const UPGRADER_ROW_PITCH =
   (UPGRADER_LAST_ROW_Y - UPGRADER_FIRST_ROW_Y) / (UPGRADER_VISIBLE_ROWS - 1);
+export const UPGRADER_CLICK_X_OFFSET = 60;
 
 // Scrollbar handle (ball center) Y bounds. Linear mapping from top-row 0
 // (handle at top) to MAX_TOP_ROW (handle at bottom). Bottom Y was originally
@@ -26,11 +28,11 @@ export const UPGRADER_ROW_PITCH =
 export const UPGRADER_SCROLLBAR_TOP_Y = 90;
 export const UPGRADER_SCROLLBAR_BOTTOM_Y = 455;
 
-// Per-skill column positions. The scrollbar column and upgrade-button column
-// move between panels; Y coords + pitches are shared.
+// Per-skill column position. Only the scrollbar column varies between panels;
+// the upgrade button sits at a fixed offset left of the scrollbar (see
+// UPGRADER_CLICK_X_OFFSET). Y coords + pitches are shared.
 export type UpgraderGeometry = {
   scrollbarX: number;
-  clickX: number;
 };
 
 // Settle delays. SCROLL_SETTLE is load-bearing: required to let the scrollbar
@@ -71,7 +73,7 @@ export function placementFor(
       y: Math.round(UPGRADER_SCROLLBAR_TOP_Y + topRow * scrollPitch),
     },
     click: {
-      x: geometry.clickX,
+      x: geometry.scrollbarX - UPGRADER_CLICK_X_OFFSET,
       y: Math.round(UPGRADER_FIRST_ROW_Y + visiblePos * UPGRADER_ROW_PITCH),
     },
     topRow,
