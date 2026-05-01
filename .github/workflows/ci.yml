@@ -8,14 +8,11 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    name: Lint, Typecheck & Build
-    runs-on: windows-latest
+  frontend:
+    name: Frontend (lint, typecheck)
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Configure git line endings
-        run: git config --global core.autocrlf false
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -36,6 +33,14 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+  backend:
+    name: Backend (compile)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
