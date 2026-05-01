@@ -18,7 +18,7 @@ const OPTIMIZER_DESCRIPTION =
   "optimal upgrade order across bucks/hr, fuel rate, fuel cap, or cheapest overall. rows are sorted by efficiency.";
 
 const TAB_CLASS =
-  "cursor-pointer border-0 bg-transparent p-0 text-text-dim data-[active]:font-medium data-[active]:text-primary data-[active]:underline data-[active]:decoration-primary-dim data-[active]:underline-offset-[3px]";
+  "cursor-pointer border-0 bg-transparent p-0 font-mono text-[10.5px] text-text-dim data-[active]:font-medium data-[active]:text-primary data-[active]:underline data-[active]:decoration-primary-dim data-[active]:underline-offset-[3px]";
 
 const SushiStation = () => {
   const [isDev, setIsDev] = useState(false);
@@ -47,6 +47,7 @@ const SushiStation = () => {
   return (
     <>
       <PageHead
+        descMinLines={2}
         description={description}
         path="world-7 / sushi-station"
         title="sushi-station"

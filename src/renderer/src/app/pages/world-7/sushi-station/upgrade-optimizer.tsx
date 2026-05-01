@@ -135,6 +135,7 @@ export const UpgradeOptimizer = () => {
         <OptimizerToolbar
           categories={CATEGORY_OPTIONS}
           category={prefs.category}
+          className="mb-0"
           groupMode={prefs.groupMode}
           maxSteps={prefs.maxSteps}
           maxStepsOptions={OPTIMIZER_MAX_STEPS_OPTIONS}
