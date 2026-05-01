@@ -19,11 +19,22 @@ export const backendConfig = {
   },
 } as const;
 
-export type ClickPreset = "0.5x" | "1x" | "1.75x" | "2x" | "4x" | "8x" | "16x";
+export type ClickPreset =
+  | "0.5x"
+  | "1x"
+  | "1.25x"
+  | "1.5x"
+  | "1.75x"
+  | "2x"
+  | "4x"
+  | "8x"
+  | "16x";
 
 const PRESET_MULTIPLIERS: Record<ClickPreset, number> = {
   "0.5x": 0.5,
   "1x": 1,
+  "1.25x": 1.25,
+  "1.5x": 1.5,
   "1.75x": 1.75,
   "2x": 2,
   "4x": 4,
