@@ -81,9 +81,13 @@ export async function runUpgraderLoop(
       config.geometry
     );
     const name = config.upgradeNameOf(step.index);
+    const transition =
+      step.fromLevel === undefined
+        ? `x${step.levels}`
+        : `${step.fromLevel} -> ${step.fromLevel + step.levels}`;
 
     logger.log(
-      `${config.logPrefix} - [${i + 1}/${steps.length}] #${step.index} ${name} x${step.levels}`
+      `${config.logPrefix} - [${i + 1}/${steps.length}] #${step.index} ${name} ${transition}`
     );
 
     if (topRow !== currentTopRow) {
