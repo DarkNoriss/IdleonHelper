@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { TermCheckbox, TermInput, TermSelect } from "@/components/terminal";
+import { cn } from "@/lib/utils";
 import type { OptimizerGroupMode } from "@/parsers/optimizer-core";
 
 const MAX_STEPS_FLOOR = 1;
@@ -43,6 +44,11 @@ type Props = {
   // Anything caller wants pinned to the right edge of the toolbar (e.g.
   // single-currency inventory display). Rendered last, with ml-auto.
   rightSlot?: ReactNode;
+
+  // Caller-supplied class string merged onto the outer flex via tailwind-merge.
+  // Use to override the default `mb-3` when the toolbar lives inside a wrapper
+  // that handles bottom spacing itself.
+  className?: string;
 };
 
 const GROUP_MODE_OPTIONS: readonly {
@@ -74,6 +80,7 @@ export const OptimizerToolbar = ({
   resourceFilterValue,
   onResourceFilterChange,
   rightSlot,
+  className,
 }: Props) => {
   const categoryOptions = categories.map((c) => ({
     value: c.id,
@@ -132,7 +139,12 @@ export const OptimizerToolbar = ({
     onResourceFilterChange !== undefined;
 
   return (
-    <div className="mb-3 flex flex-wrap items-end gap-3 font-mono text-[11px]">
+    <div
+      className={cn(
+        "mb-3 flex flex-wrap items-end gap-3 font-mono text-[11px]",
+        className
+      )}
+    >
       <div className="flex flex-col gap-1">
         <span className="text-text-dim">optimize for</span>
         <TermSelect

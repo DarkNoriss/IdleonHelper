@@ -93,7 +93,10 @@ export const RunBtn = <T extends keyof ScriptMap>({
   } as const;
 
   return (
-    <div className="inline-flex flex-col gap-1">
+    // `self-start` keeps the button at its content width when the parent is a
+    // flex column (default `align-items: stretch` would otherwise make it
+    // full-width). No-op in non-flex parents.
+    <div className="inline-flex flex-col gap-1 self-start">
       <button
         className={cn(base, sizing, byState[state], className)}
         disabled={isDisabled}

@@ -28,6 +28,8 @@ export type SushiStationData = {
   hasBundleV: boolean;
   /** Sparks count — input to fireplace effect base. */
   sparks: number;
+  /** Current fuel from Sushi[4][0]. Display-only; not used by optimizer. */
+  fuelCurrent: number;
   /** External multiplier inputs to bucks-per-hr metric. Most fields default
    *  to 0 in v1 (per port-source.md open issue #2). */
   externalSources: ExternalSources;
