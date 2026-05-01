@@ -232,12 +232,7 @@ export const GrimoireOptimizerTab = () => {
         rphDirty={isRphDirty(prefs.rph)}
       />
       <OptimizerTable
-        formatCost={(cost, resourceId) => (
-          <span>
-            {notateNumber(cost)}{" "}
-            <span className="text-text-dim">{resourceId}</span>
-          </span>
-        )}
+        formatCost={notateNumber}
         formatGain={(gain) => `+${gain.toFixed(2)}%`}
         isMetric={isMetric}
         rows={rows}

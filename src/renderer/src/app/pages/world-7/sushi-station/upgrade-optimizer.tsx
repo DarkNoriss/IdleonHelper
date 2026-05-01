@@ -155,8 +155,8 @@ export const UpgradeOptimizer = () => {
         />
       </div>
       <OptimizerTable
-        formatCost={(cost) => notateNumber(cost)}
-        formatGain={(gain) => notateNumber(gain)}
+        formatCost={notateNumber}
+        formatGain={notateNumber}
         isMetric={isMetric}
         rows={rows}
       />
