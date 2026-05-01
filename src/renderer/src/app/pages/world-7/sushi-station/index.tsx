@@ -17,13 +17,12 @@ const SCRIPTS_DESCRIPTION =
 const OPTIMIZER_DESCRIPTION =
   "optimal upgrade order across bucks/hr, fuel rate, fuel cap, or cheapest overall. rows are sorted by efficiency.";
 
-// Base UI's `Tabs.Tab` renders as <button>, so the UA `font` shorthand sets
-// font-family: Arial and font-size: ~13.33px. We want font-family to win
-// (mono), but leave font-size alone so the tab text matches the design mock's
-// effective size (~13.33px UA default) — the spec on Tabs.List is for the
-// surrounding `›` / `·` chrome only.
+// Base UI's `Tabs.Tab` renders as <button>, so the UA `font` shorthand resets
+// font-family + font-size — explicit `font-mono text-sm` here ensures tabs
+// render in mono at 14px, intentionally larger than the surrounding `›` / `·`
+// chrome so the labels read as the primary control on the strip.
 const TAB_CLASS =
-  "cursor-pointer border-0 bg-transparent p-0 font-mono text-text-dim data-[active]:font-medium data-[active]:text-primary data-[active]:underline data-[active]:decoration-primary-dim data-[active]:underline-offset-[3px]";
+  "cursor-pointer border-0 bg-transparent p-0 font-mono text-sm text-text-dim data-[active]:font-medium data-[active]:text-primary data-[active]:underline data-[active]:decoration-primary-dim data-[active]:underline-offset-[3px]";
 
 const SushiStation = () => {
   const [isDev, setIsDev] = useState(false);
@@ -96,7 +95,7 @@ const SushiStation = () => {
             tag="script"
             title="sushi.heat-of-the-east-wind"
           >
-            <div className="mb-3 space-y-2">
+            <div className="mb-3 flex flex-col gap-2">
               <TermCheckbox
                 checked={sushiHeatOfTheEastWind.shouldCook}
                 label="auto-cook on empty board"
