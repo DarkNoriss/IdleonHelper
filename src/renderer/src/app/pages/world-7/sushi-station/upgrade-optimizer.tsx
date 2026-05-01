@@ -146,12 +146,7 @@ export const UpgradeOptimizer = () => {
           onlyAffordable={prefs.onlyAffordable}
           onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
           onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
-          rightSlot={
-            <span className="text-[10px] text-text-muted">
-              showing <span className="text-text-dim">{rows.length}</span>{" "}
-              upgrades
-            </span>
-          }
+          upgradeCount={rows.reduce((sum, r) => sum + r.count, 0)}
         />
       </div>
       <OptimizerTable

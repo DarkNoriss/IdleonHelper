@@ -1,5 +1,4 @@
 import type { Selections } from "./alchemy";
-import type { CompassUpgrade } from "./compass";
 import type { OptimalStep, SolverProgress } from "./construction";
 import type { HsvColor } from "./hsv";
 import type { UpgraderStep } from "./upgrader";
@@ -76,7 +75,7 @@ export type ScriptMap = {
   "general.debug.findCloudsaveCoords": { args: []; result: undefined };
   "general.debug.constructionNavStress": { args: []; result: undefined };
   "classSpecific.compass.run": {
-    args: [CompassUpgrade[]];
+    args: [UpgraderStep[]];
     result: undefined;
   };
   "classSpecific.compass.discover": {

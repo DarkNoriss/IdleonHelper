@@ -27,27 +27,28 @@ type Props = {
   onOnlyAffordableChange: (b: boolean) => void;
 
   // Optional RPH controls. When undefined, the corresponding controls are
-  // not rendered (sushi case). The set-rph button renders right after the
-  // category select so users see resource configuration as one cluster.
+  // not rendered (sushi case).
   scoreMode?: ScoreMode;
   onScoreModeChange?: (m: ScoreMode) => void;
   onOpenRphDialog?: () => void;
   rphDirty?: boolean;
 
-  // Optional secondary filter (e.g. compass dust-type). Renders right after
-  // the rph button. `label` is shown above the select.
+  // Optional secondary filter (e.g. compass dust-type). `label` is the bare
+  // noun shown above the select; the toolbar prepends "--" automatically.
   resourceFilterLabel?: string;
   resourceFilterOptions?: readonly SelectOption[];
   resourceFilterValue?: string;
   onResourceFilterChange?: (id: string) => void;
 
-  // Anything caller wants pinned to the right edge of the toolbar (e.g.
-  // single-currency inventory display). Rendered last, with ml-auto.
+  // Total upgrade levels currently shown — sum of `OptimizerRow.count` across
+  // all visible rows, NOT the row count. (One row "+3 levels" counts as 3.)
+  // Rendered as "showing X upgrades" on row 2, left of `rightSlot`.
+  upgradeCount?: number;
+
+  // Action node pinned to the right edge of row 2 (e.g. "run upgrader"
+  // button on the class-specific upgraders).
   rightSlot?: ReactNode;
 
-  // Caller-supplied class string merged onto the outer flex via tailwind-merge.
-  // Use to override the default `mb-3` when the toolbar lives inside a wrapper
-  // that handles bottom spacing itself.
   className?: string;
 };
 
@@ -59,6 +60,10 @@ const GROUP_MODE_OPTIONS: readonly {
   { value: "upgrade", label: "upgrade" },
   { value: "summary", label: "summary" },
 ];
+
+const FlagLabel = ({ children }: { children: string }) => (
+  <span className="text-text-dim">--{children}</span>
+);
 
 export const OptimizerToolbar = ({
   categories,
@@ -79,6 +84,7 @@ export const OptimizerToolbar = ({
   resourceFilterOptions,
   resourceFilterValue,
   onResourceFilterChange,
+  upgradeCount,
   rightSlot,
   className,
 }: Props) => {
@@ -139,115 +145,127 @@ export const OptimizerToolbar = ({
     onResourceFilterChange !== undefined;
 
   return (
-    <div
-      className={cn(
-        "mb-3 flex flex-wrap items-end gap-3 font-mono text-[11px]",
-        className
-      )}
-    >
-      <div className="flex flex-col gap-1">
-        <span className="text-text-dim">optimize for</span>
-        <TermSelect
-          onChange={onCategoryChange}
-          options={categoryOptions}
-          value={category}
-        />
-      </div>
-
-      {scoreMode !== undefined && onScoreModeChange && (
-        <div className="flex items-center gap-1 rounded-[3px] border border-border bg-surface p-0.5">
-          <button
-            className={`rounded-[2px] px-2 py-[3px] ${
-              scoreMode === "cost"
-                ? "bg-primary text-primary-ink"
-                : "text-text-dim hover:text-foreground"
-            }`}
-            onClick={() => onScoreModeChange("cost")}
-            type="button"
-          >
-            cost
-          </button>
-          <button
-            className={`rounded-[2px] px-2 py-[3px] ${
-              scoreMode === "perHour"
-                ? "bg-primary text-primary-ink"
-                : "text-text-dim hover:text-foreground"
-            }`}
-            onClick={() => onScoreModeChange("perHour")}
-            type="button"
-          >
-            per hour
-          </button>
-        </div>
-      )}
-
-      {onOpenRphDialog && (
-        <button
-          className="relative rounded-[3px] border border-border bg-surface px-2 py-[5px] text-text-dim hover:text-foreground"
-          onClick={onOpenRphDialog}
-          type="button"
-        >
-          set rph
-          {rphDirty && (
-            <span className="absolute -top-0.5 -right-0.5 inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-          )}
-        </button>
-      )}
-
-      {showResourceFilter && (
+    <div className={cn("font-mono text-[11px]", className)}>
+      {/* Row 1 — filters (optimize-for, resources, set rph | spacer | max-upgrades, group) */}
+      <div className="mb-2 flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
-          <span className="text-text-dim">
-            {resourceFilterLabel ?? "resource"}
-          </span>
+          <FlagLabel>optimize-for</FlagLabel>
           <TermSelect
-            onChange={onResourceFilterChange}
-            options={resourceFilterSelectOptions}
-            value={resourceFilterValue}
+            onChange={onCategoryChange}
+            options={categoryOptions}
+            value={category}
           />
         </div>
-      )}
 
-      <div className="flex flex-col gap-1">
-        <span className="text-text-dim">max upgrades</span>
-        <div className="flex items-center gap-2">
-          <TermSelect
-            onChange={handleMaxStepsSelectChange}
-            options={maxStepsSelectOptions}
-            value={customMaxSteps ? CUSTOM_OPTION_VALUE : String(maxSteps)}
-          />
-          {customMaxSteps && (
-            <TermInput
-              className="w-20"
-              inputMode="numeric"
-              onBlur={(e) => commitCustomMaxSteps(e.target.value)}
-              onChange={setCustomMaxStepsDraft}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  commitCustomMaxSteps(e.currentTarget.value);
-                }
-              }}
-              value={customMaxStepsDraft}
+        {scoreMode !== undefined && onScoreModeChange && (
+          <div className="flex items-center gap-1 rounded-[3px] border border-border bg-surface p-0.5">
+            <button
+              className={`rounded-[2px] px-2 py-[3px] ${
+                scoreMode === "cost"
+                  ? "bg-primary text-primary-ink"
+                  : "text-text-dim hover:text-foreground"
+              }`}
+              onClick={() => onScoreModeChange("cost")}
+              type="button"
+            >
+              cost
+            </button>
+            <button
+              className={`rounded-[2px] px-2 py-[3px] ${
+                scoreMode === "perHour"
+                  ? "bg-primary text-primary-ink"
+                  : "text-text-dim hover:text-foreground"
+              }`}
+              onClick={() => onScoreModeChange("perHour")}
+              type="button"
+            >
+              per hour
+            </button>
+          </div>
+        )}
+
+        {showResourceFilter && (
+          <div className="flex flex-col gap-1">
+            <FlagLabel>{resourceFilterLabel ?? "resources"}</FlagLabel>
+            <TermSelect
+              onChange={onResourceFilterChange}
+              options={resourceFilterSelectOptions}
+              value={resourceFilterValue}
             />
-          )}
+          </div>
+        )}
+
+        {onOpenRphDialog && (
+          <button
+            className="relative rounded-[3px] border border-border bg-surface px-2 py-[5px] text-text-dim hover:text-foreground"
+            onClick={onOpenRphDialog}
+            type="button"
+          >
+            set rph
+            {rphDirty && (
+              <span className="absolute -top-0.5 -right-0.5 inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+            )}
+          </button>
+        )}
+
+        {/* 1px vertical divider — matches select height via h-7 + items-end on
+            the row aligns its bottom to the selects' bottom. Visual separator
+            between the resource cluster and the display-control cluster. */}
+        <div aria-hidden className="h-7 w-px bg-border" />
+
+        <div className="flex flex-col gap-1">
+          <FlagLabel>max-upgrades</FlagLabel>
+          <div className="flex items-center gap-2">
+            <TermSelect
+              className="min-w-[100px]"
+              onChange={handleMaxStepsSelectChange}
+              options={maxStepsSelectOptions}
+              value={customMaxSteps ? CUSTOM_OPTION_VALUE : String(maxSteps)}
+            />
+            {customMaxSteps && (
+              <TermInput
+                className="w-20"
+                inputMode="numeric"
+                onBlur={(e) => commitCustomMaxSteps(e.target.value)}
+                onChange={setCustomMaxStepsDraft}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    commitCustomMaxSteps(e.currentTarget.value);
+                  }
+                }}
+                value={customMaxStepsDraft}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <FlagLabel>group</FlagLabel>
+          <TermSelect
+            onChange={(v) => onGroupModeChange(v as OptimizerGroupMode)}
+            options={GROUP_MODE_OPTIONS}
+            value={groupMode}
+          />
         </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <span className="text-text-dim">group</span>
-        <TermSelect
-          onChange={(v) => onGroupModeChange(v as OptimizerGroupMode)}
-          options={GROUP_MODE_OPTIONS}
-          value={groupMode}
+      {/* Row 2 — actions (show only affordable | spacer | showing N upgrades, rightSlot) */}
+      <div className="flex flex-wrap items-center gap-3">
+        <TermCheckbox
+          checked={onlyAffordable}
+          label="show only affordable"
+          onChange={onOnlyAffordableChange}
         />
+        <div className="ml-auto flex items-center gap-2.5">
+          {upgradeCount !== undefined && (
+            <span className="text-[10px] text-text-muted">
+              showing <span className="text-text-dim">{upgradeCount}</span>{" "}
+              upgrades
+            </span>
+          )}
+          {rightSlot}
+        </div>
       </div>
-
-      <TermCheckbox
-        checked={onlyAffordable}
-        label="show only affordable"
-        onChange={onOnlyAffordableChange}
-      />
-
-      {rightSlot && <div className="ml-auto">{rightSlot}</div>}
     </div>
   );
 };

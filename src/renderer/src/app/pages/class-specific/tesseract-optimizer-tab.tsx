@@ -196,53 +196,61 @@ export const TesseractOptimizerTab = () => {
         dailyDiscounts={dailyDiscounts}
         inventory={inventory}
       />
-      <OptimizerToolbar
-        categories={CATEGORY_OPTIONS}
-        category={prefs.category}
-        groupMode={prefs.groupMode}
-        maxSteps={prefs.maxSteps}
-        maxStepsOptions={MAX_STEPS_OPTIONS}
-        onCategoryChange={(c) => setPrefs({ category: c as TesseractCategory })}
-        onGroupModeChange={(m) => setPrefs({ groupMode: m })}
-        onlyAffordable={prefs.onlyAffordable}
-        onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
-        onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
-        onOpenRphDialog={() => setRphOpen(true)}
-        onResourceFilterChange={(id) =>
-          setPrefs({ tachyonFilter: idToTachyonFilter(id) })
-        }
-        resourceFilterLabel="resource"
-        resourceFilterOptions={TACHYON_FILTER_OPTIONS}
-        resourceFilterValue={tachyonFilterToId(prefs.tachyonFilter ?? "all")}
-        rightSlot={(() => {
-          const upgraderDisabled =
-            !prefs.onlyAffordable || upgraderSteps.length === 0 || dataIsStale;
-          const upgraderHint = dataIsStale
-            ? "waiting for upgrade levels to update - idleon hasn't synced post-run state yet"
-            : prefs.onlyAffordable
-              ? upgraderSteps.length === 0
-                ? "no affordable upgrades found - tweak the optimizer or earn more tachyons"
-                : null
-              : "enable 'show only affordable' to use the upgrader";
-          const button = (
-            <RunBtn
-              disabled={upgraderDisabled}
-              getArgs={() => [upgraderSteps]}
-              label="run upgrader"
-              scriptId={UPGRADER_SCRIPT_ID}
-              small
-            />
-          );
-          return upgraderHint ? (
-            <DisabledHint disabled popover={upgraderHint}>
-              {button}
-            </DisabledHint>
-          ) : (
-            button
-          );
-        })()}
-        rphDirty={isRphDirty(prefs.rph)}
-      />
+      <div className="mb-2.5 rounded-[5px] border border-border bg-panel p-2.5">
+        <OptimizerToolbar
+          categories={CATEGORY_OPTIONS}
+          category={prefs.category}
+          className="mb-0"
+          groupMode={prefs.groupMode}
+          maxSteps={prefs.maxSteps}
+          maxStepsOptions={MAX_STEPS_OPTIONS}
+          onCategoryChange={(c) =>
+            setPrefs({ category: c as TesseractCategory })
+          }
+          onGroupModeChange={(m) => setPrefs({ groupMode: m })}
+          onlyAffordable={prefs.onlyAffordable}
+          onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
+          onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
+          onOpenRphDialog={() => setRphOpen(true)}
+          onResourceFilterChange={(id) =>
+            setPrefs({ tachyonFilter: idToTachyonFilter(id) })
+          }
+          resourceFilterLabel="resources"
+          resourceFilterOptions={TACHYON_FILTER_OPTIONS}
+          resourceFilterValue={tachyonFilterToId(prefs.tachyonFilter ?? "all")}
+          rightSlot={(() => {
+            const upgraderDisabled =
+              !prefs.onlyAffordable ||
+              upgraderSteps.length === 0 ||
+              dataIsStale;
+            const upgraderHint = dataIsStale
+              ? "waiting for upgrade levels to update - idleon hasn't synced post-run state yet"
+              : prefs.onlyAffordable
+                ? upgraderSteps.length === 0
+                  ? "no affordable upgrades found - tweak the optimizer or earn more tachyons"
+                  : null
+                : "enable 'show only affordable' to use the upgrader";
+            const button = (
+              <RunBtn
+                disabled={upgraderDisabled}
+                getArgs={() => [upgraderSteps]}
+                label="run upgrader"
+                scriptId={UPGRADER_SCRIPT_ID}
+                small
+              />
+            );
+            return upgraderHint ? (
+              <DisabledHint disabled popover={upgraderHint}>
+                {button}
+              </DisabledHint>
+            ) : (
+              button
+            );
+          })()}
+          rphDirty={isRphDirty(prefs.rph)}
+          upgradeCount={rows.reduce((sum, r) => sum + r.count, 0)}
+        />
+      </div>
       <OptimizerTable
         formatCost={notateNumber}
         formatGain={(gain) => `+${gain.toFixed(2)}%`}

@@ -1,13 +1,16 @@
+import { PageHead } from "@/components/terminal";
 import { GrimoireOptimizerTab } from "./grimoire-optimizer-tab";
 
 const Grimoire = () => {
   return (
-    <div className="flex flex-col gap-3 p-3">
-      <h1 className="font-mono text-sm text-text-dim uppercase tracking-wide">
-        grimoire upgrade optimizer
-      </h1>
+    <>
+      <PageHead
+        description="optimal upgrade order across damage, accuracy, defence, hp, crit, or extra bones. rows are sorted by efficiency."
+        path="class-specific / grimoire"
+        title="grimoire"
+      />
       <GrimoireOptimizerTab />
-    </div>
+    </>
   );
 };
 
