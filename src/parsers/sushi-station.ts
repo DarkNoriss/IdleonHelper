@@ -40,10 +40,11 @@ export function parseSushiStation(
     (_, i) => Number(ulRaw[i] ?? 0) || 0
   );
 
-  // 3. bucks (Sushi[4][3]) and sparks (Sushi[4][2])
+  // 3. bucks (Sushi[4][3]), sparks (Sushi[4][2]), fuelCurrent (Sushi[4][0])
   const meta = sushi[4];
   const bucks = Array.isArray(meta) ? Number(meta[3] ?? 0) || 0 : 0;
   const sparks = Array.isArray(meta) ? Number(meta[2] ?? 0) || 0 : 0;
+  const fuelCurrent = Array.isArray(meta) ? Number(meta[0] ?? 0) || 0 : 0;
 
   // 4. researchLevel: max of Lv0_<i>[20] across all chars 0..9 (open issue #5)
   let researchLevel = 0;
@@ -95,6 +96,7 @@ export function parseSushiStation(
     rawSushiData,
     hasBundleV,
     sparks,
+    fuelCurrent,
     externalSources,
   };
 }
