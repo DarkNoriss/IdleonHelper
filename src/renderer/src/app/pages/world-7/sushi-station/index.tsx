@@ -17,8 +17,13 @@ const SCRIPTS_DESCRIPTION =
 const OPTIMIZER_DESCRIPTION =
   "optimal upgrade order across bucks/hr, fuel rate, fuel cap, or cheapest overall. rows are sorted by efficiency.";
 
+// Base UI's `Tabs.Tab` renders as <button>, so the UA `font` shorthand sets
+// font-family: Arial and font-size: ~13.33px. We want font-family to win
+// (mono), but leave font-size alone so the tab text matches the design mock's
+// effective size (~13.33px UA default) — the spec on Tabs.List is for the
+// surrounding `›` / `·` chrome only.
 const TAB_CLASS =
-  "cursor-pointer border-0 bg-transparent p-0 font-mono text-[10.5px] text-text-dim data-[active]:font-medium data-[active]:text-primary data-[active]:underline data-[active]:decoration-primary-dim data-[active]:underline-offset-[3px]";
+  "cursor-pointer border-0 bg-transparent p-0 font-mono text-text-dim data-[active]:font-medium data-[active]:text-primary data-[active]:underline data-[active]:decoration-primary-dim data-[active]:underline-offset-[3px]";
 
 const SushiStation = () => {
   const [isDev, setIsDev] = useState(false);
