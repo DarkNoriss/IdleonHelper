@@ -130,6 +130,9 @@ const api = {
     get: () => {
       return ipcRenderer.invoke("logs:get");
     },
+    warn: (message: string) => {
+      ipcRenderer.send("logs:warn", message);
+    },
     onChange: (callback: (logs: unknown[]) => void) => {
       const handler = (_event: IpcRendererEvent, logs: unknown[]) => {
         callback(logs);

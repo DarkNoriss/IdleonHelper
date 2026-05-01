@@ -132,6 +132,7 @@ declare global {
       };
       logs: {
         get: () => Promise<LogEntry[]>;
+        warn: (message: string) => void;
         onChange: (callback: (logs: LogEntry[]) => void) => () => void;
       };
       state: {
@@ -162,6 +163,7 @@ declare global {
     electron: ElectronAPI;
     logs: {
       get: () => Promise<LogEntry[]>;
+      warn: (message: string) => void;
       onChange: (callback: (logs: LogEntry[]) => void) => () => void;
     };
   }
