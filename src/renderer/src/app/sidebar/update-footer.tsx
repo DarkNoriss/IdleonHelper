@@ -1,6 +1,8 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, HTMLAttributes } from "react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+
+const FOOT_BOX = "rounded-[3px] border px-2 py-0.5 font-mono text-[9.5px]";
 
 type UpdateStatus =
   | "idle"
@@ -111,15 +113,17 @@ export const UpdateFooter = () => {
   } else if (status === "checking") {
     left = VerCurrent;
     right = (
-      <div className="flex items-center gap-1 rounded-[3px] border border-transparent px-2 py-0.5">
+      <FootSlot className="gap-1">
         <span className="inline-block h-2 w-2 animate-v3spin rounded-full border-[1.5px] border-amber border-t-transparent" />
         <span className="text-amber">checking…</span>
-      </div>
+      </FootSlot>
     );
   } else if (status === "update-not-available") {
     left = VerCurrent;
     right = (
-      <span className="whitespace-nowrap text-success">✓ up to date</span>
+      <FootSlot>
+        <span className="whitespace-nowrap text-success">✓ up to date</span>
+      </FootSlot>
     );
   } else if (status === "update-available") {
     left = (
@@ -190,7 +194,8 @@ type FootBtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 const FootBtn = ({ primary, className, children, ...rest }: FootBtnProps) => (
   <button
     className={cn(
-      "shrink-0 cursor-pointer rounded-[3px] border px-2 py-0.5 font-mono text-[9.5px] disabled:cursor-default disabled:opacity-60",
+      FOOT_BOX,
+      "shrink-0 cursor-pointer disabled:cursor-default disabled:opacity-60",
       primary
         ? "border-transparent bg-primary font-semibold text-primary-ink hover:bg-primary-hover"
         : "border-border bg-transparent text-text-dim hover:bg-surface",
@@ -201,4 +206,21 @@ const FootBtn = ({ primary, className, children, ...rest }: FootBtnProps) => (
   >
     {children}
   </button>
+);
+
+const FootSlot = ({
+  className,
+  children,
+  ...rest
+}: HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      FOOT_BOX,
+      "flex shrink-0 items-center border-transparent",
+      className
+    )}
+    {...rest}
+  >
+    {children}
+  </div>
 );
