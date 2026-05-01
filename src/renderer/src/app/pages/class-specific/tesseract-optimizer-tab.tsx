@@ -7,8 +7,11 @@ import {
 } from "@/components/optimizer/optimizer-rph-dialog";
 import { OptimizerTable } from "@/components/optimizer/optimizer-table";
 import { OptimizerToolbar } from "@/components/optimizer/optimizer-toolbar";
+import { RunBtn } from "@/components/terminal";
+import { DisabledHint } from "@/components/terminal/disabled-hint";
+import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
-import { groupSteps } from "@/parsers/optimizer-core";
+import { groupSteps, toUpgraderSteps } from "@/parsers/optimizer-core";
 import {
   computeTesseractPath,
   TACHYON_RESOURCE_IDS,
@@ -20,6 +23,8 @@ import type {
   TesseractRphRates,
   TesseractTachyonFilter,
 } from "@/types/tesseract";
+
+const UPGRADER_SCRIPT_ID = "classSpecific.tesseract.runUpgrader";
 
 const CATEGORY_OPTIONS: readonly { id: TesseractCategory; label: string }[] = [
   { id: "all", label: "all (cheapest)" },
@@ -110,14 +115,24 @@ export const TesseractOptimizerTab = () => {
   const { tesseract } = useGameData();
   const prefs = useUiPrefsStore((s) => s.tesseractOptimizer);
   const setPrefs = useUiPrefsStore((s) => s.setTesseractOptimizer);
+  const lastRunAt = useUiPrefsStore((s) => s.tesseractUpgraderRun.lastRunAt);
+  const setUpgraderRun = useUiPrefsStore((s) => s.setTesseractUpgraderRun);
+
+  const { dataIsStale } = useUpgraderFreshnessGate({
+    scriptId: UPGRADER_SCRIPT_ID,
+    lastRunAt,
+    setLastRunAt: (ms) => setUpgraderRun({ lastRunAt: ms }),
+  });
 
   const [rphOpen, setRphOpen] = useState(false);
 
-  const rows = useMemo(() => {
+  const isMetric = prefs.category !== "all";
+
+  const steps = useMemo(() => {
     if (!tesseract) {
       return [];
     }
-    const steps = computeTesseractPath({
+    return computeTesseractPath({
       data: tesseract,
       category: prefs.category,
       // Always score by time-to-afford; with rph defaulting to 1 this
@@ -129,8 +144,17 @@ export const TesseractOptimizerTab = () => {
       groupMode: prefs.groupMode,
       onlyAffordable: prefs.onlyAffordable,
     });
-    return groupSteps(steps, prefs.groupMode, prefs.category !== "all");
   }, [tesseract, prefs]);
+
+  const rows = useMemo(
+    () => groupSteps(steps, prefs.groupMode, isMetric),
+    [steps, prefs.groupMode, isMetric]
+  );
+
+  const upgraderSteps = useMemo(
+    () => toUpgraderSteps(steps, prefs.groupMode, isMetric),
+    [steps, prefs.groupMode, isMetric]
+  );
 
   if (!tesseract) {
     return (
@@ -139,8 +163,6 @@ export const TesseractOptimizerTab = () => {
       </div>
     );
   }
-
-  const isMetric = prefs.category !== "all";
 
   const inventory = TACHYON_RESOURCE_IDS.map((id, i) => ({
     id,
@@ -179,6 +201,33 @@ export const TesseractOptimizerTab = () => {
         resourceFilterLabel="resource"
         resourceFilterOptions={TACHYON_FILTER_OPTIONS}
         resourceFilterValue={tachyonFilterToId(prefs.tachyonFilter ?? "all")}
+        rightSlot={(() => {
+          const upgraderDisabled =
+            !prefs.onlyAffordable || upgraderSteps.length === 0 || dataIsStale;
+          const upgraderHint = dataIsStale
+            ? "waiting for next cloudsave - game state is stale until firestore refreshes"
+            : prefs.onlyAffordable
+              ? upgraderSteps.length === 0
+                ? "no affordable upgrades found - tweak the optimizer or earn more tachyons"
+                : null
+              : "enable 'show only affordable' to use the upgrader";
+          const button = (
+            <RunBtn
+              disabled={upgraderDisabled}
+              getArgs={() => [upgraderSteps]}
+              label="run upgrader"
+              scriptId={UPGRADER_SCRIPT_ID}
+              small
+            />
+          );
+          return upgraderHint ? (
+            <DisabledHint disabled popover={upgraderHint}>
+              {button}
+            </DisabledHint>
+          ) : (
+            button
+          );
+        })()}
         rphDirty={isRphDirty(prefs.rph)}
       />
       <OptimizerTable

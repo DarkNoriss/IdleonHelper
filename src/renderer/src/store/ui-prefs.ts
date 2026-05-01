@@ -71,6 +71,9 @@ type GrimoireOptimizerPrefs = {
   groupMode: OptimizerGroupMode;
   onlyAffordable: boolean;
 };
+// Timestamp of the last upgrader run; used by the tab to gate the run
+// button until a fresh cloudsave (`lastUpdated > lastRunAt`) has landed.
+type UpgraderRunState = { lastRunAt: number | null };
 
 type UiPrefsState = {
   candy: CandyPrefs;
@@ -85,7 +88,9 @@ type UiPrefsState = {
   sushiOptimizer: SushiOptimizerPrefs;
   compassOptimizer: CompassOptimizerPrefs;
   tesseractOptimizer: TesseractOptimizerPrefs;
+  tesseractUpgraderRun: UpgraderRunState;
   grimoireOptimizer: GrimoireOptimizerPrefs;
+  grimoireUpgraderRun: UpgraderRunState;
 
   setCandy: (patch: Partial<CandyPrefs>) => void;
   setBossFarmer: (patch: Partial<BossFarmerPrefs>) => void;
@@ -102,7 +107,9 @@ type UiPrefsState = {
   setSushiOptimizer: (patch: Partial<SushiOptimizerPrefs>) => void;
   setCompassOptimizer: (patch: Partial<CompassOptimizerPrefs>) => void;
   setTesseractOptimizer: (patch: Partial<TesseractOptimizerPrefs>) => void;
+  setTesseractUpgraderRun: (patch: Partial<UpgraderRunState>) => void;
   setGrimoireOptimizer: (patch: Partial<GrimoireOptimizerPrefs>) => void;
+  setGrimoireUpgraderRun: (patch: Partial<UpgraderRunState>) => void;
 };
 
 const INITIAL_ALCHEMY_SELECTIONS: Selections = {
@@ -152,6 +159,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         groupMode: "none",
         onlyAffordable: false,
       },
+      tesseractUpgraderRun: { lastRunAt: null },
       grimoireOptimizer: {
         category: "all",
         rph: { 0: 1, 1: 1, 2: 1, 3: 1 },
@@ -160,6 +168,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         groupMode: "none",
         onlyAffordable: false,
       },
+      grimoireUpgraderRun: { lastRunAt: null },
 
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
       setBossFarmer: (patch) =>
@@ -202,9 +211,17 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         set((s) => ({
           tesseractOptimizer: { ...s.tesseractOptimizer, ...patch },
         })),
+      setTesseractUpgraderRun: (patch) =>
+        set((s) => ({
+          tesseractUpgraderRun: { ...s.tesseractUpgraderRun, ...patch },
+        })),
       setGrimoireOptimizer: (patch) =>
         set((s) => ({
           grimoireOptimizer: { ...s.grimoireOptimizer, ...patch },
+        })),
+      setGrimoireUpgraderRun: (patch) =>
+        set((s) => ({
+          grimoireUpgraderRun: { ...s.grimoireUpgraderRun, ...patch },
         })),
     }),
     {

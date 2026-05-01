@@ -30,6 +30,7 @@ export const navConfig: NavEntry[] = [
   {
     title: "class-specific",
     items: [
+      { title: "grimoire", page: "classSpecific/grimoire" },
       { title: "compass", page: "classSpecific/compass" },
       {
         title: "compass-debug",
@@ -37,7 +38,6 @@ export const navConfig: NavEntry[] = [
         devOnly: true,
       },
       { title: "tesseract", page: "classSpecific/tesseract" },
-      { title: "grimoire", page: "classSpecific/grimoire" },
     ],
   },
   {
