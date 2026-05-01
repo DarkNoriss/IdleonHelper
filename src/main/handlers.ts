@@ -134,6 +134,12 @@ export const setupHandlers = (): void => {
     return getLogs();
   });
 
+  ipcMain.on("logs:warn", (_event, message: unknown) => {
+    if (typeof message === "string") {
+      logger.warn(message);
+    }
+  });
+
   // Script configs
   ipcMain.handle(
     "scriptConfigs:publish",
