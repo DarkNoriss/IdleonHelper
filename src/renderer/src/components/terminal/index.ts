@@ -12,4 +12,5 @@ export { Step } from "./step";
 export { TermCheckbox } from "./term-checkbox";
 export { TermInput } from "./term-input";
 export { TermSelect } from "./term-select";
+export { TermTabs } from "./term-tabs";
 export { TermTextarea } from "./term-textarea";

@@ -6,6 +6,7 @@ import {
   Field,
   PageHead,
   RunBtn,
+  TermTabs,
   TermTextarea,
 } from "@/components/terminal";
 import { useMainState } from "@/hooks/use-main-state.ts";
@@ -68,21 +69,13 @@ const Compass = () => {
   const hasMissing = validation !== null && validation.missing.length > 0;
 
   return (
-    <Tabs.Root className="w-full" defaultValue="scripts">
-      <Tabs.List className="mb-4 flex gap-1 border-border border-b pb-0">
-        <Tabs.Tab
-          className="cursor-pointer border-transparent border-b-2 px-3 py-1.5 font-mono text-[11px] text-text-dim transition-colors hover:text-foreground data-[active]:border-primary data-[active]:text-foreground"
-          value="scripts"
-        >
-          Scripts
-        </Tabs.Tab>
-        <Tabs.Tab
-          className="cursor-pointer border-transparent border-b-2 px-3 py-1.5 font-mono text-[11px] text-text-dim transition-colors hover:text-foreground data-[active]:border-primary data-[active]:text-foreground"
-          value="optimizer"
-        >
-          Upgrade Optimizer
-        </Tabs.Tab>
-      </Tabs.List>
+    <TermTabs
+      defaultValue="scripts"
+      tabs={[
+        { value: "scripts", label: "scripts" },
+        { value: "optimizer", label: "optimizer" },
+      ]}
+    >
       <Tabs.Panel value="scripts">
         <PageHead
           description="Drives the Divinity Compass automatically based on an upgrade plan you paste in."
@@ -135,7 +128,7 @@ const Compass = () => {
       <Tabs.Panel value="optimizer">
         <CompassOptimizerTab />
       </Tabs.Panel>
-    </Tabs.Root>
+    </TermTabs>
   );
 };
 
