@@ -6,7 +6,6 @@ import {
   type CellTier,
   isBoardSorted,
   logBoardGrid,
-  planSortDrags,
 } from "./sushi-station-board";
 import {
   SUSHI_DRAG_OPTIONS,
@@ -14,6 +13,7 @@ import {
   SUSHI_HSV_UPPER,
   SUSHI_TEMPLATES,
 } from "./sushi-station-constants";
+import { planSortDrags } from "./sushi-station-sort-planner";
 
 const log = (msg: string): void => logger.log(`sushi-station-sort - ${msg}`);
 
