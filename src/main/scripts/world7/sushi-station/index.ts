@@ -2,3 +2,4 @@ export { default as sushiStationHeatOfTheEastWind } from "./sushi-station-heat-o
 export { default as sushiStationMerge } from "./sushi-station-merge";
 export { default as sushiStationMergeDebug } from "./sushi-station-merge-debug";
 export { default as sushiStationSort } from "./sushi-station-sort";
+export { default as sushiStationUpgrader } from "./sushi-station-upgrader";

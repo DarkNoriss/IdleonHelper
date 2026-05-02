@@ -216,7 +216,7 @@ export const GrimoireOptimizerTab = () => {
             const button = (
               <RunBtn
                 disabled={upgraderDisabled}
-                getArgs={() => [upgraderSteps]}
+                getArgs={() => [upgraderSteps, false]}
                 label="run upgrader"
                 scriptId={UPGRADER_SCRIPT_ID}
                 small

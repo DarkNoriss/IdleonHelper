@@ -1,8 +1,15 @@
 import { useMemo } from "react";
 import { OptimizerTable } from "@/components/optimizer/optimizer-table";
 import { OptimizerToolbar } from "@/components/optimizer/optimizer-toolbar";
+import { RunBtn } from "@/components/terminal";
+import { DisabledHint } from "@/components/terminal/disabled-hint";
+import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
-import { groupSteps } from "@/parsers/optimizer-core";
+import {
+  groupSteps,
+  toUpgraderSteps,
+  withFromLevels,
+} from "@/parsers/optimizer-core";
 import {
   computeOrangeFireSum,
   computeUniqueSushi,
@@ -10,6 +17,7 @@ import {
   fuelCapacity,
   fuelGenPerHr,
   knowledgeBonusTotals,
+  SLOT_TO_UPG,
   totalBucksPerHr,
 } from "@/parsers/sushi-station-formulas";
 import { computeSushiPath } from "@/parsers/sushi-station-optimizer";
@@ -19,6 +27,8 @@ import {
   OPTIMIZER_MAX_STEPS_OPTIONS,
   type OptimizerCategory,
 } from "@/types/sushi-station";
+
+const UPGRADER_SCRIPT_ID = "world7.sushiStation.sushiUpgrader";
 
 const CATEGORY_OPTIONS: readonly { id: OptimizerCategory; label: string }[] = [
   { id: "all", label: "all (cheapest)" },
@@ -54,19 +64,51 @@ export const UpgradeOptimizer = () => {
   const { sushiStation } = useGameData();
   const prefs = useUiPrefsStore((s) => s.sushiOptimizer);
   const setPrefs = useUiPrefsStore((s) => s.setSushiOptimizer);
+  const lastRunAt = useUiPrefsStore((s) => s.sushiUpgraderRun.lastRunAt);
+  const setUpgraderRun = useUiPrefsStore((s) => s.setSushiUpgraderRun);
 
-  const rows = useMemo(() => {
+  const { dataIsStale } = useUpgraderFreshnessGate({
+    scriptId: UPGRADER_SCRIPT_ID,
+    lastRunAt,
+    setLastRunAt: (ms) => setUpgraderRun({ lastRunAt: ms }),
+  });
+
+  const isMetric = prefs.category !== "all";
+
+  const steps = useMemo(() => {
     if (!sushiStation) {
       return [];
     }
-    const steps = computeSushiPath({
+    return computeSushiPath({
       data: sushiStation,
       category: prefs.category,
       maxSteps: prefs.maxSteps,
       onlyAffordable: prefs.onlyAffordable,
     });
-    return groupSteps(steps, prefs.groupMode, prefs.category !== "all");
   }, [sushiStation, prefs]);
+
+  const rows = useMemo(
+    () => groupSteps(steps, prefs.groupMode, isMetric),
+    [steps, prefs.groupMode, isMetric]
+  );
+
+  // upgradeLevels is keyed by upgIdx (raw SUSHI_UPG order); UpgraderStep.index
+  // is the slot (panel row order). withFromLevels does currentLevels[step.index],
+  // so we remap to slot-keyed first - tesseract/grimoire don't need this since
+  // their panel order matches their upgrade-data array.
+  const slotLevels = useMemo(() => {
+    const levels = sushiStation?.upgradeLevels ?? [];
+    return SLOT_TO_UPG.map((upgIdx) => levels[upgIdx] ?? 0);
+  }, [sushiStation?.upgradeLevels]);
+
+  const upgraderSteps = useMemo(
+    () =>
+      withFromLevels(
+        toUpgraderSteps(steps, prefs.groupMode, isMetric),
+        slotLevels
+      ),
+    [steps, prefs.groupMode, isMetric, slotLevels]
+  );
 
   const stats = useMemo(() => {
     if (!sushiStation) {
@@ -113,8 +155,6 @@ export const UpgradeOptimizer = () => {
     );
   }
 
-  const isMetric = prefs.category !== "all";
-
   return (
     <div className="flex flex-col">
       <div className="mb-3 grid grid-cols-5 overflow-hidden rounded-[4px] border border-border bg-panel font-mono text-[10.5px]">
@@ -146,6 +186,30 @@ export const UpgradeOptimizer = () => {
           onlyAffordable={prefs.onlyAffordable}
           onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
           onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
+          rightSlot={(() => {
+            const upgraderDisabled = upgraderSteps.length === 0 || dataIsStale;
+            const upgraderHint = dataIsStale
+              ? "waiting for upgrade levels to update - idleon hasn't synced post-run state yet"
+              : upgraderSteps.length === 0
+                ? "no upgrades planned - increase max steps or load a save"
+                : null;
+            const button = (
+              <RunBtn
+                disabled={upgraderDisabled}
+                getArgs={() => [upgraderSteps, false]}
+                label="run upgrader"
+                scriptId={UPGRADER_SCRIPT_ID}
+                small
+              />
+            );
+            return upgraderHint ? (
+              <DisabledHint disabled popover={upgraderHint}>
+                {button}
+              </DisabledHint>
+            ) : (
+              button
+            );
+          })()}
           upgradeCount={rows.reduce((sum, r) => sum + r.count, 0)}
         />
       </div>
