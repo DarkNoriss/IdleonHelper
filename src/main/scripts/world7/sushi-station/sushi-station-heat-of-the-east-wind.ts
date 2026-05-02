@@ -1,5 +1,9 @@
 import { backendCommand } from "../../../backend/index";
 import { delay, logger } from "../../../utils/index";
+import {
+  UPGRADER_UI_HSV_LOWER,
+  UPGRADER_UI_HSV_UPPER,
+} from "../../_shared/upgrader/index";
 import { defineScript } from "../../define-script";
 import {
   buildBoardFromResults,
@@ -28,6 +32,7 @@ import {
   SUSHI_DRAG_OPTIONS,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
+  SUSHI_TAB,
   SUSHI_TEMPLATES,
   SUSHI_TIERS_OFF,
   SUSHI_TIERS_ON,
@@ -51,6 +56,18 @@ export default defineScript<[boolean, boolean]>({
   id: "world7.sushiStation.sushiStationHeatOfTheEastWind",
   name: "Sushi Station - Heat of the East Wind",
   run: async ({ token, args: [shouldCook, mergeAboveHotew] }) => {
+    const tabHits = await backendCommand.isVisibleHSV(
+      SUSHI_TAB,
+      UPGRADER_UI_HSV_LOWER,
+      UPGRADER_UI_HSV_UPPER,
+      undefined,
+      token
+    );
+    if (tabHits.length > 0) {
+      log("sushi tab inactive, clicking to activate");
+      await backendCommand.click(tabHits[0]!, undefined, token);
+    }
+
     log("ensuring tiers are visible");
 
     const visibility = await backendCommand.isVisibleParallel(

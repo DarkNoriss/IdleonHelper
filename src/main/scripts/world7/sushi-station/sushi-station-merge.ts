@@ -1,5 +1,9 @@
 import { backendCommand } from "../../../backend/index";
 import { logger } from "../../../utils/index";
+import {
+  UPGRADER_UI_HSV_LOWER,
+  UPGRADER_UI_HSV_UPPER,
+} from "../../_shared/upgrader/index";
 import { defineScript } from "../../define-script";
 import {
   buildBoardFromResults,
@@ -20,6 +24,7 @@ import {
   SUSHI_GRID,
   SUSHI_HSV_LOWER,
   SUSHI_HSV_UPPER,
+  SUSHI_TAB,
   SUSHI_TEMPLATES,
   SUSHI_TIERS_OFF,
   SUSHI_TIERS_ON,
@@ -29,6 +34,20 @@ export default defineScript<[boolean]>({
   id: "world7.sushiStation.sushiStationMerge",
   name: "Sushi Station - Merge",
   run: async ({ token, args: [shouldCook] }) => {
+    const tabHits = await backendCommand.isVisibleHSV(
+      SUSHI_TAB,
+      UPGRADER_UI_HSV_LOWER,
+      UPGRADER_UI_HSV_UPPER,
+      undefined,
+      token
+    );
+    if (tabHits.length > 0) {
+      logger.log(
+        "sushi-station-merge - sushi tab inactive, clicking to activate"
+      );
+      await backendCommand.click(tabHits[0]!, undefined, token);
+    }
+
     logger.log("sushi-station-merge - ensuring tiers are visible");
 
     const visibility = await backendCommand.isVisibleParallel(
