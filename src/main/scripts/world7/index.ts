@@ -3,6 +3,7 @@ import {
   sushiStationMerge,
   sushiStationMergeDebug,
   sushiStationSort,
+  sushiStationUpgrader,
 } from "./sushi-station";
 
 export const world7Scripts = [
@@ -10,4 +11,5 @@ export const world7Scripts = [
   sushiStationSort,
   sushiStationMergeDebug,
   sushiStationHeatOfTheEastWind,
+  sushiStationUpgrader,
 ];
