@@ -21,7 +21,11 @@ export default defineScript<[UpgraderStep[], boolean]>({
       {
         ensureOpen: inactiveTabOpener(SUSHI_UPGRADE_TAB, LOG_PREFIX),
         totalRows: SLOT_TO_UPG.length,
-        geometry: { scrollbarX: 725, scrollbarYTop: 70, scrollbarYBottom: 425 },
+        // Rail measures 70 / 425, but the handle's center can't reach the
+        // rail edges - smoke runs showed low topRows snapping back one row
+        // and topRow=28 snapping forward one row. Anchor range fits 80 / 413
+        // (pitch 9.0 across maxTopRow=37).
+        geometry: { scrollbarX: 725, scrollbarYTop: 80, scrollbarYBottom: 413 },
         upgradeNameOf: (i) => SUSHI_UPG[SLOT_TO_UPG[i] ?? -1]?.[0] ?? "?",
         logPrefix: LOG_PREFIX,
       },
