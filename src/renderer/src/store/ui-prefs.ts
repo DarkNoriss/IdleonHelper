@@ -46,6 +46,7 @@ type SushiOptimizerPrefs = {
   maxSteps: OptimizerMaxSteps;
   onlyAffordable: boolean;
   groupMode: OptimizerGroupMode;
+  dryRun: boolean;
 };
 type CompassOptimizerPrefs = {
   category: CompassCategory;
@@ -86,6 +87,7 @@ type UiPrefsState = {
   sushi: SushiPrefs;
   sushiHeatOfTheEastWind: SushiHeatOfTheEastWindPrefs;
   sushiOptimizer: SushiOptimizerPrefs;
+  sushiUpgraderRun: UpgraderRunState;
   compassOptimizer: CompassOptimizerPrefs;
   compassUpgraderRun: UpgraderRunState;
   tesseractOptimizer: TesseractOptimizerPrefs;
@@ -106,6 +108,7 @@ type UiPrefsState = {
     patch: Partial<SushiHeatOfTheEastWindPrefs>
   ) => void;
   setSushiOptimizer: (patch: Partial<SushiOptimizerPrefs>) => void;
+  setSushiUpgraderRun: (patch: Partial<UpgraderRunState>) => void;
   setCompassOptimizer: (patch: Partial<CompassOptimizerPrefs>) => void;
   setCompassUpgraderRun: (patch: Partial<UpgraderRunState>) => void;
   setTesseractOptimizer: (patch: Partial<TesseractOptimizerPrefs>) => void;
@@ -144,7 +147,9 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         maxSteps: 25,
         onlyAffordable: false,
         groupMode: "none",
+        dryRun: true,
       },
+      sushiUpgraderRun: { lastRunAt: null },
       compassOptimizer: {
         category: "all",
         rph: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 },
@@ -205,6 +210,10 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setSushiOptimizer: (patch) =>
         set((s) => ({
           sushiOptimizer: { ...s.sushiOptimizer, ...patch },
+        })),
+      setSushiUpgraderRun: (patch) =>
+        set((s) => ({
+          sushiUpgraderRun: { ...s.sushiUpgraderRun, ...patch },
         })),
       setCompassOptimizer: (patch) =>
         set((s) => ({

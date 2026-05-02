@@ -46,6 +46,10 @@ export type ScriptMap = {
     args: [];
     result: undefined;
   };
+  "world7.sushiStation.sushiUpgrader": {
+    args: [UpgraderStep[], boolean];
+    result: undefined;
+  };
   "world3.construction.apply": { args: [OptimalStep[]]; result: undefined };
   "world3.construction.collectCogs": { args: []; result: undefined };
   "world3.construction.trashCogs": { args: []; result: undefined };

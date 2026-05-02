@@ -1,8 +1,15 @@
 import { useMemo } from "react";
 import { OptimizerTable } from "@/components/optimizer/optimizer-table";
 import { OptimizerToolbar } from "@/components/optimizer/optimizer-toolbar";
+import { RunBtn, TermCheckbox } from "@/components/terminal";
+import { DisabledHint } from "@/components/terminal/disabled-hint";
+import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
-import { groupSteps } from "@/parsers/optimizer-core";
+import {
+  groupSteps,
+  toUpgraderSteps,
+  withFromLevels,
+} from "@/parsers/optimizer-core";
 import {
   computeOrangeFireSum,
   computeUniqueSushi,
@@ -19,6 +26,8 @@ import {
   OPTIMIZER_MAX_STEPS_OPTIONS,
   type OptimizerCategory,
 } from "@/types/sushi-station";
+
+const UPGRADER_SCRIPT_ID = "world7.sushiStation.sushiUpgrader";
 
 const CATEGORY_OPTIONS: readonly { id: OptimizerCategory; label: string }[] = [
   { id: "all", label: "all (cheapest)" },
@@ -54,19 +63,42 @@ export const UpgradeOptimizer = () => {
   const { sushiStation } = useGameData();
   const prefs = useUiPrefsStore((s) => s.sushiOptimizer);
   const setPrefs = useUiPrefsStore((s) => s.setSushiOptimizer);
+  const lastRunAt = useUiPrefsStore((s) => s.sushiUpgraderRun.lastRunAt);
+  const setUpgraderRun = useUiPrefsStore((s) => s.setSushiUpgraderRun);
 
-  const rows = useMemo(() => {
+  const { dataIsStale } = useUpgraderFreshnessGate({
+    scriptId: UPGRADER_SCRIPT_ID,
+    lastRunAt,
+    setLastRunAt: (ms) => setUpgraderRun({ lastRunAt: ms }),
+  });
+
+  const isMetric = prefs.category !== "all";
+
+  const steps = useMemo(() => {
     if (!sushiStation) {
       return [];
     }
-    const steps = computeSushiPath({
+    return computeSushiPath({
       data: sushiStation,
       category: prefs.category,
       maxSteps: prefs.maxSteps,
       onlyAffordable: prefs.onlyAffordable,
     });
-    return groupSteps(steps, prefs.groupMode, prefs.category !== "all");
   }, [sushiStation, prefs]);
+
+  const rows = useMemo(
+    () => groupSteps(steps, prefs.groupMode, isMetric),
+    [steps, prefs.groupMode, isMetric]
+  );
+
+  const upgraderSteps = useMemo(
+    () =>
+      withFromLevels(
+        toUpgraderSteps(steps, prefs.groupMode, isMetric),
+        sushiStation?.upgradeLevels ?? []
+      ),
+    [steps, prefs.groupMode, isMetric, sushiStation?.upgradeLevels]
+  );
 
   const stats = useMemo(() => {
     if (!sushiStation) {
@@ -113,8 +145,6 @@ export const UpgradeOptimizer = () => {
     );
   }
 
-  const isMetric = prefs.category !== "all";
-
   return (
     <div className="flex flex-col">
       <div className="mb-3 grid grid-cols-5 overflow-hidden rounded-[4px] border border-border bg-panel font-mono text-[10.5px]">
@@ -146,8 +176,44 @@ export const UpgradeOptimizer = () => {
           onlyAffordable={prefs.onlyAffordable}
           onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
           onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
+          rightSlot={(() => {
+            const upgraderDisabled =
+              !prefs.onlyAffordable ||
+              upgraderSteps.length === 0 ||
+              dataIsStale;
+            const upgraderHint = dataIsStale
+              ? "waiting for upgrade levels to update - idleon hasn't synced post-run state yet"
+              : prefs.onlyAffordable
+                ? upgraderSteps.length === 0
+                  ? "no affordable upgrades found - tweak the optimizer or earn more bucks"
+                  : null
+                : "enable 'show only affordable' to use the upgrader";
+            const button = (
+              <RunBtn
+                disabled={upgraderDisabled}
+                getArgs={() => [upgraderSteps, prefs.dryRun]}
+                label={prefs.dryRun ? "dry-run upgrader" : "run upgrader"}
+                scriptId={UPGRADER_SCRIPT_ID}
+                small
+              />
+            );
+            return upgraderHint ? (
+              <DisabledHint disabled popover={upgraderHint}>
+                {button}
+              </DisabledHint>
+            ) : (
+              button
+            );
+          })()}
           upgradeCount={rows.reduce((sum, r) => sum + r.count, 0)}
         />
+        <div className="mt-2.5">
+          <TermCheckbox
+            checked={prefs.dryRun}
+            label="dry-run (capture screenshot, skip click)"
+            onChange={(v) => setPrefs({ dryRun: v })}
+          />
+        </div>
       </div>
       <OptimizerTable
         formatCost={notateNumber}
