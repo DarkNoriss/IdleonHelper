@@ -196,12 +196,14 @@ export const TesseractOptimizerTab = () => {
           categories={CATEGORY_OPTIONS}
           category={prefs.category}
           className="mb-0"
+          customMaxSteps={prefs.customMaxSteps}
           groupMode={prefs.groupMode}
           maxSteps={prefs.maxSteps}
           maxStepsOptions={MAX_STEPS_OPTIONS}
           onCategoryChange={(c) =>
             setPrefs({ category: c as TesseractCategory })
           }
+          onCustomMaxStepsChange={(n) => setPrefs({ customMaxSteps: n })}
           onGroupModeChange={(m) => setPrefs({ groupMode: m })}
           onlyAffordable={prefs.onlyAffordable}
           onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}

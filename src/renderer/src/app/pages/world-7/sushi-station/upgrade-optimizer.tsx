@@ -176,12 +176,14 @@ export const UpgradeOptimizer = () => {
           categories={CATEGORY_OPTIONS}
           category={prefs.category}
           className="mb-0"
+          customMaxSteps={prefs.customMaxSteps}
           groupMode={prefs.groupMode}
           maxSteps={prefs.maxSteps}
           maxStepsOptions={OPTIMIZER_MAX_STEPS_OPTIONS}
           onCategoryChange={(c) =>
             setPrefs({ category: c as OptimizerCategory })
           }
+          onCustomMaxStepsChange={(n) => setPrefs({ customMaxSteps: n })}
           onGroupModeChange={(m) => setPrefs({ groupMode: m })}
           onlyAffordable={prefs.onlyAffordable}
           onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
