@@ -200,8 +200,9 @@ export const cascadeBlockedByEmpty = (
 
 // True when every priority slot holds the tier dictated by descending
 // piece order. Source of truth for "is the board sorted?" - do not infer
-// from planSortDrags returning 0 moves, because a full board with
-// mismatches also returns 0 (place + evict both blocked, see below).
+// from planSortDrags returning 0 moves, because the planner can emit 0
+// drags in edge cases (eg per-tier count mismatch) without the board
+// being sorted.
 export const isBoardSorted = (
   board: CellTier[],
   priorityCells: number[]
