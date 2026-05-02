@@ -95,11 +95,7 @@ const AlchemyUpgrade = () => {
 
   return (
     <>
-      <PageHead
-        description="Auto-upgrades selected bubbles across all four cauldrons on a recurring interval. Pick a bubble per cauldron — blanks are skipped."
-        path="world-2 / alchemy-upgrade"
-        title="alchemy-upgrade"
-      />
+      <PageHead path="world-2 / alchemy-upgrade" title="alchemy-upgrade" />
       <Block
         note="select the target bubble for each cauldron. leave a cauldron unset to skip it."
         tag="config"

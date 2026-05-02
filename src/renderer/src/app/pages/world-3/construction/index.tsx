@@ -262,11 +262,7 @@ const Construction = () => {
 
   return (
     <>
-      <PageHead
-        description="Solves for the optimal cog placement given your current cogs, then applies the layout. Also collects or trashes cogs in bulk."
-        path="world-3 / construction"
-        title="construction"
-      />
+      <PageHead path="world-3 / construction" title="construction" />
       {!isSignedIn && (
         <Alert tone="warn">
           solver is locked — sign in with google from the title bar to sync your

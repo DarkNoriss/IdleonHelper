@@ -30,11 +30,7 @@ const Debug = () => {
 
   return (
     <>
-      <PageHead
-        description="Internal tools for probing attack-skill templates and tuning HSV color thresholds. Intended for development — not part of normal automation."
-        path="debug"
-        title="debug"
-      />
+      <PageHead path="debug" title="debug" />
       <Alert tone="warn">
         dev-only page. scripts here run loose probes against the game window —
         results land in <span className="text-amber">logs</span>.

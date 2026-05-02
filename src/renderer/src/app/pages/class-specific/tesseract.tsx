@@ -4,11 +4,7 @@ import { TesseractOptimizerTab } from "./tesseract-optimizer-tab";
 const Tesseract = () => {
   return (
     <>
-      <PageHead
-        description="optimal upgrade order across damage, accuracy, defence, crit, attack speed, or extra tachyons. rows are sorted by efficiency."
-        path="class-specific / tesseract"
-        title="tesseract"
-      />
+      <PageHead path="class-specific / tesseract" title="tesseract" />
       <TesseractOptimizerTab />
     </>
   );

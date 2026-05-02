@@ -30,11 +30,7 @@ const CardPresets = () => {
 
   return (
     <>
-      <PageHead
-        description="Apply or select saved card presets by slot. Useful for switching card layouts between farming setups."
-        path="general / card-presets"
-        title="card-presets"
-      />
+      <PageHead path="general / card-presets" title="card-presets" />
       <Block title="cards.config">
         <Field label="preset-slot" width="w-[220px]">
           <TermSelect

@@ -30,11 +30,7 @@ const Candy = () => {
 
   return (
     <>
-      <PageHead
-        description="Batch-consumes Time Candy from the active character's inventory. Matches the selected tier exactly — auto-exits when none remain."
-        path="general / candy"
-        title="candy"
-      />
+      <PageHead path="general / candy" title="candy" />
       <Block
         note="switch in-game to the target character before starting. script auto-stops when no matching candies are left."
         tag="script"

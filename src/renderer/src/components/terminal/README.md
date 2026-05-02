@@ -10,7 +10,7 @@ Every page follows the same shape:
 
 ```tsx
 <>
-  <PageHead path="…" title="…" description="…" actions={<SmBtn>save</SmBtn>} />
+  <PageHead path="…" title="…" actions={<SmBtn>save</SmBtn>} />
   <Alert tone="warn">…optional warning…</Alert>
   <Block title="script.name" tag="script" note="…what the user should do in-game…">
     <Field label="duration" width="w-[140px]">
@@ -23,7 +23,7 @@ Every page follows the same shape:
 
 Rules of the road:
 
-- **One `PageHead` per page.** It renders the breadcrumb path, title, optional description, and right-side actions slot.
+- **One `PageHead` per page.** It renders the breadcrumb path, title, and right-side actions slot.
 - **One or more `Block`s.** Each block is a titled section that usually hosts one script (config + run button) or some data.
 - **Run buttons live inside `Block`s**, never on top of a raw `<div>`. The block's header sets context for what the button does.
 - **Page content lives above the always-visible Queue Dock.** The dock is rendered globally in `app.tsx`; never import it into a page.
@@ -37,14 +37,12 @@ Rules of the road:
 <PageHead
   path="world-3 / trapping"
   title="trapping"
-  description="Places and collects traps across all characters with trapping unlocked."
   actions={<SmBtn onClick={refetch}>↻ refetch</SmBtn>}
 />
 ```
 
 - `path` — breadcrumb, e.g. `"general / candy"`. Use kebab-case, match the sidebar label hierarchy.
 - `title` — lowercase mono, matches the sidebar label.
-- `description` — 1–2 sentences of what this page does. Optional but recommended.
 - `actions` — right-aligned slot. Use `<SmBtn>` or a cluster of them (`<div className="flex gap-1"><SmBtn>…</SmBtn></div>`).
 
 ---
@@ -276,11 +274,7 @@ export const CandyPage = () => {
   const [duration, setDuration] = useState("24h");
   return (
     <>
-      <PageHead
-        path="general / candy"
-        title="candy"
-        description="Batch-consumes Time Candy from the active character's inventory. Auto-exits when none remain."
-      />
+      <PageHead path="general / candy" title="candy" />
       <Block
         title="candy.run"
         tag="script"
