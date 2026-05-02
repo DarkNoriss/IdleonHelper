@@ -46,7 +46,6 @@ type SushiOptimizerPrefs = {
   maxSteps: OptimizerMaxSteps;
   onlyAffordable: boolean;
   groupMode: OptimizerGroupMode;
-  dryRun: boolean;
 };
 type CompassOptimizerPrefs = {
   category: CompassCategory;
@@ -147,7 +146,6 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         maxSteps: 25,
         onlyAffordable: false,
         groupMode: "none",
-        dryRun: true,
       },
       sushiUpgraderRun: { lastRunAt: null },
       compassOptimizer: {

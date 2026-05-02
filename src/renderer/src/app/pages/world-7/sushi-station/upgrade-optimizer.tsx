@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { OptimizerTable } from "@/components/optimizer/optimizer-table";
 import { OptimizerToolbar } from "@/components/optimizer/optimizer-toolbar";
-import { RunBtn, TermCheckbox } from "@/components/terminal";
+import { RunBtn } from "@/components/terminal";
 import { DisabledHint } from "@/components/terminal/disabled-hint";
 import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
@@ -196,8 +196,8 @@ export const UpgradeOptimizer = () => {
             const button = (
               <RunBtn
                 disabled={upgraderDisabled}
-                getArgs={() => [upgraderSteps, prefs.dryRun]}
-                label={prefs.dryRun ? "dry-run upgrader" : "run upgrader"}
+                getArgs={() => [upgraderSteps, false]}
+                label="run upgrader"
                 scriptId={UPGRADER_SCRIPT_ID}
                 small
               />
@@ -212,13 +212,6 @@ export const UpgradeOptimizer = () => {
           })()}
           upgradeCount={rows.reduce((sum, r) => sum + r.count, 0)}
         />
-        <div className="mt-2.5">
-          <TermCheckbox
-            checked={prefs.dryRun}
-            label="dry-run (capture screenshot, skip click)"
-            onChange={(v) => setPrefs({ dryRun: v })}
-          />
-        </div>
       </div>
       <OptimizerTable
         formatCost={notateNumber}
