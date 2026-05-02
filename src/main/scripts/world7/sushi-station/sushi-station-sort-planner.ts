@@ -29,8 +29,7 @@ const buildSortMove = (
 // an in-game merge.
 export const planSortDrags = (
   board: CellTier[],
-  priorityCells: number[],
-  _availableCells: ReadonlySet<number>
+  priorityCells: number[]
 ): SortMove[] => {
   if (board.length === 0) {
     return [];

@@ -71,7 +71,7 @@ export const runPlannedSort = async (
     };
   }
 
-  const moves = planSortDrags(preBoard, priorityCells, availableCells);
+  const moves = planSortDrags(preBoard, priorityCells);
   log(`planned ${moves.length} drags`);
 
   if (moves.length === 0) {
@@ -122,7 +122,7 @@ export const runPlannedSort = async (
   if (sorted) {
     log("verification: board is sorted");
   } else {
-    const remaining = planSortDrags(postBoard, priorityCells, availableCells);
+    const remaining = planSortDrags(postBoard, priorityCells);
     log(
       `verification: board NOT sorted, ${remaining.length} drags planned for next pass`
     );

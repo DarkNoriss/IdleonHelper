@@ -191,7 +191,7 @@ export default defineScript<[boolean]>({
       if (!actedThisIteration) {
         const board = buildBoardFromResults(response.results);
         if (!isBoardSorted(board, priorityCells)) {
-          const moves = planSortDrags(board, priorityCells, availableCells);
+          const moves = planSortDrags(board, priorityCells);
           if (moves.length > 0) {
             logger.log(`sushi-station-merge - sorting ${moves.length} drags`);
             for (const move of moves) {
