@@ -6,7 +6,6 @@ import {
   type CellTier,
   isBoardSorted,
   logBoardGrid,
-  planSortDrags,
 } from "./sushi-station-board";
 import {
   SUSHI_DRAG_OPTIONS,
@@ -14,6 +13,7 @@ import {
   SUSHI_HSV_UPPER,
   SUSHI_TEMPLATES,
 } from "./sushi-station-constants";
+import { planSortDrags } from "./sushi-station-sort-planner";
 
 const log = (msg: string): void => logger.log(`sushi-station-sort - ${msg}`);
 
@@ -31,10 +31,11 @@ export type SortResult = {
 };
 
 // Single planned-sort pass: one upfront scan, full plan via planSortDrags
-// (place -> evict -> swap), execute every drag, post-scan + verify. Steps 1
-// and 2 only target empty cells; step 3 swap requires explicit tier mismatch
-// at the source. The board is never re-scanned mid-execution, which makes
-// this immune to the template-miss -> same-tier-merge failure mode that
+// (cycle decomposition: chains then pure cycles), execute every drag,
+// post-scan + verify. Same-tier merges are structurally impossible because
+// adjacent pieces in any misplacement cycle/chain always have different
+// tiers. The board is never re-scanned mid-execution, which makes this
+// immune to the template-miss -> same-tier-merge failure mode that
 // rescan-between-drags loops are vulnerable to.
 //
 // Freeze detection: if the planner emits drags but the post-scan board hash
@@ -70,7 +71,7 @@ export const runPlannedSort = async (
     };
   }
 
-  const moves = planSortDrags(preBoard, priorityCells, availableCells);
+  const moves = planSortDrags(preBoard, priorityCells);
   log(`planned ${moves.length} drags`);
 
   if (moves.length === 0) {
@@ -121,7 +122,7 @@ export const runPlannedSort = async (
   if (sorted) {
     log("verification: board is sorted");
   } else {
-    const remaining = planSortDrags(postBoard, priorityCells, availableCells);
+    const remaining = planSortDrags(postBoard, priorityCells);
     log(
       `verification: board NOT sorted, ${remaining.length} drags planned for next pass`
     );
