@@ -99,11 +99,11 @@ export type ScriptMap = {
     result: undefined;
   };
   "classSpecific.tesseract.runUpgrader": {
-    args: [UpgraderStep[]];
+    args: [UpgraderStep[], boolean];
     result: undefined;
   };
   "classSpecific.grimoire.runUpgrader": {
-    args: [UpgraderStep[]];
+    args: [UpgraderStep[], boolean];
     result: undefined;
   };
 };

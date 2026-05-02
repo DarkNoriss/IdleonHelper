@@ -33,6 +33,11 @@ export const UPGRADER_SCROLLBAR_BOTTOM_Y = 455;
 // UPGRADER_CLICK_X_OFFSET). Y coords + pitches are shared.
 export type UpgraderGeometry = {
   scrollbarX: number;
+  // Optional per-skill overrides. Most upgrader panels share the
+  // 90 / 455 Y bounds (tesseract, grimoire, etc.); sushi's panel is
+  // shorter and uses 70 / 425.
+  scrollbarYTop?: number;
+  scrollbarYBottom?: number;
 };
 
 // Settle delays. SCROLL_SETTLE is load-bearing: required to let the scrollbar
@@ -62,15 +67,16 @@ export function placementFor(
   click: Point;
   topRow: number;
 } {
+  const yTop = geometry.scrollbarYTop ?? UPGRADER_SCROLLBAR_TOP_Y;
+  const yBottom = geometry.scrollbarYBottom ?? UPGRADER_SCROLLBAR_BOTTOM_Y;
   const maxTopRow = totalRows - UPGRADER_VISIBLE_ROWS;
-  const scrollPitch =
-    (UPGRADER_SCROLLBAR_BOTTOM_Y - UPGRADER_SCROLLBAR_TOP_Y) / maxTopRow;
+  const scrollPitch = (yBottom - yTop) / maxTopRow;
   const topRow = Math.min(index, maxTopRow);
   const visiblePos = index - topRow;
   return {
     scrollbar: {
       x: geometry.scrollbarX,
-      y: Math.round(UPGRADER_SCROLLBAR_TOP_Y + topRow * scrollPitch),
+      y: Math.round(yTop + topRow * scrollPitch),
     },
     click: {
       x: geometry.scrollbarX - UPGRADER_CLICK_X_OFFSET,

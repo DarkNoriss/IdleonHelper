@@ -5,7 +5,7 @@ import {
 } from "../../../backend/index";
 import type { CancellationToken } from "../../../utils/cancellation-token";
 import { delay, logger } from "../../../utils/index";
-import { navigation } from "../../game-nav/index";
+import type { EnsureOpen } from "./openers";
 import {
   placementFor,
   UPGRADER_CLICK_SETTLE_MS,
@@ -18,12 +18,10 @@ import {
 const CLICK_OPTIONS_15X = getClickOptionsFromPreset("1.5x");
 
 export type UpgraderConfig = {
-  attackIcon: string;
-  headerImage: string;
-  skillName: string;
+  ensureOpen: EnsureOpen;
   // In-game panel's total row count (visible + locked placeholders). Source
   // of truth is the skill's *_UPGRADE_DEFS.length - sets maxTopRow + scroll
-  // pitch. Per-skill because tesseract has 63 rows, grimoire 55.
+  // pitch. Per-skill because tesseract has 63 rows, grimoire 55, sushi 45.
   totalRows: number;
   geometry: UpgraderGeometry;
   upgradeNameOf: (index: number) => string;
@@ -33,6 +31,7 @@ export type UpgraderConfig = {
 export async function runUpgraderLoop(
   steps: readonly UpgraderStep[],
   config: UpgraderConfig,
+  dryRun: boolean,
   token: CancellationToken
 ): Promise<void> {
   if (steps.length === 0) {
@@ -40,33 +39,16 @@ export async function runUpgraderLoop(
     return;
   }
 
-  logger.log(`${config.logPrefix} - starting with ${steps.length} step(s)`);
-
-  const opened = await navigation.findAttackSkill(
-    config.attackIcon,
-    token,
-    config.skillName
+  const dryLabel = dryRun ? " (dry-run)" : "";
+  logger.log(
+    `${config.logPrefix} - starting with ${steps.length} step(s)${dryLabel}`
   );
+
+  const opened = await config.ensureOpen(token);
   if (!opened) {
-    logger.log(
-      `${config.logPrefix} - ${config.skillName} skill not found - aborting`
-    );
     return;
   }
 
-  const headerVisible = await backendCommand.findHSV(
-    config.headerImage,
-    UPGRADER_UI_HSV_LOWER,
-    UPGRADER_UI_HSV_UPPER,
-    undefined,
-    token
-  );
-  if (headerVisible.length === 0) {
-    logger.log(`${config.logPrefix} - panel header not found - aborting`);
-    return;
-  }
-
-  // Panel is open and the list defaults to topRow=0.
   let currentTopRow = 0;
 
   for (let i = 0; i < steps.length; i++) {
@@ -98,6 +80,19 @@ export async function runUpgraderLoop(
       currentTopRow = topRow;
     }
 
+    if (dryRun) {
+      const shot = await backendCommand.captureHsvScreen(
+        UPGRADER_UI_HSV_LOWER,
+        UPGRADER_UI_HSV_UPPER,
+        undefined,
+        token
+      );
+      logger.log(
+        `${config.logPrefix} - dry-run would click @ (${click.x}, ${click.y}) - screenshot ${shot.savedPath}`
+      );
+      continue;
+    }
+
     await backendCommand.click(
       click,
       { ...CLICK_OPTIONS_15X, times: step.levels },
@@ -106,5 +101,5 @@ export async function runUpgraderLoop(
     await delay(UPGRADER_CLICK_SETTLE_MS, token);
   }
 
-  logger.log(`${config.logPrefix} - finished`);
+  logger.log(`${config.logPrefix} - finished${dryLabel}`);
 }
