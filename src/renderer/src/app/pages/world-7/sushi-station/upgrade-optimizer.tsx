@@ -17,6 +17,7 @@ import {
   fuelCapacity,
   fuelGenPerHr,
   knowledgeBonusTotals,
+  SLOT_TO_UPG,
   totalBucksPerHr,
 } from "@/parsers/sushi-station-formulas";
 import { computeSushiPath } from "@/parsers/sushi-station-optimizer";
@@ -91,13 +92,22 @@ export const UpgradeOptimizer = () => {
     [steps, prefs.groupMode, isMetric]
   );
 
+  // upgradeLevels is keyed by upgIdx (raw SUSHI_UPG order); UpgraderStep.index
+  // is the slot (panel row order). withFromLevels does currentLevels[step.index],
+  // so we remap to slot-keyed first - tesseract/grimoire don't need this since
+  // their panel order matches their upgrade-data array.
+  const slotLevels = useMemo(() => {
+    const levels = sushiStation?.upgradeLevels ?? [];
+    return SLOT_TO_UPG.map((upgIdx) => levels[upgIdx] ?? 0);
+  }, [sushiStation?.upgradeLevels]);
+
   const upgraderSteps = useMemo(
     () =>
       withFromLevels(
         toUpgraderSteps(steps, prefs.groupMode, isMetric),
-        sushiStation?.upgradeLevels ?? []
+        slotLevels
       ),
-    [steps, prefs.groupMode, isMetric, sushiStation?.upgradeLevels]
+    [steps, prefs.groupMode, isMetric, slotLevels]
   );
 
   const stats = useMemo(() => {
