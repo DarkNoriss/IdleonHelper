@@ -45,7 +45,6 @@ const WeeklyBattle = () => {
             {loading ? "…fetching" : "↻ refetch"}
           </SmBtn>
         }
-        description="Solves this week's divinity boss. Data is fetched live from the community tracker — refetch if you see stale info."
         path="world-2 / weekly-battle"
         title="weekly-battle"
       />

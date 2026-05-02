@@ -12,11 +12,7 @@ const Summoning = () => {
 
   return (
     <>
-      <PageHead
-        description="Runs the summoning autobattler — pick endless mode for grinding or normal for progression."
-        path="world-6 / summoning"
-        title="summoning"
-      />
+      <PageHead path="world-6 / summoning" title="summoning" />
       <Block
         note="open the summoning arena in-game first. the script controls mouse and reads the board each turn."
         tag="scripts"

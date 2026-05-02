@@ -212,11 +212,7 @@ const CollectBlock = () => {
 
 const Trapping = () => (
   <>
-    <PageHead
-      description="Places and collects traps across all characters with trapping unlocked. Script rotates through each automatically."
-      path="world-3 / trapping"
-      title="trapping"
-    />
+    <PageHead path="world-3 / trapping" title="trapping" />
     <PlaceBlock />
     <CollectBlock />
   </>

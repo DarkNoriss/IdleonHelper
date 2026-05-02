@@ -2,11 +2,7 @@ import { Block, PageHead, RunBtn } from "@/components/terminal";
 
 const StoreItems = () => (
   <>
-    <PageHead
-      description="Buys pre-configured items from town shops across all characters on daily refresh. Switches characters automatically."
-      path="general / store-items"
-      title="store-items"
-    />
+    <PageHead path="general / store-items" title="store-items" />
     <Block
       note="open the shop on any town NPC first. script rotates through all characters that have shop-list entries configured."
       tag="script"

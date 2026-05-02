@@ -74,7 +74,6 @@ const Logs = () => {
             />
           </div>
         }
-        description="Live application logs. Tail updates in real-time as scripts run."
         path="general / logs"
         title="logs"
       />

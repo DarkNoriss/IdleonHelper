@@ -62,11 +62,7 @@ const CompassDebug = () => {
 
   return (
     <>
-      <PageHead
-        description="dev probes for compass navigation: neighbor discovery, minor-node debug, center calibration, and image-audit against pasted upgrade lists. results land in logs."
-        path="class-specific / compass-debug"
-        title="compass-debug"
-      />
+      <PageHead path="class-specific / compass-debug" title="compass-debug" />
       <Alert tone="warn">dev-only. results land in logs.</Alert>
 
       <Block

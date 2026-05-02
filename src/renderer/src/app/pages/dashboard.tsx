@@ -53,11 +53,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <PageHead
-        description="System overview. Scripts queue and run one-at-a-time — switch your game to the target character before starting."
-        path="dashboard"
-        title="dashboard"
-      />
+      <PageHead path="dashboard" title="dashboard" />
       {!isSignedIn && (
         <Alert tone="warn">
           not signed in — game data won't sync from firebase. open the profile

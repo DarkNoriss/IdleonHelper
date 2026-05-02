@@ -26,7 +26,6 @@ const RawData = () => {
             </SmBtn>
           </div>
         }
-        description="Read-only view of the live raw JSON synced from firebase. Click save to force a fresh fetch from the cloud."
         path="raw-data"
         title="raw-data"
       />

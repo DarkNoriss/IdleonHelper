@@ -17,11 +17,6 @@ const TABS = [
   { value: "optimizer", label: "optimizer" },
 ] as const satisfies readonly { value: ActiveTab; label: string }[];
 
-const SCRIPTS_DESCRIPTION =
-  "cook and merge sushi to push to higher tiers. each new tier unlocks a permanent rest-of-game bonus and boosts Bucks/hr. scripts here automate the merge board.";
-const OPTIMIZER_DESCRIPTION =
-  "optimal upgrade order across bucks/hr, fuel rate, fuel cap, or cheapest overall. rows are sorted by efficiency.";
-
 const SushiStation = () => {
   const [isDev, setIsDev] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>("scripts");
@@ -43,17 +38,9 @@ const SushiStation = () => {
       .catch(() => setIsDev(false));
   }, []);
 
-  const description =
-    activeTab === "scripts" ? SCRIPTS_DESCRIPTION : OPTIMIZER_DESCRIPTION;
-
   return (
     <>
-      <PageHead
-        descMinLines={2}
-        description={description}
-        path="world-7 / sushi-station"
-        title="sushi-station"
-      />
+      <PageHead path="world-7 / sushi-station" title="sushi-station" />
       <TermTabs onValueChange={setActiveTab} tabs={TABS} value={activeTab}>
         <Tabs.Panel value="scripts">
           <Block

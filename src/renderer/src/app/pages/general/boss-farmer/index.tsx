@@ -35,11 +35,7 @@ const BossFarmer = () => {
 
   return (
     <>
-      <PageHead
-        description="Repeatedly farms the currently-selected boss. Set the iteration count and start."
-        path="general / boss-farmer"
-        title="boss-farmer"
-      />
+      <PageHead path="general / boss-farmer" title="boss-farmer" />
       <Block
         note="open the boss-select menu in-game. set your boss and difficulty first, then return here."
         tag="script"

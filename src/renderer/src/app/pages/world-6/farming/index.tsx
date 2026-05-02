@@ -36,11 +36,7 @@ const Farming = () => {
 
   return (
     <>
-      <PageHead
-        description="Collect crops with an overgrowth threshold, and run bean-trading cycles for tickets and crop trades."
-        path="world-6 / farming"
-        title="farming"
-      />
+      <PageHead path="world-6 / farming" title="farming" />
       <Block
         compact
         note="only harvests plots that reached the selected overgrowth multiplier. set to >=0x to collect everything."
