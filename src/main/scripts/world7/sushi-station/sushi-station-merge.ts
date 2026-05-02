@@ -8,7 +8,7 @@ import { defineScript } from "../../define-script";
 import {
   buildBoardFromResults,
   cellToPoint,
-  pickSortMove,
+  isBoardSorted,
 } from "./sushi-station-board";
 import {
   buildSushiRegions,
@@ -29,6 +29,7 @@ import {
   SUSHI_TIERS_OFF,
   SUSHI_TIERS_ON,
 } from "./sushi-station-constants";
+import { planSortDrags } from "./sushi-station-sort-planner";
 
 export default defineScript<[boolean]>({
   id: "world7.sushiStation.sushiStationMerge",
@@ -189,19 +190,24 @@ export default defineScript<[boolean]>({
 
       if (!actedThisIteration) {
         const board = buildBoardFromResults(response.results);
-        const move = pickSortMove(board, priorityCells);
-        if (move) {
-          logger.log(
-            `sushi-station-merge - sorting ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
-          );
-          token.throwIfCancelled();
-          await backendCommand.drag(
-            move.from,
-            move.to,
-            SUSHI_DRAG_OPTIONS,
-            token
-          );
-          actedThisIteration = true;
+        if (!isBoardSorted(board, priorityCells)) {
+          const moves = planSortDrags(board, priorityCells, availableCells);
+          if (moves.length > 0) {
+            logger.log(`sushi-station-merge - sorting ${moves.length} drags`);
+            for (const move of moves) {
+              logger.log(
+                `sushi-station-merge - sort drag ${move.tier} [${move.fromRow},${move.fromCol}] -> [${move.toRow},${move.toCol}]`
+              );
+              token.throwIfCancelled();
+              await backendCommand.drag(
+                move.from,
+                move.to,
+                SUSHI_DRAG_OPTIONS,
+                token
+              );
+            }
+            actedThisIteration = true;
+          }
         }
       }
 
