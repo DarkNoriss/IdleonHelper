@@ -11,7 +11,6 @@ import { RunBtn } from "@/components/terminal";
 import { DisabledHint } from "@/components/terminal/disabled-hint";
 import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
-import { COMPASS_UPGRADE_DEFS } from "@/parsers/compass-data";
 import {
   computeCompassPath,
   DUST_RESOURCE_IDS,
@@ -124,10 +123,6 @@ export const CompassOptimizerTab = () => {
     scriptId: UPGRADER_SCRIPT_ID,
     lastRunAt,
     setLastRunAt: (ms) => setUpgraderRun({ lastRunAt: ms }),
-    getCurrentLevels: () => compass?.upgradeLevels ?? [],
-    getPlannedSteps: () => upgraderSteps,
-    upgradeNameOf: (i) => COMPASS_UPGRADE_DEFS[i]?.name ?? "?",
-    logPrefix: "compass-upgrader",
   });
 
   const [rphOpen, setRphOpen] = useState(false);
