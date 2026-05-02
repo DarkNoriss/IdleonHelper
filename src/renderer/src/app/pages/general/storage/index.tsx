@@ -8,13 +8,7 @@ const StoreItems = () => (
       tag="script"
       title="store.run"
     >
-      <div className="flex items-center gap-3">
-        <RunBtn label="start store-items" scriptId="general.storeItems.run" />
-        <div className="font-mono text-[10.5px] text-text-muted">
-          tip: configure the shop list per character in{" "}
-          <span className="text-amber">~/config/shops.json</span>
-        </div>
-      </div>
+      <RunBtn label="start store-items" scriptId="general.storeItems.run" />
     </Block>
   </>
 );

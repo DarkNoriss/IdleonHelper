@@ -289,7 +289,7 @@ const Construction = () => {
       )}
       {solverError && <Alert tone="danger">{solverError}</Alert>}
 
-      <Block compact tag={solved ? "optimized" : "current"} title="score">
+      <Block tag={solved ? "optimized" : "current"} title="score">
         <div className="grid grid-cols-3 gap-2.5 text-center">
           <ScoreCol
             current={notateNumber(buildRate)}
@@ -333,7 +333,6 @@ const Construction = () => {
       </Block>
 
       <Block
-        compact
         note="solver runs locally for up to 10 minutes. after solving, click apply to execute the move list."
         tag="planner"
         title="construction.solver"
@@ -494,7 +493,6 @@ const Construction = () => {
 
       <div className="grid grid-cols-2 gap-1.5">
         <Block
-          compact
           note="collects every available cog on the bench."
           title="cogs.collect"
         >
@@ -507,7 +505,6 @@ const Construction = () => {
           </BlockActions>
         </Block>
         <Block
-          compact
           note="bulk-trashes cogs on the bench below your kept-quality threshold."
           title="cogs.trash"
         >

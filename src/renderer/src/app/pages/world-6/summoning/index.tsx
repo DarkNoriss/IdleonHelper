@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Block, PageHead, RunBtn } from "@/components/terminal";
+import { Block, BlockActions, PageHead, RunBtn } from "@/components/terminal";
 
 const Summoning = () => {
   const [isDev, setIsDev] = useState(false);
@@ -13,22 +13,32 @@ const Summoning = () => {
   return (
     <>
       <PageHead path="world-6 / summoning" title="summoning" />
-      <Block
-        note="open the summoning arena in-game first. the script controls mouse and reads the board each turn."
-        tag="scripts"
-        title="summoning.scripts"
-      >
-        <div className="grid grid-cols-2 gap-2">
-          <RunBtn
-            label="start endless autobattler"
-            scriptId="world6.summoning.startEndlessAutobattler"
-          />
-          <RunBtn
-            label="start autobattler"
-            scriptId="world6.summoning.startAutobattler"
-          />
-        </div>
-      </Block>
+      <div className="grid grid-cols-2 gap-2">
+        <Block
+          note="runs a single match, then stops. open the summoning arena in-game first."
+          tag="script"
+          title="summoning.single"
+        >
+          <BlockActions>
+            <RunBtn
+              label="start autobattler"
+              scriptId="world6.summoning.startAutobattler"
+            />
+          </BlockActions>
+        </Block>
+        <Block
+          note="loops matches back-to-back. open the summoning arena in-game first."
+          tag="script"
+          title="summoning.endless"
+        >
+          <BlockActions>
+            <RunBtn
+              label="start endless autobattler"
+              scriptId="world6.summoning.startEndlessAutobattler"
+            />
+          </BlockActions>
+        </Block>
+      </div>
       {isDev && (
         <Block
           note="visual probes for the board reader. dev-only."

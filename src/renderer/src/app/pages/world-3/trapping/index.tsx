@@ -85,7 +85,6 @@ const PlaceBlock = () => {
 
   return (
     <Block
-      compact
       note="open the trapping menu in-game on any character. pick critter + trap tier + duration."
       tag="script"
       title="traps.place"
@@ -171,7 +170,6 @@ const CollectBlock = () => {
 
   return (
     <Block
-      compact
       note="collects traps of chosen tier. leave timer empty to skip re-arming."
       tag="script"
       title="traps.collect"

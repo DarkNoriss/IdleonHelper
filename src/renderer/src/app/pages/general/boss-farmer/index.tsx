@@ -41,7 +41,7 @@ const BossFarmer = () => {
         tag="script"
         title="boss.run"
       >
-        <div className="mb-2.5 flex items-end gap-2.5">
+        <div className="flex items-end gap-2.5">
           <Field label="iterations" width="w-[120px]">
             <TermInput
               disabled={isRunning}
@@ -92,7 +92,7 @@ const BossFarmer = () => {
           )}
         </div>
         {isRunning && bossFarmer && (
-          <div className="grid grid-cols-2 gap-1 rounded-[3px] border border-border-soft bg-panel-2 p-2.5 font-mono text-[10.5px]">
+          <div className="mt-2.5 grid grid-cols-2 gap-1 rounded-[3px] border border-border-soft bg-panel-2 p-2.5 font-mono text-[10.5px]">
             <span className="text-text-dim">
               iteration:{" "}
               <span className="text-foreground">

@@ -68,8 +68,7 @@ Props:
 
 - `title` — mono, rendered as `# title`. Use `module.action` form (e.g. `candy.run`, `cards.apply`, `traps.place`).
 - `tag` — optional small chip to the right of the title. Common tags: `"script"`, `"config"`, `"data"`, `"planner"`, `"current"`.
-- `note` — optional guidance rendered as `// note text`. This strip grows vertically when sibling Blocks in a grid have more content — it absorbs extra height so action rows stay pinned at the bottom.
-- `compact` — tighter body padding. Use for short, dense blocks (e.g. the `cogs.collect` / `cogs.trash` pair on the construction page).
+- `note` — optional guidance rendered as `// note text`. When present, this strip grows vertically so sibling Blocks in a grid stay equal height and action rows stay pinned at the bottom. When absent, the body itself fills the leftover height instead, so `BlockActions` (`mt-auto`) still pins to the bottom.
 
 ### Side-by-side Blocks with equal height
 
@@ -77,12 +76,12 @@ When two `Block`s sit in a `grid grid-cols-2` and one has a longer note/body, th
 
 ```tsx
 <div className="grid grid-cols-2 gap-2">
-  <Block title="cards.apply" tag="script" note="applies preset to active character." compact>
+  <Block title="cards.apply" tag="script" note="applies preset to active character.">
     <BlockActions>
       <RunBtn scriptId="general.cardPresets.apply" label="apply preset" getArgs={…} />
     </BlockActions>
   </Block>
-  <Block title="cards.select" tag="script" note="selects preset without applying." compact>
+  <Block title="cards.select" tag="script" note="selects preset without applying.">
     <BlockActions>
       <RunBtn scriptId="general.cardPresets.select" label="select preset" getArgs={…} />
     </BlockActions>

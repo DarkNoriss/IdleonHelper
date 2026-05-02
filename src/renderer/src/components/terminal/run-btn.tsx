@@ -93,10 +93,11 @@ export const RunBtn = <T extends keyof ScriptMap>({
   } as const;
 
   return (
-    // `self-start` keeps the button at its content width when the parent is a
-    // flex column (default `align-items: stretch` would otherwise make it
-    // full-width). No-op in non-flex parents.
-    <div className="inline-flex flex-col gap-1 self-start">
+    // `h-fit w-fit` keep the wrapper at content size in any container so
+    // flex/grid `stretch` defaults can't expand it. We deliberately avoid
+    // `self-*` so the parent's `items-*` (e.g. `items-end` on a row of
+    // buttons) controls vertical alignment.
+    <div className="inline-flex h-fit w-fit flex-col gap-1">
       <button
         className={cn(base, sizing, byState[state], className)}
         disabled={isDisabled}
