@@ -42,7 +42,6 @@ const CardPresets = () => {
       </Block>
       <div className="grid grid-cols-2 gap-2">
         <Block
-          compact
           note="applies the preset to the active character in-game."
           tag="script"
           title="cards.apply"
@@ -56,7 +55,6 @@ const CardPresets = () => {
           </BlockActions>
         </Block>
         <Block
-          compact
           note="selects (highlights) the preset without applying, so you can inspect before committing."
           tag="script"
           title="cards.select"

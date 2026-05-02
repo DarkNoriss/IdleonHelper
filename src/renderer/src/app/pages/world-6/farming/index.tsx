@@ -38,7 +38,6 @@ const Farming = () => {
     <>
       <PageHead path="world-6 / farming" title="farming" />
       <Block
-        compact
         note="only harvests plots that reached the selected overgrowth multiplier. set to >=0x to collect everything."
         tag="script"
         title="farming.collect-crops"
@@ -60,14 +59,12 @@ const Farming = () => {
             <RunBtn
               label="debug"
               scriptId="world6.farming.farmingCollectCropsDebug"
-              small
             />
           )}
         </div>
       </Block>
       <div className="grid grid-cols-2 gap-2">
         <Block
-          compact
           note="buys tickets from the bean vendor."
           title="bean-trading.tickets"
         >
@@ -80,7 +77,6 @@ const Farming = () => {
           </BlockActions>
         </Block>
         <Block
-          compact
           note="trades crops at the vendor for goods and reroll currency."
           title="bean-trading.trade"
         >

@@ -6,7 +6,6 @@ type BlockProps = {
   tag?: string;
   dev?: boolean;
   note?: ReactNode;
-  compact?: boolean;
   children: ReactNode;
   className?: string;
 };
@@ -16,7 +15,6 @@ export const Block = ({
   tag,
   dev,
   note,
-  compact,
   children,
   className,
 }: BlockProps) => (
@@ -49,7 +47,14 @@ export const Block = ({
       </div>
     )}
     <div
-      className={cn("flex shrink-0 flex-col", compact ? "px-3 py-2" : "p-3")}
+      className={cn(
+        // Without a note, give the body the leftover height so `BlockActions`
+        // (`mt-auto`) can pin its action to the bottom of a stretched block —
+        // otherwise empty space sits between content and the block's edge
+        // (e.g. the weekly-battle skull/trophy cards).
+        "flex flex-col px-3 py-2",
+        note ? "shrink-0" : "min-h-0 flex-1"
+      )}
     >
       {children}
     </div>
@@ -62,5 +67,8 @@ type BlockActionsProps = {
 };
 
 export const BlockActions = ({ children, className }: BlockActionsProps) => (
-  <div className={cn("mt-auto pt-2.5", className)}>{children}</div>
+  // `first:pt-0` drops the top separator when BlockActions is the only child
+  // of the Block body — the note already provides visual separation, and the
+  // extra padding looks like a bug when nothing sits above it.
+  <div className={cn("mt-auto pt-2.5 first:pt-0", className)}>{children}</div>
 );

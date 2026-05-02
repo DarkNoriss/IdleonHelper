@@ -72,7 +72,6 @@ const WeeklyBattle = () => {
             const label = isSkulls ? "start skulls" : "start trophy";
             return (
               <Block
-                compact
                 key={`${index}-${step.stepName}`}
                 tag="script"
                 title={`${step.stepName

@@ -97,7 +97,6 @@ const SushiStation = () => {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Block
-                  compact
                   dev
                   note="captures filtered cell images for new sushi tier templates."
                   tag="script"
@@ -110,7 +109,6 @@ const SushiStation = () => {
                   />
                 </Block>
                 <Block
-                  compact
                   dev
                   note="single sort pass: arranges sushi in descending tier order along the snake. no merging, no cooking."
                   tag="script"
