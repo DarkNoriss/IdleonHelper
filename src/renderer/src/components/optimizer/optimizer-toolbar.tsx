@@ -20,6 +20,13 @@ type Props = {
   maxSteps: number;
   onMaxStepsChange: (n: number) => void;
 
+  // Persisted "custom slot" — the value the input restores when the user
+  // toggles back to custom after picking a preset. When omitted, the toolbar
+  // falls back to the legacy behaviour where custom shares storage with
+  // `maxSteps` and gets clobbered by preset selections.
+  customMaxSteps?: number;
+  onCustomMaxStepsChange?: (n: number) => void;
+
   groupMode: OptimizerGroupMode;
   onGroupModeChange: (m: OptimizerGroupMode) => void;
 
@@ -72,6 +79,8 @@ export const OptimizerToolbar = ({
   maxStepsOptions,
   maxSteps,
   onMaxStepsChange,
+  customMaxSteps,
+  onCustomMaxStepsChange,
   groupMode,
   onGroupModeChange,
   onlyAffordable,
@@ -104,7 +113,7 @@ export const OptimizerToolbar = ({
   // "custom mode" is a UI flag — once toggled on, the user types into the
   // input even if their typed value happens to match a preset. Sync once on
   // mount and again whenever an external reset lands a non-preset value.
-  const [customMaxSteps, setCustomMaxSteps] = useState(
+  const [inCustomMode, setInCustomMode] = useState(
     () => !maxStepsOptions.includes(maxSteps)
   );
   const [customMaxStepsDraft, setCustomMaxStepsDraft] = useState(
@@ -113,16 +122,21 @@ export const OptimizerToolbar = ({
   useEffect(() => {
     setCustomMaxStepsDraft(String(maxSteps));
     if (!maxStepsOptions.includes(maxSteps)) {
-      setCustomMaxSteps(true);
+      setInCustomMode(true);
     }
   }, [maxSteps, maxStepsOptions]);
 
   const handleMaxStepsSelectChange = (v: string) => {
     if (v === CUSTOM_OPTION_VALUE) {
-      setCustomMaxSteps(true);
+      setInCustomMode(true);
+      // Restore the saved custom slot (when wired). Without it, fall back to
+      // the current `maxSteps` so the input simply takes over the field.
+      if (customMaxSteps !== undefined && customMaxSteps !== maxSteps) {
+        onMaxStepsChange(customMaxSteps);
+      }
       return;
     }
-    setCustomMaxSteps(false);
+    setInCustomMode(false);
     onMaxStepsChange(Number(v));
   };
 
@@ -137,6 +151,7 @@ export const OptimizerToolbar = ({
     if (clamped !== maxSteps) {
       onMaxStepsChange(clamped);
     }
+    onCustomMaxStepsChange?.(clamped);
   };
 
   const showResourceFilter =
@@ -220,9 +235,9 @@ export const OptimizerToolbar = ({
               className="min-w-[100px]"
               onChange={handleMaxStepsSelectChange}
               options={maxStepsSelectOptions}
-              value={customMaxSteps ? CUSTOM_OPTION_VALUE : String(maxSteps)}
+              value={inCustomMode ? CUSTOM_OPTION_VALUE : String(maxSteps)}
             />
-            {customMaxSteps && (
+            {inCustomMode && (
               <TermInput
                 className="w-20"
                 inputMode="numeric"

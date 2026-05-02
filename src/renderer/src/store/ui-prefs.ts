@@ -44,6 +44,7 @@ type SushiHeatOfTheEastWindPrefs = {
 type SushiOptimizerPrefs = {
   category: OptimizerCategory;
   maxSteps: OptimizerMaxSteps;
+  customMaxSteps: number;
   onlyAffordable: boolean;
   groupMode: OptimizerGroupMode;
 };
@@ -52,6 +53,7 @@ type CompassOptimizerPrefs = {
   rph: CompassRphRates;
   dustFilter: CompassDustFilter;
   maxSteps: number;
+  customMaxSteps: number;
   groupMode: OptimizerGroupMode;
   onlyAffordable: boolean;
 };
@@ -60,6 +62,7 @@ type TesseractOptimizerPrefs = {
   rph: TesseractRphRates;
   tachyonFilter: TesseractTachyonFilter;
   maxSteps: number;
+  customMaxSteps: number;
   groupMode: OptimizerGroupMode;
   onlyAffordable: boolean;
 };
@@ -68,6 +71,7 @@ type GrimoireOptimizerPrefs = {
   rph: GrimoireRphRates;
   boneFilter: GrimoireBoneFilter;
   maxSteps: number;
+  customMaxSteps: number;
   groupMode: OptimizerGroupMode;
   onlyAffordable: boolean;
 };
@@ -144,6 +148,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       sushiOptimizer: {
         category: "all",
         maxSteps: 25,
+        customMaxSteps: 25,
         onlyAffordable: false,
         groupMode: "none",
       },
@@ -153,6 +158,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         rph: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 },
         dustFilter: "all",
         maxSteps: 25,
+        customMaxSteps: 25,
         groupMode: "none",
         onlyAffordable: false,
       },
@@ -162,6 +168,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         rph: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 },
         tachyonFilter: "all",
         maxSteps: 25,
+        customMaxSteps: 25,
         groupMode: "none",
         onlyAffordable: false,
       },
@@ -171,6 +178,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         rph: { 0: 1, 1: 1, 2: 1, 3: 1 },
         boneFilter: "all",
         maxSteps: 25,
+        customMaxSteps: 25,
         groupMode: "none",
         onlyAffordable: false,
       },
