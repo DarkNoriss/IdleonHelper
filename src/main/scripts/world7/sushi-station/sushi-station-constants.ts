@@ -32,7 +32,7 @@ export const GRID_SLOT = `${SUSHI_PATH}/grid_slot`;
 export const GRID_SLOT_RED = `${SUSHI_PATH}/grid_slot_red`;
 export const GRID_SLOT_YELLOW = `${SUSHI_PATH}/grid_slot_yellow`;
 export const SUSHI_TAB = `${SUSHI_PATH}/sushi_sushi`;
-export const SUSHI_UPGRADE_HEADER = `${SUSHI_PATH}/sushi_upgrade`;
+export const SUSHI_UPGRADE_TAB = `${SUSHI_PATH}/sushi_upgrade`;
 
 const SUSHI_TIERS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,

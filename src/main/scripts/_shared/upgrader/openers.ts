@@ -42,23 +42,25 @@ export const attackSkillOpener = (
   };
 };
 
-// Sushi: caller is already in the sushi-station UI; we only need to verify the
-// upgrade panel header is on screen.
-export const headerOpener = (
-  headerImage: string,
+// Sushi: caller is already in the sushi-station UI but may be on a different
+// inner tab. The image is the inactive-tab graphic - if visible, click it to
+// switch to the upgrade tab; if absent, we're already on it. Uses
+// isVisibleHSV (short timeout) so the happy path is a fast no-op.
+export const inactiveTabOpener = (
+  inactiveTabImage: string,
   logPrefix: string
 ): EnsureOpen => {
   return async (token) => {
-    const headerVisible = await backendCommand.findHSV(
-      headerImage,
+    const tabHits = await backendCommand.isVisibleHSV(
+      inactiveTabImage,
       UPGRADER_UI_HSV_LOWER,
       UPGRADER_UI_HSV_UPPER,
       undefined,
       token
     );
-    if (headerVisible.length === 0) {
-      logger.log(`${logPrefix} - panel header not found - aborting`);
-      return false;
+    if (tabHits.length > 0) {
+      logger.log(`${logPrefix} - inactive tab visible, clicking to activate`);
+      await backendCommand.click(tabHits[0]!, undefined, token);
     }
     return true;
   };
