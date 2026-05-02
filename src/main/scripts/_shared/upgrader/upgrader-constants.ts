@@ -34,8 +34,9 @@ export const UPGRADER_SCROLLBAR_BOTTOM_Y = 455;
 export type UpgraderGeometry = {
   scrollbarX: number;
   // Optional per-skill overrides. Most upgrader panels share the
-  // 90 / 455 Y bounds (tesseract, grimoire, etc.); sushi's panel is
-  // shorter and uses 70 / 425.
+  // 90 / 455 handle-anchor Y bounds (tesseract, grimoire). Sushi's panel
+  // is shorter and uses 80 / 413 - see sushi-station-upgrader.ts for the
+  // smoke-derived rationale.
   scrollbarYTop?: number;
   scrollbarYBottom?: number;
 };
