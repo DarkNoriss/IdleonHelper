@@ -11,7 +11,6 @@ import { RunBtn } from "@/components/terminal";
 import { DisabledHint } from "@/components/terminal/disabled-hint";
 import { useUpgraderFreshnessGate } from "@/hooks/use-upgrader-freshness-gate";
 import { notateNumber } from "@/lib/notateNumber";
-import { GRIMOIRE_UPGRADE_DEFS } from "@/parsers/grimoire-data";
 import {
   BONE_RESOURCE_IDS,
   computeGrimoirePath,
@@ -118,10 +117,6 @@ export const GrimoireOptimizerTab = () => {
     scriptId: UPGRADER_SCRIPT_ID,
     lastRunAt,
     setLastRunAt: (ms) => setUpgraderRun({ lastRunAt: ms }),
-    getCurrentLevels: () => grimoire?.upgradeLevels ?? [],
-    getPlannedSteps: () => upgraderSteps,
-    upgradeNameOf: (i) => GRIMOIRE_UPGRADE_DEFS[i]?.name ?? "?",
-    logPrefix: "grimoire-upgrader",
   });
 
   const [rphOpen, setRphOpen] = useState(false);
