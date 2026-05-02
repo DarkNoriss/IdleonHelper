@@ -177,17 +177,12 @@ export const UpgradeOptimizer = () => {
           onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
           onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
           rightSlot={(() => {
-            const upgraderDisabled =
-              !prefs.onlyAffordable ||
-              upgraderSteps.length === 0 ||
-              dataIsStale;
+            const upgraderDisabled = upgraderSteps.length === 0 || dataIsStale;
             const upgraderHint = dataIsStale
               ? "waiting for upgrade levels to update - idleon hasn't synced post-run state yet"
-              : prefs.onlyAffordable
-                ? upgraderSteps.length === 0
-                  ? "no affordable upgrades found - tweak the optimizer or earn more bucks"
-                  : null
-                : "enable 'show only affordable' to use the upgrader";
+              : upgraderSteps.length === 0
+                ? "no upgrades planned - increase max steps or load a save"
+                : null;
             const button = (
               <RunBtn
                 disabled={upgraderDisabled}
