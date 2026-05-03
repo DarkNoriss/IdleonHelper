@@ -4,6 +4,7 @@ import {
   getAuth,
   setPersistence,
 } from "firebase/auth";
+import { getDatabase } from "firebase/database";
 import { getFirestore } from "firebase/firestore";
 import { firebaseConfig } from "./config";
 
@@ -16,3 +17,7 @@ setPersistence(auth, browserLocalPersistence).catch(() => {
 });
 
 export const firestore = getFirestore(app);
+// `_data/{uid}` lives in Firestore, but `_comp/{uid}` (companions),
+// `_usgu/{uid}` (guild membership), and `_tournament/{uid}` live in the
+// Realtime Database -- mirroring how IdleOn / IdleonToolbox split storage.
+export const database = getDatabase(app);
