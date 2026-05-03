@@ -391,7 +391,11 @@ export const CURRENCY_PER_TIER: readonly number[] = [
 ] as const;
 
 export const MAX_SLOTS = 120;
-export const MAX_TIER = 53;
+// Highest sushi tier the game supports (toolbox uses 58 too -- mirrors the
+// length of `research[30]` minus 1). Tiers 54-58 exist past the end of
+// `TIER_TO_KNOWLEDGE_CAT`; the game treats them as category 0 (sushi-bucks),
+// so high-tier knowledge XP feeds the bucks-multi factor `knowledgeTotals[0]`.
+export const MAX_TIER = 58;
 
 // ---------------------------------------------------------------------------
 // Leaf helper functions (no dependencies on later-task functions)
@@ -490,15 +494,13 @@ export function computeUniqueSushi(sushiData: unknown): number {
 }
 
 // Returns the knowledge bonus for a specific tier (sushi.js:128-135).
-// Returns 0 for tiers past TIER_TO_KNOWLEDGE_CAT length (open issue #7).
+// Tiers past TIER_TO_KNOWLEDGE_CAT length (54..58) default to category 0
+// (sushi-bucks, value 20) -- mirrors toolbox's `Number(undefined) || 0` fallback.
 export function knowledgeBonusSpecific(
   tier: number,
   sushiData: unknown
 ): number {
-  const cat = TIER_TO_KNOWLEDGE_CAT[tier];
-  if (cat === undefined) {
-    return 0;
-  }
+  const cat = TIER_TO_KNOWLEDGE_CAT[tier] ?? 0;
   const baseVal = KNOWLEDGE_CAT_VALUE[cat] || 0;
   const sd = sushiData as { 7?: unknown; 5?: unknown } | null | undefined;
   const knowledgeLv =
@@ -512,14 +514,14 @@ export function knowledgeBonusSpecific(
 
 // Sums knowledge bonuses across all tiers into 11 category buckets (sushi.js:140-147).
 // Category 6 is the cost-discount input used by upgCost.
+// Tiers past TIER_TO_KNOWLEDGE_CAT length (54..58) default to category 0
+// (sushi-bucks) -- mirrors toolbox's `Number(undefined) || 0` fallback so high-
+// tier knowledge XP correctly feeds knowledgeTotals[0].
 export function knowledgeBonusTotals(sushiData: unknown): number[] {
   const totals = new Array<number>(11).fill(0);
   for (let tier = 0; tier <= MAX_TIER; tier++) {
-    const cat = TIER_TO_KNOWLEDGE_CAT[tier];
-    if (cat !== undefined) {
-      totals[cat] =
-        (totals[cat] ?? 0) + knowledgeBonusSpecific(tier, sushiData);
-    }
+    const cat = TIER_TO_KNOWLEDGE_CAT[tier] ?? 0;
+    totals[cat] = (totals[cat] ?? 0) + knowledgeBonusSpecific(tier, sushiData);
   }
   return totals;
 }
@@ -551,6 +553,10 @@ export type ExternalSources = {
   gamingSuperBit67: number;
   /** `(1 + buttonBonus2/100)` factor in computeCurrencyMulti. Default 0. */
   buttonBonus2: number;
+  /** Event Shop bonus 45 (`Sushi_Bucks`) ownership flag (0 or 1). Multiplies
+   *  computeCurrencyMulti by `(1 + 100 * eventShopBonus45 / 100) = (1 + x)`.
+   *  Default 0. */
+  eventShopBonus45: number;
 };
 
 // Returns the fireplace-effect base multiplier from sparks and knowledge category 9 (sushi.js:212-218).
@@ -630,6 +636,7 @@ export function computeCurrencyMulti(
   const hasBundleV = externalSources?.hasBundleV ? 1 : 0;
   const gamingSuperBit67 = externalSources?.gamingSuperBit67 || 0;
   const buttonBonus2 = externalSources?.buttonBonus2 || 0;
+  const eventShopBonus45 = externalSources?.eventShopBonus45 || 0;
 
   const surchargeSum =
     upgradeQTY(30, upgLevels) +
@@ -641,6 +648,7 @@ export function computeCurrencyMulti(
 
   return (
     (1 + arcade67 / 100) *
+    (1 + eventShopBonus45) *
     1.1 ** uniqueSushi *
     (1 + Math.min(1, hasBundleV)) *
     (1 + surchargeSum / 100) *

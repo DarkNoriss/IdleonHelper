@@ -7,8 +7,12 @@ import {
   TermCheckbox,
   TermTabs,
 } from "@/components/terminal";
+import { DisabledHint } from "@/components/terminal/disabled-hint";
+import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 import { UpgradeOptimizer } from "./upgrade-optimizer";
+
+const HOTEW_RESEARCH_LV_REQ = 49;
 
 type ActiveTab = "scripts" | "optimizer";
 
@@ -30,6 +34,14 @@ const SushiStation = () => {
   const setSushiHeatOfTheEastWind = useUiPrefsStore(
     (s) => s.setSushiHeatOfTheEastWind
   );
+
+  const { sushiStation } = useGameData();
+  const researchLevel = sushiStation?.researchLevel;
+  const hotewLocked =
+    researchLevel !== undefined && researchLevel < HOTEW_RESEARCH_LV_REQ;
+  const hotewLockHint = hotewLocked
+    ? `locked - requires research level ${HOTEW_RESEARCH_LV_REQ} (current: ${researchLevel})`
+    : null;
 
   useEffect(() => {
     window.api.app
@@ -80,14 +92,26 @@ const SushiStation = () => {
                 }
               />
             </div>
-            <RunBtn
-              getArgs={() => [
-                sushiHeatOfTheEastWind.shouldCook,
-                sushiHeatOfTheEastWind.mergeAboveHotew ?? false,
-              ]}
-              label="start loop"
-              scriptId="world7.sushiStation.sushiStationHeatOfTheEastWind"
-            />
+            {(() => {
+              const button = (
+                <RunBtn
+                  disabled={hotewLocked}
+                  getArgs={() => [
+                    sushiHeatOfTheEastWind.shouldCook,
+                    sushiHeatOfTheEastWind.mergeAboveHotew ?? false,
+                  ]}
+                  label="start loop"
+                  scriptId="world7.sushiStation.sushiStationHeatOfTheEastWind"
+                />
+              );
+              return hotewLockHint ? (
+                <DisabledHint disabled popover={hotewLockHint}>
+                  {button}
+                </DisabledHint>
+              ) : (
+                button
+              );
+            })()}
           </Block>
           {isDev && (
             <div className="mt-1.5 rounded-[5px] border border-border border-dashed bg-black/20 px-2.5 pt-2 pb-1">

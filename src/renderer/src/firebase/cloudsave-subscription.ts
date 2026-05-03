@@ -1,26 +1,46 @@
+import { ref as dbRef, get, off, onValue } from "firebase/database";
 import { doc, getDoc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { useConnectionStore } from "@/store/connection";
 import { useRawJsonStore } from "@/store/raw-json";
-import { firestore } from "./client";
+import { database, firestore } from "./client";
 
 const MAX_CONSECUTIVE_ERRORS = 3;
 
-// The Firestore `_data/{uid}` document IS the game state — top-level keys are
-// flat (e.g. `GemItemsPurchased`, `CogM`, `Guild`). Our existing parsers expect
-// the standard `{ data: {...} }` cloudsave-export envelope, so we wrap the
-// full document under a `data` key before persisting. We also mirror the
-// envelope's siblings (charNames, companion, guildData, tournament, serverVars,
-// accountCreateTime, lastUpdated, extraData) with null placeholders so future
-// features can populate them without re-shaping the store.
-type CloudsaveDoc = Record<string, unknown> & { lastUpdated?: number };
+// Per signed-in user we read TWO storage backends -- mirroring how IdleOn /
+// IdleonToolbox split persistence:
+//   - `_data/{uid}` lives in **Firestore**. This is the main game state with
+//     flat top-level keys (`Sushi`, `OptLacc`, `Atoms`, ...). Mirrored into
+//     the envelope under `data`.
+//   - `_comp/{uid}` lives in **Realtime Database** (NOT Firestore). Companion
+//     / pet state -- `{ d, e, l[], o, p, s, t, x, y }`. Mirrored under
+//     `companion`.
+//
+// Both subscriptions update private module-scoped caches; whenever EITHER
+// fires, we rebuild the full envelope JSON and push it to the raw-json store.
+// This keeps the persisted shape consistent regardless of which source updated.
+//
+// Error handling: companion failures are non-essential -- they don't escalate
+// the connection state to "error" because most parsers run fine without it.
+// Only `_data/{uid}` failures bump the error counter.
 
-const applyCloudsaveDoc = (docData: CloudsaveDoc): void => {
+type CloudsaveDoc = Record<string, unknown> & { lastUpdated?: number };
+type CompanionDoc = Record<string, unknown>;
+
+let latestDataDoc: CloudsaveDoc | null = null;
+let latestCompanionDoc: CompanionDoc | null = null;
+
+const rebuildEnvelope = (): void => {
+  if (!latestDataDoc) {
+    return;
+  }
   const lastUpdated =
-    typeof docData.lastUpdated === "number" ? docData.lastUpdated : Date.now();
+    typeof latestDataDoc.lastUpdated === "number"
+      ? latestDataDoc.lastUpdated
+      : Date.now();
   const envelope = {
-    data: docData,
+    data: latestDataDoc,
     charNames: null,
-    companion: null,
+    companion: latestCompanionDoc,
     guildData: null,
     tournament: null,
     serverVars: null,
@@ -33,9 +53,16 @@ const applyCloudsaveDoc = (docData: CloudsaveDoc): void => {
 };
 
 export const subscribeToCloudsave = (uid: string): Unsubscribe => {
-  const ref = doc(firestore, "_data", uid);
-  return onSnapshot(
-    ref,
+  // Reset caches on each (re)subscribe -- switching accounts shouldn't leak
+  // companion state from the previous user into the new envelope.
+  latestDataDoc = null;
+  latestCompanionDoc = null;
+
+  const dataRef = doc(firestore, "_data", uid);
+  const compRef = dbRef(database, `_comp/${uid}`);
+
+  const unsubData = onSnapshot(
+    dataRef,
     { includeMetadataChanges: true },
     (snap) => {
       const conn = useConnectionStore.getState();
@@ -43,10 +70,12 @@ export const subscribeToCloudsave = (uid: string): Unsubscribe => {
       conn.setStale(snap.metadata.fromCache);
 
       if (!snap.exists()) {
+        latestDataDoc = null;
         conn.setLastUpdated(null);
         return;
       }
-      applyCloudsaveDoc(snap.data() as CloudsaveDoc);
+      latestDataDoc = snap.data() as CloudsaveDoc;
+      rebuildEnvelope();
     },
     (err) => {
       const conn = useConnectionStore.getState();
@@ -60,17 +89,48 @@ export const subscribeToCloudsave = (uid: string): Unsubscribe => {
       }
     }
   );
+
+  const compListener = onValue(
+    compRef,
+    (snap) => {
+      latestCompanionDoc = snap.exists() ? (snap.val() as CompanionDoc) : null;
+      rebuildEnvelope();
+    },
+    () => {
+      // Companion doc is non-essential; reset cache and keep going.
+      latestCompanionDoc = null;
+      rebuildEnvelope();
+    }
+  );
+
+  return () => {
+    unsubData();
+    off(compRef, "value", compListener);
+    latestDataDoc = null;
+    latestCompanionDoc = null;
+  };
 };
 
-// One-shot fetch of the current cloudsave doc. Used to repopulate after the
-// user manually clears local state -- onSnapshot won't re-fire unless the doc
-// changes, so we explicitly read once.
+// One-shot fetch of the current cloudsave + companion data. Used to repopulate
+// after the user manually clears local state -- listeners won't re-fire unless
+// the underlying doc changes, so we explicitly read once.
 export const refreshCloudsave = async (uid: string): Promise<void> => {
-  const ref = doc(firestore, "_data", uid);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) {
+  const dataRef = doc(firestore, "_data", uid);
+  const compRef = dbRef(database, `_comp/${uid}`);
+
+  const [dataSnap, compSnap] = await Promise.all([
+    getDoc(dataRef),
+    get(compRef).catch(() => null),
+  ]);
+
+  if (!dataSnap.exists()) {
     useConnectionStore.getState().setLastUpdated(null);
     return;
   }
-  applyCloudsaveDoc(snap.data() as CloudsaveDoc);
+
+  latestDataDoc = dataSnap.data() as CloudsaveDoc;
+  latestCompanionDoc = compSnap?.exists()
+    ? (compSnap.val() as CompanionDoc)
+    : null;
+  rebuildEnvelope();
 };
