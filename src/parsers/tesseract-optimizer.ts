@@ -79,7 +79,7 @@ export function computeTesseractPath(
     category,
     scoreMode,
     rph,
-    tachyonFilter,
+    disabledTachyons,
     maxSteps,
     onlyAffordable,
   } = input;
@@ -112,11 +112,9 @@ export function computeTesseractPath(
     if (!data.unlockedIndices.has(slot)) {
       return { ok: false, reason: "locked" };
     }
-    if (tachyonFilter !== "all") {
-      const def = TESSERACT_UPGRADE_DEFS[slot];
-      if (!def || def.x3 !== tachyonFilter) {
-        return { ok: false, reason: "locked" };
-      }
+    const def = TESSERACT_UPGRADE_DEFS[slot];
+    if (def && disabledTachyons.includes(def.x3)) {
+      return { ok: false, reason: "locked" };
     }
     return { ok: true };
   };

@@ -11,6 +11,7 @@ export { Stat } from "./stat";
 export { Step } from "./step";
 export { TermCheckbox } from "./term-checkbox";
 export { TermInput } from "./term-input";
+export { TermMultiSelect } from "./term-multi-select";
 export { TermSelect } from "./term-select";
 export { TermTabs } from "./term-tabs";
 export { TermTextarea } from "./term-textarea";

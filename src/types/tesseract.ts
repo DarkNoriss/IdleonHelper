@@ -33,9 +33,6 @@ export type TesseractCategory =
   | "attackSpeed"
   | "tachyons";
 
-// Numeric values match def.x3 so the optimizer can compare directly.
-export type TesseractTachyonFilter = "all" | 0 | 1 | 2 | 3 | 4 | 5;
-
 export type TesseractStats = {
   damage: number;
   accuracy: number;
@@ -61,7 +58,9 @@ export type TesseractOptimizerInput = {
   category: TesseractCategory;
   scoreMode: TesseractOptimizerScoreMode;
   rph: TesseractRphRates;
-  tachyonFilter: TesseractTachyonFilter;
+  // Sorted resource indices (def.x3 values 0..5) that should be EXCLUDED
+  // from picks. Empty array = consider every tachyon.
+  disabledTachyons: readonly number[];
   maxSteps: number;
   groupMode: "none" | "upgrade" | "summary";
   onlyAffordable: boolean;

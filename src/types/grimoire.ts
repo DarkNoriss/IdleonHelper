@@ -36,9 +36,6 @@ export type GrimoireCategory =
   | "crit"
   | "extraBones";
 
-// Numeric values match def.boneType so the optimizer can compare directly.
-export type GrimoireBoneFilter = "all" | 0 | 1 | 2 | 3;
-
 export type GrimoireStats = {
   hp: number;
   damage: number;
@@ -62,7 +59,9 @@ export type GrimoireOptimizerInput = {
   data: GrimoireData;
   category: GrimoireCategory;
   rph: GrimoireRphRates;
-  boneFilter: GrimoireBoneFilter;
+  // Sorted resource indices (def.boneType values 0..3) that should be
+  // EXCLUDED from picks. Empty array = consider every bone.
+  disabledBones: readonly number[];
   maxSteps: number;
   groupMode: "none" | "upgrade" | "summary";
   onlyAffordable: boolean;

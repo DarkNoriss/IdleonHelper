@@ -88,7 +88,7 @@ export function computeCompassPath(
     category,
     scoreMode,
     rph,
-    dustFilter,
+    disabledDusts,
     maxSteps,
     onlyAffordable,
   } = input;
@@ -117,11 +117,9 @@ export function computeCompassPath(
     if (!data.unlockedIndices.has(slot)) {
       return { ok: false, reason: "locked" };
     }
-    if (dustFilter !== "all") {
-      const def = COMPASS_UPGRADE_DEFS[slot];
-      if (!def || def.x3 !== dustFilter) {
-        return { ok: false, reason: "locked" };
-      }
+    const def = COMPASS_UPGRADE_DEFS[slot];
+    if (def && disabledDusts.includes(def.x3)) {
+      return { ok: false, reason: "locked" };
     }
     return { ok: true };
   };

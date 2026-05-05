@@ -22,11 +22,7 @@ import {
 } from "@/parsers/optimizer-core";
 import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs";
-import type {
-  CompassCategory,
-  CompassDustFilter,
-  CompassRphRates,
-} from "@/types/compass";
+import type { CompassCategory, CompassRphRates } from "@/types/compass";
 
 const UPGRADER_SCRIPT_ID = "classSpecific.compass.run";
 
@@ -57,7 +53,6 @@ const RPH_RESOURCES: readonly RphResource[] = DUST_RESOURCE_IDS.map((id) => ({
 }));
 
 const DUST_FILTER_OPTIONS: readonly { id: string; label: string }[] = [
-  { id: "all", label: "all dusts" },
   { id: "0", label: "stardust" },
   { id: "1", label: "moondust" },
   { id: "2", label: "solardust" },
@@ -65,19 +60,24 @@ const DUST_FILTER_OPTIONS: readonly { id: string; label: string }[] = [
   { id: "4", label: "novadust" },
 ];
 
-function dustFilterToId(f: CompassDustFilter): string {
-  return f === "all" ? "all" : String(f);
+// Convert the prefs `disabledDusts: number[]` into the multi-select's
+// "selected ids" view (the indices NOT disabled), preserving option order.
+function selectedIdsFromDisabled(
+  disabled: readonly number[]
+): readonly string[] {
+  const set = new Set(disabled);
+  return DUST_FILTER_OPTIONS.filter((o) => !set.has(Number(o.id))).map(
+    (o) => o.id
+  );
 }
 
-function idToDustFilter(id: string): CompassDustFilter {
-  if (id === "all") {
-    return "all";
-  }
-  const n = Number(id);
-  if (n === 0 || n === 1 || n === 2 || n === 3 || n === 4) {
-    return n;
-  }
-  return "all";
+// Convert the multi-select's "selected ids" back into a sorted-ascending
+// `disabledDusts` list.
+function disabledFromSelectedIds(ids: readonly string[]): number[] {
+  const checked = new Set(ids);
+  return DUST_FILTER_OPTIONS.filter((o) => !checked.has(o.id))
+    .map((o) => Number(o.id))
+    .sort((a, b) => a - b);
 }
 
 const DEFAULT_RPH = 1;
@@ -142,7 +142,7 @@ export const CompassOptimizerTab = () => {
       // control needed.
       scoreMode: "perHour",
       rph: prefs.rph,
-      dustFilter: prefs.dustFilter ?? "all",
+      disabledDusts: prefs.disabledDusts ?? [],
       maxSteps: prefs.maxSteps,
       groupMode: prefs.groupMode,
       onlyAffordable: prefs.onlyAffordable,
@@ -206,12 +206,15 @@ export const CompassOptimizerTab = () => {
           onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
           onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
           onOpenRphDialog={() => setRphOpen(true)}
-          onResourceFilterChange={(id) =>
-            setPrefs({ dustFilter: idToDustFilter(id) })
+          onResourceFilterChange={(ids) =>
+            setPrefs({ disabledDusts: disabledFromSelectedIds(ids) })
           }
+          resourceFilterAllLabel="all dusts"
           resourceFilterLabel="resources"
           resourceFilterOptions={DUST_FILTER_OPTIONS}
-          resourceFilterValue={dustFilterToId(prefs.dustFilter ?? "all")}
+          resourceFilterValues={selectedIdsFromDisabled(
+            prefs.disabledDusts ?? []
+          )}
           rightSlot={(() => {
             const upgraderDisabled =
               !prefs.onlyAffordable ||

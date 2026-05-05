@@ -22,11 +22,7 @@ import {
 } from "@/parsers/optimizer-core";
 import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs";
-import type {
-  GrimoireBoneFilter,
-  GrimoireCategory,
-  GrimoireRphRates,
-} from "@/types/grimoire";
+import type { GrimoireCategory, GrimoireRphRates } from "@/types/grimoire";
 
 const UPGRADER_SCRIPT_ID = "classSpecific.grimoire.runUpgrader";
 
@@ -55,26 +51,26 @@ const RPH_RESOURCES: readonly RphResource[] = BONE_RESOURCE_IDS.map((id) => ({
 }));
 
 const BONE_FILTER_OPTIONS: readonly { id: string; label: string }[] = [
-  { id: "all", label: "all bones" },
   { id: "0", label: "femur" },
   { id: "1", label: "ribcage" },
   { id: "2", label: "cranium" },
   { id: "3", label: "bovinae" },
 ];
 
-function boneFilterToId(f: GrimoireBoneFilter): string {
-  return f === "all" ? "all" : String(f);
+function selectedIdsFromDisabled(
+  disabled: readonly number[]
+): readonly string[] {
+  const set = new Set(disabled);
+  return BONE_FILTER_OPTIONS.filter((o) => !set.has(Number(o.id))).map(
+    (o) => o.id
+  );
 }
 
-function idToBoneFilter(id: string): GrimoireBoneFilter {
-  if (id === "all") {
-    return "all";
-  }
-  const n = Number(id);
-  if (n === 0 || n === 1 || n === 2 || n === 3) {
-    return n;
-  }
-  return "all";
+function disabledFromSelectedIds(ids: readonly string[]): number[] {
+  const checked = new Set(ids);
+  return BONE_FILTER_OPTIONS.filter((o) => !checked.has(o.id))
+    .map((o) => Number(o.id))
+    .sort((a, b) => a - b);
 }
 
 const DEFAULT_RPH = 1;
@@ -131,7 +127,7 @@ export const GrimoireOptimizerTab = () => {
       data: grimoire,
       category: prefs.category,
       rph: prefs.rph,
-      boneFilter: prefs.boneFilter ?? "all",
+      disabledBones: prefs.disabledBones ?? [],
       maxSteps: prefs.maxSteps,
       groupMode: prefs.groupMode,
       onlyAffordable: prefs.onlyAffordable,
@@ -197,12 +193,15 @@ export const GrimoireOptimizerTab = () => {
           onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
           onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
           onOpenRphDialog={() => setRphOpen(true)}
-          onResourceFilterChange={(id) =>
-            setPrefs({ boneFilter: idToBoneFilter(id) })
+          onResourceFilterChange={(ids) =>
+            setPrefs({ disabledBones: disabledFromSelectedIds(ids) })
           }
+          resourceFilterAllLabel="all bones"
           resourceFilterLabel="resources"
           resourceFilterOptions={BONE_FILTER_OPTIONS}
-          resourceFilterValue={boneFilterToId(prefs.boneFilter ?? "all")}
+          resourceFilterValues={selectedIdsFromDisabled(
+            prefs.disabledBones ?? []
+          )}
           rightSlot={(() => {
             const upgraderDisabled =
               !prefs.onlyAffordable ||
