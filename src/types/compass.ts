@@ -99,10 +99,6 @@ export type CompassRphRates = {
   4: number;
 };
 
-// "all" = consider every dust. Numeric values match `def.x3` (0=stardust,
-// 1=moondust, 2=solardust, 3=cooldust, 4=novadust).
-export type CompassDustFilter = "all" | 0 | 1 | 2 | 3 | 4;
-
 export const COMPASS_MAX_STEPS_PRESETS = [10, 25, 50, 100, 300] as const;
 
 // Accepts any user-typed positive integer in addition to the presets. The
@@ -112,7 +108,9 @@ export type CompassOptimizerInput = {
   category: CompassCategory;
   scoreMode: CompassOptimizerScoreMode;
   rph: CompassRphRates;
-  dustFilter: CompassDustFilter;
+  // Sorted resource indices (def.x3 values 0..4) that should be EXCLUDED
+  // from picks. Empty array = consider every dust.
+  disabledDusts: readonly number[];
   maxSteps: number;
   groupMode: "none" | "upgrade" | "summary";
   onlyAffordable: boolean;

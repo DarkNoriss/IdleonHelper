@@ -1,5 +1,10 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { TermCheckbox, TermInput, TermSelect } from "@/components/terminal";
+import {
+  TermCheckbox,
+  TermInput,
+  TermMultiSelect,
+  TermSelect,
+} from "@/components/terminal";
 import { cn } from "@/lib/utils";
 import type { OptimizerGroupMode } from "@/parsers/optimizer-core";
 
@@ -42,10 +47,14 @@ type Props = {
 
   // Optional secondary filter (e.g. compass dust-type). `label` is the bare
   // noun shown above the select; the toolbar prepends "--" automatically.
+  // `resourceFilterValues` is the list of currently-checked option ids
+  // (= resources that remain enabled). Passing every option's id selects
+  // "all" — the trigger shows `resourceFilterAllLabel`.
   resourceFilterLabel?: string;
   resourceFilterOptions?: readonly SelectOption[];
-  resourceFilterValue?: string;
-  onResourceFilterChange?: (id: string) => void;
+  resourceFilterValues?: readonly string[];
+  resourceFilterAllLabel?: string;
+  onResourceFilterChange?: (ids: string[]) => void;
 
   // Total upgrade levels currently shown — sum of `OptimizerRow.count` across
   // all visible rows, NOT the row count. (One row "+3 levels" counts as 3.)
@@ -91,7 +100,8 @@ export const OptimizerToolbar = ({
   rphDirty,
   resourceFilterLabel,
   resourceFilterOptions,
-  resourceFilterValue,
+  resourceFilterValues,
+  resourceFilterAllLabel,
   onResourceFilterChange,
   upgradeCount,
   rightSlot,
@@ -156,7 +166,7 @@ export const OptimizerToolbar = ({
 
   const showResourceFilter =
     resourceFilterSelectOptions !== undefined &&
-    resourceFilterValue !== undefined &&
+    resourceFilterValues !== undefined &&
     onResourceFilterChange !== undefined;
 
   return (
@@ -202,10 +212,12 @@ export const OptimizerToolbar = ({
         {showResourceFilter && (
           <div className="flex flex-col gap-1">
             <FlagLabel>{resourceFilterLabel ?? "resources"}</FlagLabel>
-            <TermSelect
+            <TermMultiSelect
+              className="min-w-[120px]"
               onChange={onResourceFilterChange}
               options={resourceFilterSelectOptions}
-              value={resourceFilterValue}
+              placeholderAll={resourceFilterAllLabel ?? "all"}
+              value={resourceFilterValues}
             />
           </div>
         )}

@@ -22,11 +22,7 @@ import {
 } from "@/parsers/tesseract-optimizer";
 import { useGameData } from "@/providers/game-data-provider";
 import { useUiPrefsStore } from "@/store/ui-prefs";
-import type {
-  TesseractCategory,
-  TesseractRphRates,
-  TesseractTachyonFilter,
-} from "@/types/tesseract";
+import type { TesseractCategory, TesseractRphRates } from "@/types/tesseract";
 
 const UPGRADER_SCRIPT_ID = "classSpecific.tesseract.runUpgrader";
 
@@ -56,7 +52,6 @@ const RPH_RESOURCES: readonly RphResource[] = TACHYON_RESOURCE_IDS.map(
 );
 
 const TACHYON_FILTER_OPTIONS: readonly { id: string; label: string }[] = [
-  { id: "all", label: "all tachyons" },
   { id: "0", label: "purple" },
   { id: "1", label: "brown" },
   { id: "2", label: "green" },
@@ -65,19 +60,20 @@ const TACHYON_FILTER_OPTIONS: readonly { id: string; label: string }[] = [
   { id: "5", label: "gold" },
 ];
 
-function tachyonFilterToId(f: TesseractTachyonFilter): string {
-  return f === "all" ? "all" : String(f);
+function selectedIdsFromDisabled(
+  disabled: readonly number[]
+): readonly string[] {
+  const set = new Set(disabled);
+  return TACHYON_FILTER_OPTIONS.filter((o) => !set.has(Number(o.id))).map(
+    (o) => o.id
+  );
 }
 
-function idToTachyonFilter(id: string): TesseractTachyonFilter {
-  if (id === "all") {
-    return "all";
-  }
-  const n = Number(id);
-  if (n === 0 || n === 1 || n === 2 || n === 3 || n === 4 || n === 5) {
-    return n;
-  }
-  return "all";
+function disabledFromSelectedIds(ids: readonly string[]): number[] {
+  const checked = new Set(ids);
+  return TACHYON_FILTER_OPTIONS.filter((o) => !checked.has(o.id))
+    .map((o) => Number(o.id))
+    .sort((a, b) => a - b);
 }
 
 const DEFAULT_RPH = 1;
@@ -143,7 +139,7 @@ export const TesseractOptimizerTab = () => {
       // collapses to plain-cost behavior. Same rationale as compass.
       scoreMode: "perHour",
       rph: prefs.rph,
-      tachyonFilter: prefs.tachyonFilter ?? "all",
+      disabledTachyons: prefs.disabledTachyons ?? [],
       maxSteps: prefs.maxSteps,
       groupMode: prefs.groupMode,
       onlyAffordable: prefs.onlyAffordable,
@@ -209,12 +205,15 @@ export const TesseractOptimizerTab = () => {
           onMaxStepsChange={(n) => setPrefs({ maxSteps: n })}
           onOnlyAffordableChange={(b) => setPrefs({ onlyAffordable: b })}
           onOpenRphDialog={() => setRphOpen(true)}
-          onResourceFilterChange={(id) =>
-            setPrefs({ tachyonFilter: idToTachyonFilter(id) })
+          onResourceFilterChange={(ids) =>
+            setPrefs({ disabledTachyons: disabledFromSelectedIds(ids) })
           }
+          resourceFilterAllLabel="all tachyons"
           resourceFilterLabel="resources"
           resourceFilterOptions={TACHYON_FILTER_OPTIONS}
-          resourceFilterValue={tachyonFilterToId(prefs.tachyonFilter ?? "all")}
+          resourceFilterValues={selectedIdsFromDisabled(
+            prefs.disabledTachyons ?? []
+          )}
           rightSlot={(() => {
             const upgraderDisabled =
               !prefs.onlyAffordable ||

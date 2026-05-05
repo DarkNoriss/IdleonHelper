@@ -2,27 +2,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type { Selections } from "@/types/alchemy";
-import type {
-  CompassCategory,
-  CompassDustFilter,
-  CompassRphRates,
-} from "@/types/compass";
+import type { CompassCategory, CompassRphRates } from "@/types/compass";
 import type { SolverFocus } from "@/types/construction";
-import type {
-  GrimoireBoneFilter,
-  GrimoireCategory,
-  GrimoireRphRates,
-} from "@/types/grimoire";
+import type { GrimoireCategory, GrimoireRphRates } from "@/types/grimoire";
 import type {
   OptimizerCategory,
   OptimizerGroupMode,
   OptimizerMaxSteps,
 } from "@/types/sushi-station";
-import type {
-  TesseractCategory,
-  TesseractRphRates,
-  TesseractTachyonFilter,
-} from "@/types/tesseract";
+import type { TesseractCategory, TesseractRphRates } from "@/types/tesseract";
 
 type CandyPrefs = { duration: string };
 type BossFarmerPrefs = { iterations: string };
@@ -51,7 +39,8 @@ type SushiOptimizerPrefs = {
 type CompassOptimizerPrefs = {
   category: CompassCategory;
   rph: CompassRphRates;
-  dustFilter: CompassDustFilter;
+  // Sorted resource indices the user has UNCHECKED (excluded). Empty = "all".
+  disabledDusts: number[];
   maxSteps: number;
   customMaxSteps: number;
   groupMode: OptimizerGroupMode;
@@ -60,7 +49,8 @@ type CompassOptimizerPrefs = {
 type TesseractOptimizerPrefs = {
   category: TesseractCategory;
   rph: TesseractRphRates;
-  tachyonFilter: TesseractTachyonFilter;
+  // Sorted resource indices the user has UNCHECKED (excluded). Empty = "all".
+  disabledTachyons: number[];
   maxSteps: number;
   customMaxSteps: number;
   groupMode: OptimizerGroupMode;
@@ -69,7 +59,8 @@ type TesseractOptimizerPrefs = {
 type GrimoireOptimizerPrefs = {
   category: GrimoireCategory;
   rph: GrimoireRphRates;
-  boneFilter: GrimoireBoneFilter;
+  // Sorted resource indices the user has UNCHECKED (excluded). Empty = "all".
+  disabledBones: number[];
   maxSteps: number;
   customMaxSteps: number;
   groupMode: OptimizerGroupMode;
@@ -156,7 +147,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       compassOptimizer: {
         category: "all",
         rph: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 },
-        dustFilter: "all",
+        disabledDusts: [],
         maxSteps: 25,
         customMaxSteps: 25,
         groupMode: "none",
@@ -166,7 +157,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       tesseractOptimizer: {
         category: "all",
         rph: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 },
-        tachyonFilter: "all",
+        disabledTachyons: [],
         maxSteps: 25,
         customMaxSteps: 25,
         groupMode: "none",
@@ -176,7 +167,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       grimoireOptimizer: {
         category: "all",
         rph: { 0: 1, 1: 1, 2: 1, 3: 1 },
-        boneFilter: "all",
+        disabledBones: [],
         maxSteps: 25,
         customMaxSteps: 25,
         groupMode: "none",

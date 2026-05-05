@@ -69,7 +69,8 @@ function stateToData(base: GrimoireData, levels: number[]): GrimoireData {
 export function computeGrimoirePath(
   input: GrimoireOptimizerInput
 ): OptimizerStep[] {
-  const { data, category, rph, boneFilter, maxSteps, onlyAffordable } = input;
+  const { data, category, rph, disabledBones, maxSteps, onlyAffordable } =
+    input;
 
   const allowedSlots: ReadonlySet<number> | null =
     category === "all"
@@ -99,11 +100,9 @@ export function computeGrimoirePath(
     if (!data.unlockedIndices.has(slot)) {
       return { ok: false, reason: "locked" };
     }
-    if (boneFilter !== "all") {
-      const def = GRIMOIRE_UPGRADE_DEFS[slot];
-      if (!def || def.boneType !== boneFilter) {
-        return { ok: false, reason: "locked" };
-      }
+    const def = GRIMOIRE_UPGRADE_DEFS[slot];
+    if (def && disabledBones.includes(def.boneType)) {
+      return { ok: false, reason: "locked" };
     }
     return { ok: true };
   };
