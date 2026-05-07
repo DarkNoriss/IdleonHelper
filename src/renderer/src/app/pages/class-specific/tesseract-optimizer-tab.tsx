@@ -1,4 +1,8 @@
 import { useMemo, useState } from "react";
+import {
+  type OptimizerCostItem,
+  OptimizerCostSummary,
+} from "@/components/optimizer/optimizer-cost-summary";
 import { OptimizerResourceChips } from "@/components/optimizer/optimizer-resource-chips";
 import {
   OptimizerRphDialog,
@@ -160,6 +164,23 @@ export const TesseractOptimizerTab = () => {
     [steps, prefs.groupMode, isMetric, tesseract?.upgradeLevels]
   );
 
+  const costItems = useMemo<OptimizerCostItem[]>(() => {
+    if (!tesseract) {
+      return [];
+    }
+    const byId = new Map<string, number>();
+    for (const r of rows) {
+      byId.set(r.resourceId, (byId.get(r.resourceId) ?? 0) + r.cost);
+    }
+    return TACHYON_RESOURCE_IDS.map((id, i) => ({
+      id,
+      label: TACHYON_LABELS[id] ?? id,
+      totalCost: byId.get(id) ?? 0,
+      currentHave: tesseract.tachyons[i] ?? 0,
+      rph: prefs.rph[i as 0 | 1 | 2 | 3 | 4 | 5] ?? 1,
+    })).filter((item) => item.totalCost > 0);
+  }, [tesseract, rows, prefs.rph]);
+
   if (!tesseract) {
     return (
       <div className="rounded-[5px] border border-border bg-panel p-4 text-center font-mono text-[11px] text-text-dim">
@@ -247,6 +268,7 @@ export const TesseractOptimizerTab = () => {
           upgradeCount={rows.reduce((sum, r) => sum + r.count, 0)}
         />
       </div>
+      <OptimizerCostSummary items={costItems} />
       <OptimizerTable
         formatCost={notateNumber}
         formatGain={(gain) => `+${gain.toFixed(2)}%`}

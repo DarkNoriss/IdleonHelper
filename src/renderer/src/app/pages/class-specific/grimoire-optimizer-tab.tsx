@@ -1,4 +1,8 @@
 import { useMemo, useState } from "react";
+import {
+  type OptimizerCostItem,
+  OptimizerCostSummary,
+} from "@/components/optimizer/optimizer-cost-summary";
 import { OptimizerResourceChips } from "@/components/optimizer/optimizer-resource-chips";
 import {
   OptimizerRphDialog,
@@ -148,6 +152,23 @@ export const GrimoireOptimizerTab = () => {
     [steps, prefs.groupMode, isMetric, grimoire?.upgradeLevels]
   );
 
+  const costItems = useMemo<OptimizerCostItem[]>(() => {
+    if (!grimoire) {
+      return [];
+    }
+    const byId = new Map<string, number>();
+    for (const r of rows) {
+      byId.set(r.resourceId, (byId.get(r.resourceId) ?? 0) + r.cost);
+    }
+    return BONE_RESOURCE_IDS.map((id, i) => ({
+      id,
+      label: BONE_LABELS[id] ?? id,
+      totalCost: byId.get(id) ?? 0,
+      currentHave: grimoire.bones[i] ?? 0,
+      rph: prefs.rph[i as 0 | 1 | 2 | 3] ?? 1,
+    })).filter((item) => item.totalCost > 0);
+  }, [grimoire, rows, prefs.rph]);
+
   if (!grimoire) {
     return (
       <div className="rounded-[5px] border border-border bg-panel p-4 text-center font-mono text-[11px] text-text-dim">
@@ -235,6 +256,7 @@ export const GrimoireOptimizerTab = () => {
           upgradeCount={rows.reduce((sum, r) => sum + r.count, 0)}
         />
       </div>
+      <OptimizerCostSummary items={costItems} />
       <OptimizerTable
         formatCost={notateNumber}
         formatGain={(gain) => `+${gain.toFixed(2)}%`}

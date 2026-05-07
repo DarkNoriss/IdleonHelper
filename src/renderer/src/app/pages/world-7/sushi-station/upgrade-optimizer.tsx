@@ -1,4 +1,8 @@
 import { useMemo } from "react";
+import {
+  type OptimizerCostItem,
+  OptimizerCostSummary,
+} from "@/components/optimizer/optimizer-cost-summary";
 import { OptimizerTable } from "@/components/optimizer/optimizer-table";
 import { OptimizerToolbar } from "@/components/optimizer/optimizer-toolbar";
 import { RunBtn } from "@/components/terminal";
@@ -147,6 +151,25 @@ export const UpgradeOptimizer = () => {
     };
   }, [sushiStation]);
 
+  const costItems = useMemo<OptimizerCostItem[]>(() => {
+    if (!(sushiStation && stats)) {
+      return [];
+    }
+    const totalCost = rows.reduce((sum, r) => sum + r.cost, 0);
+    if (totalCost === 0) {
+      return [];
+    }
+    return [
+      {
+        id: "bucks",
+        label: "bucks",
+        totalCost,
+        currentHave: sushiStation.bucks,
+        rph: stats.bucksPerHr,
+      },
+    ];
+  }, [sushiStation, stats, rows]);
+
   if (!(sushiStation && stats)) {
     return (
       <div className="rounded-[5px] border border-border bg-panel p-4 text-center font-mono text-[11px] text-text-dim">
@@ -215,6 +238,7 @@ export const UpgradeOptimizer = () => {
           upgradeCount={rows.reduce((sum, r) => sum + r.count, 0)}
         />
       </div>
+      <OptimizerCostSummary items={costItems} />
       <OptimizerTable
         formatCost={notateNumber}
         formatGain={notateNumber}
