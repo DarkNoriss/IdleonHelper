@@ -1,4 +1,8 @@
-import type { HsvColor, Point } from "../../../backend/backend-types";
+import type {
+  HsvColor,
+  Point,
+  ScreenOffset,
+} from "../../../backend/backend-types";
 
 export const ALCHEMY_PATH = "ui/map/world-2/alchemy";
 
@@ -41,6 +45,21 @@ export const CAULDRON_ORDER: readonly CauldronKey[] = [
   "highIq",
   "kazam",
 ] as const;
+
+// Per-cauldron x-range gates passed as ScreenOffset to HSV searches. Bubble
+// silhouettes can look identical across cauldrons (e.g. EXP-style bubbles in
+// kazam vs damage bubbles in power), so each search is constrained to the
+// owning column's x-band to prevent cross-column false matches.
+//
+// ScreenOffset semantics (per backend FilterMatchesByOffset):
+//   left  -> inclusive min X; 0 = no lower bound
+//   right -> inclusive max X; 0 = no upper bound
+export const CAULDRON_OFFSETS: Record<CauldronKey, ScreenOffset> = {
+  power: { left: 0, right: 200, top: 0, bottom: 0 },
+  quicc: { left: 200, right: 385, top: 0, bottom: 0 },
+  highIq: { left: 385, right: 570, top: 0, bottom: 0 },
+  kazam: { left: 570, right: 765, top: 0, bottom: 0 },
+};
 
 // Runtime-detected per-cauldron up-arrow positions. Populated AFTER
 // reset-to-page-1 when every cauldron has its up-arrow visible (down-arrow is
