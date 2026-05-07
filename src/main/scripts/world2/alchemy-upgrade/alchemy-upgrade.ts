@@ -22,6 +22,7 @@ import {
   ALCHEMY_UI_HSV_LOWER,
   ALCHEMY_UI_HSV_UPPER,
   ALCHEMY_UPGRADE_BUTTON,
+  CAULDRON_OFFSETS,
   CAULDRON_ORDER,
   type CauldronKey,
   type CauldronUpArrows,
@@ -128,46 +129,77 @@ const clickBubbleAndBurstUpgrade = async (
   return true;
 };
 
+// Outstanding tracks the bubbles still to upgrade per cauldron. Once a bubble's
+// burst completes, it leaves the Set; once a cauldron's Set is empty, the
+// cauldron stops being searched / scrolled.
+type Outstanding = Map<CauldronKey, Set<string>>;
+
+const totalRemaining = (outstanding: Outstanding): number => {
+  let n = 0;
+  for (const set of outstanding.values()) {
+    n += set.size;
+  }
+  return n;
+};
+
+// Search one cauldron's selected bubbles, gated by its x-range ScreenOffset so
+// matches in neighboring columns can't be misattributed. Each matched bubble is
+// clicked + bursted; resolved bubbles are removed from the cauldron's Set.
+const searchAndUpgradeCauldron = async (
+  cauldron: CauldronKey,
+  bubbles: Set<string>,
+  token: CancellationToken
+): Promise<void> => {
+  if (bubbles.size === 0) {
+    return;
+  }
+
+  const templates: Record<string, string> = {};
+  for (const path of bubbles) {
+    templates[path] = path;
+  }
+
+  const matches = await backendCommand.isVisibleHSVParallel(
+    templates,
+    ALCHEMY_HSV_LOWER,
+    ALCHEMY_HSV_UPPER,
+    { offset: CAULDRON_OFFSETS[cauldron] },
+    token
+  );
+
+  for (const path of [...bubbles]) {
+    const first = matches[path]?.[0];
+    if (!first) {
+      continue;
+    }
+    logger.log(
+      `alchemy-upgrade - ${cauldron} matched ${path} at ${first.x},${first.y} - bursting upgrade ${ALCHEMY_CLICKS_PER_BUBBLE}x`
+    );
+    const upgraded = await clickBubbleAndBurstUpgrade(first, token);
+    if (upgraded) {
+      bubbles.delete(path);
+    }
+  }
+};
+
 const searchAndUpgrade = async (
-  outstanding: Map<CauldronKey, string>,
+  outstanding: Outstanding,
   upArrows: CauldronUpArrows,
   token: CancellationToken
 ): Promise<void> => {
   for (let attempt = 0; attempt <= ALCHEMY_MAX_SCROLLS; attempt++) {
-    const templates: Record<string, string> = {};
-    for (const [key, path] of outstanding) {
-      templates[key] = path;
-    }
-
     logger.log(
-      `alchemy-upgrade - attempt ${attempt + 1}/${ALCHEMY_MAX_SCROLLS + 1} - searching ${outstanding.size} column(s)`
+      `alchemy-upgrade - attempt ${attempt + 1}/${ALCHEMY_MAX_SCROLLS + 1} - ${totalRemaining(outstanding)} bubble(s) outstanding across ${outstanding.size} column(s)`
     );
 
-    const matches = await backendCommand.isVisibleHSVParallel(
-      templates,
-      ALCHEMY_HSV_LOWER,
-      ALCHEMY_HSV_UPPER,
-      undefined,
-      token
-    );
-
-    const resolved: CauldronKey[] = [];
-    for (const [key, path] of outstanding) {
-      const first = matches[key]?.[0];
-      if (!first) {
-        continue;
-      }
-      logger.log(
-        `alchemy-upgrade - ${key} matched ${path} at ${first.x},${first.y} - bursting upgrade ${ALCHEMY_CLICKS_PER_BUBBLE}x`
-      );
-      const upgraded = await clickBubbleAndBurstUpgrade(first, token);
-      if (upgraded) {
-        resolved.push(key);
-      }
+    for (const [cauldron, bubbles] of outstanding) {
+      await searchAndUpgradeCauldron(cauldron, bubbles, token);
     }
 
-    for (const key of resolved) {
-      outstanding.delete(key);
+    for (const [cauldron, bubbles] of [...outstanding]) {
+      if (bubbles.size === 0) {
+        outstanding.delete(cauldron);
+      }
     }
 
     if (outstanding.size === 0) {
@@ -186,10 +218,12 @@ const searchAndUpgrade = async (
     }
   }
 
-  for (const key of outstanding.keys()) {
-    logger.log(
-      `alchemy-upgrade - ${key} bubble not found after ${ALCHEMY_MAX_SCROLLS} scrolls`
-    );
+  for (const [cauldron, bubbles] of outstanding) {
+    for (const path of bubbles) {
+      logger.log(
+        `alchemy-upgrade - ${cauldron}/${path} not found after ${ALCHEMY_MAX_SCROLLS} scrolls`
+      );
+    }
   }
 };
 
@@ -200,11 +234,11 @@ export default defineScript<[Selections, number]>({
     intervalFromArgs: ([, intervalMinutes]) => intervalMinutes * 60 * 1000,
   },
   run: async ({ token, args: [selections, intervalMinutes] }) => {
-    const outstanding = new Map<CauldronKey, string>();
+    const outstanding: Outstanding = new Map();
     for (const key of CAULDRON_ORDER) {
-      const value = selections[key];
-      if (value !== null && value !== "") {
-        outstanding.set(key, value);
+      const paths = selections[key];
+      if (paths && paths.length > 0) {
+        outstanding.set(key, new Set(paths));
       }
     }
 
@@ -213,8 +247,11 @@ export default defineScript<[Selections, number]>({
       return;
     }
 
+    const summary = Array.from(outstanding)
+      .map(([k, set]) => `${k}:${set.size}`)
+      .join(" ");
     logger.log(
-      `alchemy-upgrade - starting with ${outstanding.size} selection(s): ${Array.from(outstanding.keys()).join(", ")} (every ${intervalMinutes} min)`
+      `alchemy-upgrade - starting with ${totalRemaining(outstanding)} bubble(s) across ${outstanding.size} column(s) - ${summary} (every ${intervalMinutes} min)`
     );
 
     const opened = await navigation.alchemy.toBrewing(token);

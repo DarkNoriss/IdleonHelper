@@ -112,10 +112,10 @@ type UiPrefsState = {
 };
 
 const INITIAL_ALCHEMY_SELECTIONS: Selections = {
-  power: null,
-  quicc: null,
-  highIq: null,
-  kazam: null,
+  power: [],
+  quicc: [],
+  highIq: [],
+  kazam: [],
 };
 
 export const useUiPrefsStore = create<UiPrefsState>()(
