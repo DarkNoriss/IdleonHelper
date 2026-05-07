@@ -11,6 +11,8 @@ jobs:
   frontend:
     name: Frontend (lint, typecheck)
     runs-on: ubuntu-latest
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
 
     steps:
       - name: Checkout
