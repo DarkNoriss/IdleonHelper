@@ -525,10 +525,6 @@ public static class ImageProcessing
       throw new ArgumentException("Template image cannot be null or empty", nameof(imagePath));
     }
 
-    // Binarize template to match the strict 0/255 mask produced by Cv2.InRange at runtime.
-    // PNG crops/exports often introduce anti-aliased edges that tank CCoeffNormed correlation.
-    Cv2.Threshold(templateImage, templateImage, 127, 255, ThresholdTypes.Binary);
-
     if (threshold is < 0.0 or > 1.0)
     {
       throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0.0 and 1.0");
@@ -599,9 +595,6 @@ public static class ImageProcessing
         results[imagePath] = [];
         continue;
       }
-
-      // Binarize template to match the strict 0/255 mask. See FindHSV for rationale.
-      Cv2.Threshold(templateImage, templateImage, 127, 255, ThresholdTypes.Binary);
 
       if (debug && debugDir != null)
       {
