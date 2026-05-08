@@ -563,6 +563,7 @@ public static class ImageProcessing
     List<string> imagePaths,
     double threshold,
     ScreenOffset? offset,
+    bool debug,
     CancellationToken ct
   )
   {
@@ -582,7 +583,7 @@ public static class ImageProcessing
         continue;
       }
 
-      var foundMatches = MatchTemplate(binaryMask, templateImage, threshold, false, ct);
+      var foundMatches = MatchTemplate(binaryMask, templateImage, threshold, debug, ct);
       results[imagePath] = FilterMatchesByOffset(foundMatches, offset);
     }
 

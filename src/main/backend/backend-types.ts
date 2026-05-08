@@ -222,10 +222,12 @@ export type FindHSVParallelRequest = {
   hsvUpper: HsvColor;
   threshold: number;
   offset?: ScreenOffset;
+  debug?: boolean;
 };
 
 export type FindHSVParallelResponse = {
   results: Record<string, Point[]>;
+  debugImagePaths?: Record<string, string | null>;
 };
 
 // Command type mapping for type safety

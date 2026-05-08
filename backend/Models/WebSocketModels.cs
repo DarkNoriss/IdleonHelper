@@ -234,10 +234,12 @@ internal class FindHSVParallelRequest
   public HsvColorDto? HsvUpper { get; set; }
   public double? Threshold { get; set; }
   public ScreenOffsetDto? Offset { get; set; }
+  public bool? Debug { get; set; }
 }
 
 internal class FindHSVParallelResponse
 {
   public Dictionary<string, List<Point>> Results { get; set; } = new();
+  public Dictionary<string, string?>? DebugImagePaths { get; set; }
 }
 

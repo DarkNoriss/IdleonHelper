@@ -54,6 +54,8 @@ internal static class FindHSVParallelCommandHandler
       var hsvLower = new ImageProcessing.HsvColor(request.HsvLower.H, request.HsvLower.S, request.HsvLower.V);
       var hsvUpper = new ImageProcessing.HsvColor(request.HsvUpper.H, request.HsvUpper.S, request.HsvUpper.V);
 
+      var debug = request.Debug ?? false;
+
       using var colorScreenshot = WindowCapture.CaptureScreenShotColor(linkedCt);
       using var mask = ImageProcessing.BuildHsvMask(colorScreenshot, hsvLower, hsvUpper);
 
@@ -62,6 +64,7 @@ internal static class FindHSVParallelCommandHandler
         request.ImagePaths,
         request.Threshold.Value,
         offset,
+        debug,
         linkedCt
       );
 
@@ -72,6 +75,13 @@ internal static class FindHSVParallelCommandHandler
           kvp => kvp.Value.Select(m => m.Point).ToList()
         )
       };
+
+      if (debug)
+      {
+        response.DebugImagePaths = ImageProcessing.GenerateDebugImages(
+          mask, matches, request.ImagePaths, linkedCt
+        );
+      }
 
       await MessageHandler.SendResponse(ws, message.Id, response, ct);
     }
