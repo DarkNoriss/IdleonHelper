@@ -88,6 +88,7 @@ type UiPrefsState = {
   tesseractUpgraderRun: UpgraderRunState;
   grimoireOptimizer: GrimoireOptimizerPrefs;
   grimoireUpgraderRun: UpgraderRunState;
+  constructionApplyRun: UpgraderRunState;
 
   setCandy: (patch: Partial<CandyPrefs>) => void;
   setBossFarmer: (patch: Partial<BossFarmerPrefs>) => void;
@@ -109,6 +110,7 @@ type UiPrefsState = {
   setTesseractUpgraderRun: (patch: Partial<UpgraderRunState>) => void;
   setGrimoireOptimizer: (patch: Partial<GrimoireOptimizerPrefs>) => void;
   setGrimoireUpgraderRun: (patch: Partial<UpgraderRunState>) => void;
+  setConstructionApplyRun: (patch: Partial<UpgraderRunState>) => void;
 };
 
 const INITIAL_ALCHEMY_SELECTIONS: Selections = {
@@ -174,6 +176,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         onlyAffordable: false,
       },
       grimoireUpgraderRun: { lastRunAt: null },
+      constructionApplyRun: { lastRunAt: null },
 
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
       setBossFarmer: (patch) =>
@@ -235,6 +238,10 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setGrimoireUpgraderRun: (patch) =>
         set((s) => ({
           grimoireUpgraderRun: { ...s.grimoireUpgraderRun, ...patch },
+        })),
+      setConstructionApplyRun: (patch) =>
+        set((s) => ({
+          constructionApplyRun: { ...s.constructionApplyRun, ...patch },
         })),
     }),
     {
