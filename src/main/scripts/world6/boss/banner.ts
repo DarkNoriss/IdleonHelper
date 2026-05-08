@@ -63,7 +63,7 @@ export const clickBannerReset = async (
     logger.error("Banner reset button not found");
     return false;
   }
-  await backendCommand.click(matches[0]!, undefined, token);
-  logger.log("Clicked banner reset");
+  await backendCommand.click(matches[0]!, { times: 2 }, token);
+  logger.log("Double-clicked banner reset");
   return true;
 };
