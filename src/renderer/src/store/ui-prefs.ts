@@ -14,6 +14,7 @@ import type { TesseractCategory, TesseractRphRates } from "@/types/tesseract";
 
 type CandyPrefs = { duration: string };
 type BossFarmerPrefs = { iterations: string };
+type W6EmperorPrefs = { presetSlot: number | null; skipReset: boolean };
 type CardsPrefs = { slot: string };
 type AlchemyPrefs = { selections: Selections; intervalMinutes: number };
 type ConstructionPrefs = { focus: SolverFocus };
@@ -73,6 +74,7 @@ type UpgraderRunState = { lastRunAt: number | null };
 type UiPrefsState = {
   candy: CandyPrefs;
   bossFarmer: BossFarmerPrefs;
+  w6Emperor: W6EmperorPrefs;
   cards: CardsPrefs;
   alchemy: AlchemyPrefs;
   construction: ConstructionPrefs;
@@ -92,6 +94,7 @@ type UiPrefsState = {
 
   setCandy: (patch: Partial<CandyPrefs>) => void;
   setBossFarmer: (patch: Partial<BossFarmerPrefs>) => void;
+  setW6Emperor: (patch: Partial<W6EmperorPrefs>) => void;
   setCards: (patch: Partial<CardsPrefs>) => void;
   setAlchemy: (patch: Partial<AlchemyPrefs>) => void;
   setConstruction: (patch: Partial<ConstructionPrefs>) => void;
@@ -125,6 +128,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
     (set) => ({
       candy: { duration: "1h" },
       bossFarmer: { iterations: "150" },
+      w6Emperor: { presetSlot: 4, skipReset: false },
       cards: { slot: "1" },
       alchemy: {
         selections: INITIAL_ALCHEMY_SELECTIONS,
@@ -181,6 +185,8 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setCandy: (patch) => set((s) => ({ candy: { ...s.candy, ...patch } })),
       setBossFarmer: (patch) =>
         set((s) => ({ bossFarmer: { ...s.bossFarmer, ...patch } })),
+      setW6Emperor: (patch) =>
+        set((s) => ({ w6Emperor: { ...s.w6Emperor, ...patch } })),
       setCards: (patch) => set((s) => ({ cards: { ...s.cards, ...patch } })),
       setAlchemy: (patch) =>
         set((s) => ({ alchemy: { ...s.alchemy, ...patch } })),
