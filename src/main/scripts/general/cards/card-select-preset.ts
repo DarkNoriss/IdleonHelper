@@ -5,7 +5,7 @@ import type { CancellationToken } from "../../../utils/cancellation-token";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { codex } from "../../game-nav/codex";
-import { pressKey } from "../../keys";
+import { closeMenu } from "../../keys";
 
 export const selectCardPreset = async (
   slot: number,
@@ -104,7 +104,7 @@ export const selectCardPreset = async (
 
   if (!foundPoint) {
     logger.log("Set not found after 6 pages - closing menu");
-    await pressKey("ESCAPE", token);
+    await closeMenu(token);
     return;
   }
 
@@ -127,7 +127,7 @@ export const selectCardPreset = async (
   }
 
   // Step 7: Close menu
-  await pressKey("ESCAPE", token);
+  await closeMenu(token);
   logger.log(`Card set for ${config.name} selected`);
 };
 

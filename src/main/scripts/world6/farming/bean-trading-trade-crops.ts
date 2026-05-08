@@ -4,7 +4,7 @@ import type { CancellationToken } from "../../../utils/cancellation-token";
 import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { navigation } from "../../game-nav/index";
-import { pressKey } from "../../keys";
+import { closeMenu } from "../../keys";
 import {
   BEAN_TRADING_TICKET_COUNT,
   FARMING_GRID,
@@ -137,7 +137,7 @@ const dropTicket = async (token: CancellationToken): Promise<boolean> => {
     token
   );
 
-  await pressKey("ESCAPE", token);
+  await closeMenu(token);
 
   logger.log("bean-trading-trade-crops - waiting for trade dialog");
   const dialog = await backendCommand.find(
