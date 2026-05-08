@@ -15,7 +15,7 @@ export const openBossBanner = async (
     },
     W6_BOSS_HSV.hsvLower,
     W6_BOSS_HSV.hsvUpper,
-    { debug: true },
+    undefined,
     token
   );
 
@@ -36,7 +36,7 @@ export const openBossBanner = async (
     "world6/boss/banner_header",
     W6_BOSS_HSV.hsvLower,
     W6_BOSS_HSV.hsvUpper,
-    { debug: true },
+    undefined,
     token
   );
 
@@ -56,7 +56,7 @@ export const clickBannerReset = async (
     "world6/boss/banner_reset",
     W6_BOSS_HSV.hsvLower,
     W6_BOSS_HSV.hsvUpper,
-    { debug: true },
+    undefined,
     token
   );
   if (matches.length === 0) {

@@ -35,71 +35,70 @@ export default defineScript<[number | null, boolean]>({
     );
     setRunning("preparing");
     try {
-      // 1. Auto off for safe positioning before any UI/preset work
+      // One-time setup before the loop
       await setAuto("off", token);
-
-      // 2. Card preset swap (optional)
       if (presetSlot !== null) {
         await selectCardPreset(presetSlot, token);
       }
 
-      // 3. Open banner
-      const opened = await openBossBanner(token);
-      if (!opened) {
-        throw new Error("Failed to open W6 boss banner");
-      }
+      let iteration = 0;
+      while (true) {
+        token.throwIfCancelled();
+        iteration += 1;
+        logger.log(`W6 Boss Farmer: iteration ${iteration}`);
 
-      // 4. Reset boss difficulty (optional)
-      if (skipReset) {
-        logger.log("Skipping banner reset (push mode)");
-      } else {
-        const resetClicked = await clickBannerReset(token);
-        if (!resetClicked) {
-          throw new Error("Banner reset button not found");
+        setRunning("preparing");
+        const opened = await openBossBanner(token);
+        if (!opened) {
+          throw new Error("Failed to open W6 boss banner");
         }
+
+        if (skipReset) {
+          logger.log("Skipping banner reset (push mode)");
+        } else {
+          const resetClicked = await clickBannerReset(token);
+          if (!resetClicked) {
+            throw new Error("Banner reset button not found");
+          }
+        }
+
+        setRunning("entering");
+        logger.log(`Clicking enter at (${ENTER_POINT.x}, ${ENTER_POINT.y})`);
+        await backendCommand.click(ENTER_POINT, undefined, token);
+        await delay(POST_ENTER_DELAY_MS, token);
+
+        await setAuto("off", token);
+
+        const lineMatches = await backendCommand.findHSV(
+          "world6/boss/boss_line",
+          W6_BOSS_HSV.hsvLower,
+          W6_BOSS_HSV.hsvUpper,
+          undefined,
+          token
+        );
+        if (lineMatches.length === 0) {
+          throw new Error("Boss line not found");
+        }
+        await backendCommand.click(lineMatches[0]!, undefined, token);
+        logger.log("Clicked boss line");
+        await delay(POST_LINE_DELAY_MS, token);
+
+        setRunning("fighting");
+        await setAuto("on", token);
+        await waitForEmperorDead(token);
+        await setAuto("off", token);
+
+        setRunning("exiting");
+        logger.log(
+          `Clicking exit at (${EXIT_BUTTON_POINT.x}, ${EXIT_BUTTON_POINT.y})`
+        );
+        await backendCommand.click(EXIT_BUTTON_POINT, undefined, token);
+        await delay(POST_EXIT_DELAY_MS, token);
+        logger.log(`Clicking portal at (${PORTAL_POINT.x}, ${PORTAL_POINT.y})`);
+        await backendCommand.click(PORTAL_POINT, undefined, token);
+
+        logger.log(`W6 Boss Farmer: iteration ${iteration} complete`);
       }
-
-      // 5. Enter via static coord
-      setRunning("entering");
-      logger.log(`Clicking enter at (${ENTER_POINT.x}, ${ENTER_POINT.y})`);
-      await backendCommand.click(ENTER_POINT, undefined, token);
-      await delay(POST_ENTER_DELAY_MS, token);
-
-      // 6. Auto off again - entering may have toggled it
-      await setAuto("off", token);
-
-      // 7. Click boss line
-      const lineMatches = await backendCommand.findHSV(
-        "world6/boss/boss_line",
-        W6_BOSS_HSV.hsvLower,
-        W6_BOSS_HSV.hsvUpper,
-        undefined,
-        token
-      );
-      if (lineMatches.length === 0) {
-        throw new Error("Boss line not found");
-      }
-      await backendCommand.click(lineMatches[0]!, undefined, token);
-      logger.log("Clicked boss line");
-      await delay(POST_LINE_DELAY_MS, token);
-
-      // 8. Fight: auto on, wait for death, auto off
-      setRunning("fighting");
-      await setAuto("on", token);
-      await waitForEmperorDead(token);
-      await setAuto("off", token);
-
-      // 9. Exit + portal back to banner platform
-      setRunning("exiting");
-      logger.log(
-        `Clicking exit at (${EXIT_BUTTON_POINT.x}, ${EXIT_BUTTON_POINT.y})`
-      );
-      await backendCommand.click(EXIT_BUTTON_POINT, undefined, token);
-      await delay(POST_EXIT_DELAY_MS, token);
-      logger.log(`Clicking portal at (${PORTAL_POINT.x}, ${PORTAL_POINT.y})`);
-      await backendCommand.click(PORTAL_POINT, undefined, token);
-
-      logger.log("W6 Boss Farmer: iteration complete");
     } finally {
       setIdle();
     }

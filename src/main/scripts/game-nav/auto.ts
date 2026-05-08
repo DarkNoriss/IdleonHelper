@@ -21,7 +21,7 @@ export const setAuto = async (
     },
     AUTO_HSV.hsvLower,
     AUTO_HSV.hsvUpper,
-    { threshold: AUTO_THRESHOLD, debug: true },
+    { threshold: AUTO_THRESHOLD },
     token
   );
 
