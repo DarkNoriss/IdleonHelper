@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import {
   Alert,
   Block,
@@ -14,19 +14,15 @@ import { useMainState } from "@/hooks/use-main-state";
 import { notateNumber } from "@/lib/notateNumber.ts";
 import { signInWithGoogle } from "@/providers/auth-provider";
 import { useGameData } from "@/providers/game-data-provider.tsx";
-import { useIsSignedIn } from "@/store/connection";
+import { useConnectionStore, useIsSignedIn } from "@/store/connection";
+import { useConstructionSolverStore } from "@/store/construction-solver";
 import {
   type LoopFinalOutcome,
   SCORE_FIELD,
   useLoopSolveStore,
 } from "@/store/loop-solve";
 import { useUiPrefsStore } from "@/store/ui-prefs.ts";
-import type {
-  OptimalStep,
-  SolverFocus,
-  SolverResult,
-  SolverWeights,
-} from "@/types/construction.ts";
+import type { OptimalStep, SolverFocus } from "@/types/construction.ts";
 
 const SPARE_ROWS = 5;
 const DEFAULT_SOLVE_TIME_SECONDS = 600;
@@ -126,13 +122,15 @@ const Construction = () => {
   const isSignedIn = useIsSignedIn();
   const focus = useUiPrefsStore((s) => s.construction.focus);
   const setConstruction = useUiPrefsStore((s) => s.setConstruction);
-  const [isSolving, setIsSolving] = useState(false);
-  const [solverResult, setSolverResult] = useState<SolverResult | null>(null);
-  const [solverError, setSolverError] = useState<string | null>(null);
+  const solverResult = useConstructionSolverStore((s) => s.result);
+  const solverError = useConstructionSolverStore((s) => s.error);
+  const isStarting = useConstructionSolverStore((s) => s.isStarting);
+  const isCancelling = useConstructionSolverStore((s) => s.isCancelling);
+  const solverSolve = useConstructionSolverStore((s) => s.solve);
+  const solverCancelAction = useConstructionSolverStore((s) => s.cancel);
   const solverState = useMainState("constructionSolver");
   const progress = solverState?.progress ?? null;
-  const [isCancelling, setIsCancelling] = useState(false);
-  const isSolverActive = isSolving || progress !== null;
+  const isSolverActive = isStarting || progress !== null;
   const score = constructionData?.score;
 
   const queue = useMainState("queue");
@@ -149,21 +147,15 @@ const Construction = () => {
   const queueHasOtherWork =
     Boolean(queue?.runningItem) || (queue?.queue.length ?? 0) > 0;
 
-  // Clear the solver plan once an apply (or any cancel of one) finishes — once
-  // the steps run, the source positions no longer hold the cogs the plan
-  // expects, so applying the same plan twice would corrupt the board.
-  const isApplyActive =
-    queue?.runningItem?.scriptId === "world3.construction.apply" ||
-    (queue?.queue.some((i) => i.scriptId === "world3.construction.apply") ??
-      false);
-  const wasApplyActiveRef = useRef(false);
-  useEffect(() => {
-    if (wasApplyActiveRef.current && !isApplyActive) {
-      setSolverResult(null);
-      setSolverError(null);
-    }
-    wasApplyActiveRef.current = isApplyActive;
-  }, [isApplyActive]);
+  const applyLastRunAt = useUiPrefsStore(
+    (s) => s.constructionApplyRun.lastRunAt
+  );
+  const cloudsaveLastUpdated = useConnectionStore((s) => s.lastUpdated);
+  const dataIsStale =
+    applyLastRunAt !== null &&
+    (cloudsaveLastUpdated === null || cloudsaveLastUpdated <= applyLastRunAt);
+  const stalenessHint =
+    "waiting for cog data to update - idleon hasn't synced post-apply state yet";
 
   const allSlotsUnlocked =
     constructionData === null
@@ -188,49 +180,25 @@ const Construction = () => {
     ? focusOptions.filter((o) => o.value !== "flaggy")
     : focusOptions;
 
-  const handleSolve = async () => {
+  const handleSolve = () => {
     if (!constructionData) {
-      setSolverError("No construction data available");
+      useConstructionSolverStore.setState({
+        error: "No construction data available",
+      });
       return;
     }
-    setSolverError(null);
-    setSolverResult(null);
-    setIsSolving(true);
-    try {
-      const weights: SolverWeights = { focus, flaggy: 0 };
-      const solveTimeMs = DEFAULT_SOLVE_TIME_SECONDS * 1000;
-      const result = await window.api.script.world3.construction.solver(
-        constructionData,
-        weights,
-        solveTimeMs
-      );
-      if (result) {
-        setSolverResult(result);
-      }
-    } catch (err) {
-      setSolverError(
-        err instanceof Error ? err.message : "Failed to solve construction"
-      );
-    } finally {
-      setIsSolving(false);
-      setIsCancelling(false);
-    }
+    solverSolve(
+      constructionData,
+      focus,
+      DEFAULT_SOLVE_TIME_SECONDS * 1000
+    ).catch(() => undefined);
   };
 
-  const handleCancel = async () => {
+  const handleCancel = () => {
     if (!isSolverActive || isCancelling) {
       return;
     }
-    setIsCancelling(true);
-    try {
-      await window.api.script.world3.construction.solverCancel();
-    } catch (err) {
-      setSolverError(
-        err instanceof Error ? err.message : "Failed to cancel solver"
-      );
-    } finally {
-      setIsCancelling(false);
-    }
+    solverCancelAction().catch(() => undefined);
   };
 
   const solved = solverResult !== null;
@@ -345,13 +313,17 @@ const Construction = () => {
               value={focus}
             />
           </Field>
-          <DisabledHint disabled={!isSignedIn} popover={solverHint}>
+          <DisabledHint
+            disabled={!isSignedIn || dataIsStale}
+            popover={isSignedIn ? stalenessHint : solverHint}
+          >
             <button
               className="cursor-pointer rounded-[3px] border border-amber bg-surface px-3.5 py-1.5 font-mono font-semibold text-[11px] text-amber hover:bg-surface-hi disabled:cursor-default disabled:opacity-60"
               disabled={
                 !(isSignedIn && constructionData) ||
                 isSolverActive ||
-                isLoopRunning
+                isLoopRunning ||
+                dataIsStale
               }
               onClick={handleSolve}
               type="button"
@@ -369,7 +341,16 @@ const Construction = () => {
               {isCancelling ? "↻ cancelling…" : "↻ cancel"}
             </button>
           )}
-          <DisabledHint disabled={!isSignedIn} popover={solverHint}>
+          <DisabledHint
+            disabled={!isSignedIn || (loopStatus === "idle" && dataIsStale)}
+            popover={
+              isSignedIn
+                ? loopStatus === "idle" && dataIsStale
+                  ? stalenessHint
+                  : null
+                : solverHint
+            }
+          >
             <button
               className="cursor-pointer rounded-[3px] border border-amber bg-surface px-3.5 py-1.5 font-mono font-semibold text-[11px] text-amber hover:bg-surface-hi disabled:cursor-default disabled:opacity-60"
               disabled={
@@ -377,7 +358,8 @@ const Construction = () => {
                 (loopStatus === "idle" &&
                   (!(isSignedIn && constructionData) ||
                     isSolverActive ||
-                    queueHasOtherWork))
+                    queueHasOtherWork ||
+                    dataIsStale))
               }
               onClick={() => {
                 if (loopStatus === "running") {
@@ -397,9 +379,12 @@ const Construction = () => {
             </button>
           </DisabledHint>
           {solverResult && solverResult.steps.length > 0 && (
-            <DisabledHint disabled={!isSignedIn} popover={solverHint}>
+            <DisabledHint
+              disabled={!isSignedIn || dataIsStale}
+              popover={isSignedIn ? stalenessHint : solverHint}
+            >
               <RunBtn
-                disabled={!isSignedIn || isLoopRunning}
+                disabled={!isSignedIn || isLoopRunning || dataIsStale}
                 getArgs={() => [solverResult.steps]}
                 label="apply board"
                 scriptId="world3.construction.apply"
@@ -467,6 +452,17 @@ const Construction = () => {
             })}
           </div>
         )}
+        {solverResult &&
+          solverResult.steps.length === 0 &&
+          !isSolverActive &&
+          !isLoopRunning && (
+            <div className="mt-2.5 rounded-[3px] border border-border-soft bg-panel-2 p-2 font-mono text-[10px] text-text-dim leading-[1.7]">
+              no better board found - score holds at build-rate{" "}
+              {notateNumber(solverResult.score.buildRate)} / exp-bonus{" "}
+              {formatPercent(solverResult.score.expBonus)} / flaggy{" "}
+              {notateNumber(solverResult.score.flaggy)}
+            </div>
+          )}
         {!isLoopRunning && loopOutcome && loopOutcome.kind !== "error" && (
           <div className="mt-2.5 rounded-[3px] border border-border-soft bg-panel-2 p-2 font-mono text-[10px] text-text-dim leading-[1.7]">
             {formatOutcomeLine(loopOutcome)}
