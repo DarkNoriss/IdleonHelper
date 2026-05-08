@@ -12,28 +12,40 @@ import {
   POST_ENTER_DELAY_MS,
   POST_EXIT_DELAY_MS,
   POST_LINE_DELAY_MS,
+  POST_PORTAL_DELAY_MS,
   W6_BOSS_HSV,
 } from "./constants";
 import { waitForEmperorDead } from "./emperor-monitor";
 
 const setRunning = (
-  phase: "preparing" | "entering" | "fighting" | "exiting"
+  phase: "preparing" | "entering" | "fighting" | "exiting",
+  iteration: number,
+  total: number
 ): void => {
-  setState("w6BossFarmer", { running: true, phase });
+  setState("w6BossFarmer", { running: true, phase, iteration, total });
 };
 
 const setIdle = (): void => {
-  setState("w6BossFarmer", { running: false, phase: "idle" });
+  setState("w6BossFarmer", {
+    running: false,
+    phase: "idle",
+    iteration: 0,
+    total: 0,
+  });
 };
 
-export default defineScript<[number | null, boolean]>({
+export default defineScript<[number | null, boolean, number]>({
   id: "world6.bossFarmer.run",
   name: "W6 Boss Farmer",
-  run: async ({ token, args: [presetSlot, skipReset] }) => {
+  run: async ({ token, args: [presetSlot, skipReset, attempts] }) => {
     logger.log(
-      `W6 Boss Farmer: starting (presetSlot=${presetSlot ?? "skip"}, skipReset=${skipReset})`
+      `W6 Boss Farmer: starting (presetSlot=${presetSlot ?? "skip"}, skipReset=${skipReset}, attempts=${attempts})`
     );
-    setRunning("preparing");
+    if (attempts <= 0) {
+      logger.log("W6 Boss Farmer: no attempts available, aborting");
+      return;
+    }
+    setRunning("preparing", 0, attempts);
     try {
       // One-time setup before the loop
       await setAuto("off", token);
@@ -41,13 +53,11 @@ export default defineScript<[number | null, boolean]>({
         await selectCardPreset(presetSlot, token);
       }
 
-      let iteration = 0;
-      while (true) {
+      for (let iteration = 1; iteration <= attempts; iteration++) {
         token.throwIfCancelled();
-        iteration += 1;
-        logger.log(`W6 Boss Farmer: iteration ${iteration}`);
+        logger.log(`W6 Boss Farmer: iteration ${iteration}/${attempts}`);
 
-        setRunning("preparing");
+        setRunning("preparing", iteration, attempts);
         const opened = await openBossBanner(token);
         if (!opened) {
           throw new Error("Failed to open W6 boss banner");
@@ -62,7 +72,7 @@ export default defineScript<[number | null, boolean]>({
           }
         }
 
-        setRunning("entering");
+        setRunning("entering", iteration, attempts);
         logger.log(`Clicking enter at (${ENTER_POINT.x}, ${ENTER_POINT.y})`);
         await backendCommand.click(ENTER_POINT, undefined, token);
         await delay(POST_ENTER_DELAY_MS, token);
@@ -83,12 +93,12 @@ export default defineScript<[number | null, boolean]>({
         logger.log("Clicked boss line");
         await delay(POST_LINE_DELAY_MS, token);
 
-        setRunning("fighting");
+        setRunning("fighting", iteration, attempts);
         await setAuto("on", token);
         await waitForEmperorDead(token);
         await setAuto("off", token);
 
-        setRunning("exiting");
+        setRunning("exiting", iteration, attempts);
         logger.log(
           `Clicking exit at (${EXIT_BUTTON_POINT.x}, ${EXIT_BUTTON_POINT.y})`
         );
@@ -96,9 +106,13 @@ export default defineScript<[number | null, boolean]>({
         await delay(POST_EXIT_DELAY_MS, token);
         logger.log(`Clicking portal at (${PORTAL_POINT.x}, ${PORTAL_POINT.y})`);
         await backendCommand.click(PORTAL_POINT, undefined, token);
+        await delay(POST_PORTAL_DELAY_MS, token);
 
-        logger.log(`W6 Boss Farmer: iteration ${iteration} complete`);
+        logger.log(
+          `W6 Boss Farmer: iteration ${iteration}/${attempts} complete`
+        );
       }
+      logger.log("W6 Boss Farmer: all attempts consumed, stopping");
     } finally {
       setIdle();
     }

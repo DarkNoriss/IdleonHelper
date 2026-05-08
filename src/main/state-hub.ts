@@ -27,6 +27,8 @@ const state: AppState = {
   w6BossFarmer: {
     running: false,
     phase: "idle",
+    iteration: 0,
+    total: 0,
   },
   collectTraps: {
     endsAt: null,

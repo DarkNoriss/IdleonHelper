@@ -31,7 +31,7 @@ export type ScriptMap = {
   "world6.summoning.debugBoardRange": { args: []; result: undefined };
   "world6.summoning.debugBoardImage": { args: []; result: undefined };
   "world6.bossFarmer.run": {
-    args: [number | null, boolean];
+    args: [number | null, boolean, number];
     result: undefined;
   };
   "world7.sushiStation.sushiStationMerge": {
@@ -134,6 +134,8 @@ export type W6BossFarmerPhase =
 export type W6BossFarmerState = {
   running: boolean;
   phase: W6BossFarmerPhase;
+  iteration: number;
+  total: number;
 };
 
 export type ConnectionStatus = "connecting" | "connected" | "error";
