@@ -8,6 +8,8 @@ const AUTO_HSV: { hsvLower: HsvColor; hsvUpper: HsvColor } = {
   hsvUpper: { h: 192, s: 25, v: 255 },
 };
 
+const AUTO_THRESHOLD = 0.85;
+
 export const setAuto = async (
   target: "on" | "off",
   token: CancellationToken
@@ -19,7 +21,7 @@ export const setAuto = async (
     },
     AUTO_HSV.hsvLower,
     AUTO_HSV.hsvUpper,
-    undefined,
+    { threshold: AUTO_THRESHOLD, debug: true },
     token
   );
 
