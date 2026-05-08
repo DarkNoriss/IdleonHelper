@@ -5,7 +5,7 @@ import { logger } from "../../utils/index";
 
 const AUTO_HSV: { hsvLower: HsvColor; hsvUpper: HsvColor } = {
   hsvLower: { h: 0, s: 0, v: 128 },
-  hsvUpper: { h: 192, s: 25, v: 255 },
+  hsvUpper: { h: 192, s: 255, v: 255 },
 };
 
 const AUTO_THRESHOLD = 0.85;

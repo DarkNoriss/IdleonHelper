@@ -2,7 +2,7 @@ import type { HsvColor } from "../../../backend/backend-types";
 
 export const W6_BOSS_HSV: { hsvLower: HsvColor; hsvUpper: HsvColor } = {
   hsvLower: { h: 0, s: 0, v: 128 },
-  hsvUpper: { h: 192, s: 25, v: 255 },
+  hsvUpper: { h: 192, s: 255, v: 255 },
 };
 
 export const ENTER_POINT = { x: 220, y: 480 } as const;
