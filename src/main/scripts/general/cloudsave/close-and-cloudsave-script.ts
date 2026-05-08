@@ -1,6 +1,6 @@
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
-import { pressKey } from "../../keys";
+import { closeMenu } from "../../keys";
 import { cloudsave } from "./cloudsave";
 
 export default defineScript({
@@ -10,7 +10,7 @@ export default defineScript({
     logger.log(
       "close-and-cloudsave - pressing ESCAPE to close any open sub-screen"
     );
-    await pressKey("ESCAPE", token);
+    await closeMenu(token);
     const ok = await cloudsave(token);
     if (!ok) {
       throw new Error("cloudsave flow failed");

@@ -1,3 +1,4 @@
+import w6BossFarmer from "./boss/w6-boss-farmer";
 import {
   beanTradingGetTickets,
   beanTradingTradeCrops,
@@ -12,6 +13,7 @@ import {
 } from "./summoning";
 
 export const world6Scripts = [
+  w6BossFarmer,
   beanTradingGetTickets,
   beanTradingTradeCrops,
   farmingCollectCrops,

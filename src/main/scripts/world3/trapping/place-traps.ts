@@ -4,7 +4,7 @@ import { backendCommand } from "../../../backend/index";
 import { setState } from "../../../state-hub";
 import { delay, logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
-import { pressKey } from "../../keys";
+import { closeMenu } from "../../keys";
 
 const FAST_CLICK = { times: 10, interval: 30, holdTime: 15 };
 const NAV_DELAY = 200;
@@ -95,8 +95,7 @@ export default defineScript<[string, string, string]>({
         undefined,
         token
       );
-      await pressKey("ESCAPE", token);
-      await delay(250, token);
+      await closeMenu(token);
 
       // Reopen and select critter
       logger.log("Reopening UI, selecting critter...");
@@ -256,7 +255,7 @@ export default defineScript<[string, string, string]>({
       }
 
       // Close
-      await pressKey("ESCAPE", token);
+      await closeMenu(token);
       logger.log(`Done! Placed traps for ${characterNum} characters.`);
     } finally {
       setState("placeTraps", { current: null });

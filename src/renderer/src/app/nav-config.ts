@@ -57,6 +57,7 @@ export const navConfig: NavEntry[] = [
   {
     title: "world-6",
     items: [
+      { title: "emperor", page: "world6/emperor" },
       { title: "summoning", page: "world6/summoning" },
       { title: "farming", page: "world6/farming" },
     ],

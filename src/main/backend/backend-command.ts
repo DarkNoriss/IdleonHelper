@@ -543,6 +543,7 @@ export const backendCommand = {
           intervalMs?: number;
           threshold?: number;
           offset?: ScreenOffset;
+          debug?: boolean;
         }
       | undefined,
     token: CancellationToken
@@ -553,6 +554,7 @@ export const backendCommand = {
     const timeoutMs = options?.timeoutMs ?? backendConfig.find.timeoutMs;
     const intervalMs = options?.intervalMs ?? backendConfig.find.intervalMs;
     const threshold = options?.threshold ?? backendConfig.find.threshold;
+    const debug = options?.debug ?? false;
     const start = Date.now();
 
     while (Date.now() - start < timeoutMs) {
@@ -563,6 +565,7 @@ export const backendCommand = {
         hsvUpper,
         threshold,
         offset: options?.offset ?? undefined,
+        debug,
       };
       const response = await sendCommand("findHSVParallel", request);
       const responseValues = Object.values(response.results);
@@ -592,6 +595,7 @@ export const backendCommand = {
       | {
           offset?: ScreenOffset;
           threshold?: number;
+          debug?: boolean;
         }
       | undefined,
     token: CancellationToken
@@ -605,6 +609,7 @@ export const backendCommand = {
       hsvUpper,
       threshold: options?.threshold ?? backendConfig.find.threshold,
       offset: options?.offset ?? undefined,
+      debug: options?.debug ?? false,
     };
     const response = await sendCommand("findHSVParallel", request);
     const responseValues = Object.values(response.results);

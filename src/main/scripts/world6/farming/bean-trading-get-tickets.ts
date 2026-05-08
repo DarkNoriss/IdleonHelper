@@ -2,7 +2,7 @@ import { backendCommand, backendConfig } from "../../../backend/index";
 import { logger } from "../../../utils/index";
 import { defineScript } from "../../define-script";
 import { navigation } from "../../game-nav/index";
-import { pressKey } from "../../keys";
+import { closeMenu } from "../../keys";
 import {
   BEAN_TRADING_TICKET_COUNT,
   INVENTORY_CENTER,
@@ -164,7 +164,7 @@ export default defineScript({
     }
 
     // 10. Close storage
-    await pressKey("ESCAPE", token);
+    await closeMenu(token);
     logger.log("bean-trading-get-tickets - done");
   },
 });

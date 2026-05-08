@@ -8,6 +8,7 @@ import {
 import { type BossFarmerData, parseBossFarmer } from "@/parsers/boss-farmer";
 import { parseCompass } from "@/parsers/compass";
 import { parseConstruction } from "@/parsers/construction";
+import { type EmperorData, parseEmperor } from "@/parsers/emperor";
 import { parseGrimoire } from "@/parsers/grimoire";
 import { parseSushiStation } from "@/parsers/sushi-station";
 import { parseTesseract } from "@/parsers/tesseract";
@@ -21,6 +22,7 @@ import type { TesseractData } from "@/types/tesseract";
 type GameDataContextType = {
   construction: ParsedConstructionData | null;
   bossFarmer: BossFarmerData | null;
+  emperor: EmperorData | null;
   sushiStation: SushiStationData | null;
   compass: CompassData | null;
   grimoire: GrimoireData | null;
@@ -30,6 +32,7 @@ type GameDataContextType = {
 const GameDataContext = createContext<GameDataContextType>({
   construction: null,
   bossFarmer: null,
+  emperor: null,
   sushiStation: null,
   compass: null,
   grimoire: null,
@@ -47,6 +50,7 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
   const [construction, setConstruction] =
     useState<ParsedConstructionData | null>(null);
   const [bossFarmer, setBossFarmer] = useState<BossFarmerData | null>(null);
+  const [emperor, setEmperor] = useState<EmperorData | null>(null);
   const [sushiStation, setSushiStation] = useState<SushiStationData | null>(
     null
   );
@@ -77,6 +81,19 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
     } catch (error) {
       console.error("Failed to parse boss-farmer data:", error);
       setBossFarmer(null);
+    }
+  }, [parsedJson]);
+
+  useEffect(() => {
+    if (!parsedJson) {
+      setEmperor(null);
+      return;
+    }
+    try {
+      setEmperor(parseEmperor(parsedJson));
+    } catch (error) {
+      console.error("Failed to parse emperor data:", error);
+      setEmperor(null);
     }
   }, [parsedJson]);
 
@@ -137,6 +154,7 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
       value={{
         construction,
         bossFarmer,
+        emperor,
         sushiStation,
         compass,
         grimoire,

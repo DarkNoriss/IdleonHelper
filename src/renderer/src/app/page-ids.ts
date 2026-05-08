@@ -21,6 +21,7 @@ export const PAGE_IDS = [
   "world3/trapping",
   "world6/farming",
   "world6/summoning",
+  "world6/emperor",
   "world7/sushi-station",
 ] as const;
 

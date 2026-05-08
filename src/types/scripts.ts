@@ -30,6 +30,10 @@ export type ScriptMap = {
   "world6.summoning.startEndlessAutobattler": { args: []; result: undefined };
   "world6.summoning.debugBoardRange": { args: []; result: undefined };
   "world6.summoning.debugBoardImage": { args: []; result: undefined };
+  "world6.bossFarmer.run": {
+    args: [number | null, boolean, number];
+    result: undefined;
+  };
   "world7.sushiStation.sushiStationMerge": {
     args: [boolean];
     result: undefined;
@@ -120,6 +124,20 @@ export type BossFarmerState = {
   estimatedRemainingMs: number;
 };
 
+export type W6BossFarmerPhase =
+  | "idle"
+  | "preparing"
+  | "entering"
+  | "fighting"
+  | "exiting";
+
+export type W6BossFarmerState = {
+  running: boolean;
+  phase: W6BossFarmerPhase;
+  iteration: number;
+  total: number;
+};
+
 export type ConnectionStatus = "connecting" | "connected" | "error";
 
 export type EngineState = "idle" | "running" | "paused";
@@ -156,6 +174,7 @@ export type AppState = {
     fetchedAt: string | null;
   };
   bossFarmer: BossFarmerState;
+  w6BossFarmer: W6BossFarmerState;
   collectTraps: { endsAt: number | null };
   placeTraps: { current: number | null };
   constructionSolver: {

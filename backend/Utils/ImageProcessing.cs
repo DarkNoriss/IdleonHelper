@@ -563,6 +563,7 @@ public static class ImageProcessing
     List<string> imagePaths,
     double threshold,
     ScreenOffset? offset,
+    bool debug,
     CancellationToken ct
   )
   {
@@ -570,6 +571,19 @@ public static class ImageProcessing
 
     offset ??= new ScreenOffset();
     var results = new Dictionary<string, List<Match>>();
+
+    string? debugTimestamp = null;
+    string? debugDir = null;
+    if (debug)
+    {
+      debugTimestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff");
+      debugDir = Path.Combine(AppContext.BaseDirectory, "screenshots");
+      Directory.CreateDirectory(debugDir);
+
+      var maskPath = Path.Combine(debugDir, $"hsv-livemask-{debugTimestamp}.png");
+      Cv2.ImWrite(maskPath, binaryMask);
+      Console.WriteLine($"FindHSVParallel debug: live mask {binaryMask.Cols}x{binaryMask.Rows} -> {maskPath}");
+    }
 
     foreach (var imagePath in imagePaths)
     {
@@ -582,7 +596,18 @@ public static class ImageProcessing
         continue;
       }
 
-      var foundMatches = MatchTemplate(binaryMask, templateImage, threshold, false, ct);
+      if (debug && debugDir != null)
+      {
+        Cv2.MinMaxLoc(templateImage, out double minVal, out double maxVal);
+        var baseName = Path.GetFileNameWithoutExtension(imagePath);
+        var loadedPath = Path.Combine(debugDir, $"hsv-loaded-{baseName}-{debugTimestamp}.png");
+        Cv2.ImWrite(loadedPath, templateImage);
+        Console.WriteLine(
+          $"FindHSVParallel debug: '{baseName}' {templateImage.Cols}x{templateImage.Rows} ch={templateImage.Channels()} min={minVal} max={maxVal} -> {loadedPath}"
+        );
+      }
+
+      var foundMatches = MatchTemplate(binaryMask, templateImage, threshold, debug, ct);
       results[imagePath] = FilterMatchesByOffset(foundMatches, offset);
     }
 
