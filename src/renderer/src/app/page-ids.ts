@@ -17,6 +17,7 @@ export const PAGE_IDS = [
   "classSpecific/grimoire",
   "world2/weekly-battle",
   "world2/alchemy-upgrade",
+  "world2/prismatic-bubbles",
   "world3/construction",
   "world3/trapping",
   "world6/farming",
