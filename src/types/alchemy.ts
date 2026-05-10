@@ -14,15 +14,15 @@ export const CAULDRON_ORDER: readonly Cauldron[] = [
   "kazam",
 ] as const;
 
-// IdleonToolbox layout: 25 bubbles per cauldron, indexed 0..99 across all
+// IdleonToolbox layout: 35 bubbles per cauldron, indexed 0..139 across all
 // cauldrons. Verified during impl against real CauldronInfo shape; update
 // here if a cauldron has a different capacity.
-export const BUBBLES_PER_CAULDRON = 25;
+export const BUBBLES_PER_CAULDRON = 35;
 export const CAULDRON_FLAT_OFFSET: Record<Cauldron, number> = {
   power: 0,
-  quicc: 25,
-  highIq: 50,
-  kazam: 75,
+  quicc: 35,
+  highIq: 70,
+  kazam: 105,
 };
 
 export type BubbleRef = {

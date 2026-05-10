@@ -8,16 +8,15 @@ import {
 type CauldronList = readonly string[];
 
 // Ordered exactly as IdleonToolbox / the game store them: index 0 = first
-// bubble in cauldron, index 24 = last. Position is the bubble's index in the
+// bubble in cauldron, index 34 = last. Position is the bubble's index in the
 // game save (CauldronInfo[cauldron][index]).
 //
 // Display names derived from IdleonToolbox website-data.json bubbleName field
 // via the toolbox formula: cleanUnderscore(bubbleName.toLowerCase().capitalizeAll())
 // Source: C:\Users\darkn\Downloads\IdleonToolbox-main\data\website-data.json
 //
-// Each cauldron has 35 bubbles in the source; only the first 25 are included
-// here (indices 0-24). The 10 extra per cauldron were added in a later game
-// update — update BUBBLES_PER_CAULDRON in src/types/alchemy.ts if needed.
+// Each cauldron has 35 entries (indices 0-34). Slots 33-34 are placeholder
+// "BUBBLE" entries — kept in the array so positions align with CauldronInfo.
 const POWER_BUBBLES: CauldronList = [
   "Roid Ragin",
   "Warriors Rule",
@@ -44,6 +43,16 @@ const POWER_BUBBLES: CauldronList = [
   "Gamer At Heart",
   "Slabi Strength",
   "Power Trione",
+  "Farquad Force",
+  "Endgame Eff I",
+  "Tome Strength",
+  "Essence Boost",
+  "Crop Chapter",
+  "Double Pagey",
+  "Dmg Of The Sun",
+  "Bone Bubble",
+  "Bubble",
+  "Bubble",
 ];
 
 const QUICC_BUBBLES: CauldronList = [
@@ -72,6 +81,16 @@ const QUICC_BUBBLES: CauldronList = [
   "Sailor At Heart",
   "Slabo Agility",
   "Power Tritwo",
+  "Quickdraw Quiver",
+  "Essence Boost",
+  "Endgame Eff Ii",
+  "Tome Agility",
+  "Stealth Chapter",
+  "Spapunkie",
+  "Dmg Of The Moon",
+  "Dust Bubble",
+  "Bubble",
+  "Bubble",
 ];
 
 const HIGH_IQ_BUBBLES: CauldronList = [
@@ -100,6 +119,16 @@ const HIGH_IQ_BUBBLES: CauldronList = [
   "Pious At Heart",
   "Slabe Wisdom",
   "Power Trithree",
+  "Smarter Spells",
+  "Endgame Eff Iii",
+  "Essence Boost",
+  "Tome Wisdom",
+  "Essence Chapter",
+  "Deep Depth",
+  "Dmg Of The Soul",
+  "Tachyon Bubble",
+  "Bubble",
+  "Bubble",
 ];
 
 const KAZAM_BUBBLES: CauldronList = [
@@ -128,6 +157,16 @@ const KAZAM_BUBBLES: CauldronList = [
   "Bit By Bit",
   "Gifts Abound",
   "Atom Split",
+  "Cropius Mapper",
+  "Essence Boost",
+  "Hinge Buster",
+  "Ninja Looter",
+  "Lo Cost Mo Jade",
+  "Faster Nrg",
+  "Kattle Da Goat",
+  "Codfrey Rulz Ok",
+  "Bubble",
+  "Bubble",
 ];
 
 const RAW_BY_CAULDRON: Record<Cauldron, CauldronList> = {
@@ -145,7 +184,7 @@ function buildCatalog(): Record<string, BubbleRef> {
       if (indexInCauldron >= BUBBLES_PER_CAULDRON) {
         return;
       }
-      if (out[name]) {
+      if (out[name] && name !== "Bubble") {
         console.warn(`Duplicate bubble name in catalog: ${name}`);
       }
       const flatIndex = CAULDRON_FLAT_OFFSET[cauldron] + indexInCauldron;
