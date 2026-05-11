@@ -28,8 +28,8 @@ const CAULDRON_LABEL: Record<Cauldron, string> = {
 const CAULDRON_CLASS: Record<Cauldron, string> = {
   power: "text-red-300",
   quicc: "text-emerald-300",
-  highIq: "text-sky-300",
-  kazam: "text-purple-300",
+  highIq: "text-purple-300",
+  kazam: "text-yellow-300",
 };
 
 const STATUS_LABEL: Record<RowStatus, string> = {

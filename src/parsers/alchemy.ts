@@ -1,6 +1,7 @@
 import {
   type AlchemyData,
   BUBBLES_PER_CAULDRON,
+  CAULDRON_FLAT_OFFSET,
   CAULDRON_ORDER,
 } from "@/types/alchemy";
 
@@ -276,23 +277,52 @@ export function parseAlchemy(parsedJson: unknown): AlchemyData | null {
   };
 }
 
+// IdleonToolbox's `number2letter` ordering. The game stores prismatic bubble
+// identifiers as `<cauldronLetter><indexInCauldron>` strings — e.g. "_16" is
+// power slot 16, "a3" is quicc slot 3, "b0" is high-iq slot 0, "c5" is kazam
+// slot 5. The full CSV looks like "_16,a3,b16,c5,".
+const CAULDRON_LETTERS: readonly string[] = ["_", "a", "b", "c"];
+
 function parsePrismaticCsv(raw: unknown): ReadonlySet<number> {
   if (typeof raw !== "string") {
     return new Set();
   }
-  // Save format: "0,1,5," (trailing comma is intentional).
   const parts = raw.split(",");
   const out = new Set<number>();
   for (const part of parts) {
     if (part.length === 0) {
       continue;
     }
-    const n = Number(part);
-    if (Number.isFinite(n)) {
-      out.add(n);
+    const flatIndex = parsePrismaticToken(part);
+    if (flatIndex !== null) {
+      out.add(flatIndex);
     }
   }
   return out;
+}
+
+// "_16" -> 16, "a3" -> 38, "b16" -> 86, "c0" -> 105.
+// Returns null when the token doesn't match the expected shape or the cauldron
+// letter is unknown (we silently drop unknowns rather than mismapping them).
+function parsePrismaticToken(token: string): number | null {
+  const match = token.match(/^([a-zA-Z_]+)(\d+)$/);
+  if (!match) {
+    return null;
+  }
+  const letter = match[1] ?? "";
+  const slot = Number(match[2]);
+  if (!Number.isFinite(slot)) {
+    return null;
+  }
+  const cauldronIdx = CAULDRON_LETTERS.indexOf(letter);
+  if (cauldronIdx < 0 || cauldronIdx >= CAULDRON_ORDER.length) {
+    return null;
+  }
+  const cauldron = CAULDRON_ORDER[cauldronIdx];
+  if (!cauldron) {
+    return null;
+  }
+  return CAULDRON_FLAT_OFFSET[cauldron] + slot;
 }
 
 function parseBubbleLevels(raw: unknown): number[][] {
