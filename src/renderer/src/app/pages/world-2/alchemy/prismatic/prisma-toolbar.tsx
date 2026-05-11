@@ -1,10 +1,21 @@
+import { TermCheckbox } from "@/components/terminal";
 import type { AlchemyData } from "@/types/alchemy";
 
 type Props = {
   alchemy: AlchemyData | null;
+  doneCount: number;
+  totalCount: number;
+  showDone: boolean;
+  onShowDoneChange: (next: boolean) => void;
 };
 
-export const PrismaToolbar = ({ alchemy }: Props) => {
+export const PrismaToolbar = ({
+  alchemy,
+  doneCount,
+  totalCount,
+  showDone,
+  onShowDoneChange,
+}: Props) => {
   if (!alchemy) {
     return (
       <div className="mb-2.5 rounded-[5px] border border-border bg-panel p-2.5 font-mono text-[11px] text-text-dim">
@@ -16,6 +27,7 @@ export const PrismaToolbar = ({ alchemy }: Props) => {
   const { prismaFragments, prismaMultiplier } = alchemy;
   const hasMissing = prismaMultiplier.missing.length > 0;
   const multiplierLabel = `${hasMissing ? "≥" : ""}${prismaMultiplier.value.toFixed(2)}x`;
+  const progressLabel = totalCount > 0 ? `${doneCount}/${totalCount}` : "—";
 
   return (
     <div className="mb-2.5 rounded-[5px] border border-border bg-panel p-2.5 font-mono text-[11px]">
@@ -26,6 +38,12 @@ export const PrismaToolbar = ({ alchemy }: Props) => {
           value={Math.floor(prismaFragments).toLocaleString()}
         />
         <Stat label="multiplier" value={multiplierLabel} />
+        <Stat label="progress" value={progressLabel} />
+        <TermCheckbox
+          checked={showDone}
+          label={<span className="text-text-dim">show done</span>}
+          onChange={onShowDoneChange}
+        />
       </div>
     </div>
   );

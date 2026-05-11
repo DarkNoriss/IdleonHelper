@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useGameData } from "@/providers/game-data-provider";
+import { useUiPrefsStore } from "@/store/ui-prefs.ts";
 import {
   type AlchemyData,
   type BubbleRef,
@@ -23,23 +24,38 @@ const HEADER_CLASS =
 
 export const PrismaticBubblesTab = () => {
   const { alchemy } = useGameData();
+  const showDone = useUiPrefsStore((s) => s.prismatic.showDone);
+  const setPrismatic = useUiPrefsStore((s) => s.setPrismatic);
 
   const { rows, outsideOrder } = useMemo(
     () => resolveRows(PRISMATIC_ORDER, alchemy),
     [alchemy]
   );
 
+  const doneCount = rows.filter((r) => r.status === "done").length;
+  const visibleRows = showDone ? rows : rows.filter((r) => r.status !== "done");
+
   return (
     <>
-      <PrismaToolbar alchemy={alchemy} />
+      <PrismaToolbar
+        alchemy={alchemy}
+        doneCount={doneCount}
+        onShowDoneChange={(next) => setPrismatic({ showDone: next })}
+        showDone={showDone}
+        totalCount={rows.length}
+      />
 
       {PRISMATIC_ORDER.length === 0 ? (
         <div className="rounded-[5px] border border-border bg-panel p-4 text-center font-mono text-[11px] text-text-dim">
           --prismatic-order is empty. fill it in at prismatic-order.ts to see
           your curated upgrade plan.
         </div>
+      ) : visibleRows.length === 0 ? (
+        <div className="rounded-[5px] border border-border bg-panel p-4 text-center font-mono text-[11px] text-text-dim">
+          --all curated bubbles are prismatic. toggle "show done" to see them.
+        </div>
       ) : (
-        <OrderTable rows={rows} />
+        <OrderTable rows={visibleRows} />
       )}
 
       {outsideOrder.length > 0 && (
