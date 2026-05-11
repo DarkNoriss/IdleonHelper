@@ -32,16 +32,18 @@ export const PrismaToolbar = ({
   return (
     <div className="mb-2.5 rounded-[5px] border border-border bg-panel p-2.5 font-mono text-[11px]">
       <div className="mb-2 text-text-dim">--prisma</div>
-      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+      <div className="mb-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
         <Stat
           label="fragments"
           value={Math.floor(prismaFragments).toLocaleString()}
         />
         <Stat label="multiplier" value={multiplierLabel} />
         <Stat label="progress" value={progressLabel} />
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
         <TermCheckbox
           checked={showDone}
-          label={<span className="text-text-dim">show done</span>}
+          label="show done"
           onChange={onShowDoneChange}
         />
       </div>
