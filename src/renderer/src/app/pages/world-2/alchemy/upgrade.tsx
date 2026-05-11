@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Block,
   Field,
-  PageHead,
   RunBtn,
   TermInput,
   TermMultiSelect,
@@ -92,7 +91,7 @@ const matchesSanitized = (sanitized: Selections, raw: unknown): boolean => {
   return true;
 };
 
-const AlchemyUpgrade = () => {
+export const AlchemyUpgradeTab = () => {
   const selections = useUiPrefsStore((s) => s.alchemy.selections);
   const intervalMinutes = useUiPrefsStore((s) => s.alchemy.intervalMinutes);
   const setAlchemy = useUiPrefsStore((s) => s.setAlchemy);
@@ -212,70 +211,65 @@ const AlchemyUpgrade = () => {
   })();
 
   return (
-    <>
-      <PageHead path="world-2 / alchemy-upgrade" title="alchemy-upgrade" />
-      <Block
-        note="select one or more bubbles per cauldron. each selected bubble gets bursted in turn. matches are gated by column x-range so look-alike bubbles in other cauldrons don't get clicked."
-        tag="config"
-        title="alchemy.targets"
-      >
-        <div className="mb-2.5 grid grid-cols-2 gap-2">
-          {(Object.keys(BUBBLES_BY_CAULDRON) as (keyof Selections)[]).map(
-            (key) => (
-              <Field key={key} label={CAULDRON_LABELS[key].toLowerCase()}>
-                <TermMultiSelect
-                  bulkActions={false}
-                  onChange={setColumn(key)}
-                  options={BUBBLES_BY_CAULDRON[key]}
-                  placeholderAll="all bubbles"
-                  placeholderNone="none"
-                  searchable
-                  searchPlaceholder="search bubbles"
-                  value={sanitized[key]}
-                />
-              </Field>
-            )
-          )}
-        </div>
-        <div className="flex items-end gap-2.5">
-          <Field label="run every (minutes)" width="w-[160px]">
-            <TermInput
-              inputMode="numeric"
-              maxLength={4}
-              onBlur={handleIntervalBlur}
-              onChange={handleIntervalChange}
-              pattern="[0-9]*"
-              type="text"
-              value={intervalDraft}
-            />
-          </Field>
-          <Field label="next run" width="w-[120px]">
-            <div
-              className={cn(
-                "rounded-[3px] border border-border bg-surface px-2 py-[5px] font-mono text-[11px]",
-                isRunning ? "text-amber" : "text-foreground"
-              )}
-            >
-              {countdownLabel}
-            </div>
-          </Field>
-          <RunBtn
-            disabled={
-              totalSelected === 0 || intervalMinutes < MIN_INTERVAL_MINUTES
-            }
-            getArgs={() => [sanitized, intervalMinutes]}
-            label="start alchemy"
-            scriptId="world2.alchemyUpgrade.run"
-          />
-        </div>
-        {totalSelected === 0 && (
-          <div className="mt-2 font-mono text-[10px] text-text-muted">
-            select at least one bubble to enable start.
-          </div>
+    <Block
+      note="select one or more bubbles per cauldron. each selected bubble gets bursted in turn. matches are gated by column x-range so look-alike bubbles in other cauldrons don't get clicked."
+      tag="config"
+      title="alchemy.targets"
+    >
+      <div className="mb-2.5 grid grid-cols-2 gap-2">
+        {(Object.keys(BUBBLES_BY_CAULDRON) as (keyof Selections)[]).map(
+          (key) => (
+            <Field key={key} label={CAULDRON_LABELS[key].toLowerCase()}>
+              <TermMultiSelect
+                bulkActions={false}
+                onChange={setColumn(key)}
+                options={BUBBLES_BY_CAULDRON[key]}
+                placeholderAll="all bubbles"
+                placeholderNone="none"
+                searchable
+                searchPlaceholder="search bubbles"
+                value={sanitized[key]}
+              />
+            </Field>
+          )
         )}
-      </Block>
-    </>
+      </div>
+      <div className="flex items-end gap-2.5">
+        <Field label="run every (minutes)" width="w-[160px]">
+          <TermInput
+            inputMode="numeric"
+            maxLength={4}
+            onBlur={handleIntervalBlur}
+            onChange={handleIntervalChange}
+            pattern="[0-9]*"
+            type="text"
+            value={intervalDraft}
+          />
+        </Field>
+        <Field label="next run" width="w-[120px]">
+          <div
+            className={cn(
+              "rounded-[3px] border border-border bg-surface px-2 py-[5px] font-mono text-[11px]",
+              isRunning ? "text-amber" : "text-foreground"
+            )}
+          >
+            {countdownLabel}
+          </div>
+        </Field>
+        <RunBtn
+          disabled={
+            totalSelected === 0 || intervalMinutes < MIN_INTERVAL_MINUTES
+          }
+          getArgs={() => [sanitized, intervalMinutes]}
+          label="start alchemy"
+          scriptId="world2.alchemyUpgrade.run"
+        />
+      </div>
+      {totalSelected === 0 && (
+        <div className="mt-2 font-mono text-[10px] text-text-muted">
+          select at least one bubble to enable start.
+        </div>
+      )}
+    </Block>
   );
 };
-
-export default AlchemyUpgrade;

@@ -5,6 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { parseAlchemy } from "@/parsers/alchemy";
 import { type BossFarmerData, parseBossFarmer } from "@/parsers/boss-farmer";
 import { parseCompass } from "@/parsers/compass";
 import { parseConstruction } from "@/parsers/construction";
@@ -13,6 +14,7 @@ import { parseGrimoire } from "@/parsers/grimoire";
 import { parseSushiStation } from "@/parsers/sushi-station";
 import { parseTesseract } from "@/parsers/tesseract";
 import { useRawJsonStore } from "@/store/raw-json.ts";
+import type { AlchemyData } from "@/types/alchemy";
 import type { CompassData } from "@/types/compass";
 import type { ParsedConstructionData } from "@/types/construction";
 import type { GrimoireData } from "@/types/grimoire";
@@ -27,6 +29,7 @@ type GameDataContextType = {
   compass: CompassData | null;
   grimoire: GrimoireData | null;
   tesseract: TesseractData | null;
+  alchemy: AlchemyData | null;
 };
 
 const GameDataContext = createContext<GameDataContextType>({
@@ -37,6 +40,7 @@ const GameDataContext = createContext<GameDataContextType>({
   compass: null,
   grimoire: null,
   tesseract: null,
+  alchemy: null,
 });
 
 export const useGameData = () => useContext(GameDataContext);
@@ -57,6 +61,7 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
   const [compass, setCompass] = useState<CompassData | null>(null);
   const [grimoire, setGrimoire] = useState<GrimoireData | null>(null);
   const [tesseract, setTesseract] = useState<TesseractData | null>(null);
+  const [alchemy, setAlchemy] = useState<AlchemyData | null>(null);
 
   useEffect(() => {
     if (!parsedJson) {
@@ -149,6 +154,19 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
     }
   }, [parsedJson]);
 
+  useEffect(() => {
+    if (!parsedJson) {
+      setAlchemy(null);
+      return;
+    }
+    try {
+      setAlchemy(parseAlchemy(parsedJson));
+    } catch (error) {
+      console.error("Failed to parse alchemy data:", error);
+      setAlchemy(null);
+    }
+  }, [parsedJson]);
+
   return (
     <GameDataContext.Provider
       value={{
@@ -159,6 +177,7 @@ export const GameDataProvider = ({ children }: GameDataProviderProps) => {
         compass,
         grimoire,
         tesseract,
+        alchemy,
       }}
     >
       {children}

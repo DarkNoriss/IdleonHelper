@@ -17,6 +17,7 @@ type BossFarmerPrefs = { iterations: string };
 type W6EmperorPrefs = { presetSlot: number | null; skipReset: boolean };
 type CardsPrefs = { slot: string };
 type AlchemyPrefs = { selections: Selections; intervalMinutes: number };
+type PrismaticPrefs = { showDone: boolean };
 type ConstructionPrefs = { focus: SolverFocus };
 type TrappingPlacePrefs = { critter: string; trap: string; timer: string };
 type TrappingCollectPrefs = { trap: string; timer: string };
@@ -77,6 +78,7 @@ type UiPrefsState = {
   w6Emperor: W6EmperorPrefs;
   cards: CardsPrefs;
   alchemy: AlchemyPrefs;
+  prismatic: PrismaticPrefs;
   construction: ConstructionPrefs;
   trapping: TrappingPrefs;
   farming: FarmingPrefs;
@@ -97,6 +99,7 @@ type UiPrefsState = {
   setW6Emperor: (patch: Partial<W6EmperorPrefs>) => void;
   setCards: (patch: Partial<CardsPrefs>) => void;
   setAlchemy: (patch: Partial<AlchemyPrefs>) => void;
+  setPrismatic: (patch: Partial<PrismaticPrefs>) => void;
   setConstruction: (patch: Partial<ConstructionPrefs>) => void;
   setTrappingPlace: (patch: Partial<TrappingPlacePrefs>) => void;
   setTrappingCollect: (patch: Partial<TrappingCollectPrefs>) => void;
@@ -134,6 +137,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         selections: INITIAL_ALCHEMY_SELECTIONS,
         intervalMinutes: 5,
       },
+      prismatic: { showDone: false },
       construction: { focus: "exp" },
       trapping: {
         place: { critter: "", trap: "", timer: "" },
@@ -190,6 +194,8 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       setCards: (patch) => set((s) => ({ cards: { ...s.cards, ...patch } })),
       setAlchemy: (patch) =>
         set((s) => ({ alchemy: { ...s.alchemy, ...patch } })),
+      setPrismatic: (patch) =>
+        set((s) => ({ prismatic: { ...s.prismatic, ...patch } })),
       setConstruction: (patch) =>
         set((s) => ({ construction: { ...s.construction, ...patch } })),
       setTrappingPlace: (patch) =>
