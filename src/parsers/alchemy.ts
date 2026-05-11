@@ -299,17 +299,19 @@ export function parseAlchemy(parsedJson: unknown): AlchemyData | null {
 // slot 5. The full CSV looks like "_16,a3,b16,c5,".
 const CAULDRON_LETTERS: readonly string[] = ["_", "a", "b", "c"];
 
+// The save's raw CSV sometimes has stray leading characters (we've observed
+// a leading "0" before the first id, e.g. "0c9,c2,b1,..."). Toolbox sidesteps
+// this by doing substring search (indexOf("c9,")) rather than splitting on
+// commas. We mirror that tolerance by extracting every `<letter><digits>`
+// token globally, ignoring whatever sits between or around them.
 function parsePrismaticCsv(raw: unknown): ReadonlySet<number> {
   if (typeof raw !== "string") {
     return new Set();
   }
-  const parts = raw.split(",");
   const out = new Set<number>();
-  for (const part of parts) {
-    if (part.length === 0) {
-      continue;
-    }
-    const flatIndex = parsePrismaticToken(part);
+  const tokens = raw.match(/[a-zA-Z_]+\d+/g) ?? [];
+  for (const token of tokens) {
+    const flatIndex = parsePrismaticToken(token);
     if (flatIndex !== null) {
       out.add(flatIndex);
     }
