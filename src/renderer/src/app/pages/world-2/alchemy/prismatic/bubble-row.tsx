@@ -10,7 +10,7 @@ export type RowStatus =
 
 type Props = {
   order: number;
-  /** null when the name was not found in the catalog or is ambiguous. */
+  /** null when the name was not found in the catalog. */
   bubbleRef: BubbleRef | null;
   /** The raw name as authored — shown when bubbleRef is null. */
   fallbackName: string;
@@ -19,68 +19,79 @@ type Props = {
 };
 
 const CAULDRON_LABEL: Record<Cauldron, string> = {
-  power: "Power",
-  quicc: "Quicc",
-  highIq: "High-IQ",
-  kazam: "Kazam",
+  power: "power",
+  quicc: "quicc",
+  highIq: "high-iq",
+  kazam: "kazam",
 };
 
 const CAULDRON_CLASS: Record<Cauldron, string> = {
-  power: "bg-red-900/30 text-red-300 ring-red-500/40",
-  quicc: "bg-emerald-900/30 text-emerald-300 ring-emerald-500/40",
-  highIq: "bg-sky-900/30 text-sky-300 ring-sky-500/40",
-  kazam: "bg-purple-900/30 text-purple-300 ring-purple-500/40",
+  power: "text-red-300",
+  quicc: "text-emerald-300",
+  highIq: "text-sky-300",
+  kazam: "text-purple-300",
 };
 
 const STATUS_LABEL: Record<RowStatus, string> = {
-  done: "Done",
-  next: "Next",
-  locked: "Need to unlock",
-  queued: "Queued",
-  unknown: "Unknown bubble",
-  ambiguous: "Ambiguous - specify cauldron",
+  done: "done",
+  next: "next",
+  locked: "needs-unlock",
+  queued: "queued",
+  unknown: "unknown-name",
+  ambiguous: "ambiguous",
 };
 
 const STATUS_CLASS: Record<RowStatus, string> = {
-  done: "bg-emerald-900/40 text-emerald-300 ring-emerald-500/50",
-  next: "bg-amber-900/40 text-amber-200 ring-amber-400/60",
-  locked: "bg-rose-900/40 text-rose-300 ring-rose-500/50",
-  queued: "bg-zinc-800/60 text-zinc-300 ring-zinc-600/40",
-  unknown: "bg-amber-900/40 text-amber-200 ring-amber-400/60",
-  ambiguous: "bg-amber-900/40 text-amber-200 ring-amber-400/60",
+  done: "text-emerald-300",
+  next: "text-amber",
+  locked: "text-rose-300",
+  queued: "text-text-dim",
+  unknown: "text-amber",
+  ambiguous: "text-amber",
 };
 
-export function BubbleRow({
+export const BubbleRow = ({
   order,
   bubbleRef,
   fallbackName,
   level,
   status,
-}: Props) {
+}: Props) => {
   const name = bubbleRef?.name ?? fallbackName;
   const cauldron = bubbleRef?.cauldron;
+  const isNext = status === "next";
 
   return (
-    <li className="flex items-center gap-3 rounded border border-zinc-800 bg-zinc-900/50 px-3 py-2">
-      <span className="w-8 text-right font-mono text-sm text-zinc-500">
-        {order}.
-      </span>
-      <span className="flex-1 truncate text-sm text-zinc-100">{name}</span>
-      {cauldron && (
-        <span
-          className={`rounded px-2 py-0.5 text-xs ring-1 ring-inset ${CAULDRON_CLASS[cauldron]}`}
-        >
-          {CAULDRON_LABEL[cauldron]}
-        </span>
-      )}
-      {level !== null && (
-        <span className="font-mono text-xs text-zinc-500">Lv {level}</span>
-      )}
-      <span
-        className={`rounded px-2 py-0.5 text-xs ring-1 ring-inset ${STATUS_CLASS[status]}`}
-      >
+    <tr className="border-border-soft border-t text-foreground transition-colors hover:bg-surface">
+      <td className="px-3 py-1">
+        {isNext ? (
+          <span className="rounded-sm bg-primary-dim/20 px-1.5 font-medium text-primary">
+            {order}
+          </span>
+        ) : (
+          <span className="text-text-dim">{order}</span>
+        )}
+      </td>
+      <td className="px-3 py-1">{name}</td>
+      <td className="px-3 py-1">
+        {cauldron ? (
+          <span className={CAULDRON_CLASS[cauldron]}>
+            {CAULDRON_LABEL[cauldron]}
+          </span>
+        ) : (
+          <span className="text-text-dim">—</span>
+        )}
+      </td>
+      <td className="px-3 py-1 text-right">
+        {level === null ? (
+          <span className="text-text-dim">—</span>
+        ) : (
+          <span className="text-text-dim">{level}</span>
+        )}
+      </td>
+      <td className={`px-3 py-1 ${STATUS_CLASS[status]}`}>
         {STATUS_LABEL[status]}
-      </span>
-    </li>
+      </td>
+    </tr>
   );
-}
+};

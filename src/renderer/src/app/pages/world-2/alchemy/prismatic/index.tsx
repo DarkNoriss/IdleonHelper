@@ -7,7 +7,7 @@ import {
 } from "@/types/alchemy";
 import { getBubbleByFlatIndex, resolveBubbleByName } from "./bubble-catalog";
 import { BubbleRow, type RowStatus } from "./bubble-row";
-import { HeaderTiles } from "./header-tiles";
+import { PrismaToolbar } from "./prisma-toolbar";
 import { PRISMATIC_ORDER } from "./prismatic-order";
 
 type ResolvedRow = {
@@ -18,7 +18,10 @@ type ResolvedRow = {
   status: RowStatus;
 };
 
-export function PrismaticBubblesTab() {
+const HEADER_CLASS =
+  "px-3 py-2 font-medium text-[9.5px] text-text-muted uppercase tracking-[0.6px]";
+
+export const PrismaticBubblesTab = () => {
   const { alchemy } = useGameData();
 
   const { rows, outsideOrder } = useMemo(
@@ -27,68 +30,57 @@ export function PrismaticBubblesTab() {
   );
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-zinc-500">
-        Curated order to spend prisma fragments. Status is read from your parsed
-        save.
-      </p>
-
-      {alchemy ? (
-        <HeaderTiles alchemy={alchemy} />
-      ) : (
-        <div className="rounded border border-amber-700/40 bg-amber-900/20 px-3 py-2 text-amber-200 text-sm">
-          Paste your save in the Raw JSON tab to see live status.
-        </div>
-      )}
+    <>
+      <PrismaToolbar alchemy={alchemy} />
 
       {PRISMATIC_ORDER.length === 0 ? (
-        <div className="rounded border border-zinc-800 bg-zinc-900/40 px-3 py-3 text-sm text-zinc-400">
-          PRISMATIC_ORDER is empty. Fill it in at
-          <code className="mx-1 rounded bg-zinc-800 px-1 py-0.5 text-xs text-zinc-200">
-            prismatic-order.ts
-          </code>
-          to see your curated upgrade plan.
+        <div className="rounded-[5px] border border-border bg-panel p-4 text-center font-mono text-[11px] text-text-dim">
+          --prismatic-order is empty. fill it in at prismatic-order.ts to see
+          your curated upgrade plan.
         </div>
       ) : (
-        <ol className="space-y-1">
-          {rows.map((row) => (
-            <BubbleRow
-              bubbleRef={row.bubbleRef}
-              fallbackName={row.fallbackName}
-              key={`${row.order}-${row.fallbackName}`}
-              level={row.level}
-              order={row.order}
-              status={row.status}
-            />
-          ))}
-        </ol>
+        <OrderTable rows={rows} />
       )}
 
       {outsideOrder.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="font-semibold text-sm text-zinc-300">
-            Prismatic outside curated order
-          </h2>
-          <p className="text-xs text-zinc-500">
-            Bubbles that are already prismatic but not in your curated list.
-          </p>
-          <ol className="space-y-1">
-            {outsideOrder.map((row, idx) => (
-              <BubbleRow
-                bubbleRef={row.bubbleRef}
-                fallbackName={row.fallbackName}
-                key={`outside-${row.fallbackName}`}
-                level={row.level}
-                order={idx + 1}
-                status="done"
-              />
-            ))}
-          </ol>
-        </section>
+        <div className="mt-2.5">
+          <div className="mb-1 font-mono text-[9.5px] text-text-muted uppercase tracking-[0.6px]">
+            --prismatic outside curated order
+          </div>
+          <OrderTable rows={outsideOrder} />
+        </div>
       )}
-    </div>
+    </>
   );
-}
+};
+
+const OrderTable = ({ rows }: { rows: readonly ResolvedRow[] }) => (
+  <div className="overflow-x-auto rounded-[5px] border border-border bg-panel">
+    <table className="w-full font-mono text-[11px]">
+      <thead className="bg-panel-2">
+        <tr>
+          <th className={`${HEADER_CLASS} text-left`}>#</th>
+          <th className={`${HEADER_CLASS} text-left`}>bubble</th>
+          <th className={`${HEADER_CLASS} text-left`}>cauldron</th>
+          <th className={`${HEADER_CLASS} text-right`}>lvl</th>
+          <th className={`${HEADER_CLASS} text-left`}>status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <BubbleRow
+            bubbleRef={row.bubbleRef}
+            fallbackName={row.fallbackName}
+            key={`${row.order}-${row.fallbackName}`}
+            level={row.level}
+            order={row.order}
+            status={row.status}
+          />
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
 
 function resolveRows(
   order: readonly string[],
@@ -130,13 +122,15 @@ function resolveRows(
         .map((r) => r.bubbleRef?.flatIndex)
         .filter((v): v is number => typeof v === "number")
     );
+    let outsideOrderIdx = 0;
     for (const flatIndex of alchemy.prismaticBubbleFlatIndices) {
       if (curatedFlatIndices.has(flatIndex)) {
         continue;
       }
       const ref = getBubbleByFlatIndex(flatIndex);
+      outsideOrderIdx += 1;
       outsideOrder.push({
-        order: 0,
+        order: outsideOrderIdx,
         fallbackName: ref?.name ?? `Unknown #${flatIndex}`,
         bubbleRef: ref,
         level: ref
