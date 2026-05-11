@@ -28,9 +28,12 @@ function getTesseractPrismaBonus(root: Record<string, unknown>): SourceResult {
   return { value: level, present: true };
 }
 
-// Arcade shop index 54 "+{% Prisma Bonuses": growth('decay', level, 10, 100).
-// decay formula: (x1 * level) / (level + x2) = (10 * level) / (level + 100).
-// Result is a percentage (e.g. level=100 -> 5%).
+// Arcade shop index 54 "+{% Prisma Bonuses".
+// Toolbox arcade.ts:18-29: bonus = decay(level, 10, 100) * superBonus * companionBonus
+// - decay: (10 * level) / (level + 100)
+// - superBonus: 2x when level > 100, else 1x (post-level-100 milestone)
+// - companionBonus: 2x when companion 27 is active (LIMITATION — companion data
+//   lives in a separate Firebase doc; assumed 1x here).
 // Raw save key: ArcadeUpg (parsed as number[]).
 function getArcadePrismaBonus(root: Record<string, unknown>): SourceResult {
   const arcadeUpg = parseArrayValue(root.ArcadeUpg);
@@ -38,8 +41,9 @@ function getArcadePrismaBonus(root: Record<string, unknown>): SourceResult {
     return { value: 0, present: false };
   }
   const level = toNumber(arcadeUpg[54]);
-  const bonus = (10 * level) / (level + 100);
-  return { value: bonus, present: true };
+  const decay = (10 * level) / (level + 100);
+  const superBonus = level > 100 ? 2 : 1;
+  return { value: decay * superBonus, present: true };
 }
 
 // Sushi ROG bonus index 23.
@@ -297,16 +301,43 @@ function parseBubbleLevels(raw: unknown): number[][] {
     return CAULDRON_ORDER.map(() => emptyCauldronLevels());
   }
   return CAULDRON_ORDER.map((_, idx) => {
+    // Mirrors IdleonToolbox's createArrayOfArrays: the save serializes the
+    // per-cauldron level vectors as objects with numeric keys (e.g.
+    // { "0": 12, "1": 7, ..., length: 35 }) when stored, so we coerce via
+    // Object.values when the inner element isn't already an array.
     const row = arr[idx];
-    if (!Array.isArray(row)) {
+    const levels = coerceRow(row);
+    if (!levels) {
       return emptyCauldronLevels();
     }
     const out: number[] = [];
     for (let i = 0; i < BUBBLES_PER_CAULDRON; i++) {
-      out.push(toNumber(row[i]));
+      out.push(toNumber(levels[i]));
     }
     return out;
   });
+}
+
+function coerceRow(value: unknown): unknown[] | null {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : coerceRow(parsed);
+    } catch {
+      return null;
+    }
+  }
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    // Drop the spurious `length` key the game sometimes stamps onto
+    // object-shaped arrays, matching Toolbox's `delete object?.length`.
+    const { length: _length, ...rest } = obj;
+    return Object.values(rest);
+  }
+  return null;
 }
 
 function emptyCauldronLevels(): number[] {
