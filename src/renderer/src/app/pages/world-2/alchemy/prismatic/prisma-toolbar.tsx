@@ -21,7 +21,10 @@ export const PrismaToolbar = ({ alchemy }: Props) => {
     <div className="mb-2.5 rounded-[5px] border border-border bg-panel p-2.5 font-mono text-[11px]">
       <div className="mb-2 text-text-dim">--prisma</div>
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
-        <Stat label="fragments" value={prismaFragments.toLocaleString()} />
+        <Stat
+          label="fragments"
+          value={Math.floor(prismaFragments).toLocaleString()}
+        />
         <Stat label="multiplier" value={multiplierLabel} />
       </div>
     </div>
