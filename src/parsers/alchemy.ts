@@ -1,9 +1,7 @@
 import {
   type AlchemyData,
   BUBBLES_PER_CAULDRON,
-  CAULDRON_FLAT_OFFSET,
   CAULDRON_ORDER,
-  type Cauldron,
 } from "@/types/alchemy";
 
 const PRISMA_FRAGMENTS_INDEX = 383;
@@ -331,13 +329,4 @@ function parseArrayValue(value: unknown): unknown {
 
 function toNumber(value: unknown): number {
   return Number(value ?? 0) || 0;
-}
-
-// Re-exported for the page so it can map (cauldron, idx) to flat index without
-// importing constants in two places.
-export function getFlatIndex(
-  cauldron: Cauldron,
-  indexInCauldron: number
-): number {
-  return CAULDRON_FLAT_OFFSET[cauldron] + indexInCauldron;
 }

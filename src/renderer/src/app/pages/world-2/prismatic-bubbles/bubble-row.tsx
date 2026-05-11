@@ -1,12 +1,18 @@
 import type { BubbleRef, Cauldron } from "@/types/alchemy";
 
-export type RowStatus = "done" | "next" | "locked" | "queued" | "unknown";
+export type RowStatus =
+  | "done"
+  | "next"
+  | "locked"
+  | "queued"
+  | "unknown"
+  | "ambiguous";
 
 type Props = {
   order: number;
-  /** null when the name was not found in the catalog. */
-  ref: BubbleRef | null;
-  /** The raw name as authored — shown when ref is null. */
+  /** null when the name was not found in the catalog or is ambiguous. */
+  bubbleRef: BubbleRef | null;
+  /** The raw name as authored — shown when bubbleRef is null. */
   fallbackName: string;
   level: number | null;
   status: RowStatus;
@@ -32,6 +38,7 @@ const STATUS_LABEL: Record<RowStatus, string> = {
   locked: "Need to unlock",
   queued: "Queued",
   unknown: "Unknown bubble",
+  ambiguous: "Ambiguous - specify cauldron",
 };
 
 const STATUS_CLASS: Record<RowStatus, string> = {
@@ -40,11 +47,18 @@ const STATUS_CLASS: Record<RowStatus, string> = {
   locked: "bg-rose-900/40 text-rose-300 ring-rose-500/50",
   queued: "bg-zinc-800/60 text-zinc-300 ring-zinc-600/40",
   unknown: "bg-amber-900/40 text-amber-200 ring-amber-400/60",
+  ambiguous: "bg-amber-900/40 text-amber-200 ring-amber-400/60",
 };
 
-export function BubbleRow({ order, ref, fallbackName, level, status }: Props) {
-  const name = ref?.name ?? fallbackName;
-  const cauldron = ref?.cauldron;
+export function BubbleRow({
+  order,
+  bubbleRef,
+  fallbackName,
+  level,
+  status,
+}: Props) {
+  const name = bubbleRef?.name ?? fallbackName;
+  const cauldron = bubbleRef?.cauldron;
 
   return (
     <li className="flex items-center gap-3 rounded border border-zinc-800 bg-zinc-900/50 px-3 py-2">

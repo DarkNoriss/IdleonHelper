@@ -1,7 +1,11 @@
 import { useMemo } from "react";
 import { useGameData } from "@/providers/game-data-provider";
-import type { AlchemyData, BubbleRef } from "@/types/alchemy";
-import { BUBBLE_CATALOG, getBubbleByFlatIndex } from "./bubble-catalog";
+import {
+  type AlchemyData,
+  type BubbleRef,
+  CAULDRON_ORDER,
+} from "@/types/alchemy";
+import { getBubbleByFlatIndex, resolveBubbleByName } from "./bubble-catalog";
 import { BubbleRow, type RowStatus } from "./bubble-row";
 import { HeaderTiles } from "./header-tiles";
 import { PRISMATIC_ORDER } from "./prismatic-order";
@@ -9,7 +13,7 @@ import { PRISMATIC_ORDER } from "./prismatic-order";
 type ResolvedRow = {
   order: number;
   fallbackName: string;
-  ref: BubbleRef | null;
+  bubbleRef: BubbleRef | null;
   level: number | null;
   status: RowStatus;
 };
@@ -54,11 +58,11 @@ export default function PrismaticBubblesPage() {
         <ol className="space-y-1">
           {rows.map((row) => (
             <BubbleRow
+              bubbleRef={row.bubbleRef}
               fallbackName={row.fallbackName}
               key={`${row.order}-${row.fallbackName}`}
               level={row.level}
               order={row.order}
-              ref={row.ref}
               status={row.status}
             />
           ))}
@@ -76,11 +80,11 @@ export default function PrismaticBubblesPage() {
           <ol className="space-y-1">
             {outsideOrder.map((row, idx) => (
               <BubbleRow
+                bubbleRef={row.bubbleRef}
                 fallbackName={row.fallbackName}
                 key={`outside-${row.fallbackName}`}
                 level={row.level}
                 order={idx + 1}
-                ref={row.ref}
                 status="done"
               />
             ))}
@@ -96,18 +100,21 @@ function resolveRows(
   alchemy: AlchemyData | null
 ): { rows: ResolvedRow[]; outsideOrder: ResolvedRow[] } {
   const resolved: ResolvedRow[] = order.map((name, idx) => {
-    const ref = BUBBLE_CATALOG[name] ?? null;
+    const resolution = resolveBubbleByName(name);
+    const ref = resolution.ref;
     const level =
       ref && alchemy
         ? (alchemy.bubbleLevels[indexOfCauldron(ref.cauldron)]?.[
             ref.indexInCauldron
           ] ?? 0)
         : null;
-    const status = computeStatus(ref, level, alchemy);
+    const status = resolution.ambiguous
+      ? ("ambiguous" as const)
+      : computeStatus(ref, level, alchemy);
     return {
       order: idx + 1,
       fallbackName: name,
-      ref,
+      bubbleRef: ref,
       level,
       status,
     };
@@ -125,7 +132,7 @@ function resolveRows(
   if (alchemy) {
     const curatedFlatIndices = new Set(
       resolved
-        .map((r) => r.ref?.flatIndex)
+        .map((r) => r.bubbleRef?.flatIndex)
         .filter((v): v is number => typeof v === "number")
     );
     for (const flatIndex of alchemy.prismaticBubbleFlatIndices) {
@@ -136,7 +143,7 @@ function resolveRows(
       outsideOrder.push({
         order: 0,
         fallbackName: ref?.name ?? `Unknown #${flatIndex}`,
-        ref,
+        bubbleRef: ref,
         level: ref
           ? (alchemy.bubbleLevels[indexOfCauldron(ref.cauldron)]?.[
               ref.indexInCauldron
@@ -171,17 +178,5 @@ function computeStatus(
 }
 
 function indexOfCauldron(c: BubbleRef["cauldron"]): number {
-  // Mirrors CAULDRON_ORDER from @/types/alchemy.
-  switch (c) {
-    case "power":
-      return 0;
-    case "quicc":
-      return 1;
-    case "highIq":
-      return 2;
-    case "kazam":
-      return 3;
-    default:
-      throw new Error(`Unknown cauldron: ${c}`);
-  }
+  return CAULDRON_ORDER.indexOf(c);
 }

@@ -7,16 +7,10 @@ import {
 
 type CauldronList = readonly string[];
 
-// Ordered exactly as IdleonToolbox / the game store them: index 0 = first
-// bubble in cauldron, index 34 = last. Position is the bubble's index in the
-// game save (CauldronInfo[cauldron][index]).
-//
-// Display names derived from IdleonToolbox website-data.json bubbleName field
-// via the toolbox formula: cleanUnderscore(bubbleName.toLowerCase().capitalizeAll())
-// Source: C:\Users\darkn\Downloads\IdleonToolbox-main\data\website-data.json
-//
-// Each cauldron has 35 entries (indices 0-34). Slots 33-34 are placeholder
-// "BUBBLE" entries — kept in the array so positions align with CauldronInfo.
+// Ordered exactly as IdleonToolbox / the game store them. Position is the
+// bubble's index in CauldronInfo[cauldron][index]. Slots 33 and 34 of each
+// cauldron are "Bubble" placeholder entries (8 total in the game). They are
+// kept in the array so positions remain aligned with CauldronInfo.
 const POWER_BUBBLES: CauldronList = [
   "Roid Ragin",
   "Warriors Rule",
@@ -176,34 +170,60 @@ const RAW_BY_CAULDRON: Record<Cauldron, CauldronList> = {
   kazam: KAZAM_BUBBLES,
 };
 
-function buildCatalog(): Record<string, BubbleRef> {
-  const out: Record<string, BubbleRef> = {};
+function buildFlatStore(): Record<number, BubbleRef> {
+  const out: Record<number, BubbleRef> = {};
   for (const [cauldronKey, names] of Object.entries(RAW_BY_CAULDRON)) {
     const cauldron = cauldronKey as Cauldron;
     names.forEach((name, indexInCauldron) => {
       if (indexInCauldron >= BUBBLES_PER_CAULDRON) {
         return;
       }
-      if (out[name] && name !== "Bubble") {
-        console.warn(`Duplicate bubble name in catalog: ${name}`);
-      }
       const flatIndex = CAULDRON_FLAT_OFFSET[cauldron] + indexInCauldron;
-      out[name] = { name, cauldron, indexInCauldron, flatIndex };
+      out[flatIndex] = { name, cauldron, indexInCauldron, flatIndex };
     });
   }
   return out;
 }
 
-export const BUBBLE_CATALOG: Readonly<Record<string, BubbleRef>> =
-  buildCatalog();
+function buildNameIndex(
+  flatStore: Record<number, BubbleRef>
+): Record<string, BubbleRef[]> {
+  const out: Record<string, BubbleRef[]> = {};
+  for (const ref of Object.values(flatStore)) {
+    const list = out[ref.name] ?? [];
+    list.push(ref);
+    out[ref.name] = list;
+  }
+  return out;
+}
 
-export const TOTAL_BUBBLE_COUNT = Object.keys(BUBBLE_CATALOG).length;
+const FLAT_STORE: Readonly<Record<number, BubbleRef>> = buildFlatStore();
+const NAME_INDEX: Readonly<Record<string, BubbleRef[]>> =
+  buildNameIndex(FLAT_STORE);
+
+export const TOTAL_BUBBLE_COUNT = Object.keys(FLAT_STORE).length;
 
 export function getBubbleByFlatIndex(flatIndex: number): BubbleRef | null {
-  for (const ref of Object.values(BUBBLE_CATALOG)) {
-    if (ref.flatIndex === flatIndex) {
-      return ref;
-    }
+  return FLAT_STORE[flatIndex] ?? null;
+}
+
+export type NameResolution = {
+  ref: BubbleRef | null;
+  ambiguous: boolean;
+};
+
+// Resolve a curated PRISMATIC_ORDER entry by display name.
+// Unique name -> { ref, ambiguous: false }
+// Multiple cauldrons share the name (e.g. "Essence Boost") -> { ref: null, ambiguous: true }
+//   The user must disambiguate; the page surfaces a warning.
+// Unknown -> { ref: null, ambiguous: false }
+export function resolveBubbleByName(name: string): NameResolution {
+  const matches = NAME_INDEX[name] ?? [];
+  if (matches.length === 0) {
+    return { ref: null, ambiguous: false };
   }
-  return null;
+  if (matches.length === 1) {
+    return { ref: matches[0]!, ambiguous: false };
+  }
+  return { ref: null, ambiguous: true };
 }
