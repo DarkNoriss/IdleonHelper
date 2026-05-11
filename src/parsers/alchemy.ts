@@ -4,6 +4,8 @@ import {
   CAULDRON_FLAT_OFFSET,
   CAULDRON_ORDER,
 } from "@/types/alchemy";
+import type { CompanionRawData } from "@/types/raw-json";
+import { isCompanionAcquired } from "./companions";
 
 const PRISMA_FRAGMENTS_INDEX = 383;
 const PRISMA_BUBBLES_INDEX = 384;
@@ -33,10 +35,12 @@ function getTesseractPrismaBonus(root: Record<string, unknown>): SourceResult {
 // Toolbox arcade.ts:18-29: bonus = decay(level, 10, 100) * superBonus * companionBonus
 // - decay: (10 * level) / (level + 100)
 // - superBonus: 2x when level > 100, else 1x (post-level-100 milestone)
-// - companionBonus: 2x when companion 27 is active (LIMITATION — companion data
-//   lives in a separate Firebase doc; assumed 1x here).
-// Raw save key: ArcadeUpg (parsed as number[]).
-function getArcadePrismaBonus(root: Record<string, unknown>): SourceResult {
+// - companionBonus: 2x when companion 27 ("Spirit Reindeer") is acquired
+// Raw save keys: ArcadeUpg (number[]), companion data (separate Firebase doc).
+function getArcadePrismaBonus(
+  root: Record<string, unknown>,
+  companion: CompanionRawData | null
+): SourceResult {
   const arcadeUpg = parseArrayValue(root.ArcadeUpg);
   if (!Array.isArray(arcadeUpg)) {
     return { value: 0, present: false };
@@ -44,7 +48,8 @@ function getArcadePrismaBonus(root: Record<string, unknown>): SourceResult {
   const level = toNumber(arcadeUpg[54]);
   const decay = (10 * level) / (level + 100);
   const superBonus = level > 100 ? 2 : 1;
-  return { value: decay * superBonus, present: true };
+  const companionBonus = isCompanionAcquired(companion, 27) ? 2 : 1;
+  return { value: decay * superBonus * companionBonus, present: true };
 }
 
 // Sushi ROG bonus index 23.
@@ -185,14 +190,17 @@ function getLegendTalentPrismaBonus(
   return { value: 3 * level, present: true };
 }
 
-// Companion 88 "Rift Hivemind": +50% Prisma Bubble bonus multi when acquired.
-// Companion data lives in Firebase _comp/{uid}, a separate document NOT present
-// in the main save JSON. This parser only receives the main save JSON (root),
-// so the companion cannot be checked here.
-// LIMITATION: companion 88 active state is unavailable from root save data.
-// Always returns { value: 0, present: false }.
-function getCompanionPrismaBonus(_root: Record<string, unknown>): SourceResult {
-  return { value: 0, present: false };
+// Companion 88: +50 prisma-multi percent points when acquired.
+// Toolbox tesseract.ts:515: `companionBonus = isCompanionBonusActive(account, 88) ? 1 : 0`
+// then `+ 50 * companionBonus` in the additive sum.
+function getCompanionPrismaBonus(
+  companion: CompanionRawData | null
+): SourceResult {
+  if (companion === null) {
+    return { value: 0, present: false };
+  }
+  const active = isCompanionAcquired(companion, 88);
+  return { value: active ? 50 : 0, present: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -203,18 +211,19 @@ const PRISMA_BASE = 2;
 const PRISMA_CAP = 4;
 
 function computePrismaMultiplier(
-  root: Record<string, unknown>
+  root: Record<string, unknown>,
+  companion: CompanionRawData | null
 ): AlchemyData["prismaMultiplier"] {
   const sources = {
     tesseract: getTesseractPrismaBonus(root),
-    arcade: getArcadePrismaBonus(root),
+    arcade: getArcadePrismaBonus(root, companion),
     sushi: getSushiPrismaBonus(root),
     trophy: getTrophyPrismaBonus(root),
     palette: getPalettePrismaBonus(root),
     etherealSigils: getEtherealSigilsBonus(root),
     exoticMarket: getExoticMarketBonus(root),
     legendTalent: getLegendTalentPrismaBonus(root),
-    companion: getCompanionPrismaBonus(root),
+    companion: getCompanionPrismaBonus(companion),
   } as const;
 
   const total = Object.values(sources).reduce((acc, s) => acc + s.value, 0);
@@ -257,6 +266,13 @@ export function parseAlchemy(parsedJson: unknown): AlchemyData | null {
     !Array.isArray(dataCandidate)
       ? (dataCandidate as Record<string, unknown>)
       : candidate;
+  // Companion data lives in the sibling `companion` field of the envelope
+  // (sourced from `_comp/{uid}` in Realtime DB). Some prisma bonuses
+  // (arcade companion 27, prisma companion 88) require it.
+  const companion =
+    candidate.companion && typeof candidate.companion === "object"
+      ? (candidate.companion as CompanionRawData)
+      : null;
 
   const accountOptions = parseArrayValue(root.OptLacc);
   if (!Array.isArray(accountOptions)) {
@@ -273,7 +289,7 @@ export function parseAlchemy(parsedJson: unknown): AlchemyData | null {
     prismaFragments,
     prismaticBubbleFlatIndices,
     bubbleLevels,
-    prismaMultiplier: computePrismaMultiplier(root),
+    prismaMultiplier: computePrismaMultiplier(root, companion),
   };
 }
 
