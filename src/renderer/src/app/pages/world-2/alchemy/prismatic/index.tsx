@@ -18,7 +18,7 @@ type ResolvedRow = {
   status: RowStatus;
 };
 
-export default function PrismaticBubblesPage() {
+export function PrismaticBubblesTab() {
   const { alchemy } = useGameData();
 
   const { rows, outsideOrder } = useMemo(
@@ -27,16 +27,11 @@ export default function PrismaticBubblesPage() {
   );
 
   return (
-    <div className="space-y-4 p-4">
-      <header>
-        <h1 className="font-semibold text-xl text-zinc-100">
-          Prismatic Bubbles
-        </h1>
-        <p className="text-sm text-zinc-500">
-          Curated order to spend prisma fragments. Status is read from your
-          parsed save.
-        </p>
-      </header>
+    <div className="space-y-4">
+      <p className="text-sm text-zinc-500">
+        Curated order to spend prisma fragments. Status is read from your parsed
+        save.
+      </p>
 
       {alchemy ? (
         <HeaderTiles alchemy={alchemy} />

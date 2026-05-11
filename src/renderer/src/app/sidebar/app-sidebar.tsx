@@ -21,7 +21,7 @@ const PAGE_SCRIPT_PREFIXES: Partial<Record<NavigationPage, readonly string[]>> =
     "classSpecific/compass": ["classSpecific.compass."],
     "classSpecific/compass-debug": ["classSpecific.compass."],
     "world2/weekly-battle": ["world2.weeklyBattle."],
-    "world2/alchemy-upgrade": ["world2.alchemyUpgrade."],
+    "world2/alchemy": ["world2.alchemyUpgrade."],
     "world3/construction": ["world3.construction."],
     "world3/trapping": ["world3.trapping."],
     "world6/farming": ["world6.farming."],
