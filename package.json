@@ -70,39 +70,13 @@
       [
         "@semantic-release/commit-analyzer",
         {
-          "preset": "conventionalcommits",
-          "releaseRules": [
-            {
-              "type": "refactor",
-              "release": "patch"
-            }
-          ]
+          "preset": "conventionalcommits"
         }
       ],
       [
         "@semantic-release/release-notes-generator",
         {
-          "preset": "conventionalcommits",
-          "presetConfig": {
-            "types": [
-              {
-                "type": "feat",
-                "section": "Features"
-              },
-              {
-                "type": "fix",
-                "section": "Bug Fixes"
-              },
-              {
-                "type": "perf",
-                "section": "Performance Improvements"
-              },
-              {
-                "type": "refactor",
-                "section": "Code Refactoring"
-              }
-            ]
-          }
+          "preset": "conventionalcommits"
         }
       ],
       [
