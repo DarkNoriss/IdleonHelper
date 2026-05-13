@@ -47,8 +47,8 @@ export type UpgraderGeometry = {
 // grimoire smoke (1/27). Bumped to 300ms - missed scrolls in production would
 // fire the upgrade click on the wrong row, wasting resources and desyncing
 // subsequent step indices.
-export const UPGRADER_SCROLL_SETTLE_MS = 200;
-export const UPGRADER_CLICK_SETTLE_MS = 200;
+export const UPGRADER_SCROLL_SETTLE_MS = 250;
+export const UPGRADER_CLICK_SETTLE_MS = 250;
 
 // HSV bounds for the panel header check - same shape used elsewhere for
 // bright UI text/icons on darker backgrounds.

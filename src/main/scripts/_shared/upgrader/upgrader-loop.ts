@@ -15,7 +15,7 @@ import {
   type UpgraderGeometry,
 } from "./upgrader-constants";
 
-const CLICK_OPTIONS_15X = getClickOptionsFromPreset("1.5x");
+const CLICK_OPTIONS_125X = getClickOptionsFromPreset("1.25x");
 
 export type UpgraderConfig = {
   ensureOpen: EnsureOpen;
@@ -95,7 +95,7 @@ export async function runUpgraderLoop(
 
     await backendCommand.click(
       click,
-      { ...CLICK_OPTIONS_15X, times: step.levels },
+      { ...CLICK_OPTIONS_125X, times: step.levels },
       token
     );
     await delay(UPGRADER_CLICK_SETTLE_MS, token);
