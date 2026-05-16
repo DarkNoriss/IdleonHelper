@@ -113,38 +113,34 @@ const SushiStation = () => {
               );
             })()}
           </Block>
+          <Block
+            note="single sort pass: arranges sushi in descending tier order along the snake. no merging, no cooking."
+            tag="script"
+            title="sushi.sort"
+          >
+            <RunBtn
+              label="sort once"
+              scriptId="world7.sushiStation.sushiStationSort"
+            />
+          </Block>
           {isDev && (
             <div className="mt-1.5 rounded-[5px] border border-border border-dashed bg-black/20 px-2.5 pt-2 pb-1">
               <div className="mb-1.5 flex items-center gap-2 px-1 font-mono text-[9.5px] text-text-muted uppercase tracking-[0.6px]">
                 <span>dev only</span>
                 <span className="h-px flex-1 bg-border-soft" />
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Block
-                  dev
-                  note="captures filtered cell images for new sushi tier templates."
-                  tag="script"
-                  title="sushi.merge-debug"
-                >
-                  <RunBtn
-                    label="debug merge"
-                    scriptId="world7.sushiStation.sushiStationMergeDebug"
-                    small
-                  />
-                </Block>
-                <Block
-                  dev
-                  note="single sort pass: arranges sushi in descending tier order along the snake. no merging, no cooking."
-                  tag="script"
-                  title="sushi.sort"
-                >
-                  <RunBtn
-                    label="sort once"
-                    scriptId="world7.sushiStation.sushiStationSort"
-                    small
-                  />
-                </Block>
-              </div>
+              <Block
+                dev
+                note="captures filtered cell images for new sushi tier templates."
+                tag="script"
+                title="sushi.merge-debug"
+              >
+                <RunBtn
+                  label="debug merge"
+                  scriptId="world7.sushiStation.sushiStationMergeDebug"
+                  small
+                />
+              </Block>
             </div>
           )}
         </Tabs.Panel>
