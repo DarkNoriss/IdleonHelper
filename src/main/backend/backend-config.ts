@@ -26,6 +26,7 @@ export type ClickPreset =
   | "1.5x"
   | "1.75x"
   | "2x"
+  | "3x"
   | "4x"
   | "8x"
   | "16x";
@@ -37,6 +38,7 @@ const PRESET_MULTIPLIERS: Record<ClickPreset, number> = {
   "1.5x": 1.5,
   "1.75x": 1.75,
   "2x": 2,
+  "3x": 3,
   "4x": 4,
   "8x": 8,
   "16x": 16,
