@@ -10,6 +10,7 @@ import {
   type CellTier,
   cellToPoint,
   countEmpty,
+  decideDrainCandidate,
   formatCell,
   getHighestTier,
   getHighestTierWithCount,
@@ -265,139 +266,10 @@ export default defineScript<[boolean, boolean]>({
     while (true) {
       token.throwIfCancelled();
 
-      const sortResult = await runPlannedSort(
-        regions,
-        availableCells,
-        priorityCells,
-        token
-      );
-      log(`sort complete (${sortResult.drags} drags)`);
+      // ---- Seed phase: guarantee a full, sorted, seeded board ----
 
-      const board = await scanBoard();
-
-      log(`lowest tier: ${formatTierOrNone(getLowestTier(board))}`);
-      log(
-        `highest tier with 2+: ${formatTierOrNone(getHighestTierWithCount(board, 2))}`
-      );
-      logBoardGrid(log, "board:", board, availableCells);
-      log(
-        `highest tier with 3+: ${formatTierOrNone(getHighestTierWithCount(board, 3))}`
-      );
-      log(
-        `lowest tier with 3+: ${formatTierOrNone(getLowestTierWithCount(board, 3))}`
-      );
-
-      // Phase 2: drain merges loop
-      log("phase 2: drain merges");
-      let drainMerges = 0;
-      // HOTEW cascades only promote tiers upward, so within one drain
-      // session candidates should never drop below an already-merged tier.
-      // A downward drop means the staircase is consolidated; yield to
-      // cook -> spawn -> seed instead of polluting the working area.
-      let drainMinTier: number | null = null;
-      while (true) {
-        token.throwIfCancelled();
-        const drainBoard = await scanBoard();
-        const lowestTier = getLowestTier(drainBoard);
-        if (lowestTier === null) {
-          log("board empty, ending drain");
-          break;
-        }
-        const drainFloor = lowestTier + 1;
-
-        const drainHighest = getHighestTier(drainBoard);
-        const drainBuffCap = drainHighest === null ? null : drainHighest - 6;
-
-        const aboveFloor = drainBoard.filter((p) => p.tierNumber > drainFloor);
-        const eligible = aboveFloor.filter((p) => {
-          if (p.tierNumber === MAX_TEMPLATE_TIER) {
-            return false;
-          }
-          if (
-            !mergeAboveHotew &&
-            drainBuffCap !== null &&
-            p.tierNumber > drainBuffCap
-          ) {
-            return false;
-          }
-          return true;
-        });
-
-        const filteredHardCap = aboveFloor.some(
-          (p) => p.tierNumber === MAX_TEMPLATE_TIER
-        );
-        const filteredAboveBand =
-          !mergeAboveHotew &&
-          drainBuffCap !== null &&
-          aboveFloor.some(
-            (p) =>
-              p.tierNumber > drainBuffCap && p.tierNumber !== MAX_TEMPLATE_TIER
-          );
-        if (filteredHardCap) {
-          log(`excluding T${MAX_TEMPLATE_TIER} hard cap (defensive)`);
-        }
-        if (filteredAboveBand) {
-          log(
-            `excluding tiers above buffCap T${drainBuffCap} (mergeAboveHotew=false)`
-          );
-        }
-
-        let candidateTier = getHighestTierWithCount(eligible, 2);
-
-        // Fallback: drain T_floor itself only when nothing above is
-        // eligible AND it has count >= 3. Below 3, the cascade fires only
-        // 1 trigger and leaves <2 floor pieces behind, breaking the chain
-        // for the next iteration's seed.
-        let isFloorFallback = false;
-        if (candidateTier === null && drainFloor !== MAX_TEMPLATE_TIER) {
-          const floorCount = drainBoard.filter(
-            (p) => p.tierNumber === drainFloor
-          ).length;
-          if (floorCount >= 3) {
-            candidateTier = drainFloor;
-            isFloorFallback = true;
-            log(
-              `no candidate above T${drainFloor}; draining T${drainFloor} (count=${floorCount})`
-            );
-          }
-        }
-
-        if (candidateTier === null) {
-          log("no eligible drain target, exiting drain loop");
-          break;
-        }
-
-        if (drainMinTier !== null && candidateTier < drainMinTier) {
-          log(
-            `drain candidate T${candidateTier} below session min T${drainMinTier}; exiting drain (staircase consolidated)`
-          );
-          break;
-        }
-
-        const sortedAsc = drainBoard
-          .filter((p) => p.tierNumber === candidateTier)
-          .sort((a, b) => a.cell - b.cell);
-        const fromCell = sortedAsc[0]!.cell;
-        const toCell = sortedAsc[1]!.cell;
-
-        await mergeAndMaybeSort({
-          preBoard: drainBoard,
-          fromCell,
-          toCell,
-          mergeTier: candidateTier,
-          count: sortedAsc.length,
-          isFloorFallback,
-        });
-        drainMinTier =
-          drainMinTier === null
-            ? candidateTier
-            : Math.min(drainMinTier, candidateTier);
-        drainMerges++;
-      }
-      log(`phase 2 complete: ${drainMerges} drain merges`);
-
-      // Phase 3: cook (gated by checkbox)
-      log("phase 3: cook check");
+      // Seed step 1: cook to fill empty cells (gated by checkbox)
+      log("seed phase: cook check");
       const cookBoard = await scanBoard();
       const emptyCount = countEmpty(cookBoard, availableCells);
       if (emptyCount === 0) {
@@ -423,8 +295,8 @@ export default defineScript<[boolean, boolean]>({
         log(`${emptyCount} empty cells, cook disabled, skipping spawn`);
       }
 
-      // Phase 4: post-cook sort
-      log("phase 4: post-cook sort");
+      // Seed step 2: sort the freshly cooked pieces
+      log("seed phase: post-cook sort");
       const postCookSortResult = await runPlannedSort(
         regions,
         availableCells,
@@ -433,8 +305,9 @@ export default defineScript<[boolean, boolean]>({
       );
       log(`sort complete (${postCookSortResult.drags} drags)`);
 
-      // Phase 5: seed merge (one-shot, prepares lowestTier+1 for next run)
-      log("phase 5: seed check");
+      // Seed step 3: seed merge - prep lowestTier+1 to have a 3+ chain so the
+      // merge phase has something to climb.
+      log("seed phase: seed check");
       const seedBoard = await scanBoard();
       const seedLowest = getLowestTier(seedBoard);
       if (seedLowest === null) {
@@ -474,7 +347,94 @@ export default defineScript<[boolean, boolean]>({
         }
       }
 
-      // Phase 6: final board log
+      // Seed step 4: final sort - guarantee a clean descending staircase
+      // before the merge phase (the seed merge can skip its own sort on a
+      // count<=3 merge).
+      log("seed phase: pre-merge sort");
+      const preMergeSortResult = await runPlannedSort(
+        regions,
+        availableCells,
+        priorityCells,
+        token
+      );
+      log(`sort complete (${preMergeSortResult.drags} drags)`);
+
+      const board = await scanBoard();
+      log(`lowest tier: ${formatTierOrNone(getLowestTier(board))}`);
+      log(
+        `highest tier with 2+: ${formatTierOrNone(getHighestTierWithCount(board, 2))}`
+      );
+      logBoardGrid(log, "board:", board, availableCells);
+      log(
+        `highest tier with 3+: ${formatTierOrNone(getHighestTierWithCount(board, 3))}`
+      );
+      log(
+        `lowest tier with 3+: ${formatTierOrNone(getLowestTierWithCount(board, 3))}`
+      );
+
+      // ---- Merge phase: climb the staircase upward via cascade merges. The
+      // peak watermark (highest tier merged this session) ends the phase the
+      // moment the next candidate would drop below it - i.e. no higher tier
+      // remains and we should reseed instead of re-grinding low tiers. ----
+      log("merge phase: drain");
+      let drainMerges = 0;
+      let drainPeakTier: number | null = null;
+      while (true) {
+        token.throwIfCancelled();
+        const drainBoard = await scanBoard();
+
+        const decision = decideDrainCandidate({
+          board: drainBoard,
+          peakTier: drainPeakTier,
+          mergeAboveHotew,
+          maxTemplateTier: MAX_TEMPLATE_TIER,
+        });
+
+        if (decision.action === "stop") {
+          if (decision.reason === "empty") {
+            log("board empty, ending merge phase");
+          } else if (decision.reason === "no-candidate") {
+            log("no eligible drain target, ending merge phase");
+          } else {
+            // drainPeakTier is non-null here: the helper only returns
+            // "below-peak" when peakTier !== null, which only happens after
+            // at least one merge below has set it.
+            log(
+              `drain candidate below session peak T${drainPeakTier}; ending merge phase (no higher tier, reseeding)`
+            );
+          }
+          break;
+        }
+
+        const { candidateTier, isFloorFallback } = decision;
+        if (isFloorFallback) {
+          log(
+            `no candidate above floor; draining T${candidateTier} as fallback`
+          );
+        }
+
+        const sortedAsc = drainBoard
+          .filter((p) => p.tierNumber === candidateTier)
+          .sort((a, b) => a.cell - b.cell);
+        const fromCell = sortedAsc[0]!.cell;
+        const toCell = sortedAsc[1]!.cell;
+
+        await mergeAndMaybeSort({
+          preBoard: drainBoard,
+          fromCell,
+          toCell,
+          mergeTier: candidateTier,
+          count: sortedAsc.length,
+          isFloorFallback,
+        });
+        drainPeakTier =
+          drainPeakTier === null
+            ? candidateTier
+            : Math.max(drainPeakTier, candidateTier);
+        drainMerges++;
+      }
+      log(`merge phase complete: ${drainMerges} drain merges`);
+
       const finalBoard = await scanBoard();
       logBoardGrid(log, "final board:", finalBoard, availableCells);
     }

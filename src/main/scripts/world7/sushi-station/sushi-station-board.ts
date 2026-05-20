@@ -142,6 +142,72 @@ export const getLowestTierWithCount = (
   return lowest;
 };
 
+export type DrainDecision =
+  | { action: "merge"; candidateTier: number; isFloorFallback: boolean }
+  | { action: "stop"; reason: "empty" | "no-candidate" | "below-peak" };
+
+// Pure candidate-selection + watermark decision for the HOTEW merge (drain)
+// phase. Ported verbatim from the old inline drain loop, except the watermark
+// is now the session PEAK (highest tier merged) instead of the minimum.
+//
+// HOTEW cascades only promote tiers upward, so within one merge phase the
+// candidate climbs (+1 per step). Tracking the peak and stopping on
+// `candidate < peak` ends the phase the instant the climb wraps back down to
+// the working floor - the "no higher tier, reseed" signal. The old min
+// watermark missed this whenever the climb started at the working floor
+// (peak==min), letting the floor be re-merged forever.
+export const decideDrainCandidate = (params: {
+  board: CellTier[];
+  peakTier: number | null;
+  mergeAboveHotew: boolean;
+  maxTemplateTier: number;
+}): DrainDecision => {
+  const { board, peakTier, mergeAboveHotew, maxTemplateTier } = params;
+
+  const lowestTier = getLowestTier(board);
+  if (lowestTier === null) {
+    return { action: "stop", reason: "empty" };
+  }
+  const drainFloor = lowestTier + 1;
+
+  const highest = getHighestTier(board);
+  const buffCap = highest === null ? null : highest - 6; // 6 = HOTEW buff range width (highest tier minus 6)
+
+  const eligible = board.filter((piece) => {
+    if (piece.tierNumber <= drainFloor) {
+      return false;
+    }
+    if (piece.tierNumber === maxTemplateTier) {
+      return false;
+    }
+    if (!mergeAboveHotew && buffCap !== null && piece.tierNumber > buffCap) {
+      return false;
+    }
+    return true;
+  });
+
+  const aboveCandidate = getHighestTierWithCount(eligible, 2);
+  const floorCount = board.filter(
+    (piece) => piece.tierNumber === drainFloor
+  ).length;
+  const useFloorFallback =
+    aboveCandidate === null &&
+    drainFloor !== maxTemplateTier &&
+    floorCount >= 3;
+  const candidateTier = useFloorFallback ? drainFloor : aboveCandidate;
+  const isFloorFallback = useFloorFallback;
+
+  if (candidateTier === null) {
+    return { action: "stop", reason: "no-candidate" };
+  }
+
+  if (peakTier !== null && candidateTier < peakTier) {
+    return { action: "stop", reason: "below-peak" };
+  }
+
+  return { action: "merge", candidateTier, isFloorFallback };
+};
+
 export const countEmpty = (
   board: CellTier[],
   availableCells: ReadonlySet<number>
