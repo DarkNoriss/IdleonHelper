@@ -171,7 +171,7 @@ export const decideDrainCandidate = (params: {
   const drainFloor = lowestTier + 1;
 
   const highest = getHighestTier(board);
-  const buffCap = highest === null ? null : highest - 6;
+  const buffCap = highest === null ? null : highest - 6; // 6 = HOTEW buff range width (highest tier minus 6)
 
   const eligible = board.filter((piece) => {
     if (piece.tierNumber <= drainFloor) {
@@ -186,18 +186,16 @@ export const decideDrainCandidate = (params: {
     return true;
   });
 
-  let candidateTier = getHighestTierWithCount(eligible, 2);
-  let isFloorFallback = false;
-
-  if (candidateTier === null && drainFloor !== maxTemplateTier) {
-    const floorCount = board.filter(
-      (piece) => piece.tierNumber === drainFloor
-    ).length;
-    if (floorCount >= 3) {
-      candidateTier = drainFloor;
-      isFloorFallback = true;
-    }
-  }
+  const aboveCandidate = getHighestTierWithCount(eligible, 2);
+  const floorCount = board.filter(
+    (piece) => piece.tierNumber === drainFloor
+  ).length;
+  const useFloorFallback =
+    aboveCandidate === null &&
+    drainFloor !== maxTemplateTier &&
+    floorCount >= 3;
+  const candidateTier = useFloorFallback ? drainFloor : aboveCandidate;
+  const isFloorFallback = useFloorFallback;
 
   if (candidateTier === null) {
     return { action: "stop", reason: "no-candidate" };

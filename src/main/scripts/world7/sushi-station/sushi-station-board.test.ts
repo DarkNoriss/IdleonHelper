@@ -44,10 +44,20 @@ describe("decideDrainCandidate", () => {
     });
   });
 
-  it("does not stop mid-climb when candidate equals the peak", () => {
+  it("does not stop mid-climb when candidate exceeds the peak", () => {
     // peak=40, highest count>=2 candidate above floor is T41 (>40) -> merge.
     const b = board([...run(30, 2, 0), ...run(41, 2, 10)]);
     expect(decide(b, 40)).toEqual({
+      action: "merge",
+      candidateTier: 41,
+      isFloorFallback: false,
+    });
+  });
+
+  it("does not stop when candidate equals the peak (strict < boundary)", () => {
+    // peak=41, highest count>=2 candidate above floor is exactly T41 -> merge.
+    const b = board([...run(30, 2, 0), ...run(41, 2, 10)]);
+    expect(decide(b, 41)).toEqual({
       action: "merge",
       candidateTier: 41,
       isFloorFallback: false,
