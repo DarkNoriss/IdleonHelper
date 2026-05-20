@@ -1,8 +1,8 @@
-import type { Point, Rect, RegionResult } from "../../../backend/backend-types";
 import {
   getClickOptionsFromPreset,
   getDragOptionsFromPreset,
-} from "../../../backend/index";
+} from "../../../backend/backend-config";
+import type { Point, Rect, RegionResult } from "../../../backend/backend-types";
 
 export const SUSHI_GRID = {
   ROWS: 8,

@@ -9,6 +9,8 @@
   "scripts": {
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "pnpm typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:backend": "powershell -ExecutionPolicy Bypass -File .\\scripts\\build-backend.ps1",
@@ -53,6 +55,7 @@
     "typescript": "^5.9.3",
     "ultracite": "7.4.0",
     "vite": "^7.3.0",
+    "vitest": "^4.1.6",
     "zustand": "^5.0.8"
   },
   "pnpm": {
