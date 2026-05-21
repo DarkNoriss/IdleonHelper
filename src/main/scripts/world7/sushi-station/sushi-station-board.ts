@@ -142,6 +142,31 @@ export const getLowestTierWithCount = (
   return lowest;
 };
 
+// Compares two boards by tier composition (how many pieces of each tier),
+// ignoring cell positions. The sort step reshuffles positions every cycle
+// without changing what is on the board, so progress detection must look at
+// composition, not coordinates.
+export const boardCompositionEqual = (
+  a: CellTier[],
+  b: CellTier[]
+): boolean => {
+  if (a.length !== b.length) {
+    return false;
+  }
+  const counts = new Map<number, number>();
+  for (const piece of a) {
+    counts.set(piece.tierNumber, (counts.get(piece.tierNumber) ?? 0) + 1);
+  }
+  for (const piece of b) {
+    const remaining = (counts.get(piece.tierNumber) ?? 0) - 1;
+    if (remaining < 0) {
+      return false;
+    }
+    counts.set(piece.tierNumber, remaining);
+  }
+  return true;
+};
+
 export type DrainDecision =
   | { action: "merge"; candidateTier: number; isFloorFallback: boolean }
   | {

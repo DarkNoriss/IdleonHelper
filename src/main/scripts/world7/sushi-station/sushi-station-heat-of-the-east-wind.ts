@@ -6,6 +6,7 @@ import {
 } from "../../_shared/upgrader/index";
 import { defineScript } from "../../define-script";
 import {
+  boardCompositionEqual,
   buildBoardFromResults,
   type CellTier,
   cellToPoint,
@@ -263,6 +264,12 @@ export default defineScript<[boolean, boolean]>({
       }
     };
 
+    // Tier composition of the previous cycle's final board. A cycle that ends
+    // identical to the one before it - same pieces, no drain merges - means the
+    // seed phase could not replenish feedstock and the drain has nothing left
+    // to do; looping again would only repeat the same dead cycle forever.
+    let previousFinalBoard: CellTier[] | null = null;
+
     while (true) {
       token.throwIfCancelled();
 
@@ -443,6 +450,18 @@ export default defineScript<[boolean, boolean]>({
 
       const finalBoard = await scanBoard();
       logBoardGrid(log, "final board:", finalBoard, availableCells);
+
+      if (
+        drainMerges === 0 &&
+        previousFinalBoard !== null &&
+        boardCompositionEqual(finalBoard, previousFinalBoard)
+      ) {
+        log(
+          "no progress this cycle (0 drain merges, board unchanged since last cycle); stopping script"
+        );
+        return;
+      }
+      previousFinalBoard = finalBoard;
     }
   },
 });

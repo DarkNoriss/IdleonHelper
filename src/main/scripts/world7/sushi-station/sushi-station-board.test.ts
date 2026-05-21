@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { type CellTier, decideDrainCandidate } from "./sushi-station-board";
+import {
+  boardCompositionEqual,
+  type CellTier,
+  decideDrainCandidate,
+} from "./sushi-station-board";
 import { MAX_TEMPLATE_TIER } from "./sushi-station-constants";
 
 // Build a board from [tier, cell] pairs. Cells are arbitrary but unique.
@@ -158,5 +162,35 @@ describe("decideDrainCandidate", () => {
     // lowest=30 has exactly 2 copies and no other low plateau -> depleted.
     const b = board([...run(30, 2, 0), ...run(33, 2, 10)]);
     expect(decide(b, null)).toEqual({ action: "stop", reason: "no-feedstock" });
+  });
+});
+
+describe("boardCompositionEqual", () => {
+  it("treats two empty boards as equal", () => {
+    expect(boardCompositionEqual([], [])).toBe(true);
+  });
+
+  it("ignores cell positions, comparing only tier counts", () => {
+    const a = board([...run(40, 3, 0), ...run(31, 2, 10)]);
+    const b = board([...run(40, 3, 50), ...run(31, 2, 80)]);
+    expect(boardCompositionEqual(a, b)).toBe(true);
+  });
+
+  it("is false when a tier count differs", () => {
+    const a = board([...run(40, 3, 0)]);
+    const b = board([...run(40, 2, 0)]);
+    expect(boardCompositionEqual(a, b)).toBe(false);
+  });
+
+  it("is false when the boards hold different tiers", () => {
+    const a = board([...run(40, 2, 0)]);
+    const b = board([...run(41, 2, 0)]);
+    expect(boardCompositionEqual(a, b)).toBe(false);
+  });
+
+  it("is false when only one board has an extra piece", () => {
+    const a = board([...run(40, 3, 0), [30, 10]]);
+    const b = board([...run(40, 3, 0)]);
+    expect(boardCompositionEqual(a, b)).toBe(false);
   });
 });
