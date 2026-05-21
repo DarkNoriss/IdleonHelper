@@ -395,6 +395,12 @@ export default defineScript<[boolean, boolean]>({
             log("board empty, ending merge phase");
           } else if (decision.reason === "no-candidate") {
             log("no eligible drain target, ending merge phase");
+          } else if (decision.reason === "no-feedstock") {
+            const lowest = getLowestTier(drainBoard);
+            const floor = lowest === null ? "?" : `T${lowest + 1}`;
+            log(
+              `feedstock plateau exhausted (no 3+ tier at/below floor ${floor}); ending merge phase, reseeding`
+            );
           } else {
             // drainPeakTier is non-null here: the helper only returns
             // "below-peak" when peakTier !== null, which only happens after
