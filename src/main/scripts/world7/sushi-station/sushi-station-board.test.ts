@@ -69,7 +69,7 @@ describe("decideDrainCandidate", () => {
     // working floor T32. min-watermark let 32 through; peak-watermark stops.
     const b = board([
       ...run(31, 2, 0), // lowest tier present -> floor = 32
-      ...run(32, 13, 10), // working area, count>=2, but below peak
+      ...run(32, 13, 10), // working area, count>=3 so feedstock gate passes, below peak
       [33, 30],
       [40, 31],
       [55, 32], // consolidated staircase singles above
@@ -78,7 +78,8 @@ describe("decideDrainCandidate", () => {
   });
 
   it("floor fallback merges the floor when it has count>=3 and nothing above is eligible", () => {
-    // lowest=30 => floor=31. Nothing above floor with count>=2. Floor T31 has 4.
+    // lowest=30 => floor=31. Nothing above floor with count>=2. Floor T31 has 4,
+    // which is also the 3+ plateau at the floor that keeps the feedstock gate open.
     const b = board([...run(30, 2, 0), ...run(31, 4, 10)]);
     expect(decide(b, null)).toEqual({
       action: "merge",

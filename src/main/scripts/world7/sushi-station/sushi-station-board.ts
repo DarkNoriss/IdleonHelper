@@ -175,12 +175,12 @@ export const decideDrainCandidate = (params: {
 
   // Feedstock-depletion stop: the drain phase only sustains the chain while a
   // bulk low-tier plateau keeps feeding cascades. Once no tier at or below the
-  // drain floor (lowest / lowest+1, both dynamic from the live scan) still has
-  // 3+ copies, the next merge would cascade into the staircase itself and
-  // break the chain - so end the phase and reseed, even if mergeable pairs
-  // remain higher up.
-  const feedstockPlateauTier = getLowestTierWithCount(board, 3);
-  if (feedstockPlateauTier === null || feedstockPlateauTier > drainFloor) {
+  // drain floor (lowestTier + 1, recomputed from each live scan) still has 3+
+  // copies, the next merge would cascade into the staircase itself and break
+  // the chain - so end the phase and reseed, even if mergeable pairs remain
+  // higher up.
+  const lowestFeedstockTier = getLowestTierWithCount(board, 3);
+  if (lowestFeedstockTier === null || lowestFeedstockTier > drainFloor) {
     return { action: "stop", reason: "no-feedstock" };
   }
 
