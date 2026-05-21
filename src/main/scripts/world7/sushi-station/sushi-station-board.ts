@@ -144,7 +144,10 @@ export const getLowestTierWithCount = (
 
 export type DrainDecision =
   | { action: "merge"; candidateTier: number; isFloorFallback: boolean }
-  | { action: "stop"; reason: "empty" | "no-candidate" | "below-peak" };
+  | {
+      action: "stop";
+      reason: "empty" | "no-candidate" | "below-peak" | "no-feedstock";
+    };
 
 // Pure candidate-selection + watermark decision for the HOTEW merge (drain)
 // phase. Ported verbatim from the old inline drain loop, except the watermark
@@ -169,6 +172,17 @@ export const decideDrainCandidate = (params: {
     return { action: "stop", reason: "empty" };
   }
   const drainFloor = lowestTier + 1;
+
+  // Feedstock-depletion stop: the drain phase only sustains the chain while a
+  // bulk low-tier plateau keeps feeding cascades. Once no tier at or below the
+  // drain floor (lowestTier + 1, recomputed from each live scan) still has 3+
+  // copies, the next merge would cascade into the staircase itself and break
+  // the chain - so end the phase and reseed, even if mergeable pairs remain
+  // higher up.
+  const lowestFeedstockTier = getLowestTierWithCount(board, 3);
+  if (lowestFeedstockTier === null || lowestFeedstockTier > drainFloor) {
+    return { action: "stop", reason: "no-feedstock" };
+  }
 
   const highest = getHighestTier(board);
   const buffCap = highest === null ? null : highest - 6; // 6 = HOTEW buff range width (highest tier minus 6)

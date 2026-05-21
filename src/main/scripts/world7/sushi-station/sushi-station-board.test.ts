@@ -36,7 +36,7 @@ describe("decideDrainCandidate", () => {
 
   it("first merge of a phase picks the highest tier with count>=2", () => {
     // floor = lowest+1. lowest=30 => floor=31. Above floor with count>=2: T33.
-    const b = board([...run(30, 2, 0), ...run(33, 2, 10), [40, 20]]);
+    const b = board([...run(30, 3, 0), ...run(33, 2, 10), [40, 20]]);
     expect(decide(b, null)).toEqual({
       action: "merge",
       candidateTier: 33,
@@ -46,7 +46,7 @@ describe("decideDrainCandidate", () => {
 
   it("does not stop mid-climb when candidate exceeds the peak", () => {
     // peak=40, highest count>=2 candidate above floor is T41 (>40) -> merge.
-    const b = board([...run(30, 2, 0), ...run(41, 2, 10)]);
+    const b = board([...run(30, 3, 0), ...run(41, 2, 10)]);
     expect(decide(b, 40)).toEqual({
       action: "merge",
       candidateTier: 41,
@@ -56,7 +56,7 @@ describe("decideDrainCandidate", () => {
 
   it("does not stop when candidate equals the peak (strict < boundary)", () => {
     // peak=41, highest count>=2 candidate above floor is exactly T41 -> merge.
-    const b = board([...run(30, 2, 0), ...run(41, 2, 10)]);
+    const b = board([...run(30, 3, 0), ...run(41, 2, 10)]);
     expect(decide(b, 41)).toEqual({
       action: "merge",
       candidateTier: 41,
@@ -69,7 +69,7 @@ describe("decideDrainCandidate", () => {
     // working floor T32. min-watermark let 32 through; peak-watermark stops.
     const b = board([
       ...run(31, 2, 0), // lowest tier present -> floor = 32
-      ...run(32, 13, 10), // working area, count>=2, but below peak
+      ...run(32, 13, 10), // working area, count>=3 so feedstock gate passes, below peak
       [33, 30],
       [40, 31],
       [55, 32], // consolidated staircase singles above
@@ -78,7 +78,8 @@ describe("decideDrainCandidate", () => {
   });
 
   it("floor fallback merges the floor when it has count>=3 and nothing above is eligible", () => {
-    // lowest=30 => floor=31. Nothing above floor with count>=2. Floor T31 has 4.
+    // lowest=30 => floor=31. Nothing above floor with count>=2. Floor T31 has 4,
+    // which is also the 3+ plateau at the floor that keeps the feedstock gate open.
     const b = board([...run(30, 2, 0), ...run(31, 4, 10)]);
     expect(decide(b, null)).toEqual({
       action: "merge",
@@ -88,14 +89,14 @@ describe("decideDrainCandidate", () => {
   });
 
   it("no-candidate when nothing above floor and floor has count<3", () => {
-    const b = board([...run(30, 2, 0), ...run(31, 2, 10)]);
+    const b = board([...run(30, 3, 0), ...run(31, 2, 10)]);
     expect(decide(b, null)).toEqual({ action: "stop", reason: "no-candidate" });
   });
 
   it("excludes the MAX_TEMPLATE_TIER hard cap from candidates", () => {
     // Two MAX_TEMPLATE_TIER pieces must NOT be chosen; falls through to T33.
     const b = board([
-      ...run(30, 2, 0),
+      ...run(30, 3, 0),
       ...run(33, 2, 10),
       ...run(MAX_TEMPLATE_TIER, 2, 20),
     ]);
@@ -109,7 +110,7 @@ describe("decideDrainCandidate", () => {
   it("excludes tiers above buffCap when mergeAboveHotew is false", () => {
     // highest=50 => buffCap=44. T48 pair is above band -> excluded; picks T40.
     const b = board([
-      ...run(30, 2, 0),
+      ...run(30, 3, 0),
       ...run(40, 2, 10),
       ...run(48, 2, 20),
       [50, 30],
@@ -123,7 +124,7 @@ describe("decideDrainCandidate", () => {
 
   it("allows tiers above buffCap when mergeAboveHotew is true", () => {
     const b = board([
-      ...run(30, 2, 0),
+      ...run(30, 3, 0),
       ...run(40, 2, 10),
       ...run(48, 2, 20),
       [50, 30],
@@ -133,5 +134,29 @@ describe("decideDrainCandidate", () => {
       candidateTier: 48,
       isFloorFallback: false,
     });
+  });
+
+  it("stops with no-feedstock when the plateau is gone but a pair remains higher", () => {
+    // lowest=30 => floor=31. No 3+ tier at/below 31 (T30=2, T31=2). The only
+    // 3+ plateau is T40, above the floor -> feedstock is depleted. Stop even
+    // though T40 still has a mergeable pair.
+    const b = board([...run(30, 2, 0), ...run(31, 2, 10), ...run(40, 3, 20)]);
+    expect(decide(b, null)).toEqual({ action: "stop", reason: "no-feedstock" });
+  });
+
+  it("does not stop while a 3+ plateau sits at the lowest tier", () => {
+    // lowest=30 has 3 copies (feedstock present) => climb candidate is T33.
+    const b = board([...run(30, 3, 0), ...run(33, 2, 10)]);
+    expect(decide(b, null)).toEqual({
+      action: "merge",
+      candidateTier: 33,
+      isFloorFallback: false,
+    });
+  });
+
+  it("stops with no-feedstock at the boundary where the lowest tier has only 2", () => {
+    // lowest=30 has exactly 2 copies and no other low plateau -> depleted.
+    const b = board([...run(30, 2, 0), ...run(33, 2, 10)]);
+    expect(decide(b, null)).toEqual({ action: "stop", reason: "no-feedstock" });
   });
 });
