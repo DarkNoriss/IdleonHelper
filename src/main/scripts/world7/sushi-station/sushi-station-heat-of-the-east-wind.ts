@@ -275,6 +275,12 @@ export default defineScript<[boolean, boolean]>({
 
       // ---- Seed phase: guarantee a full, sorted, seeded board ----
 
+      // Cooking burns fuel (per-tier cost, not readable from the board), so a
+      // cook of N may yield far fewer than N when fuel runs low. Track how many
+      // we asked for to measure the actual yield once the board is rescanned.
+      let cookRequested = 0;
+      let cookProducedNothing = false;
+
       // Seed step 1: cook to fill empty cells (gated by checkbox)
       log("seed phase: cook check");
       const cookBoard = await scanBoard();
@@ -291,6 +297,7 @@ export default defineScript<[boolean, boolean]>({
           log("cook button not visible, skipping spawn");
         } else {
           log(`${emptyCount} empty cells, cooking ${emptyCount} sushi`);
+          cookRequested = emptyCount;
           await backendCommand.click(
             cookButton[0]!,
             { ...SUSHI_CLICK_OPTIONS, times: emptyCount },
@@ -316,6 +323,18 @@ export default defineScript<[boolean, boolean]>({
       // merge phase has something to climb.
       log("seed phase: seed check");
       const seedBoard = await scanBoard();
+
+      // Sorting moves pieces but never adds or removes them, so the empty count
+      // here equals the post-cook count - a free measure of the cook yield.
+      if (cookRequested > 0) {
+        const cookedCount =
+          cookRequested - countEmpty(seedBoard, availableCells);
+        log(
+          `cook yield: ${cookedCount}/${cookRequested} sushi${cookedCount < cookRequested ? " (fuel-limited)" : ""}`
+        );
+        cookProducedNothing = cookedCount <= 0;
+      }
+
       const seedLowest = getLowestTier(seedBoard);
       if (seedLowest === null) {
         log("board empty, skipping seed");
@@ -451,13 +470,15 @@ export default defineScript<[boolean, boolean]>({
       const finalBoard = await scanBoard();
       logBoardGrid(log, "final board:", finalBoard, availableCells);
 
-      if (
-        drainMerges === 0 &&
+      const boardUnchanged =
         previousFinalBoard !== null &&
-        boardCompositionEqual(finalBoard, previousFinalBoard)
-      ) {
+        boardCompositionEqual(finalBoard, previousFinalBoard);
+      if (drainMerges === 0 && (cookProducedNothing || boardUnchanged)) {
+        const cause = cookProducedNothing
+          ? "out of fuel, cook produced nothing"
+          : "board unchanged since last cycle";
         log(
-          "no progress this cycle (0 drain merges, board unchanged since last cycle); stopping script"
+          `no progress this cycle (0 drain merges, ${cause}); stopping script`
         );
         return;
       }
